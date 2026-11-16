@@ -50,6 +50,9 @@ namespace Simpiens.Hosting
             public long LongestHungry, LongestHungryFrom = -1;
             public bool Starved;
 
+            /// <summary>It died (Epic 10 Part 3, K5): the day judges the living; deaths are counted apart.</summary>
+            public bool Died;
+
             /// <summary>Danger (Epic 10 G2): the lowest health seen, and whether it came back to full after being hurt.</summary>
             public float LowestHealth = 100f;
             public bool HurtThenRecovered;
@@ -101,6 +104,10 @@ namespace Simpiens.Hosting
 
         /// <summary>Drifters seen while watching (Epic 10 G1): arrived, walked out, and what those who left bought.</summary>
         public int DriftersArrived, DriftersLeft, DrifterPurchases;
+
+        /// <summary>Deaths (Epic 10 Part 3, K5.1, K5.4), residents' among them, and the first ("t1234: Name of Hazard at (x, y)").</summary>
+        public int Deaths, ResidentDeaths;
+        public string FirstDeath;
         private readonly int _driftersAtStart;
         private readonly int _faultsAtStart;
 
@@ -112,6 +119,31 @@ namespace Simpiens.Hosting
         public string FirstIdentityFault;
         private readonly HashSet<string> _livingNames = new HashSet<string>();
 
+        /// <summary>
+        /// Creatures (Epic 10 Part 3, K2.3), every crawler present, drifters included: blows that fell (hit or miss), the
+        /// crawlers they fell on, those that hurt, flights begun, crawlers a blow downed, when each of the map's lairs was
+        /// charted (-1 for never), and lone entries into a lair after it had been charted for <see cref="KnownLairGraceTicks"/>:
+        /// a crawler on its feet, off an expedition, not fleeing, not one who braves the lair (the bold and armed, Epic 10 Part
+        /// 3, K3.3, D21), stepping from outside to within its reach less <see cref="LairEdgeBand"/> (a passer-by grazing the
+        /// edge isn't going into it). Any entry fails the day.
+        /// </summary>
+        public int Blows, Hits, Flights, DownedByCreatures, EntriesIntoKnownLairs;
+
+        /// <summary>Fighting back (Epic 10 Part 3, K3.3): fights begun, creatures slain while watched, and the most residents armed at once.</summary>
+        public int Fights, Kills, MostArmed;
+        private readonly int _killsAtStart;
+
+        /// <summary>The rim of a lair's reach that a path may graze on its way past: an entry is deeper than this.</summary>
+        public const float LairEdgeBand = 1f;
+        public readonly HashSet<EntityId> Struck = new HashSet<EntityId>();
+        public long[] LairChartedAt = System.Array.Empty<long>();
+        public string FirstEntryIntoKnownLair, FirstFlight;
+
+        /// <summary>A crawler that decided to go before a lair was charted may still be on its way: entries count from a game hour after.</summary>
+        public const long KnownLairGraceTicks = DayClock.TicksPerHour;
+
+        private readonly Dictionary<EntityId, (uint Struck, bool Fleeing, bool InChartedReach, bool Downed, bool Fighting)> _creatureWatch = new Dictionary<EntityId, (uint, bool, bool, bool, bool)>();
+
         /// <summary>Intent handlers that threw while watched (ROADMAP §1A.2 #17); any fails the day.</summary>
         public int IntentFaults => _sim.Simulation.IntentFaults - _faultsAtStart;
 
@@ -121,6 +153,7 @@ namespace Simpiens.Hosting
             _startTick = sim.Clock.CurrentTick;
             _baselineSalvage = TotalSalvage(sim.Simulation);
             _faultsAtStart = sim.Simulation.IntentFaults;
+            _killsAtStart = sim.Simulation.Creatures.Kills;
             Anomalies = AnomalyDetector.For(sim);
             Anomalies.AnomalyFound += record =>
             {
@@ -130,8 +163,17 @@ namespace Simpiens.Hosting
             _driftersAtStart = host.DriftersArrived;
             host.CrawlerDeparted += (runtime, entity) =>
             {
+                var gone = runtime.State;
+                if (gone.DiedOf != Simpiens.Simulation.DeathCause.None)
+                {
+                    Deaths++;
+                    if (!gone.IsDrifter) ResidentDeaths++;
+                    FirstDeath ??= $"t{_sim.Clock.CurrentTick - _startTick}: {gone.GivenName} of {gone.DiedOf} at {gone.Position}";
+                    for (int i = 0; i < Crawlers.Count; i++) if (Crawlers[i].State == gone) Crawlers[i].Died = true;
+                    return;
+                }
                 DriftersLeft++;
-                DrifterPurchases += runtime.State.Activity.RationPurchases;
+                DrifterPurchases += gone.Activity.RationPurchases;
             };
             // The day judges the residents: drifters pass through (Epic 10 G1)
             for (int i = 0; i < host.CrawlerStates.Count; i++)
@@ -228,6 +270,7 @@ namespace Simpiens.Hosting
                 }
             }
 
+            ObserveCreatures(rel, (uint)tick, map);
             Anomalies.Observe(tick);
 
             if (sim.EconomyLedger != null)
@@ -242,6 +285,70 @@ namespace Simpiens.Hosting
                 }
             }
         }
+
+        private void ObserveCreatures(long rel, uint tick, Simpiens.Simulation.World.MapDefinition map)
+        {
+            var creatures = _sim.Simulation.Creatures;
+            int lairCount = map != null ? map.Lairs.Count : 0;
+            if (LairChartedAt.Length != lairCount)
+            {
+                LairChartedAt = new long[lairCount];
+                for (int i = 0; i < lairCount; i++) LairChartedAt[i] = -1;
+            }
+            for (int i = 0; i < lairCount; i++)
+                if (LairChartedAt[i] < 0 && creatures.IsCharted(i)) LairChartedAt[i] = rel;
+
+            Kills = creatures.Kills - _killsAtStart;
+            var present = _sim.Host.CrawlerStates;
+            int armed = 0;
+            for (int i = 0; i < present.Count; i++)
+            {
+                var state = present[i];
+                _creatureWatch.TryGetValue(state.AgentId, out var was);
+                bool fleeing = state.CurrentIntent is Simpiens.Cognition.Contracts.FleeIntent;
+                bool fighting = state.CurrentIntent is Simpiens.Cognition.Contracts.FightIntent;
+                if (fighting && !was.Fighting) Fights++;
+                if (!state.IsDrifter && Vitality.IsArmed(state.Inventory)) armed++;
+                if (state.StruckAtTick != 0 && state.StruckAtTick != was.Struck)
+                {
+                    Blows++;
+                    if (state.HurtThisTick > 0f) Hits++;
+                    Struck.Add(state.AgentId);
+                    if (state.IsDowned && !was.Downed) DownedByCreatures++;
+                }
+                if (fleeing && !was.Fleeing)
+                {
+                    Flights++;
+                    FirstFlight ??= $"t{rel}: {_sim.Host.CrawlerNames[i]} at {state.Position}";
+                }
+                // In a known lair's reach (by where it stands), and whether it braves that lair (K3.3, D21): an entry is a step
+                // into the reach unbraved, not a brave crawler's health falling while it is there (K6.4: a hurt hunter)
+                // A step is judged by where it stands, charted or not: one already standing in a lair's reach when its grace ran out
+                // didn't step in (Epic 10 Part 3, K10.1b: seed 64's wanderer, who charted the hollow on its way in and stood there)
+                bool inKnownLair = false, inChartedReach = false, braves = false;
+                for (int l = 0; l < lairCount && !inKnownLair; l++)
+                {
+                    float deep = Simpiens.Simulation.Creatures.LairReach.Of(map.Lairs[l]) - LairEdgeBand;
+                    bool within = LairChartedAt[l] >= 0 && deep > 0f && (state.Position - map.Lairs[l].Position).SqrMagnitude <= deep * deep;
+                    inChartedReach |= within;
+                    inKnownLair = within && rel - LairChartedAt[l] >= KnownLairGraceTicks;
+                    if (inKnownLair) braves = Vitality.BravesLair(map.Lairs[l], _sim.Simulation.Creatures.IsBossAlive(l), state.Skills, state.Inventory, state.Health, state.Personality.RiskTolerancePercent, state.IsDowned);
+                }
+                // A victor stepping in for its own kill's drop at hand is D24's, not a lone venture
+                bool ownDrop = state.CurrentIntent is Simpiens.Cognition.Contracts.PickUpIntent pick && _sim.Simulation.Piles.TryGet(pick.PileId, out var pile) && pile.ClaimedFor == state.AgentId;
+                if (inKnownLair && !was.InChartedReach && !braves && !ownDrop && !fleeing && !state.IsDowned && !Vitality.StruckRecently(state.StruckAtTick, tick) && !_sim.Simulation.Guild.IsOnExpedition(state.AgentId))
+                {
+                    EntriesIntoKnownLairs++;
+                    FirstEntryIntoKnownLair ??= $"t{rel}: {_sim.Host.CrawlerNames[i]} at {state.Position} ({state.CurrentIntent?.GetType().Name})";
+                }
+                _creatureWatch[state.AgentId] = (state.StruckAtTick, fleeing, inChartedReach, state.IsDowned, fighting);
+            }
+            if (armed > MostArmed) MostArmed = armed;
+        }
+
+        /// <summary>The creatures' line of the report (Epic 10 Part 3, K2.3).</summary>
+        public string CreatureSummary() =>
+            $"creatures: {Blows} blows ({Hits} hit) on {Struck.Count} crawlers, {Flights} flights{(FirstFlight != null ? $" (first {FirstFlight})" : "")}, {DownedByCreatures} downed by them; lairs charted at [{string.Join(", ", LairChartedAt.Select(t => t < 0 ? "never" : "t" + t))}]; lone entries into a known lair {EntriesIntoKnownLairs}{(FirstEntryIntoKnownLair != null ? $" (first {FirstEntryIntoKnownLair})" : "")}; armed at most {MostArmed}, fights {Fights}, kills {Kills}; deaths {Deaths}{(FirstDeath != null ? $" (first {FirstDeath})" : "")}";
 
         /// <summary>Steps <paramref name="ticks"/> ticks, observing after each.</summary>
         public void Run(long ticks)
@@ -262,14 +369,16 @@ namespace Simpiens.Hosting
         public List<string> DayFailures()
         {
             var failures = new List<string>();
-            if (Crawlers.Count == 0) { failures.Add("no crawlers"); return failures; }
-            var noCycle = Crawlers.Where(c => c.State.Activity.Cycles == 0).Select(c => c.Name).ToList();
-            int sleepers = Crawlers.Count(c => c.State.Activity.BunkSleeps > 0);
-            int eaters = Crawlers.Count(c => c.State.Activity.Meals > 0);
-            int gatherings = Crawlers.Sum(c => c.State.Activity.HearthGatherings);
-            int trustRose = Crawlers.Count(c => c.TrustEnd > c.TrustStart);
-            int requiredTrustRose = SimMath.CeilToInt(Crawlers.Count * 2f / 3f);
-            var starved = Crawlers.Where(c => c.Starved).Select(c => $"{c.Name} ({c.LongestHungry} ticks)").ToList();
+            // The living residents (Epic 10 Part 3, K5): a death is counted apart, and TheCarefulLoseFew bands it
+            var living = Crawlers.Where(c => !c.Died).ToList();
+            if (living.Count == 0) { failures.Add("no crawlers"); return failures; }
+            var noCycle = living.Where(c => c.State.Activity.Cycles == 0).Select(c => c.Name).ToList();
+            int sleepers = living.Count(c => c.State.Activity.BunkSleeps > 0);
+            int eaters = living.Count(c => c.State.Activity.Meals > 0);
+            int gatherings = living.Sum(c => c.State.Activity.HearthGatherings);
+            int trustRose = living.Count(c => c.TrustEnd > c.TrustStart);
+            int requiredTrustRose = SimMath.CeilToInt(living.Count * 2f / 3f);
+            var starved = living.Where(c => c.Starved).Select(c => $"{c.Name} ({c.LongestHungry} ticks)").ToList();
 
             if (noCycle.Count > 0) failures.Add($"{noCycle.Count} crawlers never closed a harvest -> sell cycle: {string.Join(", ", noCycle)}");
             if (sleepers < 3) failures.Add($"only {sleepers} crawlers slept in a bunk (need 3)");
@@ -277,9 +386,10 @@ namespace Simpiens.Hosting
             if (gatherings == 0) failures.Add("no hearth gathering");
             if (ScoutTick < 0 || !ScoutCharted) failures.Add($"the Scout bounty was not fulfilled with the Deep Seam charted (t{ScoutTick}, charted {ScoutCharted})");
             if (FogLeaks > 0) failures.Add($"crawlers knew Deep Seam landmarks before the scout reported ({FogLeaks}; first {FirstFogLeak})");
+            if (EntriesIntoKnownLairs > 0) failures.Add($"crawlers went alone into a known lair ({EntriesIntoKnownLairs}; first {FirstEntryIntoKnownLair})");
             if (AloneInTheChamber > 0) failures.Add($"crawlers went alone where only an expedition goes ({AloneInTheChamber} crawler-ticks; first {FirstAloneInTheChamber})");
             if (GatherTick < 0 || !GatherEscrowReleased) failures.Add($"the Gather bounty was not fulfilled and paid from escrow (t{GatherTick}, released {GatherEscrowReleased})");
-            if (trustRose < requiredTrustRose) failures.Add($"trust toward the player rose for only {trustRose} of {Crawlers.Count} (need {requiredTrustRose})");
+            if (trustRose < requiredTrustRose) failures.Add($"trust toward the player rose for only {trustRose} of {living.Count} (need {requiredTrustRose})");
             if (ConservationViolations > 0) failures.Add($"ledger conservation violated {ConservationViolations} times (worst {WorstDiscrepancy}g)");
             if (starved.Count > 0) failures.Add($"{starved.Count} crawlers starved: {string.Join(", ", starved)}");
             if (Stackings > 0) failures.Add($"pawn stacking {Stackings} times (first {FirstStacking})");
@@ -322,6 +432,7 @@ namespace Simpiens.Hosting
         {
             var sb = new StringBuilder();
             sb.AppendLine($"observed {ObservedTicks} ticks; scout@{ScoutTick} (charted {ScoutCharted}), gather@{GatherTick} (escrow released {GatherEscrowReleased}), sale@{SaleTick}, restock@{RestockTick}, regrowth@{RegrowthTick}; ledger violations {ConservationViolations}; fog leaks {FogLeaks}; alone in the chamber {AloneInTheChamber}; intent faults {IntentFaults}; drifters in {DriftersArrived}, out {DriftersLeft} (bought {DrifterPurchases}); {Anomalies.Summary()}{(Anomalies.First is AnomalyRecord first ? $" (first {first})" : "")}");
+            sb.AppendLine(CreatureSummary());
             foreach (var c in Crawlers)
             {
                 sb.AppendLine($"  {c.Name}: {c.State.Activity}; risk {c.State.Personality.RiskTolerance:+0.00;-0.00}, lowest health {c.LowestHealth:F0}{(c.HurtThenRecovered ? " (recovered)" : "")}; trust {c.TrustStart} -> {c.TrustEnd}; peak hunger {c.PeakHunger:F0}, longest at >= {StarvingHunger:F0}: {c.LongestHungry} ticks{(c.LongestHungryFrom >= 0 ? $" from t{c.LongestHungryFrom}" : "")}{(c.Starved ? " STARVED" : "")}");

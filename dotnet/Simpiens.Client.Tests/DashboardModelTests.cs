@@ -191,7 +191,7 @@ namespace Simpiens.Client.Tests
 
             // Scout offers exactly the uncharted rooms
             model.Bounties.SetType(BountyType.ScoutSector);
-            Assert.Equal(new[] { (int)Floor1Layout.DeepSeamSectorId, Floor1Layout.OvergrowthSectorId }, model.Bounties.SectorChoiceIds.OrderBy(i => i).ToArray());
+            Assert.Equal(new[] { (int)Floor1Layout.DeepSeamSectorId, Floor1Layout.OvergrowthSectorId, Floor1Layout.OldStairSectorId }, model.Bounties.SectorChoiceIds.OrderBy(i => i).ToArray());
             Assert.False(model.Bounties.SelectSector(Floor1Layout.HubSectorId), "A charted room is not offered to scout.");
             Assert.Equal("Uncharted", model.Bounties.SectorState);
 

@@ -31,6 +31,11 @@ namespace Simpiens.Simulation.Guild
         INarrativeChronicleService ChronicleService { get; }
         EconomyTuning Economy { get; }
         int GetSectorForPosition(Vec2 position);
+
+        /// <summary>The map's lairs as they are (Epic 10 Part 3, K7.1: a clear's target), which are charted, and a living creature by id.</summary>
+        IReadOnlyList<Simpiens.Simulation.Creatures.LairState> Lairs { get; }
+        bool IsLairCharted(int lairIndex);
+        bool TryGetCreature(EntityId id, out Simpiens.Simulation.Creatures.CreatureState creature);
     }
 
     /// <summary>

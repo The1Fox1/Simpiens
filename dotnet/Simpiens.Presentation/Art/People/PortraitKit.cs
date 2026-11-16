@@ -64,15 +64,28 @@ namespace Simpiens.Presentation.Art.People
         public static void BakeFramed(in PortraitKey key, Span<Rgba32> into)
         {
             Span<Rgba32> bust = stackalloc Rgba32[Size * Size];
-            Bake(key.Look, key.Mood, key.HeadGear, key.Standing == CrawlerStanding.GuildMember, bust);
+            Bake(key.Look, key.Mood, key.Worn, key.Standing == CrawlerStanding.GuildMember, bust);
             Framed(bust, key.Standing, into);
+            if (key.Greyed) Grey(into);
+        }
+
+        /// <summary>Every pixel to its grey (Rec. 601 luma), alpha kept: the dead's portrait (Epic 10 Part 3, K5.8c).</summary>
+        public static void Grey(Span<Rgba32> pixels)
+        {
+            for (int i = 0; i < pixels.Length; i++)
+            {
+                var p = pixels[i];
+                byte y = (byte)((p.R * 299 + p.G * 587 + p.B * 114 + 500) / 1000);
+                pixels[i] = new Rgba32(y, y, y, p.A);
+            }
         }
 
         /// <summary>
         /// The bust of <paramref name="look"/> showing <paramref name="mood"/> (<see cref="Size"/> square, clear behind),
-        /// wearing <paramref name="headGear"/> when it is worn on the head, and the guild's tabard when <paramref name="tabard"/>.
+        /// wearing what shows of <paramref name="worn"/> (Epic 10 Part 3, K1.5: the head's helm or mask; a coat, the shoulders'
+        /// cloth in its colour), and the guild's tabard when <paramref name="tabard"/>.
         /// </summary>
-        public static void Bake(in CrawlerLook look, Mood mood, ItemType headGear, bool tabard, Span<Rgba32> into)
+        public static void Bake(in CrawlerLook look, Mood mood, in WornLook worn, bool tabard, Span<Rgba32> into)
         {
             if (into.Length < Size * Size) throw new ArgumentException($"A portrait needs {Size * Size} pixels.", nameof(into));
             Span<byte> mat = stackalloc byte[Size * Size];
@@ -87,10 +100,12 @@ namespace Simpiens.Presentation.Art.People
             string outfit = LookCatalog.KeyOf(LookGene.Outfit, look.Outfit);
             string accessory = LookCatalog.KeyOf(LookGene.Accessory, look.Accessory);
             bool delver = lineage == "delver", female = LookCatalog.KeyOf(LookGene.Frame, look.Frame) == "female";
-            ItemLook gear = default;
-            bool worn = headGear != ItemType.None && ItemArt.TryGet(ItemCatalog.Get(headGear)?.ArtKey, out gear);
-            bool helm = worn && gear.Worn == Worn.Head;
-            bool mask = worn && gear.Worn == Worn.Face; // a respirator (Epic 10 Part 2, D52)
+            // What shows worn (K1.5): the helm, the mask (a respirator, Epic 10 Part 2, D52) in the helm's colours if both show,
+            // and a coat over the shoulders
+            bool helm = LookOf(worn.On(Worn.Head), out var helmLook);
+            bool mask = LookOf(worn.On(Worn.Face), out var maskLook);
+            var gear = helm ? helmLook : maskLook;
+            bool coat = LookOf(worn.On(Worn.Torso), out var coatLook);
 
             // The head: centre and radii by face shape and lineage; the face turns to the viewer's right, toward the light's side
             int cx = 23, cy = 20;
@@ -175,7 +190,13 @@ namespace Simpiens.Presentation.Art.People
                     for (int x = cx - 2; x <= cx + 3; x++)
                         if (c.At(x, y) is Cloth or Trim) c.Set(x, y, (y is 43 or 44) && (x == cx || x == cx + 1) ? Gold : Tabard, x < cx ? 2 : 3);
 
-            Paint(ref c, look, gear, into);
+            Paint(ref c, look, gear, coat ? coatLook.Primary : LookPalettes.PrimaryOf(look), into);
+        }
+
+        private static bool LookOf(ItemType item, out ItemLook look)
+        {
+            look = default;
+            return item != ItemType.None && ItemArt.TryGet(ItemCatalog.Get(item)?.ArtKey, out look);
         }
 
         private static void Outfit(ref Canvas c, int cx, string outfit, int shoulders)
@@ -481,11 +502,11 @@ namespace Simpiens.Presentation.Art.People
             return x;
         }
 
-        private static void Paint(ref Canvas c, in CrawlerLook look, in ItemLook gear, Span<Rgba32> into)
+        private static void Paint(ref Canvas c, in CrawlerLook look, in ItemLook gear, Rgba32 clothColour, Span<Rgba32> into)
         {
             var skin = SpriteKit.RampOf(LookPalettes.SkinOf(look));
             var hair = SpriteKit.RampOf(LookPalettes.HairOf(look));
-            var cloth = SpriteKit.RampOf(LookPalettes.PrimaryOf(look));
+            var cloth = SpriteKit.RampOf(clothColour);
             var trim = SpriteKit.RampOf(LookPalettes.SecondaryOf(look));
             var iris = SpriteKit.RampOf(LookPalettes.EyesOf(look));
             var gold = SpriteKit.RampOf(GoldColour);
@@ -607,23 +628,27 @@ namespace Simpiens.Presentation.Art.People
         }
     }
 
-    /// <summary>A portrait: a look with its mood, its standing (the frame, the tabard) and what it wears on its head.</summary>
+    /// <summary>A portrait: a look with its mood, its standing (the frame, the tabard) and what shows of its gear.</summary>
     public readonly struct PortraitKey : IEquatable<PortraitKey>
     {
-        public PortraitKey(in CrawlerLook look, Mood mood, CrawlerStanding standing, ItemType headGear)
+        public PortraitKey(in CrawlerLook look, Mood mood, CrawlerStanding standing, in WornLook worn, bool greyed = false)
         {
             Look = look;
             Mood = mood;
             Standing = standing;
-            HeadGear = headGear;
+            Worn = worn;
+            Greyed = greyed;
         }
+
+        /// <summary>The dead's portrait (Epic 10 Part 3, K5.8c): the same face, in greys.</summary>
+        public bool Greyed { get; }
 
         public CrawlerLook Look { get; }
         public Mood Mood { get; }
         public CrawlerStanding Standing { get; }
 
-        /// <summary>What it wears on its head; None for nothing, or for gear not worn on the head.</summary>
-        public ItemType HeadGear { get; }
+        /// <summary>What shows worn, by slot (Epic 10 Part 3, K1.5); nothing for nothing.</summary>
+        public WornLook Worn { get; }
 
         /// <summary>
         /// <paramref name="agent"/>'s portrait now (Epic UI-Beta B4): its look, its mood as <paramref name="moods"/> shows it
@@ -632,15 +657,14 @@ namespace Simpiens.Presentation.Art.People
         /// </summary>
         public static PortraitKey Of(EntityId id, Simpiens.Cognition.AgentState agent, MoodTracker moods, long tick)
         {
-            var worn = agent.Inventory != null ? agent.Inventory.GetEquipped(Simpiens.Simulation.Items.EquipmentSlot.Protection) : default;
             var mood = moods.Update(id, MoodSigns.Of(agent), tick);
-            return new PortraitKey(agent.Look, mood, WorldViewFrame.StandingOf(agent), BodyKit.HeadGearOf(worn.IsEmpty ? ItemType.None : worn.Type));
+            return new PortraitKey(agent.Look, mood, WorldViewFrame.StandingOf(agent), WornLook.Of(agent.Inventory));
         }
 
-        public bool Equals(PortraitKey other) => Look.Equals(other.Look) && Mood == other.Mood && Standing == other.Standing && HeadGear == other.HeadGear;
+        public bool Equals(PortraitKey other) => Look.Equals(other.Look) && Mood == other.Mood && Standing == other.Standing && Worn.Equals(other.Worn) && Greyed == other.Greyed;
 
         public override bool Equals(object obj) => obj is PortraitKey other && Equals(other);
 
-        public override int GetHashCode() => HashCode.Combine(Look.GetHashCode(), (int)Mood, (int)Standing, (int)HeadGear);
+        public override int GetHashCode() => HashCode.Combine(Look.GetHashCode(), (int)Mood, (int)Standing, Worn.GetHashCode(), Greyed);
     }
 }

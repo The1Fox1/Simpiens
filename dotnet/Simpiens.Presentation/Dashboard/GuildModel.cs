@@ -16,10 +16,13 @@ namespace Simpiens.Presentation.Dashboard
         public string Doing { get; internal set; } = string.Empty;
         public float Health { get; internal set; }
         public bool Downed { get; internal set; }
-        public string Gear { get; internal set; } = string.Empty;
-        public string GearIcon { get; internal set; }
+        /// <summary>What it wears, a row for each slot in the table's display order (Epic 10 Part 3, K1.5).</summary>
+        public WornPieces Equipment { get; } = new WornPieces();
         public string Standing { get; internal set; } = string.Empty;
         public int UnpaidVisits { get; internal set; }
+
+        /// <summary>Its two best skills (Epic 10 Part 3, K9.5): "Melee 4 · Mining 2"; who to put at a party's front and back.</summary>
+        public string Skills { get; internal set; } = string.Empty;
 
         /// <summary>"Bunk 3": the bunk kept for it in the barracks (Epic 10 Part 2, W5.2); empty when it has none.</summary>
         public string Bunk { get; internal set; } = string.Empty;
@@ -130,11 +133,10 @@ namespace Simpiens.Presentation.Dashboard
                 row.Doing = PlanText.Action(agent.HasActivePlan ? agent.ActivePlan.CurrentAction : null);
                 row.Health = agent.Health;
                 row.Downed = agent.IsDowned;
-                var worn = agent.Inventory != null ? agent.Inventory.GetEquipped(EquipmentSlot.Protection) : default;
-                row.Gear = DossierModel.GearText(worn);
-                row.GearIcon = worn.IsEmpty ? null : ItemIcons.Of(worn.Type, worn.Quality);
+                row.Equipment.Refresh(agent.Inventory);
                 var (trust, warmth) = GuildRules.Standing(agent, (uint)(_context.Clock?.CurrentTick ?? 0));
                 row.Standing = Invariant($"Trust {trust} · Warmth {warmth}");
+                row.Skills = SkillTexts.Best(agent.Skills, 2);
             }
             if (_rows.Count > members) _rows.RemoveRange(members, _rows.Count - members);
             Status = Invariant($"{members} of {tuning.MaxMembers} members · {wages}g in wages a visit") + (lodging > 0 ? Invariant($", {lodging}g back for bunks") : string.Empty);

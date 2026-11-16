@@ -528,8 +528,7 @@ namespace Simpiens.Core.Tests
             commands.QueueInfluence(InfluenceEvent.CreateGiveGear("Test", member.AgentId, gear));
             o.Sim.Step(1); // applied on the tick, as every command
 
-            var protection = Simpiens.Simulation.Items.EquipmentSlot.Protection;
-            var worn = member.Inventory.GetEquipped(protection);
+            var worn = member.Inventory.GetEquipped(Simpiens.Simulation.Items.EquipmentSlot.Body);
             Assert.Equal(gear, worn.Type);
             Assert.Equal(Simpiens.Simulation.Items.ItemCatalog.Get(gear).Equipment.Durability, worn.Durability);
             stall = o.Sim.Simulation.ActiveStalls[0];
@@ -540,13 +539,14 @@ namespace Simpiens.Core.Tests
         }
 
         /// <summary>
-        /// Outfitting by the target's hazard (Epic 10 Part 2, W3.2, D50): the best protection in stock for the Gallery's
-        /// flooding is a respirator, for the Glow Caves' falling rock a hard hat, and with neither, hazard gear. Given for
-        /// the Gallery, a respirator replaces sound hazard gear, which goes back into the stall's stock; a hard hat, no
-        /// better against flooding, is refused.
+        /// Outfitting by the target's hazard (Epic 10 Part 2, W3.2, D50), slot by slot (Epic 10 Part 3, K1.3): the best
+        /// protection in stock for the Gallery's flooding is a respirator, for the Glow Caves' falling rock a hard hat, and
+        /// with neither, hazard gear. Given for the Gallery, a respirator goes on the head over sound hazard gear, which
+        /// stays on the body; then a hard hat, no better against flooding than the respirator in its slot, is refused, and
+        /// more hazard gear, its slot taken by sound gear, too.
         /// </summary>
         [Fact]
-        public void GearIsGivenForTheTargetsHazardAndSoundGearGoesBackToStock()
+        public void GearIsGivenForTheTargetsHazardSlotBySlot()
         {
             using var o = NewOutpost(1);
             var member = o.Members[0];
@@ -554,12 +554,16 @@ namespace Simpiens.Core.Tests
             var rock = GuildRules.HazardOf(o.Host, Floor1Layout.GlowCavesSectorId);
             Assert.Equal(Simpiens.Simulation.World.HazardKind.Flooding, flooding);
             Assert.Equal(Simpiens.Simulation.World.HazardKind.FallingRock, rock);
-            Assert.Equal(ItemType.HazardGear, GuildRules.BestProtectionInStock(o.Host, flooding)); // all the stall opens with
+            var body = Simpiens.Simulation.Items.EquipmentSlot.Body;
+            var head = Simpiens.Simulation.Items.EquipmentSlot.Head;
+            Assert.Equal(ItemType.HazardGear, GuildRules.BestForBare(o.Sim.Simulation.ActiveStalls[0], body, flooding)); // all the stall opens with
+            Assert.Equal(ItemType.None, GuildRules.BestForBare(o.Sim.Simulation.ActiveStalls[0], head, flooding));
 
             var sm = (SimulationManager)o.Sim.Simulation;
             sm.UpdateStall(sm.ActiveStalls[0].WithStock(ItemType.Respirator, 1).WithStock(ItemType.HardHat, 1)); // by hand: the forge's are W3.5's
-            Assert.Equal(ItemType.Respirator, GuildRules.BestProtectionInStock(o.Host, flooding));
-            Assert.Equal(ItemType.HardHat, GuildRules.BestProtectionInStock(o.Host, rock));
+            Assert.Equal(ItemType.Respirator, GuildRules.BestForBare(sm.ActiveStalls[0], head, flooding)); // slot by slot (K1.4)
+            Assert.Equal(ItemType.HardHat, GuildRules.BestForBare(sm.ActiveStalls[0], head, rock));
+            Assert.Equal(ItemType.HazardGear, GuildRules.BestForBare(sm.ActiveStalls[0], body, rock));
             Assert.Equal(0.75f, GuildRules.ProtectionAgainst(ItemType.Respirator, flooding), 3);
             Assert.Equal(0.5f, GuildRules.ProtectionAgainst(ItemType.HazardGear, flooding), 3);
             Assert.Equal(0f, GuildRules.ProtectionAgainst(ItemType.HardHat, flooding), 3);
@@ -568,16 +572,64 @@ namespace Simpiens.Core.Tests
             commands.QueueInfluence(InfluenceEvent.CreateGiveGear("Test", member.AgentId, ItemType.HazardGear));
             o.Sim.Step(1);
             int gearStock = o.Sim.Simulation.ActiveStalls[0].SellStockOf(ItemType.HazardGear);
-            Assert.Equal(GuildRules.Check.AlreadyWearing, o.Guild.CanGiveGear(o.Host, member.AgentId, ItemType.Respirator)); // for no hazard, as G3
-            Assert.Equal(GuildRules.Check.AlreadyWearing, o.Guild.CanGiveGear(o.Host, member.AgentId, ItemType.HardHat, flooding));
+            Assert.Equal(GuildRules.Check.AlreadyWearing, o.Guild.CanGiveGear(o.Host, member.AgentId, ItemType.HazardGear)); // its slot holds sound gear, as G3
+            Assert.Equal(GuildRules.Check.Ok, o.Guild.CanGiveGear(o.Host, member.AgentId, ItemType.Respirator)); // the head is bare (K1.3)
 
             commands.QueueInfluence(InfluenceEvent.CreateGiveGear("Test", member.AgentId, ItemType.Respirator, flooding));
             o.Sim.Step(1);
-            var protection = Simpiens.Simulation.Items.EquipmentSlot.Protection;
-            Assert.Equal(ItemType.Respirator, member.Inventory.GetEquipped(protection).Type);
-            Assert.Equal(gearStock + 1, o.Sim.Simulation.ActiveStalls[0].SellStockOf(ItemType.HazardGear)); // the sound gear went back
+            Assert.Equal(ItemType.Respirator, member.Inventory.GetEquipped(Simpiens.Simulation.Items.EquipmentSlot.Head).Type);
+            Assert.Equal(ItemType.HazardGear, member.Inventory.GetEquipped(Simpiens.Simulation.Items.EquipmentSlot.Body).Type); // worn together since K1.3
+            Assert.Equal(gearStock, o.Sim.Simulation.ActiveStalls[0].SellStockOf(ItemType.HazardGear)); // nothing went back
             Assert.Equal(0, o.Sim.Simulation.ActiveStalls[0].SellStockOf(ItemType.Respirator));
+            Assert.Equal(0.9f, Simpiens.Simulation.Items.CrawlerStats.HazardResistance(member.Inventory, flooding), 3); // 0.5 and 0.75, held at the most
+            Assert.Equal(GuildRules.Check.AlreadyWearing, o.Guild.CanGiveGear(o.Host, member.AgentId, ItemType.HardHat, flooding)); // no better than the respirator in its slot
+            Assert.Equal(GuildRules.Check.Ok, o.Guild.CanGiveGear(o.Host, member.AgentId, ItemType.HardHat, rock)); // better there
             Assert.Equal(GuildRules.Check.OutOfStock, o.Guild.CanGiveGear(o.Host, member.AgentId, ItemType.Respirator, flooding));
+        }
+
+        /// <summary>
+        /// The party's outfit from scarce stock (Epic 10 Part 3, K1.4, <see cref="GuildRules.PlanOutfit"/>): the unprotected
+        /// get one piece each before anyone gets a second; with stock to spare, a member gets the best piece for every slot.
+        /// </summary>
+        [Fact]
+        public void TheUnprotectedAreOutfittedFirstThenEverySlot()
+        {
+            using var o = NewOutpost(2);
+            var flooding = GuildRules.HazardOf(o.Host, Floor1Layout.DrownedGallerySectorId);
+            var sm = (SimulationManager)o.Sim.Simulation;
+            var members = new System.Collections.Generic.List<EntityId> { o.Members[0].AgentId, o.Members[1].AgentId };
+            var gifts = new GearGift[8];
+
+            // One respirator and one hazard gear for two bare members: one piece each, the best first
+            sm.UpdateStall(sm.ActiveStalls[0].WithStock(ItemType.Respirator, 1).WithStock(ItemType.HazardGear, 1));
+            var stock = sm.ActiveStalls[0];
+            int count = 0;
+            GuildRules.PlanOutfit(o.Guild, o.Host, members, flooding, OutfitRound.Both, ref stock, gifts, ref count);
+            Assert.Equal(2, count);
+            Assert.Equal((members[0], ItemType.Respirator), (gifts[0].Crawler, gifts[0].Item));
+            Assert.Equal((members[1], ItemType.HazardGear), (gifts[1].Crawler, gifts[1].Item));
+            Assert.Equal(0, stock.SellStockOf(ItemType.Respirator) + stock.SellStockOf(ItemType.HazardGear)); // taken off the copy
+            Assert.Equal(1, sm.ActiveStalls[0].SellStockOf(ItemType.Respirator)); // the stall itself is untouched
+
+            // Stock to spare for one bare member: the best piece for every slot
+            sm.UpdateStall(sm.ActiveStalls[0].WithStock(ItemType.Respirator, 2).WithStock(ItemType.HazardGear, 2));
+            stock = sm.ActiveStalls[0];
+            count = 0;
+            GuildRules.PlanOutfit(o.Guild, o.Host, members.GetRange(0, 1), flooding, OutfitRound.Both, ref stock, gifts, ref count);
+            Assert.Equal(2, count);
+            Assert.Equal(ItemType.Respirator, gifts[0].Item); // its best piece, in the unprotected's round
+            Assert.Equal((ItemType.HazardGear, Simpiens.Simulation.Items.EquipmentSlot.Body), (gifts[1].Item, gifts[1].Slot)); // then the body
+            var commands = (IPlayerInterventionService)o.Sim.Services.GetService(typeof(IPlayerInterventionService));
+            for (int i = 0; i < count; i++) commands.QueueInfluence(InfluenceEvent.CreateGiveGear("Test", gifts[i].Crawler, gifts[i].Item, flooding));
+            o.Sim.Step(1);
+            Assert.Equal(ItemType.Respirator, o.Members[0].Inventory.GetEquipped(Simpiens.Simulation.Items.EquipmentSlot.Head).Type);
+            Assert.Equal(ItemType.HazardGear, o.Members[0].Inventory.GetEquipped(Simpiens.Simulation.Items.EquipmentSlot.Body).Type);
+
+            // Outfitted, it is given nothing more
+            stock = o.Sim.Simulation.ActiveStalls[0];
+            count = 0;
+            GuildRules.PlanOutfit(o.Guild, o.Host, members.GetRange(0, 1), flooding, OutfitRound.Both, ref stock, gifts, ref count);
+            Assert.Equal(0, count);
         }
 
         /// <summary>A worn piece the guild replaces waits on the stall's shelf for the forge to mend it (Epic 10 Part 2, W4.2, D58).</summary>
@@ -592,7 +644,7 @@ namespace Simpiens.Core.Tests
             var commands = (IPlayerInterventionService)o.Sim.Services.GetService(typeof(IPlayerInterventionService));
             commands.QueueInfluence(InfluenceEvent.CreateGiveGear("Test", member.AgentId, ItemType.Respirator));
             o.Sim.Step(1);
-            var worn = member.Inventory.GetEquipped(Simpiens.Simulation.Items.EquipmentSlot.Protection);
+            var worn = member.Inventory.GetEquipped(Simpiens.Simulation.Items.EquipmentSlot.Head);
             Assert.Equal(1500, worn.Durability);
             Assert.Equal(1, o.Sim.Simulation.ActiveStalls[0].WornOf(ItemType.Respirator));
             Assert.Equal(0, o.Sim.Simulation.ActiveStalls[0].StockOf(ItemType.Respirator));

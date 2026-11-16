@@ -155,7 +155,7 @@ namespace Simpiens.Simulation.Movement
             // waypoint is often the destination, and a pawn standing there froze a crawler across the map (Epic 10 G0,
             // finding F2); further away, IsCrowdedMove below keeps pawns apart
             float clearance = state.UseRelaxedClearance ? 0.2f : 0.4f;
-            if (nearWaypoint && IsPositionBlocked(targetPos, node.Id, clearance))
+            if (nearWaypoint && IsPositionBlocked(targetPos, node.Id, clearance, node.Agent != null ? node.Agent.Carrying : default)) // not by the fallen on its back (K7.2c)
             {
                 // Someone already stands on our destination and we're close: arrive here rather than stack on them
                 if (nearFinal) return IntentResult.Success;
@@ -168,7 +168,9 @@ namespace Simpiens.Simulation.Movement
 
             // 3. Move the pawn visually and logically, keeping clear of walls and other pawns; a downed crawler limps
             float speed = node != null ? node.BaseSpeed : 2f;
+            if (node?.Agent != null && node.Agent.IsCollapsed) return IntentResult.PathBlocked; // collapsed in danger, it can't move (Epic 10 Part 3, K5.1)
             if (node?.Agent != null && node.Agent.IsDowned) speed = (float)(speed * Vitality.DownedSpeedFactor);
+            if (node?.Agent != null && node.Agent.Carrying != default) speed = (float)(speed * Vitality.CarrySpeed(node.Agent)); // with the fallen on its back (K5.2), faster by its medicine (K9.3d)
             float step = (float)(speed * SimulationManager.FixedTickDeltaTime);
             Vec2 candidate = Vec2.MoveTowards(node.Position, targetPos, step);
             if (IsCrowdedMove(node, candidate))
@@ -337,7 +339,7 @@ namespace Simpiens.Simulation.Movement
             return false;
         }
 
-        public bool IsPositionBlocked(Vec2 targetPos, EntityId ignoreAgentId, float pawnClearanceRadius = 0.4f)
+        public bool IsPositionBlocked(Vec2 targetPos, EntityId ignoreAgentId, float pawnClearanceRadius = 0.4f, EntityId alsoIgnore = default)
         {
             if (_spatialPartition == null) return false;
             var snapshot = _spatialPartition.GetActiveSnapshot();
@@ -358,7 +360,7 @@ namespace Simpiens.Simulation.Movement
             for (int i = 0; i < count; i++)
             {
                 var entity = cellArray[i];
-                if (entity.Id != ignoreAgentId)
+                if (entity.Id != ignoreAgentId && (alsoIgnore == default || entity.Id != alsoIgnore))
                 {
                     if (entity.Type == EntityType.Wall) return true;
                     if (entity.Type == EntityType.Anchor && Vec2.Distance(entity.Position, targetPos) < 0.45f) return true;

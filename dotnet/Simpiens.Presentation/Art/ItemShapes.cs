@@ -17,6 +17,14 @@ namespace Simpiens.Presentation.Art
         public const string Pick = "pick";
         public const string Flask = "flask";
         public const string Mask = "mask";
+        public const string Vest = "vest";
+        public const string Club = "club";
+        public const string Blade = "blade";
+        public const string Mail = "mail";
+        public const string Pelt = "pelt";
+        public const string Plates = "plates";
+        public const string Sling = "sling";
+        public const string Crossbow = "crossbow";
 
         public const int GlyphSize = 12;
 
@@ -133,6 +141,134 @@ namespace Simpiens.Presentation.Art
                 "...223333...",
                 "....3344....",
                 "............",
+                "............",
+            },
+            // A studded club, its head at the top right (the cudgel; Epic 10 Part 3, K3.1)
+            [Club] = new[]
+            {
+                "......1112..",
+                ".....112223.",
+                ".....12a2b3.",
+                "....1222233.",
+                "....12b2a33.",
+                "...12223334.",
+                "...a23334...",
+                "..ab.44.....",
+                ".ab.........",
+                "ab..........",
+                "b...........",
+                "............",
+            },
+            // A leather pouch holding a stone, on two cords looped at the top left (the sling; Epic 10 Part 3, K8.1)
+            [Sling] = new[]
+            {
+                ".aa.........",
+                "a..a........",
+                "a...a.......",
+                ".a...a......",
+                "..b...a.....",
+                "...b...a....",
+                "....b...a...",
+                ".....b.1122.",
+                "......12223.",
+                "......12334.",
+                ".......334..",
+                "............",
+            },
+            // A steel prod bowed across the top, its string, and a wooden stock down to the trigger (the crossbow; K8.1)
+            [Crossbow] = new[]
+            {
+                "1..........3",
+                ".12......23.",
+                "..12aaaa23..",
+                "....2ab3....",
+                ".....ab.....",
+                ".....ab.....",
+                ".....ab.....",
+                ".....ab.....",
+                "....abbc....",
+                "....bccd....",
+                ".....cd.....",
+                "............",
+            },
+            // A straight blade, point at the top right, a crossguard and a wrapped grip (the iron blade, the glowstone edge)
+            [Blade] = new[]
+            {
+                "..........11",
+                ".........123",
+                "........123.",
+                ".......123..",
+                "......123...",
+                ".....123....",
+                "..a.123.....",
+                "...a23......",
+                "...ba.......",
+                "..bc.a......",
+                ".bc.........",
+                "cd..........",
+            },
+            // A coat of rings with short sleeves, the rings in dots (the ring coat, worn on the body; K3.2)
+            [Mail] = new[]
+            {
+                "............",
+                "..12....23..",
+                ".1222..2333.",
+                "122a2222a334",
+                "12a2a22a2a34",
+                ".22a2a2a2a3.",
+                "..2a2a2a23..",
+                "..22a2a2a3..",
+                "..2a2a2a23..",
+                "..22a2a2a3..",
+                "..23333334..",
+                "............",
+            },
+            // A stretched pelt, its legs out at the corners (a hide; Epic 10 Part 3, K4.2)
+            [Pelt] = new[]
+            {
+                "............",
+                ".1........2.",
+                "..11122222..",
+                "..12222223..",
+                ".122a22a233.",
+                ".12222222233",
+                ".1222a222233",
+                "..12222223..",
+                "..12222233..",
+                "..22333333..",
+                ".2........3.",
+                "............",
+            },
+            // Three overlapping shell plates (chitin; K4.2)
+            [Plates] = new[]
+            {
+                "............",
+                "....1112....",
+                "...112223...",
+                "..1122a223..",
+                "..1222a2233.",
+                ".11122222334",
+                ".122a222334.",
+                ".122a222334.",
+                "..1222233...",
+                "...223334...",
+                "....334.....",
+                "............",
+            },
+            // A sleeveless suit, open at the neck, with two reflective bands (hazard gear, worn on the body; Epic 10 Part 3, K1.5)
+            [Vest] = new[]
+            {
+                "............",
+                "...12..23...",
+                "..122..233..",
+                ".1222..2333.",
+                ".12222.2333.",
+                ".1222222333.",
+                ".abbbbbbccd.",
+                ".1222222333.",
+                ".1222222333.",
+                ".abbbbbbccd.",
+                ".2333333334.",
                 "............",
             },
         };

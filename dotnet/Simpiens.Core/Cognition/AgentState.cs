@@ -120,6 +120,25 @@ namespace Simpiens.Cognition
         /// </summary>
         public Simpiens.Simulation.People.CrawlerLook Look { get; set; }
 
+        /// <summary>
+        /// Its skills (Epic 10 Part 3, K9.1): the experience of each, drawn at spawn and raised by practice on the main thread
+        /// (<see cref="Practise"/>); saved in its record. Cognition reads a copy.
+        /// </summary>
+        public Simpiens.Simulation.Skills.SkillSet Skills { get; set; }
+
+        /// <summary>
+        /// Adds practice in <paramref name="skill"/>, up to <paramref name="ceiling"/>; true when a level was gained, with the
+        /// level it now has. Main thread. Internal (Epic 10 Part 3, K9.8a): practice enters through the simulation's
+        /// <see cref="Simpiens.Simulation.Skills.ISkillPractice"/>, by the work done; tests set a skill by hand here.
+        /// </summary>
+        internal bool Practise(Simpiens.Simulation.Skills.Skill skill, int experience, out int level, int ceiling = Simpiens.Simulation.Skills.SkillRules.MaxLevel)
+        {
+            var skills = Skills;
+            bool gained = skills.Practise(skill, experience, out level, ceiling);
+            Skills = skills;
+            return gained;
+        }
+
         /// <summary>The crawler's given name (Epic UI-Beta B1): drawn at spawn to fit its body frame, never shared, saved. Null for a crawler built by hand.</summary>
         public string GivenName { get; set; }
 
@@ -171,14 +190,54 @@ namespace Simpiens.Cognition
         /// </summary>
         public float HurtThisTick { get; set; }
 
+        /// <summary>
+        /// The last tick a creature swung at it, hit or miss (Epic 10 Part 3, K2.2, D13), and which: K2.3's flight reads
+        /// them. Not saved, as <see cref="HurtThisTick"/> isn't: after a load a crawler decides afresh.
+        /// </summary>
+        public uint StruckAtTick { get; set; }
+        public EntityId StruckBy { get; set; }
+
+        /// <summary>
+        /// The first tick it may swing again in a fight (Epic 10 Part 3, K3.3; the combat rule's D8: the swing's timer is its
+        /// owner's). Unsaved: a fight is work in progress, and a crawler decides afresh after a load.
+        /// </summary>
+        public long NextSwingAt { get; set; }
+
         /// <summary>At 0 health a crawler is downed: it limps to a bunk and heals until <see cref="Vitality.RecoveredAt"/>. Saved.</summary>
         public bool IsDowned { get; set; }
+
+        /// <summary>
+        /// Downed in danger, the tick it bleeds out (Epic 10 Part 3, K5.1, Q3): it lies where it fell, collapsed, until
+        /// rescued, back on its feet, or dead. 0 while it isn't bleeding (on its feet, or downed in safety, limping). Saved.
+        /// </summary>
+        public uint BleedsOutAt { get; set; }
+
+        /// <summary>
+        /// Carrying (Epic 10 Part 3, K5.2, A7): on the fallen, who carries it; on its rescuer, whom it carries. Coupled only
+        /// while the rescuer's carry runs; not saved (work in progress: after a load the fallen lies where it was).
+        /// </summary>
+        public EntityId CarriedBy { get; set; }
+        public EntityId Carrying { get; set; }
+
+        /// <summary>Collapsed in danger, its clock running (K5.1).</summary>
+        public bool IsCollapsed => IsDowned && BleedsOutAt != 0;
+
+        /// <summary>What downed it, and the cause's detail (the hazard's or the creature's kind): what it dies of if it bleeds out (K5.1). Saved.</summary>
+        public Simpiens.Simulation.DeathCause DownedBy { get; set; }
+        public byte DownedDetail { get; set; }
 
         /// <summary>
         /// Set on the main thread when the crawler walks out by the Road Gate; the session host removes it at the end of
         /// the tick. Never saved: a save is captured between ticks, after the removal.
         /// </summary>
         public bool HasLeft { get; set; }
+
+        /// <summary>
+        /// What it died of, and the cause's detail (Epic 10 Part 3, K5.4a): set with <see cref="HasLeft"/> by a death, read by
+        /// the host as it removes the crawler at the end of the tick. Not saved: a crawler is gone before any save sees it.
+        /// </summary>
+        public Simpiens.Simulation.DeathCause DiedOf { get; set; }
+        public byte DiedDetail { get; set; }
 
         public bool IsInTantrum => TantrumTimer > 0f;
         public bool IsYielding => YieldingTimer > 0f;
@@ -447,7 +506,11 @@ namespace Simpiens.Cognition
                 DepartsAtTick = DepartsAtTick,
                 Health = Health,
                 IsDowned = IsDowned,
-                Look = Look
+                Look = Look,
+                BleedsOutAt = BleedsOutAt,
+                DownedBy = DownedBy,
+                DownedDetail = DownedDetail,
+                Skills = Skills
             };
         }
 
@@ -487,6 +550,10 @@ namespace Simpiens.Cognition
             Health = record.Health;
             IsDowned = record.IsDowned;
             Look = record.Look;
+            BleedsOutAt = record.BleedsOutAt;
+            DownedBy = record.DownedBy;
+            DownedDetail = record.DownedDetail;
+            Skills = record.Skills;
 
             ActivePlan.Clear();
             ScratchPlan.Clear();
@@ -521,7 +588,12 @@ namespace Simpiens.Cognition
                 IsDowned,
                 Expedition,
                 Station,
-                Bunk);
+                Bunk,
+                StruckAtTick,
+                StruckBy,
+                BleedsOutAt,
+                Memberships.TryGet(Simpiens.Cognition.Groups.GroupType.TemporaryParty, out var party) ? party.GroupId : (byte)0,
+                Skills);
         }
     }
 }

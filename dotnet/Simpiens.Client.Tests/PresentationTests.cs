@@ -81,7 +81,7 @@ namespace Simpiens.Client.Tests
         {
             // 12 crawler states x 2 frames, berry bush, ore vein, herb patch, wall, campfire x 2, bunk, floor, rock,
             // and the selection ring (M1.5)
-            Assert.Equal(39, ProceduralSprites.All.Count); // 34, plus Epic 10 G2's glowstone, graphics V5's stall, and Part 2's forge, still and plot
+            Assert.Equal(40, ProceduralSprites.All.Count); // 34, plus Epic 10 G2's glowstone, graphics V5's stall, Part 2's forge, still and plot, and Part 3's cairn (K5.8b)
             for (int i = 0; i < ProceduralSprites.All.Count; i++)
             {
                 var sprite = ProceduralSprites.All[i];
@@ -192,8 +192,9 @@ namespace Simpiens.Client.Tests
         // Recorded 2026-10-18 (M0.2) as 1175, 384, 254; Epic 10 G2 turned the two blocks of rock either side of the lower
         // wing into the Sump and the Glow Caves, so Floor 1 had no rock tiles; Epic 10 G5 added the Drowned Gallery below the
         // Sump (80 floor tiles) and a block of rock beside it, 32 by 6; Epic 10 Part 2 (W0.4) turned that rock into the
-        // workshop row and the guildhall
-        internal const int PinnedFloor = 1754, PinnedRock = 0, PinnedWalls = 353;
+        // workshop row and the guildhall; Epic 10 Part 3 (K10.1b) added the Old Stair west of the Deep Seam (170 floor tiles, 38 of
+        // wall) and the solid rock below it, 16 by 30 (527 rock tiles)
+        internal const int PinnedFloor = 1924, PinnedRock = 527, PinnedWalls = 391;
     }
 
     public class TopDownProjectionTests

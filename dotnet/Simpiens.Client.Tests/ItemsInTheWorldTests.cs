@@ -86,7 +86,7 @@ namespace Simpiens.Client.Tests
             Assert.Equal((body.X + catalog.CarryOffset.X, body.Y + catalog.CarryOffset.Y, catalog.CarryHeight), (bundle.X, bundle.Y, bundle.Z));
 
             // Without them, the plain crawler and nothing over it
-            crawler.Inventory.Unequip(EquipmentSlot.Protection);
+            crawler.Inventory.Unequip(EquipmentSlot.Body);
             crawler.Inventory.TryRemoveItem(ItemType.IronOre, 1);
             var plain = Draw(mode, TestFrames.Of(sim), sim);
             Assert.DoesNotContain(plain, i => i.SpriteIndex == bundle.SpriteIndex && i.Pick >= 0);

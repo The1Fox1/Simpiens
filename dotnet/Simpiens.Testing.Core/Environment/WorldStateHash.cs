@@ -10,7 +10,8 @@ namespace Simpiens.Testing.Environment
     /// <summary>
     /// One sample of the authoritative world, hashed (Epic MAP Phase 5 determinism check). FNV-1a over plain data
     /// only, in id order: each agent's position (to 1/1000 unit), needs (to 0.01), gold, inventory, health, look and
-    /// given name, current intent and goal; stall stocks and treasuries; bounties; the charted-sector mask; ledger totals;
+    /// given name, current intent and goal; stall stocks and treasuries; bounties; the charted-sector mask and the creatures in
+    /// their lairs (Epic 10 Part 3, K2.4); ledger totals;
     /// groups (each active group's kind, leader, cohesion, directive and sorted roster, then each crawler's memberships:
     /// Epic 10 G4.2). No view state.
     /// Per-part hashes and per-agent descriptions name what differs when two samples disagree.
@@ -46,7 +47,7 @@ namespace Simpiens.Testing.Environment
             }
             if (Economy != other.Economy) parts.Add("stalls or ledger");
             if (Bounties != other.Bounties) parts.Add("bounties");
-            if (Map != other.Map) parts.Add("charted sectors");
+            if (Map != other.Map) parts.Add("charted sectors or creatures");
             if (Groups != other.Groups) parts.Add("groups or memberships");
             return string.Join("; ", parts);
         }
@@ -96,15 +97,21 @@ namespace Simpiens.Testing.Environment
                     Mix(ref h, inv.GetItemCount(ItemType.IronOre));
                     Mix(ref h, inv.GetItemCount(ItemType.MedicinalHerb));
                     Mix(ref h, inv.GetItemCount(ItemType.Glowstone)); // the rare salvage (Epic 10 G2)
-                    // Equipment and its wear (G3): the protection slot as G3 hashed its one gear slot; the others only when filled
-                    // (item system I4), so hashes recorded before the slots existed still match
-                    var protection = inv.GetEquipped(Simpiens.Simulation.Items.EquipmentSlot.Protection);
+                    // Equipment and its wear (G3): first the protective piece's durability, as G3 hashed its one gear slot (since
+                    // Epic 10 Part 3's K1.1, the body's piece, else the head's); then every other slot only when filled, by its
+                    // id (item system I4: the weapon 1, the tool 2), so hashes recorded before head and body existed still match
+                    var body = Simpiens.Simulation.Items.EquipmentSlot.Body;
+                    var head = Simpiens.Simulation.Items.EquipmentSlot.Head;
+                    var protective = !inv.GetEquipped(body).IsEmpty ? body : head;
+                    var protection = inv.GetEquipped(protective);
                     Mix(ref h, protection.IsEmpty ? -1 : protection.Durability);
-                    for (int slot = 1; slot < Simpiens.Cognition.Inventory.AgentInventory.EquipmentSlots; slot++)
+                    var slots = Simpiens.Simulation.Items.EquipmentSlots.All;
+                    for (int e = 0; e < slots.Count; e++)
                     {
-                        var equipped = inv.GetEquipped((Simpiens.Simulation.Items.EquipmentSlot)slot);
-                        if (equipped.IsEmpty) continue;
-                        Mix(ref h, slot);
+                        var slot = slots[e].Id;
+                        var equipped = inv.GetEquipped(slot);
+                        if (slot == protective || equipped.IsEmpty) continue;
+                        Mix(ref h, (int)slot);
                         Mix(ref h, (int)equipped.Type);
                         Mix(ref h, equipped.Durability);
                     }
@@ -114,6 +121,9 @@ namespace Simpiens.Testing.Environment
                 var look = s.Look;
                 for (int g = 0; g < Simpiens.Simulation.People.CrawlerLook.GeneCount; g++) Mix(ref h, (int)look[(Simpiens.Simulation.People.LookGene)g]);
                 Mix(ref h, s.GivenName ?? "-");
+                // Its skills (Epic 10 Part 3, K9.1): each one's experience, drawn at spawn, raised by practice and saved
+                var skills = s.Skills;
+                for (int k = 0; k < Simpiens.Simulation.Skills.SkillTable.Capacity; k++) Mix(ref h, skills.ExperienceAt(k));
                 string intent = !includeWork ? "-" : s.CurrentIntent != null ? s.CurrentIntent.GetType().Name : "none";
                 string goal = !includeWork ? "-" : s.ActiveGoal != null ? s.ActiveGoal.Name : "none";
                 Mix(ref h, intent);
@@ -168,6 +178,43 @@ namespace Simpiens.Testing.Environment
 
             ulong map = Offset;
             Mix(ref map, sectors != null ? sectors.ExploredMask : 0UL);
+
+            // The lairs and their creatures (Epic 10 Part 3, K2.4): what a save holds of them, only on a map with lairs
+            var creatures = sim?.Creatures;
+            if (creatures != null && creatures.Lairs.Count > 0)
+            {
+                Mix(ref map, creatures.IdCounter);
+                Mix(ref map, creatures.ChartedMask);
+                for (int l = 0; l < creatures.Lairs.Count; l++)
+                {
+                    var lair = creatures.Lairs[l];
+                    Mix(ref map, lair.Pack);
+                    for (int slot = 0; slot < lair.Pack; slot++)
+                    {
+                        Mix(ref map, lair.MemberIn(slot).GetHashCode());
+                        Mix(ref map, lair.ReturnAt(slot));
+                    }
+                }
+                for (int i = 0; i < creatures.Creatures.Count; i++)
+                {
+                    var c = creatures.Creatures[i];
+                    Mix(ref map, c.Id.GetHashCode());
+                    Mix(ref map, (int)c.Kind);
+                    Mix(ref map, c.LairIndex);
+                    Mix(ref map, (int)c.Slot);
+                    Mix(ref map, Quantize(c.Position.X, 1000f));
+                    Mix(ref map, Quantize(c.Position.Y, 1000f));
+                    Mix(ref map, Quantize(c.Health, 100f));
+                    Mix(ref map, (int)c.Mode);
+                    Mix(ref map, c.Target.GetHashCode());
+                    Mix(ref map, c.NextSwingAt);
+                    Mix(ref map, c.RestUntil);
+                    Mix(ref map, Quantize(c.Goal.X, 1000f));
+                    Mix(ref map, Quantize(c.Goal.Y, 1000f));
+                    if (c.LastVisitAt != 0) Mix(ref map, c.LastVisitAt); // a boss's last visitor (K10.3c), once there was one
+                }
+            }
+            if (sim != null && sim.WorldFlags != Simpiens.Simulation.World.WorldFlags.None) Mix(ref map, (ulong)sim.WorldFlags); // the breach (K10.4), once it happened
 
             // Groups by id, each with its sorted roster; then each crawler's memberships, in id order. A crawler's memberships
             // go as a count and then each one, so a crawler in several groups (Epic 10 G4.3) hashes as one in a single group did
@@ -242,6 +289,33 @@ namespace Simpiens.Testing.Environment
                         Mix(ref groups, member.NodeId.GetHashCode());
                         Mix(ref groups, (int)member.CarriedAtDispatch);
                         Mix(ref groups, (int)member.Status);
+                    }
+                }
+            }
+
+            // The items on the ground (Epic 10 Part 3, K4.1), only while there are any, so runs without piles hash as before
+            var piles = sim?.Piles;
+            if (piles != null && (piles.Piles.Count > 0 || piles.IdCounter > 0))
+            {
+                Mix(ref map, piles.IdCounter);
+                for (int i = 0; i < piles.Piles.Count; i++)
+                {
+                    var pile = piles.Piles[i];
+                    Mix(ref map, pile.Id.GetHashCode());
+                    Mix(ref map, Quantize(pile.Position.X, 1000f));
+                    Mix(ref map, Quantize(pile.Position.Y, 1000f));
+                    Mix(ref map, pile.FadesAt);
+                    Mix(ref map, pile.ClaimedFor.GetHashCode());
+                    Mix(ref map, pile.ClaimUntil);
+                    Mix(ref map, pile.Gold);
+                    Mix(ref map, pile.BodyOf.GetHashCode()); // whose body (K5.4a)
+                    for (int st = 0; st < pile.Count; st++)
+                    {
+                        var stack = pile.StackAt(st);
+                        Mix(ref map, (int)stack.Type);
+                        Mix(ref map, (int)stack.Quantity);
+                        Mix(ref map, (int)stack.Quality);
+                        Mix(ref map, (int)stack.Durability);
                     }
                 }
             }

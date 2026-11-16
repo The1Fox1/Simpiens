@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using Gum.Converters;
 using Gum.DataTypes;
 using Gum.Forms.Controls;
+using Gum.Managers;
+using Gum.Wireframe;
 using Gum.GueDeriving;
 using RenderingLibrary.Graphics;
 using Simpiens.Presentation.Dashboard;
@@ -22,6 +24,12 @@ namespace Simpiens.Client.Ui
         public const float Width = 760f;
         private const float CardHeight = 64f;
         private const float RowHeight = 40f;
+
+        /// <summary>The orders shown at once; the list scrolls to the rest (Epic 10 Part 3, K3.4).</summary>
+        public const int VisibleRecipes = 4;
+
+        /// <summary>The station's orders, a list that scrolls once there are more than <see cref="VisibleRecipes"/>.</summary>
+        public ScrollViewer RecipeList { get; private set; }
 
         private readonly StationModel _model;
         private readonly IconAtlas _icons;
@@ -185,7 +193,18 @@ namespace Simpiens.Client.Ui
             _built.Children.Add(Window.Gap(10f));
             _built.Children.Add(Window.SubHeader("ORDER"));
             _built.Children.Add(Window.Gap(6f));
-            for (int i = 0; i < recipes; i++) _recipeRows.Add(AddRecipe(_built, i));
+            // In a list that scrolls past VisibleRecipes (Epic 10 Part 3, K3.4: the forge makes seven)
+            var scroll = new ScrollViewer();
+            scroll.Visual.WidthUnits = DimensionUnitType.RelativeToParent;
+            scroll.Width = 0f;
+            scroll.Visual.HeightUnits = DimensionUnitType.Absolute;
+            scroll.Height = System.Math.Min(recipes, VisibleRecipes) * RowHeight;
+            var list = scroll.InnerPanel;
+            list.ChildrenLayout = ChildrenLayout.TopToBottomStack;
+            list.StackSpacing = 0f;
+            _built.Children.Add(scroll.Visual);
+            RecipeList = scroll;
+            for (int i = 0; i < recipes; i++) _recipeRows.Add(AddRecipe(list, i));
             var order = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 40f };
             var orderText = UiParts.Column(2f);
             UiParts.CentreVertically(orderText);
@@ -283,7 +302,7 @@ namespace Simpiens.Client.Ui
             return card;
         }
 
-        private RecipeRow AddRecipe(ContainerRuntime parent, int index)
+        private RecipeRow AddRecipe(GraphicalUiElement parent, int index)
         {
             var row = new RecipeRow();
             row.Root = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = RowHeight };

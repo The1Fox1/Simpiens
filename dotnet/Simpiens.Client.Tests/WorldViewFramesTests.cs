@@ -1,3 +1,4 @@
+using System.Linq;
 using System;
 using Simpiens.Core.Session;
 using Simpiens.Hosting;
@@ -20,7 +21,7 @@ namespace Simpiens.Client.Tests
         private static void AssertShowsTheWorld(WorldViewFrame frame, LocalSimulation sim)
         {
             Assert.Equal(sim.Clock.CurrentTick, frame.Tick);
-            var entities = sim.Registry.ActiveEntities;
+            var entities = sim.Registry.ActiveEntities.ToList(); // the creatures among them (Epic 10 Part 3, K2.5)
             Assert.Equal(entities.Count, frame.Count);
             for (int i = 0; i < entities.Count; i++)
             {
@@ -31,6 +32,14 @@ namespace Simpiens.Client.Tests
                 Assert.Equal(entity.ResourceKind, view.ResourceKind);
                 Assert.True(entity.Position.X == view.Position.X && entity.Position.Y == view.Position.Y, $"{entity} is at {entity.Position}, drawn at {view.Position}");
                 Assert.Equal(entity.Agent != null, view.IsCrawler);
+                Assert.Equal(entity.Creature != null, view.IsCreature);
+                if (entity.Creature != null)
+                {
+                    Assert.Equal(entity.Creature.Kind, view.Creature);
+                    Assert.Equal(entity.Creature.Mode, view.CreatureMode);
+                    Assert.Equal(entity.Creature.Target, view.CreatureTarget);
+                    Assert.Equal(entity.Creature.SwungAtTick != 0 && entity.Creature.SwungAtTick == (uint)frame.Tick, view.Striking);
+                }
                 if (entity.Agent == null) continue;
                 Assert.Equal(entity.Agent.VisualState, view.VisualState);
                 Assert.Equal(entity.Agent.IsInTantrum, (view.Flags & CrawlerFlags.Tantrum) != 0);

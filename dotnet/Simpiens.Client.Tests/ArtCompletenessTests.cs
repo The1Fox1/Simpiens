@@ -45,6 +45,7 @@ namespace Simpiens.Client.Tests
                     ref readonly var entity = ref frame[i];
                     seen.Add(entity.Type);
                     if (entity.IsCrawler) Assert.False(visuals.Crawler(entity.VisualState).IsNone, $"{session}: a crawler {entity.VisualState} has no art.");
+                    else if (entity.IsCreature) Assert.False(visuals.Creature(entity.Creature).IsNone, $"{session}: a {entity.Creature} has no art."); // Epic 10 Part 3, K2.5
                     else Assert.True(visuals.TryProp(entity, out _) == Drawn.Contains(entity.Type), $"{session}: {entity.Type} at {entity.Position}.");
                 }
                 if (session == OutpostSession.SessionId) Assert.Equal(Drawn.ToHashSet(), seen.Intersect(Drawn).ToHashSet()); // Floor 1 has every kind
@@ -68,6 +69,24 @@ namespace Simpiens.Client.Tests
                 }
             }
             Assert.NotEmpty(Floor1Layout.Definition.Stations);
+        }
+
+        /// <summary>Every creature kind has art of its own (Epic 10 Part 3, K2.5), not the missing art, and every lair on a shipped map's kind with it.</summary>
+        [Theory]
+        [MemberData(nameof(Modes))]
+        public void EveryCreatureKindHasItsOwnArt(string mode)
+        {
+            var catalog = Catalog(mode);
+            var visuals = new EntityVisuals(catalog);
+            foreach (var kind in Simpiens.Simulation.Creatures.CreatureCatalog.All)
+            {
+                var art = visuals.Creature(kind.Id);
+                Assert.True(!art.IsNone && art != catalog.Missing, $"{mode}: {kind.Name} ('{kind.ArtKey}') has no art of its own.");
+            }
+            Assert.True(visuals.Creature(Simpiens.Simulation.Creatures.CreatureKind.None).IsNone);
+            foreach (var map in new[] { Floor1Layout.Definition, DevMapLayout.Definition })
+                foreach (var lair in map.Lairs) Assert.NotEqual(catalog.Missing, visuals.Creature(lair.Kind));
+            Assert.NotEmpty(Floor1Layout.Definition.Lairs);
         }
 
         [Theory]
@@ -97,6 +116,12 @@ namespace Simpiens.Client.Tests
             if (catalog.TryId(ArtKeys.CrawlerShadow, out var shadow)) used.Add(shadow);
             used.Add(catalog.Id(ArtKeys.PropStall));
             used.Add(catalog.Id(ArtKeys.PropCaravan)); // the caravan walking the map (Epic 10 Part 2, D70)
+            used.Add(new EntityVisuals(catalog).Cairn); // a body (Epic 10 Part 3, K5.8b)
+            used.Add(catalog.Id(ArtKeys.FxShot)); // shots in flight (Epic 10 Part 3, K8.4a)
+            used.Add(catalog.Id(ArtKeys.FxSpit));
+            used.Add(catalog.Id(ArtKeys.FxBar)); // a boss's health bar (Epic 10 Part 3, K10.5b)
+            used.Add(catalog.Id(ArtKeys.PropGate)); // the descent gate, sealed and breached (K10.5c)
+            used.Add(catalog.Id(ArtKeys.PropGateOpen));
             foreach (Simpiens.Simulation.World.HazardKind kind in System.Enum.GetValues(typeof(Simpiens.Simulation.World.HazardKind)))
                 if (kind != Simpiens.Simulation.World.HazardKind.None) used.Add(catalog.Id(ArtKeys.Hazard(kind))); // the hazards' animations (Epic 10 Part 2, D69)
             foreach (StationKind kind in System.Enum.GetValues(typeof(StationKind)))
@@ -104,6 +129,8 @@ namespace Simpiens.Client.Tests
             foreach (var key in WornSprites.Keys)
                 foreach (AgentVisualState state in System.Enum.GetValues(typeof(AgentVisualState))) used.Add(catalog.Id(ArtKeys.CrawlerWearing(state, key)));
             foreach (AgentVisualState state in System.Enum.GetValues(typeof(AgentVisualState))) used.Add(catalog.Id(ArtKeys.Crawler(state)));
+            var visuals = new EntityVisuals(catalog);
+            foreach (var kind in Simpiens.Simulation.Creatures.CreatureCatalog.All) used.Add(visuals.Creature(kind.Id)); // the creatures (Epic 10 Part 3, K2.5)
             foreach (var item in ItemCatalog.All)
             {
                 used.Add(catalog.Node(item.ArtKey));

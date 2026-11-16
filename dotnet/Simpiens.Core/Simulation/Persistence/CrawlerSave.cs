@@ -57,6 +57,11 @@ namespace Simpiens.Simulation.Persistence
         public float Health;
         public bool IsDowned;
         public Simpiens.Simulation.People.CrawlerLook Look; // Epic UI-Beta B1 (format 7)
+        public uint BleedsOutAt; // Epic 10 Part 3, K5.1: the bleeding clock, inside format 11
+        public Simpiens.Simulation.DeathCause DownedBy;
+        public byte DownedDetail;
+        private ushort _pad;
+        public Simpiens.Simulation.Skills.SkillSet Skills; // Epic 10 Part 3, K9.1: 16 experiences, inside format 11
     }
 
     /// <summary>

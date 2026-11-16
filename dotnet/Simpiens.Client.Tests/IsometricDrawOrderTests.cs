@@ -136,6 +136,10 @@ namespace Simpiens.Client.Tests
                 // The stall is furniture wider than a cell, on purpose (graphics V5): it sorts by its centre, so a crawler
                 // beside one end can draw on the wrong side of it (an open item of the epic)
                 if (SpriteSheets.World[item.SpriteIndex].Name is "Prop_Stall" or "Iso_Stall") continue;
+                // So are the descent gate, standing in the Old Stair's back wall with nothing behind it, and the bosses on their
+                // bigger canvases, sorting by their centres as the stall does (Epic 10 Part 3, K10.5: an open item with the stall's)
+                string name = SpriteSheets.World[item.SpriteIndex].Name;
+                if (name is GateSprites.Sealed or GateSprites.Open || name.StartsWith("Creature_matriarch_", System.StringComparison.Ordinal) || name.StartsWith("Creature_gatekeeper_", System.StringComparison.Ordinal)) continue;
                 Assert.True(item.Width <= cell + 1e-3f, $"a {role} {item.Width} art pixels wide is wider than a cell ({cell})");
             }
         }

@@ -100,6 +100,24 @@ namespace Simpiens.Client.Tests
         }
 
         [Fact]
+        public void ARescueStartsTheRescueScene()
+        {
+            // Epic 10 Part 3, K5.8d: the demonstrations' rescue scene, its rescuer the chronicle's first actor
+            using var sim = Outpost();
+            var frames = new WorldViewFrames();
+            frames.Follow(sim.Host, sim.Registry, sim.Sectors, sim.Clock, Chronicle(sim));
+            var director = new SceneDirector(frames);
+            Simpiens.Client.DemoScenes.AddTo(director);
+            var crawlers = sim.Registry.ActiveEntities.Where(e => e.Type == EntityType.Pawn).Take(2).ToList();
+            Chronicle(sim).RecordEvent(new ChronicleEvent(ChronicleEventType.CrawlerRescued, crawlers[0].Id, crawlers[1].Id, Floor1Layout.HubSectorId, 1, ChronicleIntensity.Dramatic, 1f));
+            frames.Capture(sim.Registry.ActiveEntities, sim.Sectors, 1);
+            Assert.NotNull(director.Current);
+            Assert.Same(Simpiens.Client.DemoScenes.Rescue, director.Current.Trigger.Script);
+            Assert.Equal(crawlers[0].Id, director.Current.ActorOf("rescuer"));
+            Assert.Equal(crawlers[1].Id, director.Current.ActorOf("rescued"));
+        }
+
+        [Fact]
         public void AOncePerWorldTriggerReArmsInANewWorldAndTheOldScenesEnds()
         {
             using var sim = Outpost();

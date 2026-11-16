@@ -19,6 +19,7 @@ namespace Simpiens.Core.Tests
             // Content: where items are defined and placed
             ["Simpiens.Core/Simulation/Items/ItemCatalog.cs"] = "the catalog: the items' definitions",
             ["Simpiens.Core/Simulation/Items/RecipeBook.cs"] = "the recipes: what each made item takes",
+            ["Simpiens.Core/Simulation/Creatures/CreatureLoot.cs"] = "the creatures' loot tables: what each kind drops (Epic 10 Part 3, K4.2)",
             ["Simpiens.Core/Session/Layouts/Floor1Layout.cs"] = "the map: what each node yields",
             ["Simpiens.Core/Session/OutpostSession.cs"] = "the session: its seeded Gather bounty's item",
             ["Simpiens.Core/Simulation/Economy/EconomyTuning.cs"] = "the default economy: each item's base value and stall terms",

@@ -85,9 +85,15 @@ namespace Simpiens.Intervention
         public readonly RetreatRule Rule;
         public readonly byte Draughts;
 
-        public DispatchExpeditionCommand(byte partySlot, byte targetSectorId, byte goal, RetreatRule rule, byte draughts = 0)
+        /// <summary>A gathering, or a clear of a lair (Epic 10 Part 3, K7.1, Q8): its index in the map's lairs; a clear's sector is the lair's.</summary>
+        public readonly ExpeditionKind Kind;
+        public readonly byte LairIndex;
+
+        public DispatchExpeditionCommand(byte partySlot, byte targetSectorId, byte goal, RetreatRule rule, byte draughts = 0, ExpeditionKind kind = ExpeditionKind.Gather, byte lairIndex = 0)
         {
             if (draughts > MaxDraughts) throw new ArgumentException($"A member carries at most {MaxDraughts} draughts.", nameof(draughts));
+            Kind = kind;
+            LairIndex = lairIndex;
             PartySlot = partySlot;
             TargetSectorId = targetSectorId;
             Goal = goal;
@@ -206,11 +212,15 @@ namespace Simpiens.Intervention
         /// <summary>The hazard it is given for (Epic 10 Part 2, W3, D50): gear that cuts it more may replace what the member wears; None for none.</summary>
         public readonly Simpiens.Simulation.World.HazardKind Against;
 
-        public GiveGearCommand(EntityId crawlerId, ItemType item, Simpiens.Simulation.World.HazardKind against = Simpiens.Simulation.World.HazardKind.None)
+        /// <summary>Given for a fight (Epic 10 Part 3, K7.4: arms and armour for a clear): a piece that outfits it better for fighting may replace what it wears.</summary>
+        public readonly bool ForFighting;
+
+        public GiveGearCommand(EntityId crawlerId, ItemType item, Simpiens.Simulation.World.HazardKind against = Simpiens.Simulation.World.HazardKind.None, bool forFighting = false)
         {
             CrawlerId = crawlerId;
             Item = item;
             Against = against;
+            ForFighting = forFighting;
         }
     }
 
@@ -226,6 +236,10 @@ namespace Simpiens.Intervention
         public readonly Vec2 TargetLocation;
         public readonly EntityId CreatorStallId;
 
+        /// <summary>A hunt's lair, its index in the map's lairs (Epic 10 Part 3, K6.1); <see cref="NoLair"/> for any other kind.</summary>
+        public readonly byte LairIndex;
+        public const byte NoLair = byte.MaxValue;
+
         public PostBountyCommand(
             ushort bountyId,
             BountyType type,
@@ -235,8 +249,10 @@ namespace Simpiens.Intervention
             ushort rewardGold,
             uint durationTicks = 1000,
             Vec2 targetLocation = default,
-            EntityId creatorStallId = default)
+            EntityId creatorStallId = default,
+            byte lairIndex = NoLair)
         {
+            LairIndex = lairIndex;
             BountyId = bountyId;
             Type = type;
             SectorId = sectorId;
@@ -446,9 +462,9 @@ namespace Simpiens.Intervention
             return new InfluenceEvent(sourceId, InfluenceCommandType.FormParty, formParty: cmd);
         }
 
-        public static InfluenceEvent CreateGiveGear(string sourceId, EntityId crawlerId, ItemType item, Simpiens.Simulation.World.HazardKind against = Simpiens.Simulation.World.HazardKind.None)
+        public static InfluenceEvent CreateGiveGear(string sourceId, EntityId crawlerId, ItemType item, Simpiens.Simulation.World.HazardKind against = Simpiens.Simulation.World.HazardKind.None, bool forFighting = false)
         {
-            return new InfluenceEvent(sourceId, InfluenceCommandType.GiveGear, giveGear: new GiveGearCommand(crawlerId, item, against));
+            return new InfluenceEvent(sourceId, InfluenceCommandType.GiveGear, giveGear: new GiveGearCommand(crawlerId, item, against, forFighting));
         }
 
         public static InfluenceEvent CreateBuildStation(string sourceId, byte stationIndex)

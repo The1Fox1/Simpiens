@@ -83,6 +83,11 @@ namespace Simpiens.Core.Tests
             Assert.True(world.Resources.Length > 0 && world.Resources.Length <= Floor1Layout.Definition.ResourceNodes.Count, "Resource nodes.");
             Assert.NotNull(world.Supply?.Dormant);
             Assert.Equal(256, world.ExploredSectors.Length);
+            // The lairs and their creatures (Epic 10 Part 3, K2.4)
+            Assert.NotNull(world.Creatures);
+            Assert.Equal(Floor1Layout.Definition.Lairs.Count, world.Creatures.Packs.Length);
+            Assert.Equal(sim.Simulation.Creatures.Creatures.Count, world.Creatures.Creatures.Length);
+            Assert.Equal(sim.Simulation.Creatures.IdCounter, world.Creatures.IdCounter);
             int stallKey = Array.IndexOf(world.EntityKeys, Floor1Layout.Stall);
             Assert.True(stallKey >= 0, "The stall's key.");
             Assert.Equal(economy.Stalls[0].StallEntityId, world.EntityIds[stallKey]);
@@ -95,6 +100,13 @@ namespace Simpiens.Core.Tests
         /// The capture is loaded over a fresh session: the same bytes and world hash, the clock and id counter where they
         /// were; broken saves are refused with a reason and change nothing; then every crawler decides afresh.
         /// </summary>
+        private static Simpiens.Simulation.Items.WornEquipment Worn(int slot, ItemType item)
+        {
+            var records = default(Simpiens.Simulation.Items.WornEquipment);
+            records[slot] = new ItemInstance(1, item, 1, 40);
+            return records;
+        }
+
         [Fact]
         public void TheLiveOutpostLoadsBackExactly()
         {
@@ -125,6 +137,9 @@ namespace Simpiens.Core.Tests
             TryBroken("another map", s => s.Header.MapFingerprint = s.Header.MapFingerprint ^ 0xFFUL);
             TryBroken("a missing block", s => s.World = null);
             TryBroken("an item the game doesn't have", s => s.Crawlers[0].Inventory.Slots[0] = new ItemInstance(1, (ItemType)77, 1, 1));
+            // A piece worn where this game can't wear it (Epic 10 Part 3, K1.2): in retired slot 0, or in a slot of another kind
+            TryBroken("a piece in a retired slot", s => s.Crawlers[0].Inventory.Equipped = Worn(0, ItemType.HazardGear));
+            TryBroken("a piece in a slot it doesn't fit", s => s.Crawlers[0].Inventory.Equipped = Worn((int)Simpiens.Simulation.Items.EquipmentSlot.Body, ItemType.HardHat));
             Assert.Equal(50, sim.Clock.CurrentTick);
             Assert.Equal(before, SaveSerializer.Serialize(sim.Host.Capture()));
 

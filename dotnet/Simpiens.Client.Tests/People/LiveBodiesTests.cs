@@ -82,7 +82,7 @@ namespace Simpiens.Client.Tests.People
                 for (int i = 0; i < sim.Host.CrawlerStates.Count; i++)
                 {
                     var pixels = new Rgba32[BodyKit.PixelsPerFrame];
-                    BodyKit.BakeFrame(sim.Host.CrawlerStates[i].Look, ItemType.None, false, Simpiens.Entities.AgentVisualState.Idle, 0, pixels);
+                    BodyKit.BakeFrame(sim.Host.CrawlerStates[i].Look, default, false, Simpiens.Entities.AgentVisualState.Idle, 0, pixels);
                     string body = string.Join(",", pixels);
                     Assert.False(seen.TryGetValue(body, out int twin), $"Seed {seed}: residents {twin} and {i} look alike on the map.");
                     seen[body] = i;

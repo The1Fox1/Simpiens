@@ -33,7 +33,8 @@ namespace Simpiens.Testing.Economy
         {
             AssertSize<ItemInstance>(16);
             AssertSize<BountyContract>(64);
-            AssertSize<TradeStallData>(136); // 52 since Epic 10 G2 (format 3); 56 since G3 (format 4); 84 since item system I5: a goods table of 8, so new items don't change it (format 6); 96 since Epic 10 Part 2's W3: a table of 10 (D49); 136 since W4: each good's grades and worn pieces (D57, D58; both inside format 10, unreleased)
+            AssertSize<TradeStallData>(276); // 52 since Epic 10 G2 (format 3); 56 since G3 (format 4); 84 since item system I5: a goods table of 8, so new items don't change it (format 6); 96 since Epic 10 Part 2's W3: a table of 10 (D49); 136 since W4: each good's grades and worn pieces (D57, D58; both inside format 10, unreleased); 196 since Epic 10 Part 3's K1.2: a table of 16 (format 11); 276 since K4.4: a table of 24 (D25, inside format 11, unreleased)
+            AssertSize<Simpiens.Simulation.Items.WornEquipment>(256); // Epic 10 Part 3, K1.2 (format 11): a record for each of 16 slot ids, so a new slot changes nothing here
             TestLog.Log("[PASS] Test 1: ItemInstance, BountyContract and TradeStallData keep their saved sizes (16, 64, 136 bytes).");
         }
 

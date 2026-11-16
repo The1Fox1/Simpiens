@@ -1,11 +1,11 @@
 # Epic 10, Part 1: The Guild and Its Expeditions
 
-- **Status**: COMPLETED (2026-11-01). G0 (a day that holds on every seed), G1 (drifters) and G2 (health and hazards) were done on 2026-10-23, G3 (gear) on 2026-10-25, G4 (the guild) on 2026-10-30 (PR #18), G5 (expeditions) on 2026-10-31 (PR #19) and G6 (the gate) on 2026-11-01. The producer's looks at G2 and G5 and the play session at G6 passed ("Everything looks good", 2026-11-01). Decisions D1–D14 are in §0, what was delivered in §4, the Deferred items with their owners in §5, and the findings handed on in §7. Part 2 is ACTIVE (2026-11-04), in [epic-10-part-2.md](epic-10-part-2.md); Part 3 is QUEUED, with a draft plan in `.agents/epic10_part3_plan.md`. Unity was removed before G3 (Epic CLIENT M2.8–M2.9, 2026-10-24). Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`.
+- **Status**: COMPLETED (2026-11-01). G0 (a day that holds on every seed), G1 (drifters) and G2 (health and hazards) were done on 2026-10-23, G3 (gear) on 2026-10-25, G4 (the guild) on 2026-10-30 (PR #18), G5 (expeditions) on 2026-10-31 (PR #19) and G6 (the gate) on 2026-11-01. The producer's looks at G2 and G5 and the play session at G6 passed ("Everything looks good", 2026-11-01). Decisions D1–D14 are in §0, what was delivered in §4, the Deferred items with their owners in §5, and the findings handed on in §7. Parts 2 ([epic-10-part-2.md](epic-10-part-2.md)) and 3 ([epic-10-part-3.md](epic-10-part-3.md)) followed, and with their close-out on 2026-11-16 Epic 10 is COMPLETED. Unity was removed before G3 (Epic CLIENT M2.8–M2.9, 2026-10-24). Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`.
 - **Track**: Track A: Core Simulation & Cognition Engine. Epic UI-3 (Guild Roster & Expedition Dispatch) is folded in, because its UI is now the KNI client's.
 - **Milestone**: Production Milestone 2, Guild Roster & Expeditions (ROADMAP §3).
 - **Source**: the Claude Doc "Epic 10, Part 1: The Guild and Its Expeditions" (2026-10-23), approved by the producer with every default the same day.
 - **Preceding**: Epic 9 (the outpost economy). **Builds on**: Epic 8 (groups and directives), Epic CORE (the engine-free core, headless tests), Epic CLIENT (the KNI client).
-- **Following**: Epic 10 Part 2 (workshops and crafting, Milestone 3) and Part 3 (the descent, Milestone 4).
+- **Following**: Epic 10 Part 2 (workshops and crafting, Milestone 3) [Part 3](epic-10-part-3.md) (creatures, combat and the gatekeeper, Milestone 4; COMPLETED 2026-11-16, with Part 2) Epic 10 ends with Part 3 (the producer, 2026-11-15); the descent, split out of Part 3 on 2026-11-07 as a Part 4, is [Epic 12](../ROADMAP.md), after [Epic 11](epic-11.md), the skill system.
 
 ---
 
@@ -283,21 +283,21 @@ Each milestone also needs its validators, the golden check and the client's test
 
 | Left out | Owner |
 | :--- | :--- |
-| The descent gate, its boss and moving the outpost to the next floor | Epic 10 Part 3, Milestone 4 |
+| The descent gate and its boss; moving the outpost to the next floor | The gate and its boss: Epic 10 Part 3 (K10), Milestone 4. The move: Epic 12, the descent, Milestone 6 (split out of Part 3 on 2026-11-07 as a Part 4; its own epic since 2026-11-15) |
 | Workshops, hired artisans and crafting | Epic 10 Part 2 with Epic UI-4, Milestone 3 |
-| Creatures and combat | With the descent, Milestone 4 |
+| Creatures and combat | Epic 10 Part 3 (K0–K3, K8), Milestone 4 |
 | A guild larger than four, barracks and a guildhall | Part 2, the guildhall (W5), Milestone 3 |
-| Tavern rumours written by a language model | Epic 11 |
+| Tavern rumours written by a language model | Epic N, the agentic narrative (Epic 11 until 2026-11-15), unscheduled |
 | Android, screen density and a frame cap | Epic CLIENT M4 (paused) |
 | A cognition budget (ROADMAP §3A #8); planners per worker came with the core refactor's R6 (2026-11-02, no measured gain) | A measured need; G1 and G5 measured none (G5: an expedition costs 28% more time over its 800 ticks, far within the tick) |
 | The pickaxe (a harvest tool, a yield bonus; the item system's tool stat, `HarvestSpeed`, is unused until then) | Epic 10 Part 2, the workshops (W1) |
-| A weapon (the item system's Attack and Defense stats are unused until then) | Combat, with the descent (Part 3, Milestone 4) |
+| A weapon (the item system's Attack and Defense stats are unused until then) | Part 3 (K3), Milestone 4 |
 | Gear per hazard kind (a respirator, a helmet), better grades (`ItemInstance.Quality`), repair | Part 2 (W3, W4) |
 | Gear making lone crawlers bolder (D10 settles it for parties) | Part 2, gear for each hazard (W3) |
 | Several parties at once; a FormParty command (parties that outlive one expedition) | Part 2, the guildhall (W5) |
-| Carrying a downed member | Part 3, with combat (L2) |
-| Expeditions into uncharted sectors (scouting as an order) | Part 3 (L3) |
-| Loot tables in play (the item refactor's foundation): the haul, node drops (`ResourceNodeDefinition.LootTableId` is unset everywhere), conditions (sector, danger, depth, a crawler's stats); the haul stays glowstone | Part 3, creature drops (L2): the first milestone that needs random drops |
+| Carrying a downed member | Part 3 (K5, death and rescue) |
+| Expeditions into uncharted sectors (scouting as an order) | Epic 12, the descent, or later (out of Part 3 since its re-scope, 2026-11-07) |
+| Loot tables in play (the item refactor's foundation): the haul, node drops (`ResourceNodeDefinition.LootTableId` is unset everywhere), conditions (sector, danger, depth, a crawler's stats); the haul stays glowstone | Part 3, creature drops (K4): the first milestone that needs random drops |
 | Rarity in the client (colours, the merchant) | With the first rare drop the player sees |
 | Item data files (JSON) and content tools | The map designer (Epic CLIENT) |
 | Salvage as "a resource the stall buys": `IsSalvage` still means any resource, and the stall's role is checked where it trades | When an unsold resource appears (none today) |

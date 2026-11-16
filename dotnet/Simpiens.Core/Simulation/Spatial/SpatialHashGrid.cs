@@ -32,6 +32,18 @@ namespace Simpiens.Simulation.Spatial
         /// <summary>Which sectors are charted (bit i = sector i), published in every following snapshot. Main thread only.</summary>
         void SetExploredSectors(ulong mask);
 
+        /// <summary>Which of the map's lairs are charted (bit i = lair i, Epic 10 Part 3, K2.3), published in every following snapshot. Main thread only.</summary>
+        void SetChartedLairs(ulong mask);
+
+        /// <summary>Which of the map's lairs have their boss alive (bit i = lair i, Epic 10 Part 3, K10.2a), published in every following snapshot. Main thread only.</summary>
+        void SetBossLairs(ulong mask) { }
+
+        /// <summary>The items on the ground (Epic 10 Part 3, K4.3b), copied into every following snapshot as they are then. Main thread only.</summary>
+        void SetPiles(IReadOnlyList<Simpiens.Simulation.Loot.LootPile> piles);
+
+        /// <summary>The hunts' parties (Epic 10 Part 3, K6.2), copied into every following snapshot. Main thread only.</summary>
+        void SetHunts(IReadOnlyList<Simpiens.Simulation.Economy.HuntRecord> hunts);
+
         /// <summary>The session's economy tuning (immutable), published by reference in every snapshot. Main thread only.</summary>
         void SetEconomy(Simpiens.Simulation.Economy.EconomyTuning economy);
 
@@ -62,6 +74,18 @@ namespace Simpiens.Simulation.Spatial
 
         private ulong _exploredSectors = ulong.MaxValue;
         public void SetExploredSectors(ulong mask) => _exploredSectors = mask;
+
+        private ulong _chartedLairs;
+        public void SetChartedLairs(ulong mask) => _chartedLairs = mask;
+
+        private ulong _bossLairs;
+        public void SetBossLairs(ulong mask) => _bossLairs = mask;
+
+        private IReadOnlyList<Simpiens.Simulation.Loot.LootPile> _piles;
+        public void SetPiles(IReadOnlyList<Simpiens.Simulation.Loot.LootPile> piles) => _piles = piles;
+
+        private IReadOnlyList<Simpiens.Simulation.Economy.HuntRecord> _hunts;
+        public void SetHunts(IReadOnlyList<Simpiens.Simulation.Economy.HuntRecord> hunts) => _hunts = hunts;
 
         private Simpiens.Simulation.Economy.EconomyTuning _economy;
         public void SetEconomy(Simpiens.Simulation.Economy.EconomyTuning economy) => _economy = economy;
@@ -184,6 +208,10 @@ namespace Simpiens.Simulation.Spatial
             _currentTickSnapshot.SetMap(_map);
             _currentTickSnapshot.SetEconomy(_economy);
             _currentTickSnapshot.SetExploredSectors(_exploredSectors);
+            _currentTickSnapshot.SetChartedLairs(_chartedLairs);
+            _currentTickSnapshot.SetBossLairs(_bossLairs); // K10.2a
+            _currentTickSnapshot.SetPiles(_piles); // copied now, on the main thread (K4.3b)
+            _currentTickSnapshot.SetHunts(_hunts); // K6.2
             _currentTickSnapshot.SetOccupiedBunks(_occupiedBunks);
 
             // A wall disappeared last tick: walls are only ever added by rasterization, so rebuild from scratch
@@ -234,6 +262,12 @@ namespace Simpiens.Simulation.Spatial
                 var type = node.Type;
 
                 bool isCollapsed = node.Agent != null && node.Agent.IsExhaustionCollapsed;
+                if (node.Agent != null && node.Agent.IsCollapsed && !node.Agent.HasLeft)
+                {
+                    // Collapsed in danger (Epic 10 Part 3, K5.3): its cry reaches would-be rescuers through the snapshot
+                    byte party = node.Agent.Memberships.TryGet(Simpiens.Cognition.Groups.GroupType.TemporaryParty, out var membership) ? membership.GroupId : (byte)0;
+                    _currentTickSnapshot.AddFallen(new FallenView(node.Id, pos, node.Agent.BleedsOutAt, node.Agent.CarriedBy, party));
+                }
                 float hunger = node.Agent != null ? node.Agent.Hunger : 0f;
                 var snapshot = new EntitySnapshot(node.Id, pos, node.Velocity, radius, type, isCollapsed, hunger, node.ResourceKind);
 

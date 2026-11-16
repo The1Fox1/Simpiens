@@ -39,15 +39,30 @@ namespace Simpiens.Hosting
             public byte Draughts;
             public int Stockpile;
             public int Dispatches;
+            /// <summary>A clear (Epic 10 Part 3, K7.4): of the first charted lair of this kind (None: any) with a creature in it, the party armed from stock first.</summary>
+            public bool Clear;
+            public Simpiens.Simulation.Creatures.CreatureKind LairKind;
+            public bool Arm;
+            public int Shooters;
+            public ItemType Bow;
+            public Simpiens.Simulation.Creatures.CreatureKind MaterialsFirst;
+            /// <summary>Clears in order (Epic 10 Part 3, K10.6): the first of these kinds whose lair is charted and holds a creature; null for <see cref="LairKind"/> alone.</summary>
+            public Simpiens.Simulation.Creatures.CreatureKind[] ClearOrder;
             public readonly List<EntityId> Members = new List<EntityId>(DispatchExpeditionCommand.MaxMembers);
         }
 
         private readonly PartyPlan[] _plans = { new PartyPlan { Slot = 1 }, new PartyPlan { Slot = 2 } };
         private bool _together;
 
-        // Gear promised from stock this tick: the commands apply on the next, so the second party counts what the first was given
-        private ItemType _promisedGear;
-        private int _promised;
+        // The stall's stock less the gear promised this tick: the commands apply on the next, so the second party sees what
+        // the first was given (Epic 10 Part 3, K1.4: any piece, slot by slot)
+        private TradeStallData _stockLeft;
+        private bool _stockTaken;
+        private readonly GearGift[] _gifts = new GearGift[2 * DispatchExpeditionCommand.MaxMembers * Simpiens.Simulation.Items.EquipmentSlots.Capacity];
+        private int _giftCount;
+        private readonly bool[] _ready = new bool[2];
+        private readonly DispatchExpeditionCommand[] _orders = new DispatchExpeditionCommand[2];
+        private readonly bool[] _outfitting = new bool[2];
 
         /// <param name="wage">The wage it offers; the session's default wage when 0.</param>
         /// <param name="reserve">Gold it keeps in the treasury (Epic 10 Part 2, W6): it signs a member on only when the stall holds the fee and this besides.</param>
@@ -102,6 +117,45 @@ namespace Simpiens.Hosting
             _together = together;
         }
 
+        /// <summary>
+        /// Sends party 1 to clear a lair (Epic 10 Part 3, K7.4, Q8): once the guild reaches its target size, each member is given
+        /// the best weapon and armour for a fight the stall holds (if <paramref name="arm"/>), and when every member is armed and
+        /// well, the first charted lair of <paramref name="kind"/> (any, for None) with a creature in it is ordered cleared,
+        /// under <paramref name="rule"/>. Again each time the party is home and a lair shows. The last <paramref name="shooters"/>
+        /// members are armed to shoot (K8.2c), the rest to fight in reach; the arming waits until each has its weapon. With a
+        /// <paramref name="bow"/>, while the stall holds fewer of it than there are shooters, the party first clears the lairs of
+        /// <paramref name="materialsFirst"/> with no shooters, for the makings (a crossbow's hide; K8.5).
+        /// </summary>
+        public void SendClear(Simpiens.Simulation.Creatures.CreatureKind kind = Simpiens.Simulation.Creatures.CreatureKind.None, RetreatRule rule = RetreatRule.Steady, bool arm = true, int shooters = 0,
+            ItemType bow = ItemType.None, Simpiens.Simulation.Creatures.CreatureKind materialsFirst = Simpiens.Simulation.Creatures.CreatureKind.None)
+        {
+            var plan = _plans[0];
+            Plan(plan, 0, 1, rule, outfit: false, draughts: 0, stockpile: 0);
+            plan.Clear = true;
+            plan.LairKind = kind;
+            plan.Arm = arm;
+            plan.Shooters = shooters;
+            plan.Bow = bow;
+            plan.MaterialsFirst = materialsFirst;
+            plan.Target = byte.MaxValue; // planned: the lair is found when it is ready
+        }
+
+        /// <summary>
+        /// Sends party 1 to clear lairs in <paramref name="order"/> (Epic 10 Part 3, K10.6: the Old Stair's web, then its gate):
+        /// each time it is home and ready, the first kind in the order whose lair is charted and holds a creature, armed as
+        /// <see cref="SendClear"/> arms it, with <paramref name="draughts"/> each from the stall's stock once it holds
+        /// <paramref name="stockpile"/> of them.
+        /// </summary>
+        public void SendClears(Simpiens.Simulation.Creatures.CreatureKind[] order, RetreatRule rule = RetreatRule.Steady, int shooters = 0, ItemType bow = ItemType.None,
+            Simpiens.Simulation.Creatures.CreatureKind materialsFirst = Simpiens.Simulation.Creatures.CreatureKind.None, byte draughts = 0, int stockpile = 0)
+        {
+            SendClear(order.Length > 0 ? order[0] : Simpiens.Simulation.Creatures.CreatureKind.None, rule, arm: true, shooters, bow, materialsFirst);
+            var plan = _plans[0];
+            plan.ClearOrder = (Simpiens.Simulation.Creatures.CreatureKind[])order.Clone();
+            plan.Draughts = draughts;
+            plan.Stockpile = stockpile;
+        }
+
         private static void Plan(PartyPlan plan, byte sectorId, byte goal, RetreatRule rule, bool outfit, byte draughts, int stockpile)
         {
             plan.Target = sectorId;
@@ -124,12 +178,16 @@ namespace Simpiens.Hosting
             if (_commands == null) return;
             if (guild.Members.Count >= _targetSize)
             {
-                _promised = 0;
+                // Readying gives the unprotected their gear first, in both parties, then every slot its piece, then the parties go
+                // (the gifts apply before the dispatch, on the next tick)
+                _stockTaken = false;
+                _giftCount = 0;
                 if (_together && _plans[0].Target != 0 && _plans[1].Target != 0)
                 {
                     // Both at once: only when neither is out and both are ready
                     if (guild.HasExpedition) return;
                     bool first = Ready(guild, _plans[0], out var one), second = Ready(guild, _plans[1], out var two);
+                    OutfitEverySlot(guild);
                     if (first && second)
                     {
                         Send(_plans[0], one, tick);
@@ -139,7 +197,12 @@ namespace Simpiens.Hosting
                 }
                 for (int i = 0; i < _plans.Length; i++)
                 {
-                    if (_plans[i].Target != 0 && Ready(guild, _plans[i], out var order)) Send(_plans[i], order, tick);
+                    _ready[i] = _plans[i].Target != 0 && Ready(guild, _plans[i], out _orders[i]);
+                }
+                OutfitEverySlot(guild);
+                for (int i = 0; i < _plans.Length; i++)
+                {
+                    if (_ready[i]) Send(_plans[i], _orders[i], tick);
                 }
                 return;
             }
@@ -193,6 +256,27 @@ namespace Simpiens.Hosting
                 return false; // the command applies at the start of the next tick
             }
 
+            if (plan.Clear)
+            {
+                // A clear (K7.4): its lair charted and holding a creature, every member armed (from stock first) and well
+                // The bows' makings first (K8.5): while the stall holds too few of the bow, the materials' lair, with no shooters
+                var kind = plan.LairKind;
+                if (plan.ClearOrder != null)
+                    for (int k = plan.ClearOrder.Length - 1; k >= 0; k--) if (ClearTarget(plan.ClearOrder[k]) >= 0) kind = plan.ClearOrder[k]; // the first ready, in order
+                int shooters = plan.Shooters;
+                if (plan.Bow != ItemType.None && BowsInStock(plan.Bow) + BowsWorn(host, members, plan.Bow) < shooters)
+                {
+                    kind = plan.MaterialsFirst;
+                    shooters = 0;
+                }
+                int lair = ClearTarget(kind);
+                if (lair < 0) return false;
+                if (plan.Arm && !Armed(guild, host, members, shooters)) return false;
+                if (plan.Stockpile > 0 && DraughtsInStock() < plan.Stockpile) return false; // kitted (K10.6)
+                if (!AllWell(host, members)) return false;
+                order = new DispatchExpeditionCommand(plan.Slot, 0, plan.Goal, plan.Rule, plan.Draughts, ExpeditionKind.Clear, (byte)lair);
+                return guild.CanDispatch(host, order) == GuildRules.Check.Ok;
+            }
             if (plan.Outfit && !Outfitted(guild, host, plan)) return false;
             if (plan.Stockpile > 0 && DraughtsInStock() < plan.Stockpile) return false;
             if (!SeamShows(plan.Target) || !AllWell(host, members)) return false;
@@ -219,34 +303,57 @@ namespace Simpiens.Hosting
         }
 
         /// <summary>
-        /// Gives protection from the stall's stock to each member without, or with it worn to half its life (the roster shows
-        /// it), or wearing gear that cuts the target's hazard less than the best in stock (Epic 10 Part 2, D50); true when
-        /// every member wears some good for a trip.
+        /// Outfits the party for its target's hazard from the stall's stock, as the party builder does (Epic 10 Part 2, D50;
+        /// slot by slot, Epic 10 Part 3, K1.4: <see cref="GuildRules.PlanOutfit"/>): this round, members with no sound
+        /// protection get their best piece; <see cref="OutfitEverySlot"/> gives every slot its piece after every party has had
+        /// this round. True when every member wears some good for a trip.
         /// </summary>
         private bool Outfitted(GuildService guild, IGuildHost host, PartyPlan plan)
         {
-            var stall = _sim.Simulation.ActiveStalls.Count > 0 ? _sim.Simulation.ActiveStalls[0] : default;
-            // The gear in stock that cuts the target's hazard most (Epic 10 Part 2, D50), less what this tick promised already
-            var hazard = GuildRules.HazardOf(host, plan.Target);
-            var gear = GuildRules.BestProtectionInStock(host, hazard);
-            int stock = gear != ItemType.None ? stall.SellStockOf(gear) - (gear == _promisedGear ? _promised : 0) : 0;
+            _outfitting[plan.Slot - 1] = true;
+            int from = _giftCount;
+            GuildRules.PlanOutfit(guild, host, plan.Members, GuildRules.HazardOf(host, plan.Target), OutfitRound.Unprotected, ref StockLeft(), _gifts, ref _giftCount);
+            Give(from, GuildRules.HazardOf(host, plan.Target));
             bool all = true;
             for (int i = 0; i < plan.Members.Count; i++)
             {
-                var id = plan.Members[i];
-                if (!host.TryGetCrawler(id, out var member) || member.Inventory == null) continue;
-                var worn = member.Inventory.GetEquipped(EquipmentSlot.Protection);
-                bool better = gear != ItemType.None && GuildRules.ProtectionAgainst(gear, hazard) > GuildRules.ProtectionAgainst(worn.Type, hazard);
-                if (!GuildRules.WornOut(worn) && !better) continue;
-                if (GuildRules.WornOut(worn)) all = false; // a member with sound gear can go; better gear is given when there is some
-                if (stock <= 0 || guild.CanGiveGear(host, id, gear, hazard) != GuildRules.Check.Ok) continue;
-                _commands.QueueInfluence(InfluenceEvent.CreateGiveGear(SourceId, id, gear, hazard));
-                GearGiven++;
-                stock--;
-                if (_promisedGear != gear) { _promisedGear = gear; _promised = 0; }
-                _promised++;
+                if (host.TryGetCrawler(plan.Members[i], out var member) && member.Inventory != null && !GuildRules.WearsSoundProtection(member.Inventory)) all = false; // a member with sound gear can go; better gear is given when there is some
             }
             return all;
+        }
+
+        /// <summary>The second round, after every party's first: each party being readied gets the best piece in stock for every slot of each member, as stock allows.</summary>
+        private void OutfitEverySlot(GuildService guild)
+        {
+            var host = (IGuildHost)_sim.Simulation;
+            for (int p = 0; p < _plans.Length; p++)
+            {
+                if (!_outfitting[p]) continue;
+                _outfitting[p] = false;
+                var hazard = GuildRules.HazardOf(host, _plans[p].Target);
+                int from = _giftCount;
+                GuildRules.PlanOutfit(guild, host, _plans[p].Members, hazard, OutfitRound.EverySlot, ref StockLeft(), _gifts, ref _giftCount);
+                Give(from, hazard);
+            }
+        }
+
+        private ref TradeStallData StockLeft()
+        {
+            if (!_stockTaken)
+            {
+                _stockLeft = _sim.Simulation.ActiveStalls.Count > 0 ? _sim.Simulation.ActiveStalls[0] : default;
+                _stockTaken = true;
+            }
+            return ref _stockLeft;
+        }
+
+        private void Give(int from, Simpiens.Simulation.World.HazardKind hazard)
+        {
+            for (int i = from; i < _giftCount; i++)
+            {
+                _commands.QueueInfluence(InfluenceEvent.CreateGiveGear(SourceId, _gifts[i].Crawler, _gifts[i].Item, hazard));
+                GearGiven++;
+            }
         }
 
         /// <summary>Every member of a party well enough for the muster, as the roster's health bars show.</summary>
@@ -258,6 +365,55 @@ namespace Simpiens.Hosting
                 if (!host.TryGetCrawler(members[i], out var member) || member.IsDowned || member.Health < well) return false;
             }
             return true;
+        }
+
+        /// <summary>The first charted lair of <paramref name="kind"/> (any, for None) with a creature in it, as the board shows them; -1 for none.</summary>
+        private int BowsInStock(ItemType bow) => _sim.Simulation.ActiveStalls.Count > 0 ? _sim.Simulation.ActiveStalls[0].SellStockOf(bow) : 0;
+
+        private static int BowsWorn(IGuildHost host, List<EntityId> members, ItemType bow)
+        {
+            int worn = 0;
+            for (int i = 0; i < members.Count; i++)
+            {
+                if (!host.TryGetCrawler(members[i], out var m) || m.Inventory == null) continue;
+                var slots = Simpiens.Simulation.Items.EquipmentSlots.All;
+                for (int s = 0; s < slots.Count; s++) if (m.Inventory.GetEquipped(slots[s].Id).Type == bow) worn++;
+            }
+            return worn;
+        }
+
+        private int ClearTarget(Simpiens.Simulation.Creatures.CreatureKind kind)
+        {
+            var creatures = _sim.Simulation.Creatures;
+            for (int i = 0; i < creatures.Lairs.Count; i++)
+            {
+                if ((kind == Simpiens.Simulation.Creatures.CreatureKind.None || creatures.Lairs[i].Definition.Kind == kind) && creatures.IsCharted(i) && creatures.Lairs[i].Alive > 0) return i;
+            }
+            return -1;
+        }
+
+        /// <summary>
+        /// Arms the party from the stall's stock for a fight (K7.4): each member, slot by slot (the weapon, the body, the head),
+        /// is given the piece that most outfits it for fighting, while stock lasts (promised pieces counted); true when every
+        /// member is armed.
+        /// </summary>
+        private bool Armed(GuildService guild, IGuildHost host, List<EntityId> members, int shooters)
+        {
+            ref var stock = ref StockLeft();
+            int count = 0;
+            GuildRules.PlanArms(guild, host, members, ref stock, _gifts, ref count, shooters); // the builder's rule (K7.1, K8.2c)
+            for (int i = 0; i < count; i++)
+            {
+                _commands.QueueInfluence(InfluenceEvent.CreateGiveGear(SourceId, _gifts[i].Crawler, _gifts[i].Item, Simpiens.Simulation.World.HazardKind.None, forFighting: true));
+                GearGiven++;
+            }
+            bool all = count == 0; // what it was given is worn on the next tick
+            for (int i = 0; i < members.Count && all; i++)
+            {
+                if (!host.TryGetCrawler(members[i], out var member) || !Simpiens.Cognition.Vitality.IsArmed(member.Inventory)) all = false;
+                else if (i >= members.Count - shooters && !Simpiens.Cognition.Planning.Handlers.Ranged.IsShooter(member)) all = false; // a shooter waits for its bow
+            }
+            return all;
         }
 
         /// <summary>A node of <paramref name="target"/> on the map: the registry holds a node only while it is ready.</summary>

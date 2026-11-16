@@ -1,8 +1,8 @@
 # The Outpost's Day: the Time Model
 
 - **Owner:** [Epic 10 Part 2](epics/epic-10-part-2.md), milestone T (a 24-hour day, the producer's direction of 2026-11-04). Status is owned by the [roadmap](ROADMAP.md).
-- **The steps:** `.agents/epic10_part2_plan.md`, milestone T. Each step marks its rows here as done.
-- **Decisions:** D17–D22 in the epic's §0 and the plan's T. RimWorld's clock is the baseline (1,000 s a day at 1×).
+- **The steps:** milestone T of Epic 10 Part 2, T0–T7, done 2026-11-05. Its plan was deleted at Epic 10's close-out (2026-11-16).
+- **Decisions:** D17–D22 in the epic's §0 and in `.agents/architecture_history.md`. RimWorld's clock is the baseline (1,000 s a day at 1×).
 
 ## 1. The rules
 - **The clock:** the simulation ticks 10 times a second at 1× (`SimulationClock`), as before. A day is **10,080 ticks** (1,008 s at 1×): a game minute is 7 ticks, an hour 420. Tick 0 is 06:00 on day 1. `DayClock` in the core owns the arithmetic, and the dashboard's clock reads it (D17).

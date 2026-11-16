@@ -28,7 +28,7 @@ namespace Simpiens.Presentation.Art.People
         public static readonly Rgba32 TabardColour = new Rgba32(30, 58, 138), TabardDevice = new Rgba32(250, 204, 21);
 
         // The keys the kit adds to a pattern's: hair in shade, the helm and its brim, the helm's lamp, the tabard and its device
-        private const char HairShade = 'h', Helm = 'M', Brim = 'm', Lamp = 'L', Tabard = 'G', Device = 'g', Mask = 'Q', Filter = 'q';
+        private const char HairShade = 'h', Helm = 'M', Brim = 'm', Lamp = 'L', Tabard = 'G', Device = 'g', Mask = 'Q', Filter = 'q', Blade = 'X', Hilt = 'x';
 
         // What a pose holds besides the body: the tool, the bubbles' white and the marks over the head
         private const string Carried = "TW!?Z";
@@ -38,14 +38,15 @@ namespace Simpiens.Presentation.Art.People
 
         /// <summary>
         /// Bakes all 24 frames of a body into <paramref name="into"/> (<see cref="PixelsPerBody"/> pixels), frame after
-        /// frame in <see cref="FrameIndex"/> order, each row by row from the top. <paramref name="headGear"/> is what the
-        /// crawler wears on its head (None for nothing); <paramref name="tabard"/>, whether it wears the guild's tabard.
-        /// The look must be complete: every gene an option the palettes colour.
+        /// frame in <see cref="FrameIndex"/> order, each row by row from the top. <paramref name="worn"/> is what shows of
+        /// the crawler's gear, slot by slot (Epic 10 Part 3, K1.5: a helm or a mask on the head, a coat over the shirt; where
+        /// two show in one place, the higher draw layer's); <paramref name="tabard"/>, whether it wears the guild's tabard,
+        /// which goes over a coat. The look must be complete: every gene an option the palettes colour.
         /// </summary>
-        public static void Bake(in CrawlerLook look, ItemType headGear, bool tabard, Span<Rgba32> into)
+        public static void Bake(in CrawlerLook look, in WornLook worn, bool tabard, Span<Rgba32> into)
         {
             if (into.Length < PixelsPerBody) throw new ArgumentException($"A body needs {PixelsPerBody} pixels.", nameof(into));
-            var colours = new Colours(look, headGear);
+            var colours = new Colours(look, worn);
             for (int s = 0; s < FrameCount / 2; s++)
             {
                 for (int f = 0; f < 2; f++)
@@ -57,14 +58,14 @@ namespace Simpiens.Presentation.Art.People
         }
 
         /// <summary>One frame of a body (<see cref="PixelsPerFrame"/> pixels): see <see cref="Bake"/>.</summary>
-        public static void BakeFrame(in CrawlerLook look, ItemType headGear, bool tabard, AgentVisualState state, int frame, Span<Rgba32> into)
-            => BakeFrame(look, new Colours(look, headGear), tabard, state, frame, into);
+        public static void BakeFrame(in CrawlerLook look, in WornLook worn, bool tabard, AgentVisualState state, int frame, Span<Rgba32> into)
+            => BakeFrame(look, new Colours(look, worn), tabard, state, frame, into);
 
         /// <summary>A body's frames as sprites named "<paramref name="name"/>_Agent_Walk_0" (review sheets and pins).</summary>
-        public static PixelSprite[] Sprites(in CrawlerLook look, ItemType headGear, bool tabard, string name)
+        public static PixelSprite[] Sprites(in CrawlerLook look, in WornLook worn, bool tabard, string name)
         {
             var pixels = new Rgba32[PixelsPerBody];
-            Bake(look, headGear, tabard, pixels);
+            Bake(look, worn, tabard, pixels);
             var sprites = new PixelSprite[FrameCount];
             foreach (var (state, frames) in CrawlerFrames.All)
             {
@@ -76,29 +77,6 @@ namespace Simpiens.Presentation.Art.People
             }
             return sprites;
         }
-
-        private static readonly bool[] _onHead = BuildWorn(Worn.Head);
-        private static readonly bool[] _onFace = BuildWorn(Worn.Face);
-
-        private static bool[] BuildWorn(Worn where)
-        {
-            var items = (ItemType[])Enum.GetValues(typeof(ItemType));
-            int most = 0;
-            foreach (var item in items) most = Math.Max(most, (int)item);
-            var worn = new bool[most + 1];
-            foreach (var item in items)
-                worn[(int)item] = item != ItemType.None && ItemArt.TryGet(ItemCatalog.Get(item)?.ArtKey, out var art) && art.Worn == where;
-            return worn;
-        }
-
-        /// <summary>Whether <paramref name="item"/> is worn on the head, and so drawn on a body and a portrait (a helm).</summary>
-        public static bool IsWornOnHead(ItemType item) => (uint)item < (uint)_onHead.Length && _onHead[(int)item];
-
-        /// <summary>Whether <paramref name="item"/> is worn over the face (a respirator's mask, Epic 10 Part 2, D52), and so drawn on a body and a portrait.</summary>
-        public static bool IsWornOnFace(ItemType item) => (uint)item < (uint)_onFace.Length && _onFace[(int)item];
-
-        /// <summary><paramref name="worn"/> if it is worn on the head or the face, else None: what shows of a crawler's protection.</summary>
-        public static ItemType HeadGearOf(ItemType worn) => IsWornOnHead(worn) || IsWornOnFace(worn) ? worn : ItemType.None;
 
         /// <summary>The hair styles that hang below the brow, and so show under a helm.</summary>
         public static bool HangsBelowTheBrow(string hairStyle) => hairStyle is "long" or "ponytail" or "braids";
@@ -125,6 +103,7 @@ namespace Simpiens.Presentation.Art.People
                 Build(keys, head.BodyTop, LookCatalog.KeyOf(LookGene.Build, look.Build));
                 if (LookCatalog.KeyOf(LookGene.Lineage, look.Lineage) == "delver" && Shorten(keys, head.BodyTop)) shift = 1;
                 if (tabard) TabardOn(keys, head.BodyTop + shift);
+                if (colours.HasWeapon) WeaponOn(keys, head.BodyTop); // in the hand (Epic 10 Part 3, K3.4)
             }
 
             for (int i = 0; i < keys.Length; i++) into[i] = colours.Of(keys[i], head.Lying);
@@ -310,6 +289,30 @@ namespace Simpiens.Presentation.Art.People
         }
 
         // The guild's tabard (D8): two columns down the middle of the shirt, the device at the breast, a hem over the belt
+        /// <summary>
+        /// A weapon in the right hand (Epic 10 Part 3, K3.4): the hand is the rightmost skin under the head; the hilt beside it
+        /// and the blade rising up and out from there, three pixels, where nothing but the outline or the air is.
+        /// </summary>
+        public static bool TryHand(ReadOnlySpan<char> keys, int bodyTop, out int x, out int y)
+        {
+            x = y = -1;
+            for (int row = Math.Max(0, bodyTop); row < Size; row++)
+                for (int col = Size - 1; col >= 0; col--)
+                {
+                    if (keys[row * Size + col] != 'K' || col <= x) continue;
+                    x = col;
+                    y = row;
+                }
+            return x >= 0;
+        }
+
+        private static void WeaponOn(Span<char> keys, int bodyTop)
+        {
+            if (!TryHand(keys, bodyTop, out int hx, out int hy)) return;
+            Set(keys, hx + 1, hy, Hilt, ".#");
+            for (int i = 1; i <= 3; i++) Set(keys, hx + i, hy - i, Blade, ".#");
+        }
+
         private static void TabardOn(Span<char> keys, int bodyTop)
         {
             var shoulders = keys.Slice(bodyTop * Size, Size);
@@ -344,35 +347,41 @@ namespace Simpiens.Presentation.Art.People
             if (over.IndexOf(keys[y * Size + x]) >= 0) keys[y * Size + x] = key;
         }
 
-        /// <summary>A look's colours by key, resolved once per bake.</summary>
+        /// <summary>A look's colours by key, resolved once per bake: what shows worn takes its place (the helm's, the mask's, the coat's).</summary>
         private readonly struct Colours
         {
-            private readonly Rgba32 _skin, _hair, _hairShade, _shirt, _trousers, _helm, _brim, _lamp, _mask, _filter;
+            private readonly Rgba32 _skin, _hair, _hairShade, _shirt, _trousers, _helm, _brim, _lamp, _mask, _filter, _blade, _hilt;
 
-            public Colours(in CrawlerLook look, ItemType headGear)
+            public Colours(in CrawlerLook look, in WornLook worn)
             {
                 _skin = LookPalettes.SkinOf(look);
                 _hair = LookPalettes.HairOf(look);
                 _hairShade = SpriteKit.RampOf(_hair).Shade;
-                _shirt = LookPalettes.PrimaryOf(look);
                 _trousers = SpriteKit.RampOf(LookPalettes.SecondaryOf(look)).Shade;
-                HasHelm = headGear != ItemType.None && ItemArt.TryGet(ItemCatalog.Get(headGear)?.ArtKey, out var gear) && gear.Worn == Worn.Head;
-                if (HasHelm)
-                {
-                    ItemArt.TryGet(ItemCatalog.Get(headGear).ArtKey, out var helm);
-                    _helm = helm.Primary;
-                    _brim = SpriteKit.RampOf(helm.Primary).Shade;
-                    _lamp = helm.Secondary;
-                }
-                else _helm = _brim = _lamp = Rgba32.Clear;
-                ItemLook face = default;
-                HasMask = headGear != ItemType.None && ItemArt.TryGet(ItemCatalog.Get(headGear)?.ArtKey, out face) && face.Worn == Worn.Face;
+                HasHelm = LookOf(worn.On(Worn.Head), out var helm);
+                _helm = HasHelm ? helm.Primary : Rgba32.Clear;
+                _brim = HasHelm ? SpriteKit.RampOf(helm.Primary).Shade : Rgba32.Clear;
+                _lamp = HasHelm ? helm.Secondary : Rgba32.Clear;
+                HasMask = LookOf(worn.On(Worn.Face), out var face);
                 _mask = HasMask ? face.Primary : Rgba32.Clear;
                 _filter = HasMask ? face.Secondary : Rgba32.Clear;
+                // A coat over the shirt (Epic 10 Part 3, K1.5): the shirt's keys in the coat's colour
+                _shirt = LookOf(worn.On(Worn.Torso), out var coat) ? coat.Primary : LookPalettes.PrimaryOf(look);
+                // A weapon in the hand (K3.4): its blade in its primary colour, its hilt in its secondary
+                HasWeapon = LookOf(worn.On(Worn.Hand), out var weapon);
+                _blade = HasWeapon ? weapon.Primary : Rgba32.Clear;
+                _hilt = HasWeapon ? weapon.Secondary : Rgba32.Clear;
+            }
+
+            private static bool LookOf(ItemType item, out ItemLook look)
+            {
+                look = default;
+                return item != ItemType.None && ItemArt.TryGet(ItemCatalog.Get(item)?.ArtKey, out look);
             }
 
             public bool HasHelm { get; }
             public bool HasMask { get; }
+            public bool HasWeapon { get; }
 
             public Rgba32 Of(char key, bool asleep) => key switch
             {
@@ -387,6 +396,8 @@ namespace Simpiens.Presentation.Art.People
                 Lamp => _lamp,
                 Mask => _mask,
                 Filter => _filter,
+                Blade => _blade,
+                Hilt => _hilt,
                 Tabard => TabardColour,
                 Device => TabardDevice,
                 _ => ProceduralSprites.CrawlerKeyColour(key),

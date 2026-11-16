@@ -35,7 +35,8 @@ namespace Simpiens.Core.Tests
             {
                 watch.Run(1);
                 var smith = workshops.ArtisanAt(forge);
-                if (fineAt < 0 && smith != default && workshops.TryGetContract(smith, out var contract) && WorkshopService.GradeOf(contract, sim.Simulation.Economy.Workshops) >= Grades.Fine) fineAt = sim.Clock.CurrentTick;
+                var hand = smith != default ? sim.Host.CrawlerStates.FirstOrDefault(c => c.AgentId == smith) : null;
+                if (fineAt < 0 && hand != null && WorkshopService.GradeOf(hand, StationKind.Forge) >= Grades.Fine) fineAt = sim.Clock.CurrentTick;
                 foreach (var crawler in sim.Host.CrawlerStates)
                 {
                     var tool = crawler.Inventory.GetEquipped(EquipmentSlot.Tool);

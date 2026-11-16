@@ -151,6 +151,28 @@ namespace Simpiens.Simulation.Economy
             // herbs or ore, two hours' work), none to start
             items[(int)ItemType.Respirator] = new ItemTerms(80, StallRole.Sells, 60, 0);
             items[(int)ItemType.HardHat] = new ItemTerms(80, StallRole.Sells, 60, 0);
+            // Melee arms and armour (Epic 10 Part 3, K3.1, K3.2): the caravan's cudgel at 12g; what the forge makes priced as
+            // the forge's goods are, its inputs and its hours under what a neutral crawler would pay; none to start
+            items[(int)ItemType.Cudgel] = new ItemTerms(15, StallRole.Sells, 12, 0);
+            items[(int)ItemType.IronBlade] = new ItemTerms(50, StallRole.Sells, 40, 0);
+            items[(int)ItemType.GlowstoneEdge] = new ItemTerms(110, StallRole.Sells, 85, 0);
+            items[(int)ItemType.IronHelm] = new ItemTerms(40, StallRole.Sells, 30, 0);
+            items[(int)ItemType.RingCoat] = new ItemTerms(70, StallRole.Sells, 55, 0);
+            // Loot (Epic 10 Part 3, K4.2): valued, not yet traded (the stall's terms for materials and their armour are K4.4's);
+            // the rare pieces are never the stall's
+            items[(int)ItemType.Hide] = new ItemTerms(3, StallRole.Buys, 5, 0); // K4.4 (D25): the forge's, the surplus the caravan's
+            items[(int)ItemType.Chitin] = new ItemTerms(5, StallRole.Buys, 8, 0);
+            // The bosses' trophies (Epic 10 Part 3, K10, Q12): the stall buys them dear and the caravan takes them on
+            items[(int)ItemType.MatriarchPelt] = new ItemTerms(30, StallRole.Buys, 36, 0);
+            items[(int)ItemType.KeeperStone] = new ItemTerms(120, StallRole.Buys, 140, 0);
+            items[(int)ItemType.LeatherJerkin] = new ItemTerms(45, StallRole.Sells, 35, 0); // made at the forge (K4.4)
+            items[(int)ItemType.ChitinPlate] = new ItemTerms(100, StallRole.Sells, 70, 0);
+            items[(int)ItemType.FangKnife] = new ItemTerms(150);
+            items[(int)ItemType.StoneheartCoat] = new ItemTerms(180);
+            // Ranged arms (Epic 10 Part 3, K8.1, D44): the caravan's sling at 10g; the forge's crossbow priced as its goods are
+            // (two ore and a hide, two hours' work), none to start
+            items[(int)ItemType.Sling] = new ItemTerms(12, StallRole.Sells, 10, 0);
+            items[(int)ItemType.Crossbow] = new ItemTerms(60, StallRole.Sells, 45, 0);
             return items;
         }
 
@@ -198,6 +220,9 @@ namespace Simpiens.Simulation.Economy
 
         /// <summary>The player's guild: recruiting, the fee, wages and quitting (Epic 10 G4).</summary>
         public GuildTuning Guild { get; private set; } = GuildTuning.Default;
+
+        /// <summary>Hunt bounties (Epic 10 Part 3, K6, Q7).</summary>
+        public HuntTuning Hunt { get; private set; } = HuntTuning.Default;
 
         /// <summary>The stations and their artisans (Epic 10 Part 2).</summary>
         public WorkshopTuning Workshops { get; private set; } = WorkshopTuning.Default;

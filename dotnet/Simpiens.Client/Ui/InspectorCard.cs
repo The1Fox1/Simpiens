@@ -11,7 +11,8 @@ using Simpiens.Presentation.Dashboard;
 namespace Simpiens.Client.Ui
 {
     /// <summary>
-    /// The map inspector (Epic UI-Beta B4, Q10): a card at the bottom left of the map view while a crawler is selected.
+    /// The map inspector (Epic UI-Beta B4, Q10): a card at the bottom left of the map view while a crawler is selected (or a
+    /// creature, Epic 10 Part 3, K2.5: its kind's card in the portrait's place, its health alone, no dossier).
     /// Its portrait at the atlas's scale (2x in a 720-row window, larger in taller ones: the card widens with it); its name,
     /// state badge and how it feels; health and its needs; what it is doing; Open dossier and Follow. A view over
     /// <see cref="InspectorModel"/>; it decides nothing.
@@ -134,12 +135,16 @@ namespace Simpiens.Client.Ui
             _energy.Set(inspector.Energy);
             _social.Set(inspector.Social);
             _frustration.Set(inspector.Frustration);
+            // A creature (Epic 10 Part 3, K2.5): its health alone, and no dossier
+            bool crawler = !inspector.IsCreature;
+            _hunger.Visible = _energy.Visible = _social.Visible = _frustration.Visible = crawler;
+            if (OpenDossierButton.Visual.Visible != crawler) OpenDossierButton.Visual.Visible = crawler;
             UiParts.SetText(_action, inspector.Action);
             if (FollowButton.Text != inspector.FollowText) FollowButton.Text = inspector.FollowText;
-            bool portrait = inspector.HasPortrait && _portraits != null;
+            bool portrait = (inspector.HasPortrait || inspector.IsCreature) && _portraits != null;
             if (Portrait.Visible != portrait) Portrait.Visible = portrait;
             if (!portrait) return;
-            var source = _portraits.Show(inspector.Portrait);
+            var source = inspector.IsCreature ? _portraits.ShowCreature(inspector.CreatureKind) : _portraits.Show(inspector.Portrait);
             if (source != _portraitShown) Portrait.SourceRectangle = _portraitShown = source;
         }
     }

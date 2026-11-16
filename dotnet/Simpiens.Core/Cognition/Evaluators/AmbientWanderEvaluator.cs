@@ -41,8 +41,8 @@ namespace Simpiens.Cognition.Evaluators
             Vec2 targetPos = context.Position + randomDir * distance;
 
             // A point beyond a wall can lie in a hazard sector, a long walk round: only the bold wander there, and only within
-            // the lone limit (Epic 10 G2, G5)
-            if (!Vitality.WouldEnter(context, Vitality.HazardAt(context.Snapshot?.Map, targetPos)))
+            // the lone limit (Epic 10 G2, G5); nobody idles into a charted lair's reach (Epic 10 Part 3, K2.3)
+            if (!Vitality.WouldEnterAt(context, targetPos))
             {
                 return new IdleIntent(context.AgentId, duration: 1.5f);
             }

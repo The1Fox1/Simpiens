@@ -58,6 +58,39 @@ namespace Simpiens.Client.Tests.People
         }
 
         /// <summary>
+        /// The dossier of the dead (Epic 10 Part 3, K5.8c): a selected crawler that dies stays shown, its portrait greyed, its
+        /// death in place of its description, nothing to do for it.
+        /// </summary>
+        [Fact]
+        public void TheDeadKeepTheirDossierGreyed()
+        {
+            var ui = UiDriver.Start(width: Width, height: Height);
+            var game = ui.Game;
+            var sim = game.Session.Simulation;
+            var crawler = sim.Registry.ActiveEntities.First(e => e.Type == EntityType.Pawn && !e.Agent.IsDrifter);
+            var look = crawler.Agent.Look;
+            game.Session.DashboardModel.SelectCrawler(crawler.Id);
+            ui.Frame();
+            sim.Simulation.Die(crawler, Simpiens.Simulation.DeathCause.Creature, (byte)Simpiens.Simulation.Creatures.CreatureKind.StoneBeetle); // by hand
+            sim.Step(2);
+            ui.Frame();
+            var dossier = game.Session.DashboardModel.Dossier;
+            Assert.True(dossier.HasCrawler && dossier.IsDead, $"registry has it {sim.Registry.GetEntity(crawler.Id) != null}, departed {sim.Host.Departed.Count} (died {sim.Host.Departed.Count(d => d.Died)}), selected {game.Session.DashboardModel.SelectedCrawler == crawler.Id}, panels {game.Session.DashboardModel.PanelsVisible}, has {dossier.HasCrawler}, roll {game.Session.DashboardModel.Context?.Departed != null}");
+            Assert.Equal(DossierModelDead, dossier.Badge);
+            Assert.StartsWith("Downed by a stone beetle; bled out", dossier.Description);
+            Assert.False(dossier.CanCalm);
+            Assert.True(dossier.Portrait.Greyed);
+            Assert.Equal(look, dossier.Portrait.Look);
+            Assert.True(game.Play.Dashboard.Panels.Portrait.Visible);
+            AssertTheAtlasShows(game.Graphics.Portraits, dossier.Portrait, game.Play.Dashboard.Panels.Portrait.SourceRectangle);
+            var pixels = new Simpiens.Presentation.Rgba32[PortraitKit.FramedSize * PortraitKit.FramedSize];
+            PortraitKit.BakeFramed(dossier.Portrait, pixels);
+            Assert.All(pixels, p => Assert.True(p.R == p.G && p.G == p.B, "Every pixel grey."));
+        }
+
+        private const string DossierModelDead = Simpiens.Presentation.Dashboard.DossierModel.DeadBadge;
+
+        /// <summary>
         /// Portraits grow with the window in whole steps (the producer, 2026-11-03): 2x in a 720-row window, 3x at 1080, 4x
         /// at 1440, the speaker's and a sector's faces 1x then 2x. A new step bakes the seated portraits again, pixel for
         /// pixel; the dossier and the inspector widen by as much as their portrait grew, and a resident's card grows to
@@ -134,7 +167,7 @@ namespace Simpiens.Client.Tests.People
             var game = Offscreen.Start(frames: 1);
             var atlas = game.Graphics.Portraits;
             var crawler = game.Session.Simulation.Registry.ActiveEntities.First(e => e.Type == EntityType.Pawn);
-            var key = new PortraitKey(crawler.Agent.Look, Mood.Tired, CrawlerStanding.GuildMember, Simpiens.Simulation.Economy.ItemType.None);
+            var key = new PortraitKey(crawler.Agent.Look, Mood.Tired, CrawlerStanding.GuildMember, default);
             atlas.Show(key);
             int bakes = atlas.Table.Bakes;
             var source = atlas.ShowFace(key);

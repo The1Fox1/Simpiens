@@ -16,8 +16,9 @@ namespace Simpiens.Client.Ui
     /// the guild's status. Members: a card per member (its name and what it is doing, unpaid visits, health, standing with
     /// the outpost and gear, a wage slider, whether it goes with the next party, and Dismiss), and Apply, which sends the
     /// wages that moved. The cards are built once, as many as the guild can hold, and shown as members fill them.
-    /// Expeditions: the party builder (Epic 10 G5, D7): the target, the goal, the retreat rule, outfitting from stock,
-    /// draughts, Dispatch and Recall, and while a party is out, where it is.
+    /// Expeditions: the party builder (Epic 10 G5, D7): the target (a hazard sector to gather, or a charted lair to clear:
+    /// Epic 10 Part 3, K7.3), the goal, the retreat rule, outfitting or arming from stock, draughts, Dispatch and Recall,
+    /// and while a party is out, where it is.
     /// </summary>
     public sealed class GuildWindow
     {
@@ -25,6 +26,9 @@ namespace Simpiens.Client.Ui
 
         /// <summary>Two lines (Epic 10 Part 2, W5.1), so the guild's eight cards fit a 720-row window.</summary>
         private const float CardHeight = 48f;
+
+        /// <summary>Where a card's middle column (health, standing, gear) begins.</summary>
+        private const float StandingX = 270f;
 
         private readonly GuildModel _model;
         private readonly IconAtlas _icons;
@@ -37,8 +41,10 @@ namespace Simpiens.Client.Ui
         private sealed class MemberCard
         {
             public ContainerRuntime Root, Gap;
-            public TextRuntime Name, Doing, Health, Gear, Standing, Unpaid, Wage;
-            public SpriteRuntime GearIcon, Face;
+            public TextRuntime Name, Doing, Health, Standing, Unpaid, Wage;
+            public SpriteRuntime Face;
+            public WornLine Equipment;
+            public TextRuntime Skills;
             public ContainerRuntime FaceBox;
             public Slider WageSlider;
             public Button Dismiss, Party;
@@ -201,6 +207,7 @@ namespace Simpiens.Client.Ui
         public string CardName(int index) => _cards[index].Name.Text;
         public string CardStanding(int index) => _cards[index].Standing.Text;
         public Slider WageSlider(int index) => _cards[index].WageSlider;
+        public string SkillsShown(int index) => _cards[index].Skills.Text;
         public Button DismissButton(int index) => _cards[index].Dismiss;
         public Button PartyButton(int index) => _cards[index].Party;
         public ContainerRuntime Card(int index) => _cards[index].Root;
@@ -228,16 +235,23 @@ namespace Simpiens.Client.Ui
             card.Name = UiParts.Text(string.Empty, UiStyle.TextBright, UiText.BodyBold);
             card.Unpaid = UiParts.Text(string.Empty, UiStyle.Warning, UiText.Small);
             UiParts.CentreVertically(card.Unpaid);
+            // Its two best skills beside its name (Epic 10 Part 3, K9.5); they give way to an unpaid warning
+            card.Skills = UiParts.Text(string.Empty, UiStyle.TextSecondary, UiText.Small);
+            UiParts.CentreVertically(card.Skills);
             nameLine.Children.Add(card.Name);
+            nameLine.Children.Add(card.Skills);
             nameLine.Children.Add(card.Unpaid);
-            who.Children.Add(nameLine);
+            // Clipped short of the standing column: a ten-letter name beside two masters' skills would reach it
+            var nameClip = new ContainerRuntime { Width = StandingX - who.X - 8f, HeightUnits = DimensionUnitType.RelativeToChildren, Height = 0f, ClipsChildren = true };
+            nameClip.Children.Add(nameLine);
+            who.Children.Add(nameClip);
             card.Doing = UiParts.Text(string.Empty, UiStyle.TextMuted, UiText.Small);
             who.Children.Add(card.Doing);
             card.Root.Children.Add(who);
 
             // Middle: health and standing; then gear
             var standing = UiParts.Column(3f);
-            standing.X = 270f;
+            standing.X = StandingX;
             standing.Y = 7f;
             var standingLine = Line(10f);
             card.Health = UiParts.Text(string.Empty, UiStyle.TextLight, UiText.Small);
@@ -245,12 +259,10 @@ namespace Simpiens.Client.Ui
             standingLine.Children.Add(card.Health);
             standingLine.Children.Add(card.Standing);
             standing.Children.Add(standingLine);
+            // What it wears, slot by slot (Epic 10 Part 3, K1.5): each piece's icon and what's left of it, then its bunk
             var gearLine = new ContainerRuntime { Width = 230f, Height = IconAtlas.SmallSize };
-            card.GearIcon = UiParts.Icon(_icons, null, scale: 1);
-            gearLine.Children.Add(card.GearIcon);
-            card.Gear = UiParts.Text(string.Empty, UiStyle.TextSecondary, UiText.Small);
-            UiParts.CentreVertically(card.Gear);
-            gearLine.Children.Add(card.Gear);
+            card.Equipment = new WornLine(_icons);
+            gearLine.Children.Add(card.Equipment.Visual);
             standing.Children.Add(gearLine);
             card.Root.Children.Add(standing);
 
@@ -348,12 +360,11 @@ namespace Simpiens.Client.Ui
                 UiParts.SetText(card.Doing, row.Doing);
                 UiParts.SetText(card.Health, row.Downed ? Invariant($"Health {row.Health:F0}% · {DossierModel.DownedBadge}") : Invariant($"Health {row.Health:F0}%"));
                 card.Health.Color = row.Downed ? UiStyle.Danger : UiStyle.TextLight;
-                UiParts.SetText(card.Gear, row.Bunk.Length > 0 ? "Gear: " + row.Gear + " · " + row.Bunk : "Gear: " + row.Gear);
-                UiParts.SetIcon(card.GearIcon, _icons, row.GearIcon);
-                float gearX = row.GearIcon != null ? IconAtlas.SmallSize + 6f : 0f;
-                if (card.Gear.X != gearX) card.Gear.X = gearX;
+                card.Equipment.Show(row.Equipment, brief: true, suffix: row.Bunk.Length > 0 ? "· " + row.Bunk : string.Empty);
                 UiParts.SetText(card.Standing, row.Standing);
                 UiParts.SetText(card.Unpaid, UnpaidText(row.UnpaidVisits));
+                card.Skills.Visible = row.UnpaidVisits == 0;
+                UiParts.SetText(card.Skills, row.UnpaidVisits == 0 && row.Skills != Simpiens.Presentation.Dashboard.SkillTexts.None ? row.Skills : string.Empty);
                 if ((int)Math.Round(card.WageSlider.Value) != row.PendingWage) card.WageSlider.Value = row.PendingWage;
                 UiParts.SetText(card.Wage, WageText(row.PendingWage));
                 string party = PartyText(row.Party);
@@ -365,6 +376,10 @@ namespace Simpiens.Client.Ui
             if (PartySelectButton.Text != expedition.PartyText) PartySelectButton.Text = expedition.PartyText;
             if (TargetButton.Text != expedition.TargetName) TargetButton.Text = expedition.TargetName;
             UiParts.SetText(_goal, Invariant($"Goal {expedition.Goal}"));
+            bool goal = !expedition.IsClear; // a clear has no goal: the lair empty (Epic 10 Part 3, K7.3)
+            _goal.Visible = goal;
+            LessButton.Visual.Visible = goal;
+            MoreButton.Visual.Visible = goal;
             string rule = expedition.Rule.ToString().ToUpperInvariant();
             if (RuleButton.Text != rule) RuleButton.Text = rule;
             string outfit = expedition.OutfitText;

@@ -25,8 +25,10 @@ namespace Simpiens.Presentation.Dashboard
             IPlayerInterventionService intervention = null,
             ISaveGameService saveGame = null,
             ISessionSwitcher sessions = null,
-            IHostCommands hostCommands = null)
+            IHostCommands hostCommands = null,
+            Simpiens.Core.Session.IDepartedRoll departed = null)
         {
+            Departed = departed;
             HostCommands = hostCommands;
             SaveGame = saveGame;
             Sessions = sessions;
@@ -53,10 +55,14 @@ namespace Simpiens.Presentation.Dashboard
                 ?? throw new InvalidOperationException($"The dashboard needs {typeof(T).Name}, and the simulation's services have none.");
             return new DashboardContext(Need<ISimulationManager>(), Need<ISimulationClock>(), Need<IWorldRegistry>(), Need<ISectorRegistry>(),
                 Need<IAgentIdentityService>(), Need<INarrativeChronicleService>(), Need<INarrativeFormatter>(), Need<IPlayerInterventionService>(),
-                saveGame ?? services.GetService(typeof(ISaveGameService)) as ISaveGameService, Need<ISessionSwitcher>(), hostCommands);
+                saveGame ?? services.GetService(typeof(ISaveGameService)) as ISaveGameService, Need<ISessionSwitcher>(), hostCommands,
+                services.GetService(typeof(Simpiens.Core.Session.IDepartedRoll)) as Simpiens.Core.Session.IDepartedRoll);
         }
 
         public ISimulationManager Simulation { get; }
+
+        /// <summary>Everyone who has left, the dead with their causes (Epic 10 Part 3, K5.8c: the dossier of the dead); null in unit tests.</summary>
+        public Simpiens.Core.Session.IDepartedRoll Departed { get; }
         public ISimulationClock Clock { get; }
         public IWorldRegistry Registry { get; }
         public ISectorRegistry Sectors { get; }

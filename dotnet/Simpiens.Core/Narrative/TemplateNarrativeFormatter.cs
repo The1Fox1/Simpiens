@@ -159,6 +159,33 @@ namespace Simpiens.Narrative
                 case ChronicleEventType.ToolWornOut:
                     return $"{actorA}'s {(Simpiens.Simulation.Items.ItemCatalog.Get((Simpiens.Simulation.Economy.ItemType)(byte)evt.ExtraData)?.DisplayName ?? "tool").ToLowerInvariant()} broke in {sector}.";
 
+                case ChronicleEventType.CrawlerDied:
+                {
+                    int cause = (int)evt.ExtraData / 256, detail = (int)evt.ExtraData % 256;
+                    if (cause == (int)Simpiens.Simulation.DeathCause.Creature)
+                        return $"{actorA} was downed by a {(Simpiens.Simulation.Creatures.CreatureCatalog.Get((Simpiens.Simulation.Creatures.CreatureKind)detail)?.DisplayName ?? "creature").ToLowerInvariant()} in {sector} and bled out before anyone came.";
+                    return $"{actorA} fell in the danger of {sector} and bled out before anyone came.";
+                }
+
+                case ChronicleEventType.CrawlerRescued:
+                    return (int)evt.ExtraData == 2 ? $"{actorA} gave {actorB} a draught where they lay in {sector}." : $"{actorA} carried {actorB} out of danger in {sector}.";
+
+                case ChronicleEventType.NewcomerArrived:
+                    return $"{actorA} came in by the Road Gate to settle at the outpost.";
+
+                case ChronicleEventType.SkillBandReached:
+                {
+                    var skill = Simpiens.Simulation.Skills.SkillTable.Get((Simpiens.Simulation.Skills.Skill)((int)evt.ExtraData / 256));
+                    string band = Simpiens.Simulation.Skills.SkillRules.NameOf((Simpiens.Simulation.Skills.SkillBand)((int)evt.ExtraData % 256)).ToLowerInvariant();
+                    return $"{actorA} is now {(band.StartsWith("a") ? "an" : "a")} {band} {skill?.Practitioner ?? "hand"}.";
+                }
+
+                case ChronicleEventType.GateBreached:
+                    return $"{actorA} broke the Gatekeeper in {sector}: the descent gate stands open, its stairs going down into the dark.";
+
+                case ChronicleEventType.CreatureSlain:
+                    return $"{actorA} slew a {(Simpiens.Simulation.Creatures.CreatureCatalog.Get((Simpiens.Simulation.Creatures.CreatureKind)(byte)evt.ExtraData)?.DisplayName ?? "creature").ToLowerInvariant()} in {sector}.";
+
                 default:
                     return $"{actorA} interacted with {actorB} in {sector}.";
             }

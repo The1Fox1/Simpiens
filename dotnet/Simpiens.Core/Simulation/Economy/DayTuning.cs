@@ -161,9 +161,19 @@ namespace Simpiens.Simulation.Economy
         public readonly float TreatSeconds;
         public readonly float RelaxSeconds;
 
+        /// <summary>Taking what it wants from a pile on the ground (Epic 10 Part 3, K4.3).</summary>
+        public readonly float PickUpSeconds;
+
+        /// <summary>Lifting the fallen onto its back; handing the fallen a medicine (Epic 10 Part 3, K5.2, K5.3).</summary>
+        public readonly float LiftSeconds;
+        public readonly float GiveSeconds;
+
         public ActionTuning(float harvestRockSeconds, float harvestHerbSeconds, float harvestFoodSeconds, float eatSeconds, float waitAtPlotSeconds,
-            float tradeSeconds, float boardSeconds, float shareSeconds, float surveySeconds, float treatSeconds, float relaxSeconds)
+            float tradeSeconds, float boardSeconds, float shareSeconds, float surveySeconds, float treatSeconds, float relaxSeconds, float pickUpSeconds, float liftSeconds, float giveSeconds)
         {
+            PickUpSeconds = pickUpSeconds;
+            LiftSeconds = liftSeconds;
+            GiveSeconds = giveSeconds;
             HarvestRockSeconds = harvestRockSeconds;
             HarvestHerbSeconds = harvestHerbSeconds;
             HarvestFoodSeconds = harvestFoodSeconds;
@@ -187,7 +197,8 @@ namespace Simpiens.Simulation.Economy
 
         /// <summary>
         /// The 24-hour day's (<c>docs/time-model.md</c> §3.3): a unit of ore or glowstone 30 game minutes, herbs 20, a Garden
-        /// ration 15; a meal 15; a trade, the board and a hand-over 10; a survey, treating wounds and the hearth 30.
+        /// ration 15; a meal 15; a trade, the board and a hand-over 10; a survey, treating wounds and the hearth 30; a pile
+        /// picked over 5 (Epic 10 Part 3, K4.3); the fallen lifted 1, a medicine handed over 2 (K5.2, K5.3).
         /// </summary>
         public static ActionTuning Default => new ActionTuning(
             harvestRockSeconds: Minutes(30),
@@ -200,7 +211,10 @@ namespace Simpiens.Simulation.Economy
             shareSeconds: Minutes(10),
             surveySeconds: Minutes(30),
             treatSeconds: Minutes(30),
-            relaxSeconds: Minutes(30));
+            relaxSeconds: Minutes(30),
+            pickUpSeconds: Minutes(5),
+            liftSeconds: Minutes(1),
+            giveSeconds: Minutes(2));
 
         private static float Minutes(int minutes) => DayClock.Minutes(minutes) * SimulationClock.FixedTickDeltaTime;
     }

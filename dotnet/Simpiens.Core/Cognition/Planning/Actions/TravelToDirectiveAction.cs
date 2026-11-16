@@ -22,7 +22,7 @@ namespace Simpiens.Cognition.Planning.Actions
         }
 
         /// <summary>A step planned before the party got to work is dropped there, so the member re-plans to work its node (Epic 10 G5).</summary>
-        public override bool IsValid(AgentContext context) => !context.Expedition.IsWorking;
+        public override bool IsValid(AgentContext context) => !context.Expedition.IsWorking && !context.Expedition.IsFighting; // a clear's fight is its own (K7.2a)
 
         public override AgentIntent CreateIntent(AgentContext context)
         {

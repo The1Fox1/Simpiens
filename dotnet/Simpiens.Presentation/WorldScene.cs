@@ -24,9 +24,9 @@ namespace Simpiens.Presentation
 
     /// <summary>
     /// What the view shows this frame, as a sorted <see cref="DrawList"/> (Epic CLIENT): the map's tiles and room names,
-    /// the props (resource nodes, the hearth, bunks, the stall with its goods) and the crawlers with their animation,
-    /// their worn gear and what they carry (graphics V5). What stands in an uncharted sector is hidden by its fog and
-    /// fades in with it (<see cref="FogOfWar.Visibility"/>). It reads the view's frames (<see cref="WorldViewFrames"/>,
+    /// the props (resource nodes, the hearth, bunks, the stall with its goods), the crawlers with their animation,
+    /// their worn gear and what they carry (graphics V5), and the creatures (Epic 10 Part 3, K2.5). What stands in an
+    /// uncharted sector is hidden by its fog and fades in with it (<see cref="FogOfWar.Visibility"/>). It reads the view's frames (<see cref="WorldViewFrames"/>,
     /// review A3), never the live simulation. The map's tiles are built once per map. What each thing looks like
     /// (sprite, size, pivot, frames) comes from the view mode's art catalogue (<see cref="Catalog"/>, graphics V2), and
     /// which art a thing has, from its visuals (<see cref="EntityVisuals"/>); where it goes and in what order, from the
@@ -55,7 +55,12 @@ namespace Simpiens.Presentation
                 _lowWall = value.Id(ArtKeys.TileWallLow);
                 _ring = value.Id(ArtKeys.SelectionRing);
                 _shadow = value.TryId(ArtKeys.CrawlerShadow, out var shadow) ? shadow : ArtId.None;
+                _bar = value.TryId(ArtKeys.FxBar, out var bar) ? bar : ArtId.None;
+                _gate = value.TryId(ArtKeys.PropGate, out var gate) ? gate : ArtId.None;
+                _gateOpen = value.TryId(ArtKeys.PropGateOpen, out var open) ? open : ArtId.None;
                 _caravan = value.TryId(ArtKeys.PropCaravan, out var caravan) ? caravan : ArtId.None;
+                _shotArt = value.TryId(ArtKeys.FxShot, out var shot) ? shot : ArtId.None;
+                _spitArt = value.TryId(ArtKeys.FxSpit, out var spit) ? spit : ArtId.None;
                 for (int i = 0; i < _hazards.Length; i++)
                 {
                     string key = ArtKeys.Hazard((HazardKind)i);
@@ -75,7 +80,7 @@ namespace Simpiens.Presentation
         public CrawlerBodies Bodies { get; set; }
 
         private ArtCatalog _catalog;
-        private ArtId _floor, _rock, _wall, _lowWall, _ring, _shadow, _caravan;
+        private ArtId _floor, _rock, _wall, _lowWall, _ring, _shadow, _caravan, _bar, _gate, _gateOpen;
         private readonly ArtId[] _hazards = new ArtId[4]; // by HazardKind
 
         /// <summary>Where and when the hazards' animations play (Epic 10 Part 2, the stretch, D69).</summary>
@@ -105,6 +110,9 @@ namespace Simpiens.Presentation
         /// <summary>Each crawler's displayed state across frames.</summary>
         public CrawlerAppearance Appearance { get; } = new CrawlerAppearance();
 
+        /// <summary>Each creature's facing and stride across frames (Epic 10 Part 3, K2.5).</summary>
+        public CreatureAppearance Creatures { get; } = new CreatureAppearance();
+
         /// <summary>The fog over uncharted sectors, and its fades.</summary>
         public FogOfWar Fog { get; } = new FogOfWar();
 
@@ -116,6 +124,7 @@ namespace Simpiens.Presentation
         public void Advance(MapDefinition map, WorldViewFrames frames, float viewSeconds)
         {
             var frame = frames?.Current;
+            AdvanceShots(frame, viewSeconds);
             // A new world (a respawn, a switch or a load: frames.Epoch): the fog and the crawlers' poses start afresh.
             // Without frames there is no world to key on, so the fog is loaded for the map every step.
             uint epoch = frames != null ? frames.Epoch : 0;
@@ -123,6 +132,7 @@ namespace Simpiens.Presentation
             {
                 Fog.Load(map, frame);
                 Appearance.Reset();
+                Creatures.Reset();
                 _epoch = epoch;
             }
             Fog.Update(frame, viewSeconds);
@@ -137,6 +147,7 @@ namespace Simpiens.Presentation
                 crawlers++;
             }
             Appearance.ForgetAbsent(frame.Tick, crawlers);
+            Creatures.Advance(frames, Projection, viewSeconds);
         }
 
         /// <summary>
@@ -169,12 +180,15 @@ namespace Simpiens.Presentation
                 {
                     ref readonly var entity = ref frame[i];
                     if (entity.IsCrawler) AddCrawler(entity, frames.DrawnPosition(i), viewSeconds);
+                    else if (entity.IsCreature) AddCreature(entity, frames.DrawnPosition(i), viewSeconds, frames);
                     else AddProp(entity, viewSeconds);
                 }
                 for (int i = 0; i < frame.StallCount; i++) AddStall(frame.Stall(i), viewSeconds);
                 for (int i = 0; i < frame.StationCount; i++) AddStation(frame.Station(i), viewSeconds);
+                if (map != null) AddGates(map, frame.GateBreached, viewSeconds);
                 AddCaravan(frame.Caravan, frames.DrawnCaravanPosition(), viewSeconds);
             }
+            AddShots(viewSeconds);
 
             if (selection != null) AddSelection(selection, viewSeconds);
 
@@ -192,11 +206,11 @@ namespace Simpiens.Presentation
         /// <summary>A gold ring under the selected crawler and its name above it (Unity's CameraController), hidden with the crawler in the fog.</summary>
         private void AddSelection(WorldSelection selection, float viewSeconds)
         {
-            if (!selection.TryGetCrawlerPosition(out var at)) return;
+            if (!selection.TryGetSelectedPosition(out var at)) return; // a crawler or a creature (K2.5)
             float shown = Fog.Visibility(at, viewSeconds);
             if (shown <= 0f) return;
             Add(DrawRole.Selection, 0f, _catalog.Piece(_ring, viewSeconds), at, Shown(White, shown));
-            Labels.Add(new WorldLabel(selection.CrawlerName(), at + _catalog.NameOffset, LabelKind.Name, Shown(NameColor, shown), _catalog.NameHeight));
+            Labels.Add(new WorldLabel(selection.SelectedName(), at + _catalog.NameOffset, LabelKind.Name, Shown(NameColor, shown), _catalog.NameHeight));
         }
 
         /// <summary><paramref name="colour"/> with its alpha scaled by how much shows through the fog.</summary>
@@ -205,26 +219,38 @@ namespace Simpiens.Presentation
 
         private static readonly Rgba32 NameColor = Rgba32.From(new Rgba(1f, 0.92f, 0.55f));
 
+        /// <summary>The fallen lie on their side (K5.8a): a quarter turn.</summary>
+        public const float LyingDegrees = 90f;
+
         private void AddCrawler(in EntityView entity, Vec2 position, float viewSeconds)
         {
             var pose = Appearance.Pose(entity.Id, entity.VisualState, entity.Flags, viewSeconds);
             float shown = Fog.Visibility(position, viewSeconds);
             if (shown <= 0f) return;
-            if (!_shadow.IsNone) Add(DrawRole.Shadow, 0f, _catalog.Piece(_shadow, viewSeconds), position, Shown(White, shown));
+            // The fallen (Epic 10 Part 3, K5.8a): collapsed, it lies on its side where it fell; carried, it lies across its
+            // rescuer's back, raised and with no shadow of its own
+            bool ridden = (entity.Flags & CrawlerFlags.Carried) != 0;
+            bool lying = ridden || (entity.Flags & CrawlerFlags.Collapsed) != 0;
+            float tilt = lying ? LyingDegrees : pose.TiltDegrees;
+            if (!_shadow.IsNone && !ridden) Add(DrawRole.Shadow, 0f, _catalog.Piece(_shadow, viewSeconds), position, Shown(White, shown));
             // Wearing its gear (graphics V5): a helmet is the crawler's own variant. Its own body, when it has one (UI-Beta B2)
-            var art = _catalog.Piece(Visuals.Crawler(pose.State, entity.Worn), pose.Frame, pose.ScaleX, pose.ScaleY);
+            var art = _catalog.Piece(Visuals.Crawler(pose.State, entity.Worn.Topmost), pose.Frame, pose.ScaleX, pose.ScaleY);
             if (Bodies != null && Bodies.TryCell(entity, pose.State, pose.Frame, out int body)) art = art.WithSprite(body);
             float depth = Projection.Depth(position);
             int pick = Items.Pickable(entity.Id);
-            Add(DrawRole.Crawler, depth, art, position, Shown(White, shown), pose.TiltDegrees * DegreesToRadians).Pick = pick;
+            var drawnAt = ridden ? position + _catalog.RideOffset : position;
+            ref var figure = ref Add(DrawRole.Crawler, depth, art, drawnAt, Shown(White, shown), tilt * DegreesToRadians);
+            figure.Pick = pick;
+            if (ridden) figure.Z = _catalog.RideHeight;
             // Hurt (S3, D71): its red coat, the same sprite as a silhouette right over it, blinking
             float coat = (entity.Flags & CrawlerFlags.Hurt) != 0 ? HurtCoat.Strength(viewSeconds) * shown : 0f;
             if (coat > 0f)
             {
                 var colour = HurtCoat.Colour;
-                ref var silhouette = ref Add(DrawRole.Crawler, depth, art, position, new Rgba32(colour.R, colour.G, colour.B, (byte)(colour.A * coat)), pose.TiltDegrees * DegreesToRadians);
+                ref var silhouette = ref Add(DrawRole.Crawler, depth, art, drawnAt, new Rgba32(colour.R, colour.G, colour.B, (byte)(colour.A * coat)), tilt * DegreesToRadians);
                 silhouette.Silhouette = true;
                 silhouette.Pick = pick;
+                if (ridden) silhouette.Z = _catalog.RideHeight;
             }
             if (entity.Carried == ItemType.None) return;
             // What it carries hangs over it, drawn after it at its depth; a click on it picks the carrier
@@ -233,6 +259,91 @@ namespace Simpiens.Presentation
             bundle.Z = _catalog.CarryHeight;
             bundle.Pick = pick;
         }
+
+        /// <summary>
+        /// A creature (Epic 10 Part 3, K2.5), as its kind, where it is drawn between ticks, standing among the crawlers by
+        /// depth on the shadow they stand on: scuttling through its frames while it moves, its first frame while it stands,
+        /// mirrored when it last went left on screen (<see cref="CreatureAppearance"/>). The fog hides it in an uncharted
+        /// sector, as it hides a crawler (D1 = C). Striking, it lunges at its quarry, facing it (<see cref="LungeDistance"/>,
+        /// the strike pose); its shadow stays where it stands. A click on it selects it, and the inspector shows it.
+        /// </summary>
+        private void AddCreature(in EntityView entity, Vec2 position, float viewSeconds, WorldViewFrames frames)
+        {
+            var art = Visuals.Creature(entity.Creature);
+            if (art.IsNone) return;
+            float shown = Fog.Visibility(position, viewSeconds);
+            if (shown <= 0f) return;
+            var tint = Shown(White, shown);
+            if (!_shadow.IsNone) Add(DrawRole.Shadow, 0f, _catalog.Piece(_shadow, viewSeconds), position, tint);
+            bool facesLeft = Creatures.FacesLeft(entity.Id);
+            var drawnAt = position;
+            float lunge = Creatures.Lunge(entity.Id, viewSeconds);
+            if (lunge > 0f && frames.TryGetDrawnPosition(entity.CreatureTarget, out var quarry))
+            {
+                var toward = quarry - position;
+                float distance = toward.Magnitude;
+                if (distance > 1e-4f)
+                {
+                    drawnAt = position + toward * (LungeDistance * lunge / distance);
+                    float across = Projection.ToView(quarry).X - Projection.ToView(position).X;
+                    if (across != 0f) facesLeft = across < 0f;
+                }
+            }
+            ref var item = ref Add(DrawRole.Crawler, Projection.Depth(position), _catalog.Piece(art, Creatures.Moving(entity.Id) ? viewSeconds : 0f), drawnAt, tint);
+            item.FlipX = facesLeft;
+            item.Pick = Items.Pickable(entity.Id); // a click selects it, and the inspector shows it
+            var kind = Simpiens.Simulation.Creatures.CreatureCatalog.Get(entity.Creature);
+            if (kind != null && kind.IsBoss) AddBossBar(kind, entity.CreatureHealth, position, shown, viewSeconds);
+        }
+
+        /// <summary>
+        /// The descent gate (Epic 10 Part 3, K10.5c, Q13), a prop at each of the map's gates: sealed, or once the world's flag
+        /// says so, breached on stairs going down into the dark. Faded with the fog, as any prop is.
+        /// </summary>
+        private void AddGates(MapDefinition map, bool breached, float viewSeconds)
+        {
+            var pois = map.Pois;
+            for (int i = 0; i < pois.Count; i++)
+            {
+                if (pois[i].Kind != PoiKind.DescentGate) continue;
+                var art = breached ? _gateOpen : _gate;
+                if (art.IsNone) continue;
+                float shown = Fog.Visibility(pois[i].Position, viewSeconds);
+                if (shown <= 0f) continue;
+                Add(DrawRole.Prop, Projection.Depth(pois[i].Position), _catalog.Piece(art, viewSeconds), pois[i].Position, Shown(White, shown));
+            }
+        }
+
+        private static readonly Rgba32 BarBack = new Rgba32(20, 18, 24, 220), BarFill = new Rgba32(220, 64, 52, 255), BarFury = new Rgba32(255, 150, 60, 255);
+
+        /// <summary>
+        /// A boss's health bar (Epic 10 Part 3, K10.5b), over its head where a name hangs, scaled with its canvas: a dark bar,
+        /// and over it the share of health left from its left edge, red, ember in its fury. Faded with the fog, as the boss is.
+        /// </summary>
+        private void AddBossBar(Simpiens.Simulation.Creatures.CreatureDefinition kind, float health, Vec2 position, float shown, float viewSeconds)
+        {
+            if (_bar.IsNone) return;
+            float scale = Art.CreatureSprites.SizeOf(kind.ArtKey) / (float)Art.CreatureSprites.Size;
+            var piece = _catalog.Piece(_bar, viewSeconds);
+            var at = position + _catalog.NameOffset * scale;
+            float depth = Projection.Depth(position);
+            ref var back = ref Add(DrawRole.Crawler, depth, piece, at, Shown(BarBack, shown));
+            back.Width = piece.Width * scale;
+            back.Height = piece.Height * scale;
+            back.Z = _catalog.NameHeight * scale;
+            back.SnapToPixel = false;
+            float share = SimMath.Clamp01(health);
+            if (share <= 0f) return;
+            ref var fill = ref Add(DrawRole.Crawler, depth, piece, at, Shown(kind.InFury(share * kind.MaxHealth) ? BarFury : BarFill, shown));
+            fill.Width = piece.Width * scale * share;
+            fill.Height = piece.Height * scale;
+            fill.Z = _catalog.NameHeight * scale;
+            fill.PivotX = 0.5f / share; // its left edge on the bar's
+            fill.SnapToPixel = false;
+        }
+
+        /// <summary>How far a creature's strike lunges toward its quarry at its deepest, in world units (K2.5's strike pose).</summary>
+        public const float LungeDistance = 0.2f;
 
         /// <summary>
         /// The trade stall (graphics V5): its counter at its place, and on it, in its display slots, the goods it holds in
@@ -280,6 +391,53 @@ namespace Simpiens.Presentation
 
         /// <summary>The share of its route over which the caravan fades in from the road, and out again (D70).</summary>
         public const float CaravanFade = 0.08f;
+
+        /// <summary>How long a shot is drawn flying from its shooter to its target (Epic 10 Part 3, K8.4a), in the view's seconds.</summary>
+        public const float ShotSeconds = 0.25f;
+
+        private struct ShotTrail
+        {
+            public Vec2 From, To;
+            public float Start;
+            public bool ByCreature;
+        }
+
+        private readonly List<ShotTrail> _trails = new List<ShotTrail>(8);
+        private long _shotsTick = long.MinValue;
+        private uint _shotsEpoch;
+        private ArtId _shotArt, _spitArt;
+
+        /// <summary>The shots in flight, presentation only: each frame's shots start once, when the frame is new, and fly for <see cref="ShotSeconds"/>.</summary>
+        public int ShotsInFlight => _trails.Count;
+
+        private void AdvanceShots(WorldViewFrame frame, float viewSeconds)
+        {
+            for (int i = _trails.Count - 1; i >= 0; i--) if (viewSeconds - _trails[i].Start >= ShotSeconds || viewSeconds < _trails[i].Start) _trails.RemoveAt(i);
+            if (frame == null || (frame.Tick == _shotsTick && frame.Epoch == _shotsEpoch)) return;
+            _shotsTick = frame.Tick;
+            _shotsEpoch = frame.Epoch;
+            for (int i = 0; i < frame.ShotCount; i++)
+            {
+                ref readonly var shot = ref frame.Shot(i);
+                _trails.Add(new ShotTrail { From = shot.From, To = shot.To, Start = viewSeconds, ByCreature = shot.ByCreature });
+            }
+        }
+
+        /// <summary>Each shot in flight, between its shooter and its target where the view's time puts it; hidden by the fog as the bodies are.</summary>
+        private void AddShots(float viewSeconds)
+        {
+            for (int i = 0; i < _trails.Count; i++)
+            {
+                var trail = _trails[i];
+                var art = trail.ByCreature ? _spitArt : _shotArt;
+                if (art.IsNone) continue;
+                float t = Math.Clamp((viewSeconds - trail.Start) / ShotSeconds, 0f, 1f);
+                var at = trail.From + (trail.To - trail.From) * t;
+                float shown = Fog.Visibility(at, viewSeconds);
+                if (shown <= 0f) continue;
+                Add(DrawRole.Prop, Projection.Depth(at), _catalog.Piece(art, 0f), at, Shown(White, shown));
+            }
+        }
 
         /// <summary>
         /// The trade caravan (Epic 10 Part 2, the stretch, D70), where the frame's schedule puts it: walking in from the road

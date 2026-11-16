@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using Simpiens.Cognition.Contracts;
 using Simpiens.Diagnostics;
 using Simpiens.Narrative;
+using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.World;
 using ZLogger;
 
@@ -49,10 +50,104 @@ namespace Simpiens.Simulation
                 inventory.Gold = 0;
             }
 
+            int releasedClaims = ReleaseFromOutpost(node);
+            agent.HasLeft = true;
+            SimLog.Economy.ZLogInformation($"{SimLog.Agent(node.Id)} left by the Road Gate with {gold}g ({releasedClaims} claim(s) released)");
+            _chronicleService?.RecordEvent(new ChronicleEvent(ChronicleEventType.DrifterLeft, node.Id, default, GetSectorForPosition(node.Position), tick));
+        }
+
+        /// <summary>
+        /// A crawler dies (Epic 10 Part 3, K5.4a, A2: it leaves the world the drifter's way). Its body is a pile where it fell,
+        /// claimed for nobody: its pack, then what it wore, and its purse, which the ledger holds as gold on the ground
+        /// (K5.4b). It lets go of everything a departure lets go of (claims, bunks, every group, the guild's and the
+        /// workshops' contracts and its kept bunk, its party one short), and the host removes it at the end of the tick,
+        /// noting the cause in the departed list. <paramref name="by"/> is what downed it (a creature), if anything.
+        /// </summary>
+        public void Die(WorldEntity node, Simpiens.Simulation.DeathCause cause, byte detail = 0, EntityId by = default)
+        {
+            var agent = node?.Agent;
+            if (agent == null || agent.HasLeft) return;
+            uint tick = _clock != null ? (uint)_clock.CurrentTick : 0;
+
+            // The body: its pack's stacks, then each worn piece, and its purse
+            var inventory = agent.Inventory;
+            int gold = 0;
+            System.Span<ItemInstance> body = stackalloc ItemInstance[Simpiens.Simulation.Loot.PileService.Capacity];
+            int stacks = 0;
+            if (inventory != null)
+            {
+                for (int i = 0; i < inventory.Capacity && stacks < body.Length; i++)
+                {
+                    var stack = inventory.GetSlot(i);
+                    if (!stack.IsEmpty) body[stacks++] = stack;
+                }
+                var slots = Simpiens.Simulation.Items.EquipmentSlots.All;
+                for (int i = 0; i < slots.Count && stacks < body.Length; i++)
+                {
+                    var worn = inventory.Unequip(slots[i].Id);
+                    if (!worn.IsEmpty) body[stacks++] = worn;
+                }
+                for (int i = 0; i < inventory.Capacity; i++)
+                {
+                    var stack = inventory.GetSlot(i);
+                    if (!stack.IsEmpty) inventory.TryRemoveItem(stack.Type, stack.Quantity);
+                }
+                gold = inventory.Gold;
+                inventory.Gold = 0;
+            }
+            Piles.Drop(this, node.Position, body.Slice(0, stacks), gold, default, tick, bodyOf: node.Id);
+
+            // Under the guild's orders (on an expedition), its death costs the patron the other members' trust (Q4, K5.5)
+            bool underOrders = Guild.IsMember(node.Id) && agent.Expedition.IsActive;
+            int releasedClaims = ReleaseFromOutpost(node);
+            agent.HasLeft = true;
+            agent.DiedOf = cause;
+            agent.DiedDetail = detail;
+            int grieving = Grieve(node, tick, underOrders);
+            SimLog.Drives.ZLogInformation($"{SimLog.Agent(node.Id)} died ({cause}) at {node.Position}, leaving {stacks} stacks and {gold}g ({releasedClaims} claim(s) released; {grieving} grieve)");
+            _chronicleService?.RecordEvent(new ChronicleEvent(ChronicleEventType.CrawlerDied, node.Id, by, GetSectorForPosition(node.Position), tick,
+                ChronicleIntensity.Crisis, (int)cause * 256 + detail));
+        }
+
+        /// <summary>A friend's grief raises frustration by this much (Q4, K5.5): the portrait's frustrated face shows it.</summary>
+        public const float GriefFrustration = 25f;
+
+        /// <summary>What a death under the guild's orders costs the patron in each other member's trust (Q4, K5.5).</summary>
+        public const sbyte TrustLostUnderOrders = -15;
+
+        // The living remember (Q4, K5.5): each friend (warmth toward the dead at the friend line) grieves, a memory and
+        // frustration; under the guild's orders, the other members trust the patron less. The friends who grieve.
+        private int Grieve(WorldEntity dead, uint tick, bool underOrders)
+        {
+            var entities = _worldRegistry?.ActiveEntities;
+            if (entities == null) return 0;
+            int grieving = 0;
+            var at = GridPoint.RoundToInt(dead.Position);
+            for (int i = 0; i < entities.Count; i++)
+            {
+                var living = entities[i]?.Agent;
+                if (living == null || living.HasLeft || living.AgentId == dead.Id || living.Memory == null) continue;
+                if (living.Memory.GetAffinity(dead.Id, tick).Warmth >= Simpiens.Cognition.Planning.Rescue.FriendWarmth)
+                {
+                    living.Memory.EventLedger?.AddEvent(new Simpiens.Cognition.Memory.MemoryEvent(Simpiens.Cognition.Memory.MemoryEventType.Grieved, dead.Id, at, tick));
+                    living.Frustration = SimMath.Min(100f, (float)(living.Frustration + GriefFrustration));
+                    grieving++;
+                }
+                if (underOrders && Guild.IsMember(living.AgentId))
+                {
+                    living.Memory.RecordInteraction(PlayerEntityId, deltaWarmth: -5, deltaTrust: TrustLostUnderOrders, deltaFear: 0, deltaRespect: 0, tick);
+                }
+            }
+            return grieving;
+        }
+
+        // What a crawler lets go of as it leaves the world, by the Road Gate or by dying: its bounty claims, its bunk, every
+        // group (Epic 10 G4.4: no departed crawler stays on a roster, nor in the guild), and its contracts. The claims released.
+        private int ReleaseFromOutpost(WorldEntity node)
+        {
+            var agent = node.Agent;
             int releasedClaims = _market.ReleaseClaimsForAgent(node.Id);
             _lodging.ReleaseAllForAgent(node.Id);
-
-            // Leaving the outpost leaves every group (Epic 10 G4.4): no departed crawler stays on a roster, nor in the guild
             if (_groupRegistry != null)
             {
                 _groupRegistry.LeaveAllGroups(node.Id);
@@ -60,10 +155,7 @@ namespace Simpiens.Simulation
             }
             Guild.Forget(this, node.Id);
             _workshops.Forget(node.Id);
-
-            agent.HasLeft = true;
-            SimLog.Economy.ZLogInformation($"{SimLog.Agent(node.Id)} left by the Road Gate with {gold}g ({releasedClaims} claim(s) released)");
-            _chronicleService?.RecordEvent(new ChronicleEvent(ChronicleEventType.DrifterLeft, node.Id, default, GetSectorForPosition(node.Position), tick));
+            return releasedClaims;
         }
 
         public void ReleaseBunk(EntityId bunkId, EntityId agentId) => _lodging.ReleaseBunk(bunkId, agentId);

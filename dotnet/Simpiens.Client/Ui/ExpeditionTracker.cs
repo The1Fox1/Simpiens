@@ -11,14 +11,15 @@ namespace Simpiens.Client.Ui
     /// <summary>
     /// An expedition tracker (Epic 10 G5; one per party since Epic 10 Part 2, W5.3b): a compact panel at the top right of
     /// the map view while its party is out, the second under the first. Where it went and under which rule, its stage and
-    /// time out, the haul so far, and each member's health and part. A view over a <see cref="PartyTrackerModel"/>; it
+    /// time out, the haul so far, a clear's fight (the lair's living and the party's health: Epic 10 Part 3, K7.3), and each
+    /// member's health and part. A view over a <see cref="PartyTrackerModel"/>; it
     /// decides nothing.
     /// </summary>
     public sealed class ExpeditionTracker
     {
         public const float Width = 320f;
 
-        private readonly TextRuntime _title, _stage, _haul;
+        private readonly TextRuntime _title, _stage, _haul, _fight;
         private readonly List<(TextRuntime Name, TextRuntime State)> _members = new List<(TextRuntime, TextRuntime)>(4);
 
         /// <summary>The trackers' column at the top right of the map: one panel per party, an absent party's taking no room.</summary>
@@ -49,9 +50,11 @@ namespace Simpiens.Client.Ui
             _title = UiParts.Text(string.Empty, UiStyle.TextBright, UiText.BodyBold);
             _stage = UiParts.Text(string.Empty, UiStyle.TextLight, UiText.Small);
             _haul = UiParts.Text(string.Empty, UiStyle.GoldText, UiText.Small);
+            _fight = UiParts.Text(string.Empty, UiStyle.Danger, UiText.Small); // a clear's fight (Epic 10 Part 3, K7.3)
             column.Children.Add(_title);
             column.Children.Add(_stage);
             column.Children.Add(_haul);
+            column.Children.Add(_fight);
             for (int i = 0; i < capacity; i++)
             {
                 var line = new ContainerRuntime { Width = Width - 24f, Height = 18f };
@@ -69,6 +72,7 @@ namespace Simpiens.Client.Ui
         public ContainerRuntime Root { get; }
         public bool IsShown => Root.Visible;
         public string StageText => _stage.Text;
+        public string FightText => _fight.Visible ? _fight.Text : string.Empty;
 
         /// <summary>Shown while its party is out, on the map view (the dashboard's panels hidden).</summary>
         public void Bind(PartyTrackerModel model, bool mapView)
@@ -78,6 +82,8 @@ namespace Simpiens.Client.Ui
             UiParts.SetText(_title, model.Title);
             UiParts.SetText(_stage, Invariant($"{model.StageText} · {model.TimeOut}"));
             UiParts.SetText(_haul, model.HaulText);
+            _fight.Visible = model.IsClear;
+            UiParts.SetText(_fight, model.FightText);
             for (int i = 0; i < _members.Count; i++)
             {
                 var (name, state) = _members[i];

@@ -27,6 +27,14 @@ namespace Simpiens.Simulation.Economy
         private readonly List<ushort> _expiredBountiesBuffer = new List<ushort>(16);
         private readonly List<ushort> _departingClaims = new List<ushort>(2);
 
+        // Hunts' parties (Epic 10 Part 3, K6.1), by bounty id; a record lives while its hunt is open
+        private readonly List<HuntRecord> _hunts = new List<HuntRecord>(4);
+        private readonly EntityId[] _shareClaimants = new EntityId[HuntRecord.MaxClaimants];
+        private readonly uint[] _shares = new uint[HuntRecord.MaxClaimants];
+
+        /// <summary>The open hunts' parties, by bounty id (K6.1).</summary>
+        public IReadOnlyList<HuntRecord> Hunts => _hunts;
+
         public IReadOnlyList<TradeStallData> ActiveStalls => _activeStallsBuffer;
         public IReadOnlyList<BountyContract> ActiveBounties => _activeBountiesBuffer;
 
@@ -207,15 +215,16 @@ namespace Simpiens.Simulation.Economy
             StableSort.Sort(_activeBountiesBuffer, (a, b) => a.BountyId.CompareTo(b.BountyId));
         }
 
-        public void PostBounty(in PostBountyCommand cmd, uint currentTick)
+        /// <summary>Posts a bounty; its id, or 0 when it was refused. A hunt (K6.1) gets its party's record.</summary>
+        public ushort PostBounty(in PostBountyCommand cmd, uint currentTick)
         {
             ushort bountyId = cmd.BountyId;
             if (bountyId == 0 && !TryTakeNextFreeBountyId(out bountyId))
             {
                 SimLog.Intervention.ZLogWarning($"Bounty rejected: every bounty id is taken");
-                return;
+                return 0;
             }
-            PostBountyInternal(
+            bool posted = PostBountyInternal(
                 bountyId,
                 cmd.Type,
                 cmd.SectorId,
@@ -226,6 +235,9 @@ namespace Simpiens.Simulation.Economy
                 cmd.TargetLocation,
                 cmd.CreatorStallId,
                 currentTick);
+            if (!posted) return 0;
+            if (cmd.Type == BountyType.Hunt) InsertHunt(new HuntRecord(bountyId, cmd.LairIndex));
+            return bountyId;
         }
 
         // The next free id from _nextBountyId on, skipping 0 and every id on the board; false when all 65,535 are taken
@@ -249,7 +261,7 @@ namespace Simpiens.Simulation.Economy
             CancelBountyInternal(bountyId, currentTick);
         }
 
-        private void PostBountyInternal(
+        private bool PostBountyInternal(
             ushort bountyId,
             BountyType type,
             byte sectorId,
@@ -285,7 +297,7 @@ namespace Simpiens.Simulation.Economy
             // Escrow is locked (or the bounty rejected) inside TryRegisterBounty
             if (!TryRegisterBounty(contract))
             {
-                return;
+                return false;
             }
 
             _chronicleService?.RecordEvent(new ChronicleEvent(
@@ -296,6 +308,7 @@ namespace Simpiens.Simulation.Economy
                 currentTick,
                 ChronicleIntensity.Notable,
                 rewardGold));
+            return true;
         }
 
         private void CancelBountyInternal(ushort bountyId, uint currentTick)
@@ -323,6 +336,7 @@ namespace Simpiens.Simulation.Economy
                     }
 
                     _bounties[bountyId] = bounty.WithStatus(BountyStatus.Cancelled);
+                    RemoveHunt(bountyId);
                     UpdateActiveBountiesBuffer();
                     SimLog.Intervention.ZLogInformation($"Bounty #{bountyId} cancelled (was {bounty.Status}, claimant {SimLog.Agent(bounty.ClaimantId)}); escrow refunded");
 
@@ -374,6 +388,7 @@ namespace Simpiens.Simulation.Economy
                     }
 
                     _bounties[expiredId] = b.WithStatus(BountyStatus.Expired);
+                    RemoveHunt(expiredId);
                     SimLog.Intervention.ZLogInformation($"Bounty #{expiredId} expired unfulfilled (was {b.Status}, claimant {SimLog.Agent(b.ClaimantId)}); escrow refunded");
 
                     _chronicleService?.RecordEvent(new ChronicleEvent(
@@ -408,7 +423,15 @@ namespace Simpiens.Simulation.Economy
                     UpdateBounty(claimed.WithClaimant(default, BountyStatus.Open));
                 }
             }
-            return _departingClaims.Count;
+            int released = _departingClaims.Count;
+            // And every hunt it joined, its share with it (K6.1)
+            for (int i = 0; i < _hunts.Count; i++)
+            {
+                if (!_hunts[i].HasClaimant(agentId)) continue;
+                _hunts[i] = _hunts[i].WithoutClaimant(agentId);
+                released++;
+            }
+            return released;
         }
 
         public EconomySave Capture()
@@ -425,7 +448,7 @@ namespace Simpiens.Simulation.Economy
 
             var ledger = new LedgerSave();
             _economyLedger?.CaptureTo(ledger);
-            return new EconomySave { Stalls = stalls, Bounties = bounties, Ledger = ledger };
+            return new EconomySave { Stalls = stalls, Bounties = bounties, Ledger = ledger, Hunts = _hunts.ToArray() };
         }
 
         public void RestoreFrom(EconomySave economy)
@@ -452,6 +475,8 @@ namespace Simpiens.Simulation.Economy
                 }
             }
             UpdateActiveBountiesBuffer();
+            _hunts.Clear();
+            if (economy?.Hunts != null) _hunts.AddRange(economy.Hunts); // saved in id order (K6.1)
             if (economy?.Ledger != null) _economyLedger?.RestoreFrom(economy.Ledger);
         }
 
@@ -464,6 +489,92 @@ namespace Simpiens.Simulation.Economy
             _activeBountiesBuffer.Clear();
             _expiredBountiesBuffer.Clear();
             _departingClaims.Clear();
+            _hunts.Clear();
+        }
+
+        // Hunts (Epic 10 Part 3, K6.1)
+
+        /// <summary>The open hunt with <paramref name="bountyId"/>'s party.</summary>
+        public bool TryGetHunt(ushort bountyId, out HuntRecord hunt)
+        {
+            int index = HuntIndex(bountyId);
+            hunt = index >= 0 ? _hunts[index] : default;
+            return index >= 0;
+        }
+
+        /// <summary>
+        /// <paramref name="crawler"/> joins the hunt (a claim, K6.1): while it is open and active and has room. True when it
+        /// is in the party (already, or now).
+        /// </summary>
+        public bool TryJoinHunt(ushort bountyId, EntityId crawler, uint currentTick)
+        {
+            int index = HuntIndex(bountyId);
+            if (index < 0 || !_bounties.TryGetValue(bountyId, out var bounty) || bounty.Status != BountyStatus.Open || !bounty.IsActive(currentTick)) return false;
+            var hunt = _hunts[index];
+            if (hunt.HasClaimant(crawler)) return true;
+            if (hunt.IsFull) return false;
+            _hunts[index] = hunt.WithClaimant(crawler);
+            return true;
+        }
+
+        /// <summary>A crawler's blow on a creature of lair <paramref name="lairIndex"/> adds to its share of every hunt on it it joined (K6.1).</summary>
+        public void RecordHuntDamage(EntityId crawler, int lairIndex, float damage)
+        {
+            for (int i = 0; i < _hunts.Count; i++)
+            {
+                if (_hunts[i].LairIndex != lairIndex || !_hunts[i].HasClaimant(crawler)) continue;
+                _hunts[i] = _hunts[i].WithDamage(crawler, damage);
+            }
+        }
+
+        /// <summary>
+        /// Pays every joined hunt whose lair is empty (K6.1, Q7): the escrow by damage dealt, the bounty completed, the
+        /// chronicle told. A hunt on an emptied lair with nobody in it waits for a claimant, or its expiry. In id order.
+        /// </summary>
+        public void SettleHunts(IReadOnlyList<Simpiens.Simulation.Creatures.LairState> lairs, IAgentRegistry agents, uint currentTick)
+        {
+            bool settled = false;
+            for (int i = _hunts.Count - 1; i >= 0; i--)
+            {
+                var hunt = _hunts[i];
+                if (hunt.Count == 0 || lairs == null || hunt.LairIndex >= lairs.Count || lairs[hunt.LairIndex].Alive > 0) continue;
+                if (!_bounties.TryGetValue(hunt.BountyId, out var bounty) || bounty.Status != BountyStatus.Open) continue;
+                uint reward = _economyLedger != null ? _economyLedger.GetEscrowAmount(hunt.BountyId) : bounty.RewardGold;
+                var claimants = new Span<EntityId>(_shareClaimants, 0, hunt.Count);
+                var shares = new Span<uint>(_shares, 0, hunt.Count);
+                for (int c = 0; c < hunt.Count; c++) claimants[c] = hunt.ClaimantAt(c);
+                hunt.Split(reward, shares);
+                if (_economyLedger != null && !_economyLedger.TryReleaseEscrowSplit(hunt.BountyId, claimants, shares, agents)) continue;
+                _bounties[hunt.BountyId] = bounty.WithClaimant(hunt.Claimant0, BountyStatus.Completed);
+                _hunts.RemoveAt(i);
+                settled = true;
+                SimLog.Economy.ZLogInformation($"Hunt #{hunt.BountyId} done: lair {hunt.LairIndex} emptied; {reward}g paid to {hunt.Count} hunter(s) by damage dealt");
+                for (int c = 0; c < hunt.Count; c++)
+                {
+                    _chronicleService?.RecordEvent(new ChronicleEvent(ChronicleEventType.BountyFulfilled, hunt.ClaimantAt(c), SimulationManager.PlayerEntityId,
+                        bounty.TargetSectorId, currentTick, ChronicleIntensity.Notable, shares[c]));
+                }
+            }
+            if (settled) UpdateActiveBountiesBuffer();
+        }
+
+        private void InsertHunt(in HuntRecord hunt)
+        {
+            int at = 0;
+            while (at < _hunts.Count && _hunts[at].BountyId < hunt.BountyId) at++;
+            _hunts.Insert(at, hunt);
+        }
+
+        private void RemoveHunt(ushort bountyId)
+        {
+            int index = HuntIndex(bountyId);
+            if (index >= 0) _hunts.RemoveAt(index);
+        }
+
+        private int HuntIndex(ushort bountyId)
+        {
+            for (int i = 0; i < _hunts.Count; i++) if (_hunts[i].BountyId == bountyId) return i;
+            return -1;
         }
     }
 }

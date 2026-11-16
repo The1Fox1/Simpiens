@@ -12,6 +12,7 @@ namespace Simpiens.Cognition.Evaluators
     /// Tier 1 Reflexive Evaluator that handles severe biological emergencies and mental breaks:
     /// 1. Exhaustion Collapse (Energy <= 5f): Forces emergency resting recovery.
     /// 2. Starvation Panic (Hunger >= 85f and no known food, carried rations included): Clears stale memory and triggers exploratory sprint.
+    /// Between them, danger: flight from a creature's blows (Epic 10 Part 3, K2.3), wounds, a downing, a hazard's harm.
     /// </summary>
     public class MentalBreakEvaluator : ICognitiveEvaluator
     {
@@ -149,6 +150,17 @@ namespace Simpiens.Cognition.Evaluators
 
         private async ValueTask<AgentIntent> DangerReflexAsync(AgentContext context)
         {
+            // Struck by a creature (Epic 10 Part 3, K2.3, D19): on its feet, the bold and armed fight back (K3.3, Q6), the rest flee
+            // toward the bunks, before anything else; a downed crawler limps out as from a hazard (below)
+            // Under orders, a fallen mate first: the rescue outranks fighting on (Epic 10 Part 3, K7.2c, D42)
+            if (!context.IsDowned && Simpiens.Cognition.Planning.Rescue.ComesForAMate(context)) return null;
+            if (context.StruckRecently && !context.IsDowned)
+            {
+                if (Vitality.FightsBack(context) && context.StruckBy != default) return new FightIntent(context.AgentId, context.StruckBy);
+                var flight = await FleeAsync(context);
+                if (flight != null) return flight;
+            }
+
             var medicines = Simpiens.Simulation.Items.ItemCatalog.InCategory(Simpiens.Simulation.Items.ItemCategory.Medicine);
             if (context.Health < Vitality.TreatWoundsBelow)
             {
@@ -161,8 +173,10 @@ namespace Simpiens.Cognition.Evaluators
             bool inHazard = Vitality.HazardAt(context.Snapshot?.Map, context.Position).IsHazardous;
 
             // Hurt but on its feet, out of danger and not hungry: it fetches medicine (a herb) from a patch it knows, then
-            // eats it; medicines in id order
-            if (!context.IsDowned && !inHazard && context.Health < Vitality.TreatWoundsBelow && context.Hunger < FetchHerbBelowHunger)
+            // eats it; medicines in id order. Not while its own kill's drop lies at hand: it picks that up first (Epic 10
+            // Part 3, K4.4, D24), or it is lost to the fog or the lair it won't brave hurt
+            if (!context.IsDowned && !inHazard && context.Health < Vitality.TreatWoundsBelow && context.Hunger < FetchHerbBelowHunger
+                && !Simpiens.Cognition.Planning.LootTargeting.OwnDropAtHand(context))
             {
                 for (int i = 0; i < medicines.Count; i++)
                 {
@@ -174,6 +188,10 @@ namespace Simpiens.Cognition.Evaluators
             }
 
             if (!context.IsDowned && !(inHazard && context.Health < Vitality.RetreatBelow)) return null;
+
+            // Collapsed in danger (Epic 10 Part 3, K5.1, Q3): it can't limp out; it lies where it fell until rescued, or until a
+            // medicine it carries stands it up (above), or it bleeds out
+            if (context.IsCollapsed) return new IdleIntent(context.AgentId, DownedSleepSeconds);
 
             // A free bunk within reach: a downed crawler sleeps in it, its own in the barracks or not
             if (context.IsDowned && Simpiens.Cognition.Planning.BunkTargeting.TryGetNearestFreeBunk(context, out var bunkId, out var bunk, ownFirst: false)
@@ -193,6 +211,16 @@ namespace Simpiens.Cognition.Evaluators
             if (path.IsValid && path.Length > 0) return new RetreatIntent(context.AgentId, path);
             path.ReturnToPool();
             return context.IsDowned && !inHazard ? new IdleIntent(context.AgentId, DownedSleepSeconds) : null;
+        }
+
+        // Toward the floor plan's nearest bunk, as a retreat runs; the flight ends once clear of every lair's reach (FleeIntentHandler)
+        private async ValueTask<AgentIntent> FleeAsync(AgentContext context)
+        {
+            if (_pathfinder == null || !Vitality.TryGetRefuge(context, out var refuge)) return null;
+            var path = await _pathfinder.CalculatePathAsync(new PathRequest { StartPosition = context.Position, TargetPosition = refuge }, context.Snapshot);
+            if (path.IsValid && path.Length > 0) return new FleeIntent(context.AgentId, path);
+            path.ReturnToPool();
+            return null;
         }
 
         public static bool HasKnownFood(in AgentContext context)

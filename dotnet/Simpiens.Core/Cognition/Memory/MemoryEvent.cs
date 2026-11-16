@@ -24,7 +24,8 @@ namespace Simpiens.Cognition.Memory
         GroupFormed,
         LeadershipAssumed,
         DominanceChallenged,
-        GroupSchism
+        GroupSchism,
+        Grieved // Epic 10 Part 3, K5.5: a friend died; the event's other is the dead
     }
 
     public readonly struct MemoryEvent

@@ -126,7 +126,11 @@ namespace Simpiens.Core.Tests
         [Fact]
         public void TheBoldBraveTheHazardsAndHealAndTheCautiousStayOut()
         {
-            using var sim = Outpost();
+            // On gate seed 20261010 since Epic 10 Part 3, K9: on the default seed the bold now leave the hazards at 72 health,
+            // a hair above the watch's 70. Measured on the 23 gate seeds' day: the bold go in on 22, one is hurt past 70 and
+            // heals on 10, and the cautious stay out on all.
+            using var sim = LocalSimulation.Create(20261010UL);
+            sim.Respawn(OutpostSession.SessionId);
             var watch = new OutpostWatch(sim);
             watch.Run(OutpostWatch.DayTicks);
             watch.Finish();

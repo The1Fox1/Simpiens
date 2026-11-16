@@ -68,8 +68,9 @@ namespace Simpiens.Presentation.Dashboard
         /// <summary>The inspector's Follow: the camera follows the selected crawler, or stops.</summary>
         public void ToggleFollow()
         {
-            if (_selection == null || _selection.SelectedCrawler == default) return;
+            if (_selection == null || _selection.Selected == default) return;
             if (_selection.Following) _selection.StopFollowing();
+            else if (_selection.SelectedCreature != default) _selection.SelectCreature(_selection.SelectedCreature, follow: true); // K2.5
             else _selection.SelectCrawler(_selection.SelectedCrawler, follow: true);
             Refresh();
         }
@@ -98,6 +99,16 @@ namespace Simpiens.Presentation.Dashboard
 
         /// <summary>The crawler the dossier shows.</summary>
         public EntityId SelectedCrawler => _selection != null ? _selection.SelectedCrawler : _selectedCrawler;
+
+        // The dossier of the dead (Epic 10 Part 3, K5.8c): the map's selection drops a crawler that leaves the world, but the
+        // dossier keeps one that died until something else is selected
+        private EntityId _lastCrawler, _shownDead;
+
+        /// <summary>Whom the dossier shows: the selected crawler, or the one selected when it died.</summary>
+        public EntityId DossierCrawler => SelectedCrawler != default ? SelectedCrawler : _shownDead;
+
+        /// <summary>The creature the inspector shows (Epic 10 Part 3, K2.5); the dossier is a crawler's alone.</summary>
+        public EntityId SelectedCreature => _selection != null ? _selection.SelectedCreature : default;
 
         public void TogglePanels()
         {
@@ -193,16 +204,17 @@ namespace Simpiens.Presentation.Dashboard
             Bounties.Refresh();
             Guild.Refresh();
             Stations.Refresh();
-            Inspector.Refresh(PanelsVisible ? default : SelectedCrawler, _selection != null && _selection.Following);
+            Inspector.Refresh(PanelsVisible ? default : SelectedCrawler, _selection != null && _selection.Following, PanelsVisible ? default : SelectedCreature);
             if (!PanelsVisible) return;
             Sectors.Refresh(SelectedCrawler);
-            Dossier.Refresh(SelectedCrawler);
+            Dossier.Refresh(DossierCrawler);
         }
 
         /// <summary>A respawn or a load replaced every entity (ids are reissued): drop the selection, close the windows, rebuild from the new map.</summary>
         public void SessionChanged()
         {
             _selectedCrawler = default;
+            _lastCrawler = _shownDead = default;
             CloseAllBut(null);
             Bounties.Reset();
             Sectors.SelectedSectorId = -1;
@@ -214,14 +226,27 @@ namespace Simpiens.Presentation.Dashboard
         /// <summary>A click on the map (or a reset) changed the selection: show the same crawler and room here.</summary>
         private void OnSelectionChanged()
         {
+            // Dropped because it died: its dossier stays; anything else selected, or a crawler that walked out, ends that
+            var now = _selection.SelectedCrawler;
+            _shownDead = now == default && _selection.SelectedCreature == default && _lastCrawler != default && Died(_lastCrawler) ? _lastCrawler
+                : now == default && _selection.SelectedCreature == default ? _shownDead : default;
+            _lastCrawler = now;
             int sector = _selection.SelectedSector;
             if (sector > 0 && sector != Sectors.SelectedSectorId && _context.Zones.TryGetZone(sector, out _)) Sectors.SelectedSectorId = sector;
             if (PanelsVisible)
             {
                 Sectors.Refresh(SelectedCrawler);
-                Dossier.Refresh(SelectedCrawler);
+                Dossier.Refresh(DossierCrawler);
             }
-            else Inspector.Refresh(SelectedCrawler, _selection.Following);
+            else Inspector.Refresh(SelectedCrawler, _selection.Following, SelectedCreature);
+        }
+
+        private bool Died(EntityId id)
+        {
+            var departed = _context.Departed?.Departed;
+            if (departed == null) return false;
+            for (int i = departed.Count - 1; i >= 0; i--) if (departed[i].Id == id) return departed[i].Died;
+            return false;
         }
     }
 }

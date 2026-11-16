@@ -31,8 +31,9 @@ namespace Simpiens.Client.Ui
         private readonly DashboardModel _model;
         private readonly ContainerRuntime _sectorsList, _dossierDetails;
         private readonly GraphicalUiElement _residentsList, _eventsList, _affinitiesList;
-        private readonly TextRuntime _sectorTitle, _sectorDescription, _residentsEmpty, _eventsEmpty, _dossierEmpty, _dossierName, _dossierBadge, _goal, _action, _affinitiesEmpty, _gear, _tool;
+        private readonly TextRuntime _sectorTitle, _sectorDescription, _residentsEmpty, _eventsEmpty, _dossierEmpty, _dossierName, _dossierBadge, _goal, _action, _affinitiesEmpty;
         private readonly TextRuntime _groups, _recruitText; // Epic 10 G4
+        private readonly TextRuntime _skills; // Epic 10 Part 3, K9.5
         private readonly TextRuntime _description, _moodLine; // Epic UI-Beta B3
         private readonly PortraitAtlas _portraits;
         private readonly ContainerRuntime _detail, _dossier, _who;
@@ -136,49 +137,39 @@ namespace Simpiens.Client.Ui
             who.Children.Add(_moodLine);
             header.Children.Add(who);
             _dossierDetails.Children.Add(header);
-            _dossierDetails.Children.Add(Window.Gap(2f));
+            // No gap under the header, and none of their own before the sections below (the column's spacing breaks them): the
+            // skills' line took those 18 pixels, and at 720 rows the dossier has none to spare (Epic 10 Part 3, K9.5)
             _dossierDetails.Children.Add(Window.SubHeader("NEEDS"));
             _health = new DriveBar(_dossierDetails, "Health:", UiStyle.DriveHealth);
             _hunger = new DriveBar(_dossierDetails, "Hunger:", UiStyle.DriveHunger);
             _energy = new DriveBar(_dossierDetails, "Energy:", UiStyle.DriveEnergy);
             _social = new DriveBar(_dossierDetails, "Social:", UiStyle.DriveSocial);
             _frustration = new DriveBar(_dossierDetails, "Frustration:", UiStyle.Danger);
-            // Worn gear (Epic 10 G3): its icon at 1x (graphics V4), then its words; then a worn tool's (Epic 10 Part 2, W1.6b),
-            // on the same line: the dossier has no height to spare at 720 rows. A hidden piece takes no room in the row
+            // What it wears (Epic 10 G3's gear, W1.6b's tool; every slot from the table since Epic 10 Part 3, K1.5): each piece's
+            // icon at 1x (graphics V4) and its words, on one line: the dossier has no height to spare at 720 rows
             var gearLine = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = IconAtlas.SmallSize };
-            var worn = UiParts.Row(6f);
-            GearIcon = UiParts.Icon(icons, null, scale: 1);
-            worn.Children.Add(GearIcon);
-            _gear = UiParts.Text(string.Empty, UiStyle.TextSecondary, UiText.Small);
-            UiParts.CentreVertically(_gear);
-            worn.Children.Add(_gear);
-            _toolGap = new ContainerRuntime { Width = 4f, Height = 1f, Visible = false };
-            worn.Children.Add(_toolGap);
-            ToolIcon = UiParts.Icon(icons, null, scale: 1);
-            ToolIcon.Visible = false;
-            worn.Children.Add(ToolIcon);
-            _tool = UiParts.Text(string.Empty, UiStyle.TextSecondary, UiText.Small);
-            _tool.Visible = false;
-            UiParts.CentreVertically(_tool);
-            worn.Children.Add(_tool);
-            gearLine.Children.Add(worn);
+            Equipment = new WornLine(icons);
+            gearLine.Children.Add(Equipment.Visual);
             _dossierDetails.Children.Add(gearLine);
+            // Its skills, the best first (Epic 10 Part 3, K9.5): one line, as the gear's
+            _skills = UiParts.Text(string.Empty, UiStyle.TextSecondary, UiText.Small);
+            _dossierDetails.Children.Add(_skills);
             // Its groups (Epic 10 G4): "Settlement: led by Mara · Guild: member, 5g a visit"
             _groups = UiParts.Text(string.Empty, UiStyle.TextSecondary, UiText.Small);
             _dossierDetails.Children.Add(_groups);
-            _dossierDetails.Children.Add(Window.Gap(4f));
+            _dossierDetails.Children.Add(Window.Gap(0f));
             _dossierDetails.Children.Add(Window.SubHeader("WHAT THEY'RE DOING"));
             var intent = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 44f };
             UiParts.AddInset(intent);
             _goal = IntentRow(intent, "Goal:", 6f);
             _action = IntentRow(intent, "Action:", 24f);
             _dossierDetails.Children.Add(intent);
-            _dossierDetails.Children.Add(Window.Gap(4f));
+            _dossierDetails.Children.Add(Window.Gap(0f));
             _dossierDetails.Children.Add(Window.SubHeader("FEELINGS (WARMTH / TRUST / FEAR / RESPECT)"));
             _affinitiesEmpty = UiParts.Text("No relationships yet.", UiStyle.TextMuted, UiText.Small);
             _dossierDetails.Children.Add(_affinitiesEmpty);
             _affinitiesList = Scroll(_dossierDetails, 70f, 2f); // two rows with faces (UI-Beta B4); it scrolls. Unity's max-height was 120: the guild's lines and the portrait's header took the rest
-            _dossierDetails.Children.Add(Window.Gap(4f));
+            _dossierDetails.Children.Add(Window.Gap(0f));
             _dossierDetails.Children.Add(Window.SubHeader("YOUR SWAY"));
             // Whether it would sign on with the guild, then Calm and Recruit side by side (Epic 10 G4, D6)
             _recruitText = UiParts.Text(string.Empty, UiStyle.TextLight, UiText.Small);
@@ -245,6 +236,7 @@ namespace Simpiens.Client.Ui
         public Button CalmButton { get; }
         public Button RecruitButton { get; }
         public string GroupsShown => _groups.Text;
+        public string SkillsShown => _skills.Text;
         public string RecruitShown => _recruitText.Text;
 
         public bool IsShown
@@ -263,13 +255,9 @@ namespace Simpiens.Client.Ui
         public bool DossierShown => _dossierDetails.Visible;
         public float HungerShown => _hunger.Value;
         public float HealthShown => _health.Value;
-        public string GearShown => _gear.Text;
-
-        /// <summary>The worn gear's icon; hidden with none.</summary>
-        public SpriteRuntime GearIcon { get; }
-        public SpriteRuntime ToolIcon { get; }
-        private readonly ContainerRuntime _toolGap;
-        public string ToolShown => _tool.Visible ? _tool.Text : string.Empty;
+        /// <summary>The dossier's line of what the crawler wears, slot by slot (Epic 10 Part 3, K1.5).</summary>
+        public WornLine Equipment { get; }
+        public string GearShown => Equipment.Shown;
 
         /// <summary>A click on a face (Epic UI-Beta B4, D4): the dashboard view finds that crawler on the map.</summary>
         public Action<EntityId> FindOnMap { get; set; }
@@ -380,16 +368,7 @@ namespace Simpiens.Client.Ui
             UiParts.SetText(_dossierBadge, dossier.Badge);
             _dossierBadgeFill.FillColor = UiStyle.StateColor(dossier.State);
             _health.Set(dossier.Health);
-            UiParts.SetText(_gear, "Gear: " + dossier.Gear);
-            UiParts.SetIcon(GearIcon, _icons, dossier.GearIcon); // hidden with none: the words start the row
-            bool tool = dossier.Tool.Length > 0;
-            if (_tool.Visible != tool)
-            {
-                _tool.Visible = tool;
-                _toolGap.Visible = tool;
-            }
-            UiParts.SetIcon(ToolIcon, _icons, tool ? dossier.ToolIcon : null);
-            if (tool) UiParts.SetText(_tool, "Tool: " + dossier.Tool);
+            Equipment.Show(dossier.Equipment);
             _hunger.Set(dossier.Hunger);
             _energy.Set(dossier.Energy);
             _social.Set(dossier.Social);
@@ -429,6 +408,7 @@ namespace Simpiens.Client.Ui
             _affinitiesEmpty.Visible = affinities.Count == 0;
             CalmButton.IsEnabled = dossier.CanCalm;
             UiParts.SetText(_groups, dossier.Groups);
+            UiParts.SetText(_skills, dossier.Skills.Length > 0 ? "Skills: " + dossier.Skills : string.Empty);
             UiParts.SetText(_recruitText, dossier.RecruitText);
             RecruitButton.IsEnabled = dossier.CanRecruit;
         }
@@ -649,10 +629,19 @@ namespace Simpiens.Client.Ui
         {
             private readonly RectangleRuntime _fill;
             private readonly TextRuntime _value;
+            private readonly ContainerRuntime _row;
+
+            /// <summary>Shown or not (a creature in the inspector shows its health alone, Epic 10 Part 3, K2.5).</summary>
+            public bool Visible
+            {
+                get => _row.Visible;
+                set { if (_row.Visible != value) _row.Visible = value; }
+            }
 
             public DriveBar(ContainerRuntime parent, string label, Color color)
             {
                 var row = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 20f };
+                _row = row;
                 var name = UiParts.Text(label, UiStyle.TextSecondary, UiText.Body);
                 UiParts.CentreVertically(name);
                 row.Children.Add(name);

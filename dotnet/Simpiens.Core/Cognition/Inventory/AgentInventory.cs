@@ -22,13 +22,18 @@ namespace Simpiens.Cognition.Inventory
         public int Capacity => _capacity;
         public int Gold { get; set; }
 
-        /// <summary>Equipment slots beside the pack (protection, weapon, tool), one item each, so equipment never takes a pack slot.</summary>
-        public const int EquipmentSlots = 3;
+        /// <summary>
+        /// The worn equipment beside the pack, one piece per slot, so equipment never takes a pack slot: a record for every
+        /// slot id the table may define (<see cref="EquipmentSlots.Capacity"/>, Epic 10 Part 3, K1.1), indexed by the id,
+        /// and saved whole (K1.2).
+        /// </summary>
+        private WornEquipment _equipped;
 
-        private readonly ItemInstance[] _equipped = new ItemInstance[EquipmentSlots];
+        /// <summary>Copies every worn record into <paramref name="target"/> (the snapshot's buffer): main thread only.</summary>
+        internal void CopyEquippedTo(ref WornEquipment target) => target = _equipped;
 
-        /// <summary>What is equipped in a slot, or empty. Its Durability counts the wear it still takes.</summary>
-        public ItemInstance GetEquipped(EquipmentSlot slot) => _equipped[(int)slot];
+        /// <summary>What is equipped in a slot, or empty (and for a retired or undefined slot). Its Durability counts the wear it still takes.</summary>
+        public ItemInstance GetEquipped(EquipmentSlot slot) => (byte)slot < EquipmentSlots.Capacity ? _equipped[(byte)slot] : ItemInstance.Empty;
 
         /// <summary>True for an item that is equipped rather than carried (the catalog gives it an equipment block).</summary>
         public static bool IsEquipment(ItemType type) => ItemCatalog.Get(type)?.Equipment != null;
@@ -188,35 +193,83 @@ namespace Simpiens.Cognition.Inventory
             return true;
         }
 
-        /// <summary>Equips an item in its slot. Refused (false) for an item that isn't equipment, or while the slot is taken.</summary>
-        public bool TryEquip(in ItemInstance item)
+        /// <summary>
+        /// Equips an item in the first free slot of its kind (id order; Epic 10 Part 3, K1.1). Refused (false) for an item
+        /// that isn't equipment, or while every slot of its kind is taken.
+        /// </summary>
+        public bool TryEquip(in ItemInstance item) => TryEquip(item, out EquipmentSlot _);
+
+        /// <summary>As <see cref="TryEquip(in ItemInstance)"/>, saying which slot the piece went in.</summary>
+        public bool TryEquip(in ItemInstance item, out EquipmentSlot wornIn)
         {
+            wornIn = default;
             var equipment = item.IsEmpty ? null : ItemCatalog.Get(item.Type)?.Equipment;
-            if (equipment == null || !_equipped[(int)equipment.Slot].IsEmpty) return false;
-            _equipped[(int)equipment.Slot] = item.WithQuantity(1);
+            if (equipment == null) return false;
+            var slots = EquipmentSlots.All;
+            for (int i = 0; i < slots.Count; i++)
+            {
+                if (slots[i].Kind != equipment.Kind || !_equipped[(byte)slots[i].Id].IsEmpty) continue;
+                wornIn = slots[i].Id;
+                return TryEquip(item, wornIn);
+            }
+            return false;
+        }
+
+        /// <summary>Equips an item in <paramref name="slot"/>. Refused (false) for an item that doesn't fit it, or while it is taken.</summary>
+        public bool TryEquip(in ItemInstance item, EquipmentSlot slot)
+        {
+            if (item.IsEmpty || !EquipmentSlots.Fits(slot, item.Type) || !_equipped[(byte)slot].IsEmpty) return false;
+            _equipped[(byte)slot] = item.WithQuantity(1);
             return true;
         }
 
-        /// <summary>Takes a slot's item off (a rolled-back purchase); what was equipped, or empty.</summary>
+        /// <summary>Takes a slot's item off (a rolled-back purchase, a trade-in); what was equipped, or empty.</summary>
         public ItemInstance Unequip(EquipmentSlot slot)
         {
-            var worn = _equipped[(int)slot];
-            _equipped[(int)slot] = ItemInstance.Empty;
+            if ((byte)slot >= EquipmentSlots.Capacity) return ItemInstance.Empty;
+            var worn = _equipped[(byte)slot];
+            _equipped[(byte)slot] = ItemInstance.Empty;
             return worn;
         }
 
         /// <summary>Wears a slot's item by <paramref name="units"/>. At 0 it breaks and is gone: returns true then.</summary>
         public bool Wear(EquipmentSlot slot, ushort units = 1)
         {
-            var item = _equipped[(int)slot];
+            if ((byte)slot >= EquipmentSlots.Capacity) return false;
+            var item = _equipped[(byte)slot];
             if (item.IsEmpty) return false;
             if (item.Durability > units)
             {
-                _equipped[(int)slot] = item.WithDurability((ushort)(item.Durability - units));
+                _equipped[(byte)slot] = item.WithDurability((ushort)(item.Durability - units));
                 return false;
             }
-            _equipped[(int)slot] = ItemInstance.Empty;
+            _equipped[(byte)slot] = ItemInstance.Empty;
             return true;
+        }
+
+        /// <summary>
+        /// Wears by one unit every piece worn that wears by <paramref name="rule"/>, whichever slot it is in, in the table's id
+        /// order (Epic 10 Part 3, K1.3): a tick in danger wears a hard hat and hazard gear alike. Returns how many pieces it
+        /// wore; the ones that broke and are gone go into <paramref name="broke"/> (as many as fit), and their number into
+        /// <paramref name="brokeCount"/>. Allocates nothing: a caller passes a stack buffer of <see cref="EquipmentSlots.Capacity"/>.
+        /// </summary>
+        public int WearBy(WearRule rule, System.Span<ItemType> broke, out int brokeCount)
+        {
+            brokeCount = 0;
+            if (rule == WearRule.None) return 0;
+            int worn = 0;
+            var slots = EquipmentSlots.All;
+            for (int i = 0; i < slots.Count; i++)
+            {
+                var slot = slots[i].Id;
+                var piece = _equipped[(byte)slot];
+                if (piece.IsEmpty || ItemCatalog.Get(piece.Type)?.Equipment?.Wear != rule) continue;
+                worn++;
+                if (!Wear(slot)) continue;
+                if (brokeCount < broke.Length) broke[brokeCount] = piece.Type;
+                brokeCount++;
+            }
+            return worn;
         }
 
         public void AddGold(int amount)
@@ -239,21 +292,23 @@ namespace Simpiens.Cognition.Inventory
         public void Clear()
         {
             Array.Clear(_slots, 0, _capacity);
-            Array.Clear(_equipped, 0, EquipmentSlots);
+            _equipped = default;
         }
 
-        /// <summary>Writes the purse, every slot and the equipment into a save, reusing its slot array when the capacity matches.</summary>
+        /// <summary>Writes the purse, every slot and every equipment record into a save, reusing its slot array when the capacity matches.</summary>
         public void CaptureTo(InventorySave save)
         {
             if (save == null) throw new ArgumentNullException(nameof(save));
             if (save.Slots == null || save.Slots.Length != _capacity) save.Slots = new ItemInstance[_capacity];
             Array.Copy(_slots, save.Slots, _capacity);
             save.Gold = Gold;
-            if (save.Equipped == null || save.Equipped.Length != EquipmentSlots) save.Equipped = new ItemInstance[EquipmentSlots];
-            Array.Copy(_equipped, save.Equipped, EquipmentSlots);
+            save.Equipped = _equipped;
         }
 
-        /// <summary>Replaces the purse, the slots and the equipment with a save's. The save must have this inventory's capacity.</summary>
+        /// <summary>
+        /// Replaces the purse, the slots and the equipment with a save's. The save must have this inventory's capacity; that
+        /// each piece fits its slot is checked before a load begins (<see cref="Simpiens.Simulation.Persistence.SaveItems"/>).
+        /// </summary>
         public void RestoreFrom(InventorySave save)
         {
             if (save?.Slots == null) throw new ArgumentNullException(nameof(save));
@@ -263,8 +318,7 @@ namespace Simpiens.Cognition.Inventory
             }
             Array.Copy(save.Slots, _slots, _capacity);
             Gold = save.Gold;
-            Array.Clear(_equipped, 0, EquipmentSlots);
-            if (save.Equipped != null) Array.Copy(save.Equipped, _equipped, Math.Min(EquipmentSlots, save.Equipped.Length));
+            _equipped = save.Equipped;
         }
     }
 }

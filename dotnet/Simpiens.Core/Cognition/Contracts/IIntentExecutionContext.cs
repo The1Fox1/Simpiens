@@ -11,7 +11,7 @@ namespace Simpiens.Cognition.Contracts
     /// Context passed to IIntentHandler instances to interact with simulation state,
     /// physical movement, registries, and the economy ledger without tight coupling to SimulationManager.
     /// </summary>
-    public interface IIntentExecutionContext
+    public interface IIntentExecutionContext : Simpiens.Simulation.Skills.ISkillPractice
     {
         uint CurrentTick { get; }
         float FixedTickDeltaTime { get; }
@@ -32,6 +32,33 @@ namespace Simpiens.Cognition.Contracts
         bool TryDisplacePawn(WorldEntity node, Vec2 candidate, bool respectPawns = true);
         void CheckGossipOpportunity(WorldEntity node);
         int GetSectorForPosition(Vec2 position);
+
+        /// <summary>The loaded map (immutable): its sectors, lairs and points; null before one is loaded.</summary>
+        Simpiens.Simulation.World.MapDefinition Map { get; }
+
+        /// <summary>The creature with <paramref name="id"/>, alive (Epic 10 Part 3, K3.3: a fight's quarry).</summary>
+        bool TryGetCreature(EntityId id, out Simpiens.Simulation.Creatures.CreatureState creature);
+
+        /// <summary>A crawler in a fight asks to swing at a creature this tick; the creatures' phase decides it (K3.3, D6).</summary>
+        void SwingAtCreature(WorldEntity crawler, EntityId creature);
+
+        /// <summary>True when nothing of the map's walls stands between the two points (Epic 10 Part 3, K8.2: a shooter's clear line); true with no map.</summary>
+        bool HasLineOfSight(Vec2 from, Vec2 to);
+
+        /// <summary>Danger for the fallen (Epic 10 Part 3, K5.1): a hazard sector, or the reach of a lair with a living creature.</summary>
+        bool InDanger(Vec2 position);
+
+        /// <summary>The living creature of lair <paramref name="lairIndex"/> nearest <paramref name="from"/> (Epic 10 Part 3, K6.2: a hunter's quarry); false when the lair is empty.</summary>
+        bool TryGetNearestLairCreature(int lairIndex, Vec2 from, out Simpiens.Simulation.Creatures.CreatureState creature);
+
+        /// <summary>A claim on a hunt joins its party while it has room (Epic 10 Part 3, K6.1); true when the crawler is in it.</summary>
+        bool TryJoinHunt(ushort bountyId, EntityId crawler);
+
+        /// <summary>True while the pile lies on the ground (Epic 10 Part 3, K4.3).</summary>
+        bool PileExists(EntityId pileId);
+
+        /// <summary>A crawler picks over a pile by the loot rule (K4.3d): the units taken; -1 when the pile is gone or not yet its to take.</summary>
+        int TakeFromPile(WorldEntity taker, EntityId pileId);
 
         bool TryGetResource(EntityId resourceId, out ResourceData resource);
         void RemoveResource(EntityId resourceId);

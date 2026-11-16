@@ -14,6 +14,8 @@ using Simpiens.Simulation.Spatial;
 using Simpiens.Simulation.Workshops;
 using Simpiens.Simulation.World;
 
+using Simpiens.Presentation.Art;
+
 namespace Simpiens.Presentation
 {
     /// <summary>A crawler's passing moments that the view shows over its state (<see cref="CrawlerAppearance.Desired"/>).</summary>
@@ -28,6 +30,10 @@ namespace Simpiens.Presentation
         Gossiping = 16,
         /// <summary>Hurt this tick (Epic 10 Part 2, S3, D71): drawn as a blinking red coat over whatever state it shows (<see cref="HurtCoat"/>).</summary>
         Hurt = 32,
+        /// <summary>Downed in danger, its clock running (Epic 10 Part 3, K5.8a): drawn lying where it fell.</summary>
+        Collapsed = 64,
+        /// <summary>Carried by a rescuer (K5.8a): drawn lying across its rescuer's back.</summary>
+        Carried = 128,
     }
 
     /// <summary>
@@ -54,14 +60,33 @@ namespace Simpiens.Presentation
         public CrawlerFlags Flags;
         /// <summary>A crawler's sector at the end of the tick (for scenes started by entering a zone); -1 for props or with no sectors captured.</summary>
         public int SectorId;
-        /// <summary>What a crawler wears in its protection slot (graphics V5); None for none, and for props.</summary>
-        public ItemType Worn;
+        /// <summary>What a crawler shows worn, slot by slot (graphics V5; every slot since Epic 10 Part 3, K1.5); nothing for props.</summary>
+        public WornLook Worn;
         /// <summary>The first salvage a crawler holds, in id order (graphics V5): what it is seen carrying; None for none.</summary>
         public ItemType Carried;
         /// <summary>A crawler's look (Epic UI-Beta B2), its body drawn from it; default (no look) for props and for crawlers given none.</summary>
         public CrawlerLook Look;
         /// <summary>Who a crawler is to the outpost (Epic UI-Beta B2); Resident for props.</summary>
         public CrawlerStanding Standing;
+        /// <summary>A creature's kind (Epic 10 Part 3, K2.5); None for crawlers and props.</summary>
+        public Simpiens.Simulation.Creatures.CreatureKind Creature;
+        /// <summary>What a creature is doing: resting at its place, roaming, chasing, fleeing, going home.</summary>
+        public Simpiens.Simulation.Creatures.CreatureMode CreatureMode;
+        /// <summary>The crawler a creature is after (its strike lunges at it); empty unless it chases.</summary>
+        public EntityId CreatureTarget;
+        /// <summary>A creature swung during this tick, hit or miss (Epic 10 Part 3, K2.5: its strike pose).</summary>
+        public bool Striking;
+        /// <summary>A creature's health as a share of its kind's whole (Epic 10 Part 3, K10.5b: a boss's health bar); 0 for the rest.</summary>
+        public float CreatureHealth;
+
+        /// <summary>A creature (it has a kind), drawn as its kind (<see cref="EntityVisuals.Creature"/>).</summary>
+        public readonly bool IsCreature => Creature != Simpiens.Simulation.Creatures.CreatureKind.None;
+
+        /// <summary>A pile's top item (Epic 10 Part 3, K4.5a): its rarest stack, the first on a tie; none for anything else, or a purse alone.</summary>
+        public ItemType PileItem;
+
+        /// <summary>A pile that is a dead crawler's body (K5.8b): drawn as a cairn.</summary>
+        public bool IsBody;
     }
 
     /// <summary>
@@ -83,7 +108,7 @@ namespace Simpiens.Presentation
 
     /// <summary>
     /// The world as the view draws it, at the end of one tick (Epic CLIENT, review A3): every entity in the world, in
-    /// registration order, and which sectors are charted. The views read frames, never the live simulation; a network
+    /// registration order (the creatures among them since Epic 10 Part 3, K2.5), and which sectors are charted. The views read frames, never the live simulation; a network
     /// client would fill the same structure from replicated state. Its buffers grow once and are reused.
     /// </summary>
     public sealed class WorldViewFrame
@@ -94,6 +119,7 @@ namespace Simpiens.Presentation
         private readonly Dictionary<EntityId, int> _index = new Dictionary<EntityId, int>(128);
         private readonly bool[] _charted = new bool[256];
         private readonly List<ChronicleEvent> _events = new List<ChronicleEvent>(8);
+        private Simpiens.Simulation.Combat.ShotRecord[] _shots = new Simpiens.Simulation.Combat.ShotRecord[8];
         private bool _knowsCharting;
 
         /// <summary>The tick the frame was captured at.</summary>
@@ -114,6 +140,11 @@ namespace Simpiens.Presentation
 
         public ref readonly StationView Station(int index) => ref _stations[index];
 
+        /// <summary>The shots loosed in the tick (Epic 10 Part 3, K8.4a), crawlers' and creatures', as the creatures' pass decided them.</summary>
+        public int ShotCount { get; private set; }
+
+        public ref readonly Simpiens.Simulation.Combat.ShotRecord Shot(int index) => ref _shots[index];
+
         /// <summary>The trade caravan at the end of the tick (Epic 10 Part 2, the stretch, D70): off the map, walking in or out, or at the stall.</summary>
         public CaravanState Caravan { get; private set; }
 
@@ -127,6 +158,12 @@ namespace Simpiens.Presentation
 
         public bool TryGetIndex(EntityId id, out int index) => _index.TryGetValue(id, out index);
 
+        /// <summary>What has happened to the world that stays happened (Epic 10 Part 3, K10.5c): the gate's breach.</summary>
+        public Simpiens.Simulation.World.WorldFlags WorldFlags { get; private set; }
+
+        /// <summary>The descent gate is breached (K10.5c): drawn open, and its cutscene played once (K10.5d).</summary>
+        public bool GateBreached => (WorldFlags & Simpiens.Simulation.World.WorldFlags.GateBreached) != 0;
+
         /// <summary>Whether the sector was charted; with no charting captured, its default (<see cref="SectorDefinition.StartsExplored"/>).</summary>
         public bool IsCharted(in SectorDefinition sector) => _knowsCharting ? _charted[sector.Id] : sector.StartsExplored;
 
@@ -138,9 +175,16 @@ namespace Simpiens.Presentation
         /// chronicle <paramref name="events"/> at <paramref name="tick"/>.
         /// </summary>
         public void Capture(IReadOnlyList<WorldEntity> entities, ISectorRegistry sectors, long tick, uint epoch, IReadOnlyList<ChronicleEvent> events = null, IReadOnlyList<TradeStallData> stalls = null, WorkshopService workshops = null,
-            in CaravanState caravan = default)
+            in CaravanState caravan = default, IReadOnlyList<Simpiens.Simulation.Combat.ShotRecord> shots = null, Simpiens.Simulation.World.WorldFlags flags = default)
         {
             Caravan = caravan;
+            WorldFlags = flags;
+            ShotCount = 0;
+            if (shots != null)
+            {
+                if (_shots.Length < shots.Count) Array.Resize(ref _shots, Math.Max(shots.Count, _shots.Length * 2));
+                for (int i = 0; i < shots.Count; i++) _shots[ShotCount++] = shots[i];
+            }
             StallCount = 0;
             if (stalls != null)
             {
@@ -173,6 +217,7 @@ namespace Simpiens.Presentation
                 var entity = entities[i];
                 if (entity == null) continue;
                 var agent = entity.Agent;
+                var creature = entity.Creature; // a creature (Epic 10 Part 3, K2.5)
                 _entities[Count] = new EntityView
                 {
                     Id = entity.Id,
@@ -183,14 +228,37 @@ namespace Simpiens.Presentation
                     VisualState = agent != null ? agent.VisualState : AgentVisualState.Idle,
                     Flags = agent != null ? FlagsOf(agent) : CrawlerFlags.None,
                     SectorId = agent != null && sectors != null ? sectors.GetSectorAt(entity.Position).Id : -1,
-                    Worn = agent?.Inventory != null ? Worn(agent.Inventory) : ItemType.None,
+                    Worn = agent?.Inventory != null ? WornLook.Of(agent.Inventory) : default,
                     Carried = agent?.Inventory != null ? agent.Inventory.FirstHeld(ItemCategory.Resource) : ItemType.None,
                     Look = agent != null ? agent.Look : default,
                     Standing = agent != null ? StandingOf(agent) : CrawlerStanding.Resident,
+                    Creature = creature != null ? creature.Kind : Simpiens.Simulation.Creatures.CreatureKind.None,
+                    CreatureMode = creature != null ? creature.Mode : default,
+                    CreatureTarget = creature != null ? creature.Target : default,
+                    CreatureHealth = creature?.Definition != null ? (float)(creature.Health / creature.Definition.MaxHealth) : 0f,
+                    Striking = creature != null && creature.SwungAtTick != 0 && creature.SwungAtTick == (uint)tick,
+                    PileItem = entity.Pile != null ? TopItem(entity.Pile) : ItemType.None,
+                    IsBody = entity.Pile != null && entity.Pile.IsBody,
                 };
                 _index[entity.Id] = Count;
                 Count++;
             }
+        }
+
+        // A pile's rarest stack, the first on a tie (K4.5a)
+        private static ItemType TopItem(Simpiens.Simulation.Loot.LootPile pile)
+        {
+            var top = ItemType.None;
+            var rarity = ItemRarity.Common;
+            for (int i = 0; i < pile.Count; i++)
+            {
+                var item = pile.StackAt(i).Type;
+                var definition = ItemCatalog.Get(item);
+                if (definition == null || (top != ItemType.None && definition.Rarity <= rarity)) continue;
+                top = item;
+                rarity = definition.Rarity;
+            }
+            return top;
         }
 
         private void CaptureStations(WorkshopService workshops)
@@ -213,12 +281,6 @@ namespace Simpiens.Presentation
             }
         }
 
-        private static ItemType Worn(AgentInventory inventory)
-        {
-            var worn = inventory.GetEquipped(EquipmentSlot.Protection);
-            return worn.IsEmpty ? ItemType.None : worn.Type;
-        }
-
         /// <summary>A crawler's standing: a member of a guild (the player's, in the live outpost), a drifter, or a resident.</summary>
         public static CrawlerStanding StandingOf(AgentState agent)
             => agent.Memberships.Has(GroupType.FactionGuild) ? CrawlerStanding.GuildMember : agent.IsDrifter ? CrawlerStanding.Drifter : CrawlerStanding.Resident;
@@ -233,6 +295,8 @@ namespace Simpiens.Presentation
             if (agent.IsSharing) flags |= CrawlerFlags.Sharing;
             if (agent.IsGossiping) flags |= CrawlerFlags.Gossiping;
             if (agent.HurtThisTick > 0f) flags |= CrawlerFlags.Hurt;
+            if (agent.IsCollapsed) flags |= CrawlerFlags.Collapsed;
+            if (agent.CarriedBy != default) flags |= CrawlerFlags.Carried;
             return flags;
         }
     }
@@ -375,7 +439,7 @@ namespace Simpiens.Presentation
             var route = sectors?.Map?.CaravanRoute;
             uint interval = caravanInterval != 0 ? caravanInterval : _simulation?.Economy != null ? _simulation.Economy.Supply.RestockIntervalTicks : 0u;
             var caravan = route != null ? Simpiens.Simulation.Economy.Caravan.At(tick, interval, route) : default;
-            _current.Capture(entities, sectors, tick, _epoch, events, stalls, workshops, caravan);
+            _current.Capture(entities, sectors, tick, _epoch, events, stalls, workshops, caravan, _simulation?.Creatures?.ShotsThisTick, _simulation?.WorldFlags ?? default);
         }
 
         /// <summary>The events the chronicle recorded since the last capture, oldest first (it holds the newest first).</summary>

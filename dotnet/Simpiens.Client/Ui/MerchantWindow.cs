@@ -2,6 +2,8 @@ using System;
 using Gum.Converters;
 using Gum.DataTypes;
 using Gum.Forms.Controls;
+using Gum.Managers;
+using Gum.Wireframe;
 using Microsoft.Xna.Framework;
 using Gum.GueDeriving;
 using RenderingLibrary.Graphics;
@@ -11,12 +13,12 @@ namespace Simpiens.Client.Ui
 {
     /// <summary>
     /// The merchant terminal (Unity's merchant window, 600 px): the stall's status, treasury and stock, a price slider
-    /// (1 to 50 gold) per good the model lists (item system I6: rows from the stall's goods, not one field per item), and
-    /// Apply, which hands the prices to the model to queue.
+    /// (1 to 50 gold) per good the model lists (item system I6: rows from the stall's goods, not one field per item), in a
+    /// list that scrolls past nine (Epic 10 Part 3, K3.4), and Apply, which hands the prices to the model to queue.
     /// </summary>
     public sealed class MerchantWindow
     {
-        public const float Width = 740f; // 600; 660 for Epic 10 G2's glowstone; 740 for G3's gear, with a four-digit treasury (TheTreasuryAndTheStockLineDoNotOverlapAtTheirLongest)
+        public const float Width = 764f; // 600; 660 for Epic 10 G2's glowstone; 740 for G3's gear, with a four-digit treasury (TheTreasuryAndTheStockLineDoNotOverlapAtTheirLongest); 764 for the goods list's scrollbar (Epic 10 Part 3, K3.4)
 
         private readonly MerchantModel _model;
         private readonly System.Collections.Generic.List<Simpiens.Simulation.Economy.ItemType> _items = new System.Collections.Generic.List<Simpiens.Simulation.Economy.ItemType>(8);
@@ -52,12 +54,26 @@ namespace Simpiens.Client.Ui
 
             body.Children.Add(Window.SubHeader("PRICES"));
             body.Children.Add(Window.Gap(6f));
-            // A row per good, in the model's order; a slider sets the model's row for its item (rows are reloaded on open)
+            // A row per good, in the model's order, in a list that scrolls past VisibleRows (Epic 10 Part 3, K3.4: the arms and
+            // armour make fourteen); a slider sets the model's row for its item (rows are reloaded on open)
+            var scroll = new ScrollViewer();
+            scroll.Visual.WidthUnits = DimensionUnitType.RelativeToParent;
+            scroll.Width = 0f;
+            scroll.Visual.HeightUnits = DimensionUnitType.Absolute;
+            int rows = 0;
+            foreach (var _ in _model.Rows) rows++;
+            scroll.Height = Math.Min(rows, VisibleRows) * (RowHeight + RowGap);
+            var list = scroll.InnerPanel;
+            list.ChildrenLayout = ChildrenLayout.TopToBottomStack;
+            list.StackSpacing = 0f;
+            body.Children.Add(scroll.Visual);
+            GoodsList = scroll;
             foreach (var row in _model.Rows)
             {
                 var item = row.Item;
                 _items.Add(item);
-                _sliders[item] = AddPriceRow(body, row.Label, row.Hint, row.Icon, row.MaxPrice, v => { var current = _model.Row(item); if (current != null) current.Price = v; }, out var value, out var hint);
+                var rarity = Simpiens.Simulation.Items.ItemCatalog.Get(item)?.Rarity ?? Simpiens.Simulation.Items.ItemRarity.Common;
+                _sliders[item] = AddPriceRow(list, row.Label, UiStyle.RarityText(rarity, UiStyle.TextBright), row.Hint, row.Icon, row.MaxPrice, v => { var current = _model.Row(item); if (current != null) current.Price = v; }, out var value, out var hint);
                 _values[item] = value;
                 _hints[item] = hint;
             }
@@ -84,6 +100,12 @@ namespace Simpiens.Client.Ui
         private const int RowHeight = 40;
         private const float RowGap = 4f;
 
+        /// <summary>The goods shown at once; the list scrolls to the rest (Epic 10 Part 3, K3.4).</summary>
+        public const int VisibleRows = 9;
+
+        /// <summary>The goods' list, which scrolls once there are more than <see cref="VisibleRows"/>.</summary>
+        public ScrollViewer GoodsList { get; private set; }
+
         /// <summary>The goods' icons, top to bottom (tests read where they land).</summary>
         public System.Collections.Generic.IReadOnlyList<SpriteRuntime> Icons => _iconViews;
         /// <summary>The goods the window prices, top to bottom.</summary>
@@ -101,7 +123,7 @@ namespace Simpiens.Client.Ui
         /// <summary>A good's line under its name: what it is to the stall, and the stall's stock of it.</summary>
         public TextRuntime HintText(Simpiens.Simulation.Economy.ItemType item) => _hints[item];
 
-        private Slider AddPriceRow(ContainerRuntime body, string title, string description, string icon, int maxPrice, Action<int> set, out TextRuntime value, out TextRuntime hint)
+        private Slider AddPriceRow(GraphicalUiElement body, string title, Color titleColour, string description, string icon, int maxPrice, Action<int> set, out TextRuntime value, out TextRuntime hint)
         {
             var row = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = RowHeight };
             UiParts.AddFill(row, UiStyle.Card);
@@ -114,7 +136,7 @@ namespace Simpiens.Client.Ui
             var labels = UiParts.Column(2f);
             labels.X = 12f + IconAtlas.Size + 10f;
             UiParts.CentreVertically(labels);
-            labels.Children.Add(UiParts.Text(title, UiStyle.TextBright, UiText.BodyBold));
+            labels.Children.Add(UiParts.Text(title, titleColour, UiText.BodyBold)); // in its rarity's colour (Epic 10 Part 3, K4.5b)
             hint = UiParts.Text(description, UiStyle.TextMuted, UiText.Small);
             labels.Children.Add(hint);
             row.Children.Add(labels);

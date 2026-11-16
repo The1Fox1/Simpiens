@@ -160,7 +160,15 @@ namespace Simpiens.Simulation.Guild
                 var id = members[i].CrawlerId;
                 if (!guild.IsMember(id) || !host.TryGetCrawler(id, out var crawler) || crawler.IsDowned) return Check.BadParty;
             }
-            if (!host.TryGetSector(order.TargetSectorId, out var sector) || !sector.Hazard.IsHazardous || !host.IsSectorCharted(order.TargetSectorId)
+            byte targetSector = order.TargetSectorId;
+            if (order.Kind == ExpeditionKind.Clear)
+            {
+                // A clear (Epic 10 Part 3, K7.1, Q8): a charted lair with a creature in it; its sector is the lair's
+                var lairs = host.Lairs;
+                if (lairs == null || order.LairIndex >= lairs.Count || !host.IsLairCharted(order.LairIndex) || lairs[order.LairIndex].Alive == 0) return Check.BadTarget;
+                targetSector = (byte)host.GetSectorForPosition(lairs[order.LairIndex].Definition.Position);
+            }
+            else if (!host.TryGetSector(order.TargetSectorId, out var sector) || !sector.Hazard.IsHazardous || !host.IsSectorCharted(order.TargetSectorId)
                 || sectorYield == ItemType.None)
             {
                 return Check.BadTarget;
@@ -168,7 +176,7 @@ namespace Simpiens.Simulation.Guild
             for (int i = 0; i < guild.Parties.Count; i++)
             {
                 var other = guild.Parties[i];
-                if (other != party && other.IsOut && other.Expedition.TargetSectorId == order.TargetSectorId) return Check.SectorTaken;
+                if (other != party && other.IsOut && other.Expedition.TargetSectorId == targetSector) return Check.SectorTaken;
             }
             if (order.Goal == 0 || order.Goal > tuning.Expedition.MaxGoal) return Check.BadGoal;
             if (host.ActiveStalls.Count == 0) return Check.NoStall;
@@ -177,6 +185,23 @@ namespace Simpiens.Simulation.Guild
 
         public static Check CheckRecall(GuildService guild, byte partySlot) =>
             partySlot >= 1 && partySlot <= guild.Parties.Count && guild.Parties[partySlot - 1].IsOut ? Check.Ok : Check.NoExpedition;
+
+        /// <summary>
+        /// True when the crawler wears, in any slot, a piece that cuts some hazard's harm and isn't worn to half its life (D12;
+        /// every slot since Epic 10 Part 3, K1.3; by its stats, K1.4).
+        /// </summary>
+        public static bool WearsSoundProtection(Simpiens.Cognition.Inventory.IAgentInventory inventory)
+        {
+            if (inventory == null) return false;
+            var slots = EquipmentSlots.All;
+            for (int i = 0; i < slots.Count; i++)
+            {
+                var worn = inventory.GetEquipped(slots[i].Id);
+                if (worn.IsEmpty || WornOut(worn)) continue;
+                if (Outfitting.Score(null, OutfitNeed.EveryHazard, new WornSwap(slots[i].Id, worn)) > 0f) return true;
+            }
+            return false;
+        }
 
         /// <summary>An empty slot, or a piece worn to half its life or less: it gets fresh gear (D12).</summary>
         public static bool WornOut(in ItemInstance worn)
@@ -187,15 +212,13 @@ namespace Simpiens.Simulation.Guild
         }
 
         /// <summary>
-        /// Whether a member may be given <paramref name="item"/> from the stall's stock (D12): a member, something worn, in
-        /// stock, and its slot free or the piece in it worn to half its life or less (gear wears out with each trip).
+        /// Whether <paramref name="item"/> from the stall's stock may go to member <paramref name="crawlerId"/> (D12): a member,
+        /// gear, in stock; and the member wears none in the slot it goes in, or the piece there is worn to half its life, or
+        /// (given for a hazard, Epic 10 Part 2, D50) wearing it in place of that piece would outfit the member better against
+        /// <paramref name="against"/>, by the stats of all it wears (<see cref="Outfitting"/>, Epic 10 Part 3, K1.4). A fight's gift
+        /// is judged for a fight in reach or from range (K8.2c): which the member is armed for is the planner's.
         /// </summary>
-        /// <summary>
-        /// Whether <paramref name="item"/> from the stall's stock may go to member <paramref name="crawlerId"/>: a member, gear,
-        /// in stock; and the member wears none in that slot, or it is worn to half its life, or (given for a hazard,
-        /// Epic 10 Part 2, D50) what it wears cuts <paramref name="against"/> less than the item does.
-        /// </summary>
-        public static Check CheckGiveGear(GuildService guild, IGuildHost host, EntityId crawlerId, ItemType item, HazardKind against = HazardKind.None)
+        public static Check CheckGiveGear(GuildService guild, IGuildHost host, EntityId crawlerId, ItemType item, HazardKind against = HazardKind.None, bool forFighting = false)
         {
             if (!guild.IsMember(crawlerId)) return Check.NotMember;
             var equipment = ItemCatalog.Get(item)?.Equipment;
@@ -203,9 +226,156 @@ namespace Simpiens.Simulation.Guild
             if (host.ActiveStalls.Count == 0) return Check.NoStall;
             if (host.ActiveStalls[0].SellStockOf(item) < 1) return Check.OutOfStock;
             if (!host.TryGetCrawler(crawlerId, out var crawler) || crawler.Inventory == null) return Check.NoCrawler;
-            var worn = crawler.Inventory.GetEquipped(equipment.Slot);
-            if (!WornOut(worn) && (against == HazardKind.None || ProtectionAgainst(item, against) <= ProtectionAgainst(worn.Type, against))) return Check.AlreadyWearing;
-            return Check.Ok;
+            // The piece it would take the place of, by the rule the stall's sales share (Epic 10 Part 3, K1.1)
+            if (!WornGear.TryReplacing(crawler.Inventory, item, out var replacing)) return Check.NotGear;
+            var worn = crawler.Inventory.GetEquipped(replacing);
+            var need = forFighting ? OutfitNeed.Against(against).AndFighting() : OutfitNeed.Against(against); // a fight's gift (Epic 10 Part 3, K7.4)
+            var piece = Outfitting.NewPiece(item, host.ActiveStalls[0].BestGradeOf(item));
+            if (WornOut(worn) || Outfitting.Gain(crawler.Inventory, need, replacing, piece) > 0f) return Check.Ok;
+            // A fight's gift may arm a member to shoot instead (Epic 10 Part 3, K8.2c): a bow in place of a blade
+            if (forFighting && Outfitting.Gain(crawler.Inventory, OutfitNeed.ForShooting, replacing, piece) > 0f) return Check.Ok;
+            return Check.AlreadyWearing;
+        }
+
+        /// <summary>
+        /// The piece from <paramref name="stock"/> (the stall, less what is promised) to give a member wearing
+        /// <paramref name="worn"/> for <paramref name="slot"/> on a trip against <paramref name="hazard"/> (D50; slot by slot,
+        /// Epic 10 Part 3, K1.4): the piece that most improves its outfit against the hazard over what the slot holds, or over
+        /// the slot bare when what it holds is worn to half its life (D12). None when no piece gains, or for no hazard.
+        /// </summary>
+        public static ItemType GiftFor(in TradeStallData stock, Simpiens.Cognition.Inventory.IAgentInventory worn, EquipmentSlot slot, HazardKind hazard)
+        {
+            if (worn == null) return ItemType.None;
+            var piece = worn.GetEquipped(slot);
+            bool refresh = !piece.IsEmpty && WornOut(piece);
+            return Outfitting.BestInStock(stock, worn, OutfitNeed.Against(hazard), slot, refresh, out _);
+        }
+
+        /// <summary>The piece in the stall's stock that best outfits a member bare in <paramref name="slot"/> against <paramref name="hazard"/>: what outfitting gives there (the party builder's words). None for none.</summary>
+        public static ItemType BestForBare(in TradeStallData stock, EquipmentSlot slot, HazardKind hazard)
+            => Outfitting.BestInStock(stock, null, OutfitNeed.Against(hazard), slot, overBare: true, out _);
+
+        /// <summary>
+        /// The gifts that outfit <paramref name="members"/> for a trip against <paramref name="hazard"/> from the stall's stock
+        /// (D12, D50; slot by slot since Epic 10 Part 3, K1.4), the party builder's and the scripted player's alike, in two
+        /// rounds so scarce stock goes to the unprotected first:
+        /// <list type="bullet">
+        /// <item><see cref="OutfitRound.Unprotected"/>: each member with no sound protection, in the order given, gets the one
+        /// piece that outfits it best, whichever slot;</item>
+        /// <item><see cref="OutfitRound.EverySlot"/>: then each member, every slot in the table's order not already given a
+        /// piece, gets the piece <see cref="GiftFor"/> picks.</item>
+        /// </list>
+        /// A gift is planned only if the guild would give it now. Each is taken off <paramref name="stock"/> (the caller's copy
+        /// of the stall), so the next sees what is left, and appended to <paramref name="gifts"/> at <paramref name="count"/>
+        /// (as many as fit); a later round skips what an earlier one planned. <see cref="OutfitRound.Both"/> runs the two in turn.
+        /// </summary>
+        public static void PlanOutfit(GuildService guild, IGuildHost host, System.Collections.Generic.IReadOnlyList<EntityId> members, HazardKind hazard,
+            OutfitRound round, ref TradeStallData stock, System.Span<GearGift> gifts, ref int count)
+        {
+            if (guild == null || host == null || members == null) return;
+            var need = OutfitNeed.Against(hazard);
+            var slots = EquipmentSlots.All;
+            if (round == OutfitRound.Unprotected || round == OutfitRound.Both)
+            {
+                for (int i = 0; i < members.Count && count < gifts.Length; i++)
+                {
+                    if (!host.TryGetCrawler(members[i], out var crawler) || crawler.Inventory == null || WearsSoundProtection(crawler.Inventory)) continue;
+                    var best = ItemType.None;
+                    var bestSlot = default(EquipmentSlot);
+                    float bestGain = 0f;
+                    for (int s = 0; s < slots.Count; s++)
+                    {
+                        var piece = crawler.Inventory.GetEquipped(slots[s].Id);
+                        var item = Outfitting.BestInStock(stock, crawler.Inventory, need, slots[s].Id, overBare: !piece.IsEmpty && WornOut(piece), out float gain);
+                        if (item == ItemType.None || gain <= bestGain || CheckGiveGear(guild, host, members[i], item, hazard) != Check.Ok) continue;
+                        best = item;
+                        bestSlot = slots[s].Id;
+                        bestGain = gain;
+                    }
+                    if (best == ItemType.None) continue;
+                    gifts[count++] = new GearGift(members[i], best, bestSlot);
+                    stock = stock.TakeBest(best, out _);
+                }
+            }
+            if (round == OutfitRound.EverySlot || round == OutfitRound.Both)
+            {
+                for (int i = 0; i < members.Count; i++)
+                {
+                    if (!host.TryGetCrawler(members[i], out var crawler) || crawler.Inventory == null) continue;
+                    for (int s = 0; s < slots.Count && count < gifts.Length; s++)
+                    {
+                        if (Planned(gifts, count, members[i], slots[s].Id)) continue;
+                        var item = GiftFor(stock, crawler.Inventory, slots[s].Id, hazard);
+                        if (item == ItemType.None || CheckGiveGear(guild, host, members[i], item, hazard) != Check.Ok) continue;
+                        gifts[count++] = new GearGift(members[i], item, slots[s].Id);
+                        stock = stock.TakeBest(item, out _);
+                    }
+                }
+            }
+        }
+
+        /// <summary>The best piece in <paramref name="stock"/> for a bare <paramref name="slot"/> in a fight (Epic 10 Part 3, K7.3: the builder's words for a clear).</summary>
+        public static ItemType BestForFight(in TradeStallData stock, EquipmentSlot slot, bool shooting = false)
+            => Outfitting.BestInStock(stock, null, shooting ? OutfitNeed.ForShooting : OutfitNeed.ForFighting, slot, overBare: true, out _);
+
+        /// <summary>The best weapon with a range in <paramref name="stock"/>, whichever slot takes it (Epic 10 Part 3, K8.2c: the builder's words); none if none.</summary>
+        public static ItemType BestBow(in TradeStallData stock)
+        {
+            var slots = EquipmentSlots.All;
+            for (int s = 0; s < slots.Count; s++)
+            {
+                var item = BestForFight(stock, slots[s].Id, shooting: true);
+                if (item != ItemType.None && HasRange(item)) return item;
+            }
+            return ItemType.None;
+        }
+
+        /// <summary>True when <paramref name="item"/>'s equipment adds range (a sling, a crossbow).</summary>
+        public static bool HasRange(ItemType item)
+        {
+            var equipment = ItemCatalog.Get(item)?.Equipment;
+            if (equipment == null) return false;
+            for (int i = 0; i < equipment.ModifierCount; i++)
+            {
+                var m = equipment.GetModifier(i);
+                if (m.Stat == StatKind.Range && m.Op == ModifierOp.Add && m.Value > 0f) return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// The gifts that arm <paramref name="members"/> for a clear from the stall's stock (Epic 10 Part 3, K7.1, D38), the
+        /// party builder's and the scripted player's alike: each member in the order given, every slot in the table's order,
+        /// the piece that adds the most for a fight over what it wears, as stock allows. The last <paramref name="shooters"/>
+        /// members, the back of the party, are armed to shoot (K8.2c, D47: <see cref="OutfitNeed.ForShooting"/>), the rest to
+        /// fight in reach.
+        /// </summary>
+        public static void PlanArms(GuildService guild, IGuildHost host, System.Collections.Generic.IReadOnlyList<EntityId> members,
+            ref TradeStallData stock, System.Span<GearGift> gifts, ref int count, int shooters = 0)
+        {
+            if (guild == null || host == null || members == null) return;
+            var slots = EquipmentSlots.All;
+            for (int i = 0; i < members.Count; i++)
+            {
+                if (!host.TryGetCrawler(members[i], out var crawler) || crawler.Inventory == null) continue;
+                var need = i >= members.Count - shooters ? OutfitNeed.ForShooting : OutfitNeed.ForFighting;
+                for (int s = 0; s < slots.Count && count < gifts.Length; s++)
+                {
+                    var item = Outfitting.BestInStock(stock, crawler.Inventory, need, slots[s].Id, overBare: false, out float gain);
+                    if (item == ItemType.None || gain <= 0f || CheckGiveGear(guild, host, members[i], item, HazardKind.None, forFighting: true) != Check.Ok) continue;
+                    gifts[count++] = new GearGift(members[i], item, slots[s].Id);
+                    stock = stock.TakeBest(item, out _);
+                }
+            }
+        }
+
+        private static bool Planned(System.Span<GearGift> gifts, int count, EntityId crawler, EquipmentSlot slot)
+        {
+            for (int i = 0; i < count; i++)
+            {
+                if (gifts[i].Crawler == crawler && gifts[i].Slot == slot) return true;
+            }
+            return false;
         }
 
         /// <summary>
@@ -224,31 +394,6 @@ namespace Simpiens.Simulation.Guild
                 if (modifier.Op == ModifierOp.Add && (modifier.Stat == StatKind.HazardResistance || (against != StatKind.None && modifier.Stat == against))) stopped += modifier.Value;
             }
             return stopped < CrawlerStats.MaxHazardResistance ? stopped : CrawlerStats.MaxHazardResistance;
-        }
-
-        /// <summary>
-        /// The protection in the stall's stock that cuts a hazard of <paramref name="kind"/> most (D50: a respirator for the
-        /// Gallery, a hard hat for the Glow Caves, hazard gear when there is no better); the first in id order on a tie;
-        /// None when there is none in stock.
-        /// </summary>
-        public static ItemType BestProtectionInStock(IGuildHost host, HazardKind kind)
-        {
-            if (host == null || host.ActiveStalls.Count == 0) return ItemType.None;
-            var stall = host.ActiveStalls[0];
-            var protection = ItemCatalog.InCategory(ItemCategory.Protection);
-            var best = ItemType.None;
-            float most = 0f;
-            for (int i = 0; i < protection.Count; i++)
-            {
-                if (stall.SellStockOf(protection[i]) < 1) continue;
-                float stopped = ProtectionAgainst(protection[i], kind);
-                if (best == ItemType.None || stopped > most)
-                {
-                    best = protection[i];
-                    most = stopped;
-                }
-            }
-            return best;
         }
 
         /// <summary>The hazard of the sector <paramref name="sectorId"/>, from the loaded map; None for a safe sector or none found.</summary>
@@ -291,5 +436,32 @@ namespace Simpiens.Simulation.Guild
                 default: return string.Empty;
             }
         }
+    }
+
+    /// <summary>A piece from the stall's stock for a member's slot (<see cref="GuildRules.PlanOutfit"/>): sent as a GiveGear command.</summary>
+    public readonly struct GearGift
+    {
+        public GearGift(EntityId crawler, ItemType item, EquipmentSlot slot)
+        {
+            Crawler = crawler;
+            Item = item;
+            Slot = slot;
+        }
+
+        public EntityId Crawler { get; }
+        public ItemType Item { get; }
+
+        /// <summary>The slot it was planned for (the command wears it by the shared rule, <see cref="WornGear"/>).</summary>
+        public EquipmentSlot Slot { get; }
+
+        public override string ToString() => $"{Item} for {Crawler}'s {EquipmentSlots.NameOf(Slot)}";
+    }
+
+    /// <summary>The rounds of <see cref="GuildRules.PlanOutfit"/>: the unprotected's one piece each, then a piece for every slot, or both in turn.</summary>
+    public enum OutfitRound : byte
+    {
+        Both = 0,
+        Unprotected = 1,
+        EverySlot = 2
     }
 }

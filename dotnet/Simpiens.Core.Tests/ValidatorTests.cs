@@ -42,6 +42,9 @@ namespace Simpiens.Core.Tests
         public void Look() => new Simpiens.Testing.People.LookValidator().RunAllValidationTests();
 
         [Fact]
+        public void Skills() => new Simpiens.Testing.Skills.SkillsValidator().RunAllValidationTests();
+
+        [Fact]
         public void GivenNames() => new Simpiens.Testing.People.GivenNamesValidator().RunAllValidationTests();
 
         [Fact]
@@ -162,6 +165,15 @@ namespace Simpiens.Core.Tests
         public void ItemCatalog() => new Simpiens.Testing.Economy.ItemCatalogValidator().RunAllValidationTests();
 
         [Fact]
+        public void EquipmentSlots() => new Simpiens.Testing.Economy.EquipmentSlotsValidator().RunAllValidationTests();
+
+        [Fact]
+        public void Outfitting() => new Simpiens.Testing.Economy.OutfittingValidator().RunAllValidationTests();
+
+        [Fact]
+        public void Lairs() => new Simpiens.Testing.Combat.LairValidator().RunAllValidationTests();
+
+        [Fact]
         public void Recipes() => new Simpiens.Testing.Economy.RecipeValidator().RunAllValidationTests();
 
         [Fact]
@@ -175,5 +187,11 @@ namespace Simpiens.Core.Tests
 
         [Fact]
         public void Loot() => new Simpiens.Testing.Economy.LootValidator().RunAllValidationTests();
+
+        [Fact]
+        public void Combat() => new Simpiens.Testing.Combat.CombatValidator().RunAllValidationTests();
+
+        [Fact]
+        public void CreatureCatalog() => new Simpiens.Testing.Combat.CreatureCatalogValidator().RunAllValidationTests();
     }
 }

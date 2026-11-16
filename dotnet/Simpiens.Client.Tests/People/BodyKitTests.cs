@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Simpiens.Entities;
 using Simpiens.Presentation;
+using Simpiens.Presentation.Art;
 using Simpiens.Presentation.Art.People;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Economy;
@@ -36,7 +37,7 @@ namespace Simpiens.Client.Tests.People
             for (uint i = 0; i < 16; i++)
             {
                 var look = CrawlerLook.Generate(PeopleSheetTests.CrowdSeed, new EntityId(i + 1u, 0u, 0u, 0u));
-                Assert.True(Bake(look, ItemType.HazardGear, tabard: true).AsSpan().SequenceEqual(Bake(look, ItemType.HazardGear, tabard: true)));
+                Assert.True(Bake(look, Geared, tabard: true).AsSpan().SequenceEqual(Bake(look, Geared, tabard: true)));
             }
         }
 
@@ -81,7 +82,7 @@ namespace Simpiens.Client.Tests.People
         {
             foreach (var look in EveryShape())
             {
-                foreach (var gear in new[] { ItemType.None, ItemType.HazardGear })
+                foreach (var gear in new[] { default, Geared })
                 {
                     var body = Bake(look, gear, tabard: true);
                     foreach (AgentVisualState state in Enum.GetValues<AgentVisualState>())
@@ -110,7 +111,7 @@ namespace Simpiens.Client.Tests.People
             ItemArtLook(out var helm, out var lamp);
             foreach (var style in LookCatalog.Options(LookGene.HairStyle))
             {
-                var body = Bake(Basis.With(LookGene.HairStyle, style.Id), ItemType.HazardGear, tabard: false);
+                var body = Bake(Basis.With(LookGene.HairStyle, style.Id), WornLook.Wearing(ItemType.HardHat), tabard: false);
                 foreach (AgentVisualState state in Enum.GetValues<AgentVisualState>())
                 {
                     for (int f = 0; f < 2; f++)
@@ -132,7 +133,7 @@ namespace Simpiens.Client.Tests.People
         {
             foreach (var look in EveryShape())
             {
-                var body = Bake(look, ItemType.None, tabard: true);
+                var body = Bake(look, default, tabard: true);
                 foreach (AgentVisualState state in Enum.GetValues<AgentVisualState>())
                 {
                     for (int f = 0; f < 2; f++)
@@ -154,13 +155,49 @@ namespace Simpiens.Client.Tests.People
             }
         }
 
+        /// <summary>
+        /// Hazard gear is a coat over the shirt (Epic 10 Part 3, K1.5): awake, every shirt key takes its colour, and worn with
+        /// a hard hat both show, each in its place, up the slots' draw layers; asleep, the blanket covers it.
+        /// </summary>
+        [Fact]
+        public void TheCoatColoursTheShirtAndShowsWithTheHelm()
+        {
+            Assert.True(Simpiens.Presentation.Art.ItemArt.TryGet(Simpiens.Simulation.Items.ItemCatalog.Get(ItemType.HazardGear).ArtKey, out var coat));
+            ItemArtLook(out var helm, out var lamp);
+            var coated = Bake(Basis, WornLook.Wearing(ItemType.HazardGear));
+            var both = Bake(Basis, Geared);
+            foreach (AgentVisualState state in Enum.GetValues<AgentVisualState>())
+            {
+                for (int f = 0; f < 2; f++)
+                {
+                    var head = HeadAnchors.Of(state, f);
+                    var keys = ProceduralSprites.CrawlerKeys(state, f);
+                    int at = BodyKit.FrameIndex(state, f) * BodyKit.PixelsPerFrame;
+                    int shirt = 0, coloured = 0;
+                    for (int y = 0; y < BodyKit.Size; y++)
+                        for (int x = 0; x < BodyKit.Size; x++)
+                        {
+                            if (keys[y][x] != 'C') continue;
+                            shirt++;
+                            if (coated[at + y * BodyKit.Size + x] == coat.Primary) coloured++;
+                        }
+                    if (head.Lying) Assert.Equal(0, coloured);
+                    else Assert.True(shirt > 0 && coloured >= shirt - 4, $"{state} {f}: {coloured} of {shirt} shirt keys in the coat's colour."); // a build may widen or narrow it
+                    if (head.Lying) continue;
+                    var crown = both[at + head.HairTop * BodyKit.Size + HeadAnchor.Left + 2];
+                    Assert.True(crown == helm || crown == lamp, $"{state} {f}: the hard hat shows over the coat.");
+                    Assert.Contains(coat.Primary, both.AsSpan(at, BodyKit.PixelsPerFrame).ToArray());
+                }
+            }
+        }
+
         [Fact]
         public void ABakeIntoABufferAllocatesNothing()
         {
             var into = new Rgba32[BodyKit.PixelsPerBody];
-            BodyKit.Bake(Basis, ItemType.HazardGear, true, into); // warm
+            BodyKit.Bake(Basis, Geared, true, into); // warm
             long before = GC.GetAllocatedBytesForCurrentThread();
-            for (int i = 0; i < 20; i++) BodyKit.Bake(Basis, ItemType.HazardGear, i % 2 == 0, into);
+            for (int i = 0; i < 20; i++) BodyKit.Bake(Basis, Geared, i % 2 == 0, into);
             Assert.Equal(0, GC.GetAllocatedBytesForCurrentThread() - before);
         }
 
@@ -182,16 +219,19 @@ namespace Simpiens.Client.Tests.People
 
         private static void ItemArtLook(out Rgba32 helm, out Rgba32 lamp)
         {
-            Assert.True(Simpiens.Presentation.Art.ItemArt.TryGet(Simpiens.Simulation.Items.ItemCatalog.Get(ItemType.HazardGear).ArtKey, out var look));
+            Assert.True(Simpiens.Presentation.Art.ItemArt.TryGet(Simpiens.Simulation.Items.ItemCatalog.Get(ItemType.HardHat).ArtKey, out var look));
             helm = look.Primary;
             lamp = look.Secondary;
         }
 
-        private static Rgba32[] Bake(in CrawlerLook look, ItemType gear = ItemType.None, bool tabard = false)
+        private static Rgba32[] Bake(in CrawlerLook look, WornLook gear = default, bool tabard = false)
         {
             var pixels = new Rgba32[BodyKit.PixelsPerBody];
             BodyKit.Bake(look, gear, tabard, pixels);
             return pixels;
         }
+
+        // A hard hat on the head and hazard gear on the body, worn together (Epic 10 Part 3, K1.3, K1.5)
+        private static readonly WornLook Geared = WornLook.Wearing(ItemType.HardHat).And(Simpiens.Simulation.Items.EquipmentSlot.Body, ItemType.HazardGear);
     }
 }

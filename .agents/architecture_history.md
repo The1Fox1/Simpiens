@@ -1544,3 +1544,249 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
 - **Why:** `FrameTimeGateTests.TheDashboardWithFacesDrawsFarInsideTheFrameBudget` had kept main's CI red since PR #22 merged (11.56 ms against the flat 10 ms), and failed PR #23 twice (16.05 ms, then 10.72 ms), each time with a CPU p99 of 3–6 ms. On the development machine, llvmpipe with four cores, the branch drew that dashboard in about 4.1 ms against main's 5.9 ms (three alternating rounds), so Part 2 didn't make it slower: GitHub's hosted runners are slower and vary. The mean is wall time with the GPU flushed, mostly llvmpipe filling pixels, and 1280x720 has 1.92 times the pixels of the 800x600 the 10 ms was set for.
 - **Decision (the producer's pick, 2026-11-07):** the mean's budget is 10 ms at the 800x600 reference, scaled by the window's pixels and never below it (`MeanBudgetFor`): 19.2 ms at 1280x720. The CPU p99 keeps its one 33 ms budget, since it isn't filling. The gate still catches a change that multiplies the frame's cost.
 - **Rejected:** merging with red CI; re-running until green, which hides a gate that is marginal on the runners.
+
+## 2026-11-07: Epic 10 Part 3 re-scoped: creatures, combat and the gatekeeper; Floor 2 out
+- **The producer:** "I want to re evaluate what we are tackling in epic10_part3, The focus should be combat system, equipment improvements, death, loot, creatures, bosses / gate keepers. We should not focus on floor 2 at all yet".
+- **What changed:**
+  - **Out of Part 3:** Floor 2, floors as data, the move and what it carries, and the next floor's pressure (the 2026-10-29 draft's L0.3–L0.4, L4 and L5), with scouting as a guild order. They go to a Part 4, the descent, which is QUEUED and not drafted.
+  - **In Part 3:** death (the old draft had none) and equipment by body part; two bosses, where the old draft had one; hunt bounties.
+  - **The rewritten draft:** `.agents/epic10_part3_plan.md`, K0–K8, with questions Q1–Q14 as defaults for the producer.
+- **Positions the draft argues:**
+  - the player never commands a fight;
+  - combat runs in physical time, because it is watched, while bleeding out, refilling and growth run in the day's time;
+  - creatures follow a short rule, not the planner;
+  - deaths come from the player's choices, since lone crawlers avoid known lairs;
+  - loot feeds the forge.
+- **Seams laid before the systems** (AGENTS.md, "Refactor and reevaluate"; no large refactor needed):
+  - one combat rule over a read model of both kinds of fighter;
+  - a death goes the drifter's way out of the world;
+  - head and body slots and a goods table of 16, in one format bump;
+  - creatures in a phase of their own, in id order;
+  - loot piles for both kills and bodies;
+  - creature kinds as data.
+- **Milestone 4:** Q1 proposes splitting it. Milestone 4 would be "Creatures, Combat & the Gatekeeper" (Part 3, UI-5, Epic 11), and a Milestone 5 "Floor Relocation" (Part 4). The roadmap records the re-scope and leaves the split to the answer.
+
+## 2026-11-07: Part 3's draft answered in part; Milestone 4 ends with Part 3; K0–K11
+- **The producer:** "Q3 hazards should also kill if the downed crawler is not rescued. Q4 looks good. Q2 melee first, then range. Seeded hit rolls. Q11 Add more equipment slots, for now we should have 2 slots but I want us to build the foundation of a more complex appendable equipment system. Q1 the milestone 4 should end here with functional combat system. Add K9 - skill system".
+- **What the plan became:** K0–K11.
+  - **K1, the equipment system:** slots as a table, room for 16 in the save, and generic stats, wear and outfitting. Head and body replace protection.
+  - **K5, death and rescue:** carrying is one capability, used by friends and parties.
+  - **K8, ranged combat:** after the whole melee loop.
+  - **K9, the skill system:** seven skills as a table. It absorbs Q9's veterans and W4's practice.
+  - The estimate is 31–44 agent days.
+- **Readings, flagged to the producer:**
+  - **Q3:** "rescued" means a crawler downed in danger collapses: it can no longer limp out as Part 1's do. Q3a: its own draught counts as rescue. Q3b: friends rescue, not only parties.
+  - **Q11:** the "2 slots" are head and body, beside the weapon and the tool.
+  - **Q1:** Epic 11 moves with Part 4 to a new Milestone 5, "Floor Relocation", so that Milestone 4, "Combat & the Gatekeeper", ends with Part 3.
+- **Why skills come at K9 and not first:** they tune systems that must exist first (melee, ranged, harvest, making, rescue). The combat rule's read model carries a proficiency from K0.3, flat until K9 fills it, so nothing is rebuilt. The bosses (K10) are tuned with skills in play.
+- **New questions, with defaults:**
+  - Q15 and Q16, ranged: a sling and a crossbow in the one weapon slot, with no ammunition;
+  - Q17–Q21, skills: seven skills; levels 0–10 in named bands; starting skills drawn from the seed and leaned by personality; what each skill does; skills steering choices only through what work pays.
+
+## 2026-11-08: Epic 10 Part 3 ACTIVE; K0's measurements and the combat rule
+- **The go:** "The revised epic plan looks good. Please proceed with K0". The three flagged readings (Q1, Q3, Q11) and the unanswered defaults stand by exception. The design moved into `docs/epics/epic-10-part-3.md`; the plan keeps the steps. Part 2's play session and close-out stay open beside it.
+- **K0.2, measured** (the 23 gate seeds, three game days, with no player, the guild player and the crafting players): 41 of 64 planner facts; about 20,000 ticks/s; frames of 1.7–4.0 ms on llvmpipe; the soak 15/15. The bold are 1–6 of 12 residents and carry 60–100g on most days, which sets K3's weapon prices (a cudgel about 15g, a blade about 30g).
+- **Finding F1: hazards alone down nobody.** No crawler was downed on any run; the lowest health in danger is 46 for a resident and 42 for a member, above the retreat line. So Q3's lethal hazards change no gate seed by themselves, and the deaths `TheCarefulLoseFew` bounds will come from combat, reckless orders and bad luck.
+- **K0.3, the combat rule** (supervised; the developer's review pending), in `Simulation/Combat/`. The decisions are the epic's D1–D8:
+  - **D1, one read model, `Combatant`:** the rule reads a crawler (state and `CrawlerStats`) and a creature (kind and record) the same way.
+  - **D2, weapons are stat modifiers on the bare hand:** attack 2, reach 0.5 between bodies, a swing every 1.5 s, no range. Three stat kinds were added: `Reach`, `AttackInterval` and `Range`.
+  - **D3, the roll:** one draw per swing from (seed, attacker, tick, `SimRandomSalt.Combat`), with the target outside it.
+  - **D4, no damage variance:** a hit does exactly the mitigated attack.
+  - **D5, the chance:** 70% plus proficiency, kept within 5–95%.
+  - **D6, simultaneous resolution:** every swing of a tick is decided before any harm lands, so no outcome depends on entity ids.
+  - **D7, wear per landed hit:** on the weapon only.
+  - **D8, the swing timer belongs to its owner:** whether it is saved is K2.4's call.
+- **Why simultaneous (D6):** Q2 asked for one pass in entity-id order, for determinism. Applying each swing's harm at once would make the lower id strike first in every exchange: ids are drawn from the seed, so that would be a hidden per-seed bias. Deciding first and applying after keeps the pass's id order for logs, and makes outcomes independent of it. The validator duels a crawler against a hand-written creature in both orders and gets identical results.
+- **Golden unchanged:** nothing calls the rule until K2 and K3.
+
+## 2026-11-08: Epic 10 Part 3, K1, the equipment system
+- **The go:** "Approved. Proceed with developing K1", then, after K1.2's save design was presented, "continue with k1.3-k1.6". Commits `2729757`..`5bc3aea` on `feat/epic10-part3`, unpushed.
+- **Slots are a table, not an enum** (K1.1, seam A3). `EquipmentSlot` stays an id, as `ItemType` is; what a slot is (kind, region, draw layer, paper-doll cell, order) is its row in `EquipmentSlots`. Items name a `SlotKind`, never a slot, so a kind may have several slots. Protection's id 0 is retired rather than reused. The weapon (1) and tool (2) keep their ids so the world hash's old encoding holds; head is 3, body 4.
+- **The save keeps a record for every id the table may define** (K1.2): `WornEquipment`, 16 raw records, 256 bytes, pinned. A slot added later loads an older save empty, with no format change; a 17th slot changes the format. Misworn pieces (a retired or unknown slot, or a slot of another kind) are refused on load, never dropped. The goods table went to 16 in the same raise. **Deviation:** the format was raised to 11 in K1.1, not K1.2, because K1.1 already changed what the indices mean. It is the PR's one raise.
+- **Stacking is a table too** (K1.3, `StatRules`): base, plus adds, times multiplies, over every slot in id order, then held within the stat's bounds. The scattered caps (0.9 protection, a tenth of mining speed) became rows. Wear is the piece's rule, not the slot's: `PerUse` split into `PerHarvest` and `PerHit`, and `PerBlowTaken` was added for armour (D7's open question). `AgentInventory.WearBy` wears every piece with a rule.
+- **Outfitting scores a piece by what it changes in the wearer's stats** (K1.4, `Outfitting`): stacked and bounded, with the piece swapped into its slot (`WornSwap`, nothing moved). So hazard gear under a hard hat is worth 0.15 against falling rock, not its 0.5. Residents, the guild's gift check, the party builder and the scripted player all choose by it, never by an item's name or group. W3's outfitting by hazard kind is the one-hazard case.
+  - **Deviation, two rounds** (`GuildRules.PlanOutfit`): a single slot-by-slot pass gave the first unprotected members two pieces each and starved the rest until the caravan. Unprotected members now get their one best piece first, then every slot gets its best piece.
+  - **Deviation, the scripted guild player:** it now gives slot by slot, and both parties' unprotected are served before either party's extras.
+- **Behaviour that changed on purpose:** pieces in different slots are worn together, and D53's trade-in happens only within a slot. Residents in hazard gear buy a hard hat (or boots) for a bare slot where they work. In the guild runs, members keep their hazard gear under the forge's respirators, a fifth of gear's harm. Golden never moved: no forge is built in the golden runs, so nobody there owns a second piece.
+- **The client reads the table** (K1.5): `WornPieces` is a row per slot in display order, laid out by the client's `WornLine` (one gear line; no paper-doll grid, since the dossier has no height at 720 rows). `WornLook` carries each slot's showing piece in the frames; bodies and portraits bake from it up the draw layers. **Deviation, hazard gear's art:** K1.1 put it on the body, but its art was a helmet that couldn't show with a hard hat. It is now a suit: `Worn.Torso` and a new vest glyph. The art pins and 17 renders were re-recorded in their own commits after a look.
+- **The proof** (K1.6): feet and boots added through `TestCatalogs` are worn, summed, worn out, bought by a bold resident on its own, given by the guild, saved and shown in the dossier, with no code of their own. `SlotNamesTests` keeps slot names to the table and the catalogue.
+
+
+## 2026-11-08: Epic 10 Part 3, K2.1–K2.2, lairs and the creature's rule
+- **The go:** "K1 looks good", with the go for K2. K2.2 and K2.3 are supervised: K2.2's rule waits for the developer's review before K2.3. Commits `ac83fbe` (K2.1) and `94a6b37` (K2.2) on `feat/epic10-part3`, unpushed.
+- **Creatures have ids of their own** (K2.1): drawn from a seeded sequence (`SimRandomSalt.CreatureId`), not `EntityIdAllocator`, so creatures coming and going never shift which crawler or drifter comes next. The sequence's counter is what a save needs (K2.4).
+- **The creatures' phase** (K2.2, seam A4): after the crawlers' runtime, in id order; every creature decides and moves, then every swing is decided from where all stand, then all the harm lands (D6). Paths through a `GridAStarSearcher` of the creatures' own, on the main thread. The decisions are the epic's D9–D15.
+- **Hunting is off in the live session until K2.3 (D14):** creatures rest and roam, and notice nobody until crawlers can flee and keep away from known lairs. The rule's tests switch it on.
+- **Deviation:** the plan expected golden and renders to move at K2.1. Neither did: the creatures' own ids, perception skipping them (until K2.3) and the frames skipping them (until K2.5) held K2.1 to structure, and hunting off holds K2.2's.
+
+## 2026-11-09: Epic 10 Part 3, the creatures drawn ahead of K2.3 (K2.5a)
+- **The ask:** "Before we move to K3 i want to get some sprites/rendering going for creatures. They can be simplistic for now". K2.2's review is not yet given, so K2.3 still waits for it; drawing comes first.
+- **Deviation from the plan's order:** K2.5 was to follow K2.3 and K2.4. Its drawing is split out as K2.5a and done now. Each remaining piece goes with the step that makes it visible: the strike pose with K2.3 (hunting goes live), the red coat on creatures with K3 (nothing hurts one before), and the inspector later in K2.5.
+- **Side view, mirrored by the view:** each kind is drawn from the side, facing right, in two frames. Which way a creature faces is the view's own (`CreatureAppearance`): the projection says which way is left on screen, so the frames carry no facing and the core holds no presentation state. A creature that stops keeps facing the way it last went.
+- **A crawler's canvas and scale:** 16 pixels, feet on row 14, a crawler's size in top-down and standing on its feet in isometric, so creatures' pixels match crawlers' in both modes.
+- **Not pickable yet:** a click on a creature selects nothing until the inspector shows one.
+- **Nothing moved:** no existing render (both lairs open uncharted), no golden hash (no core change). Two new renders show the warren (isometric) and the hollow (top-down), the lairs charted by hand.
+- **Correction, the same day:** five existing renders did move, each by the stone beetle alone, drawn in the Deep Seam once a scout has charted it (t1500 in both modes, the fog lifting, the caravan at t2400, the expedition). Locally they passed under the render tolerance; the pinned image compares byte for byte and re-recorded them (`003e672`).
+
+## 2026-11-10: Epic 10 Part 3, K2.3, crawlers meet creatures (supervised; hunting on waits for review)
+- **The go:** "Proceed", after the K2.5a report. K2.2's rule (D9–D15) stands by exception. K2.3 split into K2.3a–d in the plan, each stamped; the decisions are the epic's D16–D20.
+- **Charting is by sight, not by survey** (D17): a lair is known to everyone once a crawler sees one of its creatures in a charted sector, or is struck by one. The plan's "a scout's report charts lairs" would have made every lair known before anyone could stray, and its "remove the perception skip" would have put moving creatures into spatial memory, gossip and surveys. Both are replaced by a sighting the creatures' phase decides.
+- **A known lair is a hazard of its own unit** (D18): a pack's expected harm a second against the lone limit, read wherever a lone crawler is sent (`Vitality.WouldEnterAt`), so the existing hazard judgment carries it and K3's armour lowers it.
+- **Flight is a reflex beside retreat** (D19): the runtime pre-empts after exhaustion and before starvation; `FleeIntent` runs to the bunks until clear of every reach. `AgentActivity` gained no counter, because it is saved; the live checks watch for the intent.
+- **The rats' leash 6** (D20): the layout's claim (the warren holds one node and not the survey point) wasn't true at 8.
+- **Each commit kept golden:** K2.3a–c and the prep left hunting off live. Turning it on is the only behaviour change, kept as a patch for the review.
+- **Finding F3:** live hunting fails Part 2's crafting soak (its 3 seeds) and the workshop loop (gate seed 1). Some of that is the epic's intended pressure (seam.1 lost, about −8% treasury over seeds 1–20); most is the crafting profile's fragility (already 17/20 with hunting off; glowstone lands at the horizon's edge). Options A (bands by the quitting rule), B (retune at F14), C (soften until K3); A recommended. The developer decides.
+
+## 2026-11-10: Epic 10 Part 3, hunting live, F3 by option A, K2.4 and the strike pose
+- **The word:** "Chose A. Proceed". The go covered turning hunting on, settling F3 by option A, golden, the renders, the DoD and K2.4. The strike pose, K2.5's piece due with live hunting, came before the renders.
+- **F3 as applied** (`e73b586`): a quit for want of pay, not a single unpaid visit, fails a band (members and artisans quit at two). The harness counts quits by who leaves a roster one short of the line on the visit that reached it, so no counter was added to the core. The crafting profile's makes and pay are judged across seeds 1–20.
+  - **Deviation:** the option as written judged pay per seed ("an unpaid run under the quitting line"). On the soak's seed 2 an artisan really quit, but pay quits are as rare with hunting as without (1 of 21 seeds off, 2 on), so pay is judged across seeds, as makes are. Recorded in the epic for the developer.
+  - The mid-craft save searches 12 days.
+- **Golden re-recorded twice, each in its own commit:** hunting live (`7298461`: only 20261010 moves, from t1900), then the creatures in the hash (`85ec88e`: every sample's map part).
+- **K2.4** (`7f6f918`): `CreatureSave` in the world's block, owned by `CreatureService` (as the workshops own theirs). The swing's timer is saved (D8, so K11.1's mid-fight load holds); paths and the strike pose's tick aren't. A save that doesn't fit the map is refused before anything changes. A load registers creatures after the crawlers, so a loaded session's registry order differs from the original's; no check needs it to match, since crawlers decide afresh after a load.
+- **The strike pose** (`570ada4`): the core notes a swing's tick (unsaved, view-only, as `HurtThisTick` is), and the view times the lunge.
+- **Finding F4:** seed 82 of 1–120 fails on one Grove jitter with no creature involved; the change of timing surfaced it.
+
+## 2026-11-10 to 2026-11-11: Epic 10 Part 3, the inspector's creature and K3, melee arms and armour
+- **The go:** "Continue", after K2's report: the inspector's creature (K2.5's last piece), then K3 up to its stop for the producer's look at the first fights.
+- **The inspector** (`8a91b62`): the selection holds a crawler or a creature, never both, so nothing that reads the crawler is handed a creature. A creature's card stands in the portrait's place, baked once per scale into a region of the portrait atlas from its sprite, three to one, so UI art stays drawn 1:1.
+- **K3.1–K3.2** (`a011275`): five items as rows on K1's tables. The new goods overflowed the merchant terminal and the station window at 720 rows, so their lists scroll (K3.4's part, done with K3.1).
+  - **Deviation:** the caravan's cudgels moved to K3.3. Stocked before anyone buys a weapon, their 12g once tipped the crafting loop's quits for pay from 2 to 6 of 20 seeds; they came with their buyers.
+- **K3.3:**
+  - **The fight** (`72e2b04`): a crawler's swing is asked for by its intent and decided in the creatures' pass, so D6 holds across both sides.
+  - **The bold arm themselves and brave what they can clear** (`d5d37cf`, D21): Q6's "past what it would brave alone" read as the harm expected while slaying the smallest pack against the health above the retreat line. Without it, nobody armed would ever meet a creature after day one.
+  - **Weapon upgrades with a trade-in:** the handler's trade-in was protection's alone.
+  - **Blade tuning:** the blade +8 and the edge +12, so a blade clears a lone beetle or three rats.
+  - **Older single-seed scenarios got room:** their outcomes sat at the edge of their horizons, the same fragility as F3's.
+- **The DoD** (`04a8d1e`): gate seed 18, a kill at t14382.
+- **K3.4** (`86fdbb3`): a weapon is worn in the hand. The hand is the rightmost skin under the head, so no new anchor table was needed.
+- **Golden:** re-recorded once, for the purchases (`a56309d`).
+
+## 2026-11-11: Epic 10 Part 3, K4, loot (under the producer's AFK directive)
+- **The word:** "Looks good. I will be afk you will be responsible for finishing K4-K5", after K3's look. Decisions D22–D26 are in the epic for the producer's return.
+- **K4.1** (`cd41635`): piles are entities of their own (`EntityType.Pile`, `PileService`) with their own seeded id sequence, as creatures have, so drops never shift who comes next. They are left out of spatial memory, so cognition reads them from the snapshot. They are saved in the world's block and held in the world hash.
+- **K4.2** (`dce6211`): creatures' materials are a new origin, `ItemCategory.Creature` (D22). Loops over every resource met the new items: the stall's room check (golden moved at t2000 until fixed), the header and the Gather list. Item ids are never reused, so the six items take 15–20.
+- **K4.3** (`5bf26a7`): one loot rule (`LootRules`) for both the take and the choice of pile, so a crawler never walks to a pile it would take nothing from. Cognition sees piles as copies in every snapshot (`PileView`, with a 256-bit item mask), never the live piles. Activity counters stay out of the raw-memory crawler record. The loot roller now gives equipment its life; it had dropped pieces at durability 0.
+- **K4.4** (`7c178e5`): measured before tuning (an explicit gate-seed measurement in `KillsFeedTheForgeTests`), which found four frictions and a leak:
+  - nobody sold at base values over the stall's price;
+  - victors walked off from their own drop, blind to it in fog or a lair they no longer braved;
+  - the herb reflex came before the drop;
+  - the plate at three chitin was too rare;
+  - the materials' empty shelves kept a full stall looking open.
+  - **Deviation:** the stall's goods table grew from 16 to 24 inside the unreleased format 11 rather than raising the format. That is format 10's precedent, and K2.4 and K4.1 had already grown format 11. A quick-save made on the branch before K4.4 won't load.
+  - **Deviation:** K3's "residents buy weapons only" was widened to armour for a bare slot (D26), so armour made from a kill finds a wearer.
+  - **The workshop player** takes extra makes (`Also`).
+- **K4.5** (`d230531`): a pile is drawn as its rarest item, so no new sprite was needed. Item names take rarity's colours from tokens a shade lighter than the icon rims.
+- **Golden unchanged through K4:** the golden runs end at t3000, before any kill.
+- **Finding F5:** a thrash by the stall on seeds 8 and 15 in long runs with the workshop player. It is older than K4 (the same at K3's gate).
+
+## 2026-11-11: Epic 10 Part 3, K5, death and rescue (under the producer's AFK directive)
+- **The split:** K5's two supervised Very Complex steps were split so that no part is Very Complex (the complexity rule's branch for an absent developer), and every call went into the epic as D27–D34 for the producer's look.
+  - **The order:** death first (`23935b9`), since bleeding out ends in it; then the collapse (`acebc49`), carrying and rescue (`6c55dcf`), memory, the newcomer and the saves (`5750248`), the DoD (`583547d`), and the client (`e7a2a57`, `c9b2e69`).
+- **One way out of the world** (A2): `Die` and `DepartOutpost` share one release (`ReleaseFromOutpost`), so the groups, contracts, bunks and claims a drifter's departure already handled handle the dead.
+  - **The body** is a pile (A5) with `BodyOf`, lying until it fades even picked clean.
+  - **Gold on the ground** is the ledger's own account, as escrow is, derived from the piles on a load.
+- **Danger is the world's:** `SimulationManager.InDanger` reads hazards and lairs with living creatures, charted or not.
+  - **The fallen's pass** runs after the creatures': it checks carry couplings, then runs the clocks.
+  - A collapsed crawler lying still had to count as tending; else the runtime pre-empted it every tick in a hazard, which made a thrash.
+- **Carrying is unsaved work in progress,** as intents are: a coupling holds only while the carrier's `CarryIntent` runs for that fallen, checked each tick.
+- **Rescue reads the snapshot's fallen** (`FallenView`): earshot, not sight; friends by warmth, or party mates; `AlreadyThere` for a rescuer in the same hazard room.
+- **Inside format 11:** `PileRecord` grew from 56 to 72 bytes; the crawler's record gained the clock and what downed it; the departed records gained their cause; the population block gained the newcomers due.
+- **Finding F6:** nobody is downed in danger in live play, measured three ways. The two K5 DoDs that need a downing are recommended to move to K7's Clear order (option A); `TheCarefulLoseFew` is live, with its band a default (D33).
+- **The client:** the dossier keeps a dead crawler after the selection drops it (`DashboardModel.DossierCrawler`; the selection's rule for a drifter walking out is unchanged). The departed list reaches the dashboard through `IDepartedRoll`.
+- **Golden unchanged through K5:** nothing dies in a golden run.
+
+## 2026-11-11: Epic 10 Part 3, K6, hunting (under "Proceed with K6-K8")
+- **A hunt beside its contract** (D35): the bounty contract keeps its 64 bytes and stays open with no claimant, so the single-claim chain never takes a hunt; a `HuntRecord` (64 bytes) holds the lair and up to three hunters with their damage, in the economy's save block (inside format 11). Damage arrives through `ICreatureWorld.CreatureHit`; hunts settle after the creatures' phase; the ledger releases escrow in shares (`TryReleaseEscrowSplit`).
+- **The hunters** (D36): `HuntGoal`, `ClaimHuntAction`, `HuntLairAction`, `HuntIntent`; the melee step shared with the fight (`Melee`). Found: the planner validates every step before the first runs, so the hunt's second step must be valid while a hunt can still be joined.
+- **Commits:** K6.1 (`8d14e76`), K6.2 (`9338aab`), K6.3 the board (`8f59a8d`), K6.4 the DoD and `HuntPlayer` (`9a0db22`); the watch's lone-entry rule narrowed (D37). Golden unchanged: its runs end at t3000.
+
+## 2026-11-12: Epic 10 Part 3, K7.1, K7.2 and K7.4, the Clear order and the party's fight (under "Proceed with K6-K8")
+- **The split:** K7.2, Very Complex and supervised, was done as three Possibly Complex parts (focus, retreat, rescue), with its decisions D38–D43 in the epic for the developer's review.
+- **The directive carries the party's choices:** the guild picks the focus and the carrier on the main thread and copies them into each member's `ExpeditionOrder`, as G5 copies the stage and the node; cognition only follows them. Rescue had been planned as each mate's own decision (K5's rule with the lone judgement waived); measured live, mates kept fighting and the most hurt came, so the choice moved to the guild (D42). The runtime pre-empts a member once per carry order.
+- **Deviation from the plan:** under a clear's orders the party's rule replaces each member's own retreat line (D41). Without it no member was ever downed in a lair, and K5's DoDs could not happen live.
+- **Inside format 11:** the expedition's record grew from 16 to 20 bytes (kind, lair, cleared); the focus and the carrier aren't saved.
+- **K5 faults found (F7):** the carried fallen blocked its carrier's waypoint (`Locomotion.IsPositionBlocked` now ignores it); a downed carrier's carry ran a tick more; the carry stepped back to where the fallen lay; the anomaly watch judged the carried's moves as jitter.
+- **The guild player arms by the slot table** (`EquipmentSlots.All`), not by naming slots (`SlotNamesTests`).
+- **Golden unchanged:** nothing in a golden run's 3,000 ticks is on an expedition, carried or under a carry order.
+- **K7.3** (`aeca8c6`, render `6fe5887`): the builder's target list carries both kinds (sectors to gather, lairs to clear) rather than a new control, so its row's layout holds. Arming has one planner, `GuildRules.PlanArms`, shared by the builder and the scripted player, as `PlanOutfit` is for hazard gear.
+- **K7's gate** (2026-11-12): core 272/272, client 510/510 in the pinned image, golden unchanged, the soak 15/15, seeds 1–120 120/120 with and without the guild, the MonoGame and Android compiles clean.
+
+## 2026-11-12: Epic 10 Part 3, K8, ranged combat (under "Proceed with K6-K8")
+- **The split:** K8.2, Very Complex and supervised, was done as three parts (a clear line, Basic since the snapshot's ray existed; keeping distance; bows at the back), with D44–D48 in the epic for the developer's review.
+- **One rule over both kinds of shooter:** range, the chance's falloff, wear per shot and the keep-away line (`CombatRules.KeepAway`) are the combat rule's; a crawler's movement uses them in the fight's handlers (`Ranged`), a creature's in its rule (`Keep`). The clear line is the creatures' pass's, which holds the snapshot.
+- **Deviation found live:** members kept their march to the lair's heart into the fight, so bows walked into the beetles; the runtime now makes each member of a clear decide afresh once when the fight begins (as it does once per carry order). This also sends melee members in together, which moved K7's runs: two of its DoDs re-picked their seeds (3 and 7).
+- **Residents keep to blades:** the melee need no longer counts a ranged weapon's attack, and a shooting need does; without it residents bought slings as cudgels and seven live scenarios moved.
+- **The DoD's chain is the player's:** a scout bounty on the Overgrowth, the rats cleared for hides, two crossbows forged, then the beetles. Crossbows need hides, and the warren lies in the uncharted Overgrowth.
+- **Test hooks:** `Floor1Layout.BuildWith` and an internal `OutpostSession` constructor give a test the floor with a lair it doesn't have yet (spinners, until K10).
+- **Found:** the creatures' pass returned early when no creature was left, keeping the last tick's shots and any asked swings.
+- **Golden re-recorded** in its own commit (`2c34d44`): the caravan stocks slings from its first visit, t2600 on.
+- **K8's gate** (2026-11-12): core 276/276, client 512/512 in the pinned image, golden 3/3, the soak 15/15, seeds 1–120 120/120 with and without the guild, the MonoGame and Android compiles clean.
+
+## 2026-11-14: Epic 10 Part 3, K9, the skill system (at the producer's "Let's tackle the skills system now")
+- **The split:** K9.3, Very Complex and supervised, was done as four parts (combat, the harvest, making, medicine), each a factor read where its work is done, with D49–D53 in the epic for the developer's review.
+- **Skills are a table on the slots' pattern:** `Simulation/Skills/` (its own namespace: cognition reads skills and may read nothing of `People/`), a `SkillTable` of rows by kind of work, a `SkillSet` of 16 experiences in the crawler's record inside format 11. Code asks the table for the skill of a kind of work (`SkillNamesTests`), so the proof (`SkillProofTests`, Mycology) adds a skill as a row.
+- **One entry point for practice:** `ISkillPractice` (`SimulationManager.Practise`), carried by the intent context, the creatures' world and the workshops' host, so every system practises the same way and a band reached is told once.
+- **The harvest is centred, the rest start at today's numbers:** a Novice 2 harvests at the old pace (0.92 + 0.04 a level). Uncentred, the outpost brought in more salvage than the treasury is tuned for (the crafting soak made goods on 14 of 20 seeds; centred, 36 of 40). Combat, making and tending at level 0 are as before skills.
+- **W4's practice moved into the bands** (inside format 11): the contract's practice count and `WorkshopTuning.MakesPerGrade` went; an artisan's grade is its station skill's band.
+- **Deviation from the plan:** the DoD runs seven game days, not three (D53): the forge stands only on day 1.3–2.8, so no seed raised a smith's grade in three.
+- **Measured against a baseline at K9.2, in a worktree** (practice without effects): no live scenario's rate moved beyond noise. The forge loop's 5 → 2 of 23 was 19 → 18 of 60 on seeds 21–80. Three DoDs moved seed for the new timings.
+- **Found:** the greedy soak band (F9, raised to 6); seed 12's trust with any scripted player (F10, untraced); one thrash on seed 64 from a bounty race (F11).
+- **Golden re-recorded twice,** each in its own commit: once for skills in the world hash (K9.1, `c72b835`), once for what they do (`e858402`).
+- **K9's gate** (2026-11-14): core 287/287, client 513/513 in the pinned image, golden 3/3, the soak 15/15, seeds 1–120 119/120 with and without the guild (F11), the MonoGame and Android compiles clean.
+
+## 2026-11-15: Epic 10 Part 3, K9.8, skill foundation reinforcement (at the producer's "Add K9.8 Skill foundation reinforcement")
+- **Why:** a report on the skill system's foundation found storage, determinism and the write path sound. The read path wasn't: every effect read the raw learned level, and one kind of work answered to exactly one skill. Both sit under skill families, books, osmosis, skills in the planner, and talents or gear that modify skills. The producer took the report's "do now" items; the rest wait for their features (the epic's §5).
+- **A seam keyed by the kind of work** (K9.8a, `a0cce97`, D54, D55):
+  - `SkillWork`, `SkillTable.SkillFor`, `CrawlerSkills.Level(skills, worn, work)` (the effective level, a pure function of what cognition's copy holds), and `ISkillPractice.Practise(agent, work, experience, source)` with a `PracticeSource` ceiling. `AgentState.Practise` is internal.
+  - `SkillReadsTests` keeps learned reads to the seam, practice's entry and the dossier's list.
+  - It was keyed by the work, not the skill, so a family, a narrower skill or gear's bonus changes the table and the seam, never the callers.
+  - No behaviour change: golden and the renders held.
+- **A lair judged as the fight is** (K9.8b, `592f0ac`, D56):
+  - `HarmToClear` builds the crawler's `Combatant` from its skills and gear, its swing in whole ticks.
+  - This was a live disagreement between cognition and the fight: a veteran judged a lair at the unskilled 70%.
+  - Measured against a baseline at K9.8a in a worktree: kills in K3's four days 5 → 6 of 23, no deaths; hunts paid 20 of 23 either way, to two or more 8 → 7. `AHuntBountyClearsALair` moved from seed 1 (a skilled hunter now clears alone) to gate seed 3.
+  - Golden unchanged: nobody braves a lair before t3000 on the golden seeds.
+- **K9.8's gate** (2026-11-15): core 290/290 (13 explicit not run), client 513/513 in the pinned image, golden 3/3 unchanged, the soak 15/15, seeds 1–120 119/120 with and without the guild (F11, as at K9), the MonoGame and Android compiles clean.
+
+## 2026-11-15: the roadmap re-sequenced; Epic 11 becomes the skill system (the producer's word)
+- **The producer:** "Epic 10 will need to end with part 3, it's already too long as is. After Epic 10 we will move onto Epic 11 which will be re written as the skills epic. The current Epic-11 Agentic Narrative should be renamed Epic-N to signify we don't know when we will get to it."
+- **Epic 10 ends with Part 3.** Part 3's close-out, with Part 2's, marks it COMPLETED. Part 4, the descent, leaves Epic 10.
+- **Epic 11, Skills, the Heart and Engine of a Crawler** (`docs/epics/epic-11.md`, QUEUED), drafted from the research paper of the same day (Claude Doc, "Simpiens Skill System: Research and Long-Term Vision"):
+  - Craft, Technique, Calling and Legend over K9's foundation and K9.8's seam, in S0–S9, each milestone stamped;
+  - Doctrine and careers wait for rival guilds and the descent;
+  - named creatures after the Nemesis system are in (S7), on the producer's call that day to emulate it: every claim of US10926179B2 needs an avatar the player operates, and Simpiens has none;
+  - Q1–Q16 are defaults that stand by exception; the plan follows the go.
+- **Defaults taken, for the producer to overturn:**
+  - Epic 11 is Milestone 5, "Skills and Careers". Floor Relocation moves to Milestone 6.
+  - The descent becomes Epic 12, QUEUED and not drafted. The request didn't place it, and it needed an owner.
+- **Epic N** is the agentic narrative (MCP), unscheduled: an epic with no place in the sequence yet is "Epic N" (ROADMAP §1). Forward references to the narrative's Epic 11 were renamed; dated records (this log, the 2026-10-08 architecture review) keep their words.
+
+## 2026-11-15: Epic 10 Part 3, K10-K11 (bosses, the gate, the part's gate), under the producer's AFK go
+- **The go:** "Let's close his out by finishing K10-K11. I will not be able to supervise so you will be responsible for overseeing the completion of this epic". K10.3 (marked supervised) was split into K10.3a-d; every decision is in the epic (D57-D73) for the developer's review.
+- **Bosses are rows with traits** (D57): `IsBoss`, `Slam`, fury, a call to the brood, whole again between attempts. The rule reads the traits, never a kind's name. A boss's sure drops come from a loot table whose every entry drops (D59).
+- **A lair may name a boss in its first place** (D58): the Matriarch heads the warren, one lair, so its hunt, clear, danger and emptying include her; judged with her only while she lives (D63, the snapshot's `BossLairMask`).
+- **The Old Stair** lies west of the Deep Seam (D60): the floor 64 wide and still 42 tall (the 720-row fit); a lair that guards the gate is charted with its sector (D61, D17's exception); the spinners' leash and sight 6 (D62).
+- **The slam** is `CombatRules.Slam`: one draw a foe in id order from the swing's stream, as D3 foresaw (D64). **Fury** follows health (D65). **Whole between attempts** keeps its clock in `CreatureRecord` (72 -> 80 bytes inside format 11, D66). **Beaten once** is `RespawnHours` 0 (D67). **The breach** is `WorldFlags.GateBreached`, a new world-level flag word saved in the world's block (D68).
+- **Found by the DoD's measurement and fixed in the rules, not the DoD:** draughts are drunk in a fight in place of a swing, and a clear's retreat rule leaves draught carriers out of its average (D69); travel and harvest paths are judged along the way against charted lairs (D70). The keeper's health was tuned to 320 (D71).
+- **The client:** sized creature canvases, a boss's bar, the gate as a prop drawn by the world's flag, the breach as the first story cutscene behind `ClientOptions.StoryScenes` (off in tests and renders), lairs named in one place (`LairWords`) (D72).
+- **K11:** every scenario together, saves at the hard moments (compared at the save's tick: work in progress isn't saved), the soak's `hunting` profile (D73), seeds 1-120. Findings: F12 (the crafting band at its own rate), F13 (a third allocation flake: a pass that allocates is measured again), F14 (pay quits past day 3 with every player at once).
+- **Process lesson:** build the whole solution before the host's golden check; one project's build left the host stale, and a commit claimed golden unchanged until the next re-recorded it.
+- **Open:** the producer's play session (K11.4), then Part 3 and Milestone 4 COMPLETED.
+
+## 2026-11-16: Epic 10 COMPLETED (Parts 2 and 3 closed out together)
+- **The producer:** "Part 3 passes. Close out Epic 10 by creating a PR and closing it out". Part 3's play session (K11.4) passed. The bosses' strength (D71) and the soak's `hunting` band (D73) stand by exception.
+- **Part 2 closed out with Part 3:**
+  - *The reading:* Part 2's own play session (W6.5) and W3's look never happened apart from Part 3's. "Close out Epic 10" is taken as passing them within Part 3's session, which played the workshops, the still and the guildhall on the default seed.
+  - *If the producer reads it otherwise:* those two looks are the items to reopen.
+- **Milestones 3 and 4 COMPLETED;** Epics UI-4 and UI-5 delivered within Parts 2 and 3 (the roadmap's Track B now lists both).
+- **The economy is left open, not tuned:** Part 2's F14 (the whole loop's balance), joined by Part 3's F14, F8 and F10, is the producer's economy decision.
+  - Its data and levers moved from Part 2's plan to `docs/economy-model.md` §8.
+  - It is unscheduled: the next epic that re-tunes the economy re-sets the `crafting` and `hunting` bands with it.
+  - The scripted players' reserves (D67, D71) hold every DoD's run until then.
+- **Every Epic 10 plan deleted:** `.agents/epic10_plan.md` (the index), `epic10_part2_plan.md` and `epic10_part3_plan.md`.
+  - Their open findings were already in the epics' §7, each now with an owner at the close-out.
+  - Part 3's gate numbers (K11) and the economy's numbers moved into the epic and the economy model.
+  - Milestone T's rules were already in `docs/time-model.md`.
+  - Git keeps the plans: `git log --diff-filter=D -- .agents/`.
+- **One PR for Part 3 and the close-out** (#24, `feat/epic10-part3`), per the producer's one-PR-per-plan rule. Part 2's code reached main as PR #23.

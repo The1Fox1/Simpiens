@@ -7,10 +7,10 @@ namespace Simpiens.Cognition.Planning.Goals
     /// <summary>
     /// Goal (Epic 10 G3): before going into danger, buy protection at the stall. DesiredState: HasHazardGear = true.
     /// Reached through TravelToStall → BuyHazardGear. Only a crawler that would venture (Vitality.WouldVenture: bold and
-    /// healthy) wants it, and only while it wears none, isn't hungry or worn out, and the stall has a piece it can pay for
-    /// that lets it work hazardous salvage it knows, preferring one that opens salvage it can't reach as it is (a respirator
-    /// for the Gallery, Epic 10 Part 2, D51; ResourceTargeting.TryChooseProtection). Wearing some, it still wants a piece
-    /// that would open salvage it can't reach, trading the old one in (D53).
+    /// healthy) wants it, and only while it isn't hungry or worn out and the stall has a piece it can pay for
+    /// (ResourceTargeting.TryChooseProtection): first one that opens salvage it can't reach as it is (a respirator for the
+    /// Gallery, Epic 10 Part 2, D51), trading in what its slot holds (D53); else the piece that most cuts the harm where it
+    /// works, for a slot it has bare (Epic 10 Part 3, K1.4: hazard gear for a crawler with none, a hard hat over hazard gear).
     /// </summary>
     public class OutfitForDangerGoal : GoapGoal
     {
@@ -27,8 +27,6 @@ namespace Simpiens.Cognition.Planning.Goals
         {
             if (context.Inventory == null || !Vitality.WouldVenture(context)) return false;
             if (context.Hunger >= 60f || context.Energy <= 25f) return false;
-            // Wearing protection, it still wants a piece that would open salvage it can't reach as it is (D53)
-            if (context.Inventory.IsWearing(Simpiens.Simulation.Items.ItemCategory.Protection)) return ResourceTargeting.WouldUpgradeProtection(context);
             return ResourceTargeting.TryChooseProtection(context, out _);
         }
     }

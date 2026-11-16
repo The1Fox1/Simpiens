@@ -27,6 +27,9 @@ namespace Simpiens.Presentation.Art
         public const string PropBunk = "prop/bunk";
         /// <summary>The trade stall, with its goods on display (graphics V5).</summary>
         public const string PropStall = "prop/stall";
+
+        /// <summary>A body's cairn (Epic 10 Part 3, K5.8b).</summary>
+        public const string PropCairn = "prop/cairn";
         /// <summary>The trade caravan walking the map (Epic 10 Part 2, the stretch, D70).</summary>
         public const string PropCaravan = "prop/caravan";
 
@@ -58,6 +61,14 @@ namespace Simpiens.Presentation.Art
             Simpiens.Simulation.World.HazardKind.Flooding => FxFlood,
             _ => null
         };
+        /// <summary>A shot in flight (Epic 10 Part 3, K8.4a): a crawler's stone or bolt, and a spinner's spit.</summary>
+        public const string FxShot = "fx/shot";
+        public const string FxSpit = "fx/spit";
+        /// <summary>A boss's health bar (Epic 10 Part 3, K10.5b): the row's size is the bar's for a creature a crawler's size.</summary>
+        public const string FxBar = "fx/bar";
+        /// <summary>The descent gate, sealed and breached (Epic 10 Part 3, K10.5c).</summary>
+        public const string PropGate = "prop/gate", PropGateOpen = "prop/gate-open";
+
         /// <summary>A soft shadow on the floor under a crawler; a catalogue without one draws none.</summary>
         public const string CrawlerShadow = "fx/crawler-shadow";
         public const string NodePrefix = "node/";
@@ -81,6 +92,11 @@ namespace Simpiens.Presentation.Art
         };
 
         public static string Node(string itemArtKey) => NodePrefix + itemArtKey;
+
+        public const string CreaturePrefix = "creature/";
+
+        /// <summary>A creature of a kind (Epic 10 Part 3, K2.5), by its kind's art key: <c>creature/burrow-rat</c> (setup only: builds a string).</summary>
+        public static string Creature(string creatureArtKey) => CreaturePrefix + creatureArtKey;
 
         public const string ItemPrefix = "item/";
 

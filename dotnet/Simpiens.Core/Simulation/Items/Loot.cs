@@ -87,8 +87,17 @@ namespace Simpiens.Simulation.Items
             TotalWeight = (uint)total;
         }
 
+        /// <summary>
+        /// A table whose every entry drops once, in order, with no weighted pick (Epic 10 Part 3, K10, Q12: a boss's sure
+        /// trophy and rare piece). Its entries still need a weight to pass the checks; it is ignored.
+        /// </summary>
+        public static LootTable EveryEntry(ushort id, string name, params LootEntry[] entries) => new LootTable(id, name, 1, 1, entries) { Every = true };
+
         public ushort Id { get; }
         public string Name { get; }
+
+        /// <summary>True for a table whose every entry drops once (<see cref="EveryEntry"/>); its rolls are then unused.</summary>
+        public bool Every { get; private init; }
         public byte MinRolls { get; }
         public byte MaxRolls { get; }
         public uint TotalWeight { get; }
@@ -162,15 +171,22 @@ namespace Simpiens.Simulation.Items
 
         private static void RollTable(LootTables tables, LootTable table, ref SimRandom random, Span<ItemInstance> drops, ref int count, int depth)
         {
-            int rolls = table.MinRolls + (int)Below(ref random, (uint)(table.MaxRolls - table.MinRolls + 1));
+            int rolls = table.Every ? table.EntryCount : table.MinRolls + (int)Below(ref random, (uint)(table.MaxRolls - table.MinRolls + 1));
             for (int r = 0; r < rolls; r++)
             {
-                var entry = table.GetEntry(table.EntryAt(Below(ref random, table.TotalWeight)));
+                var entry = table.GetEntry(table.Every ? r : table.EntryAt(Below(ref random, table.TotalWeight)));
                 switch (entry.Kind)
                 {
                     case LootEntryKind.Item:
                         ushort quantity = (ushort)(entry.MinQuantity + Below(ref random, (uint)(entry.MaxQuantity - entry.MinQuantity + 1)));
-                        if (count < drops.Length) drops[count++] = new ItemInstance(1, entry.Item, quantity, 0);
+                        // A piece of equipment comes whole, a new Standard piece with its life (Epic 10 Part 3, K4.3a): a stack of
+                        // durability 0 would break at its first wear
+                        if (count < drops.Length)
+                        {
+                            drops[count++] = ItemCatalog.Get(entry.Item)?.Equipment != null
+                                ? Outfitting.NewPiece(entry.Item, Grades.Standard)
+                                : new ItemInstance(1, entry.Item, quantity, 0);
+                        }
                         break;
                     case LootEntryKind.Table:
                         if (depth < MaxDepth && tables.TryGet(entry.TableId, out var nested)) RollTable(tables, nested, ref random, drops, ref count, depth + 1);

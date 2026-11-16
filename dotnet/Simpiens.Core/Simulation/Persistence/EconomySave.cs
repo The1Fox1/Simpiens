@@ -15,6 +15,9 @@ namespace Simpiens.Simulation.Persistence
         public BountyContract[] Bounties { get; set; }
 
         public LedgerSave Ledger { get; set; }
+
+        /// <summary>The hunts' parties by bounty id (Epic 10 Part 3, K6.1; inside format 11).</summary>
+        public HuntRecord[] Hunts { get; set; }
     }
 
     /// <summary>The ledger in a save, written and read by <see cref="EconomyLedger"/>. Named totals are in ordinal name order.</summary>

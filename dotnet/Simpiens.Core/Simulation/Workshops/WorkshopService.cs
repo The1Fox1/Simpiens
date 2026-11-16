@@ -16,7 +16,7 @@ namespace Simpiens.Simulation.Workshops
     /// What the workshops need from the simulation: the stall they work from and pay from (Q7), the ledger, the crawlers
     /// they hire, the groups their crews are, and the guild (one role at a time, D6).
     /// </summary>
-    public interface IWorkshopHost
+    public interface IWorkshopHost : Simpiens.Simulation.Skills.ISkillPractice
     {
         IReadOnlyList<TradeStallData> ActiveStalls { get; }
         void UpdateStall(TradeStallData stall);
@@ -486,13 +486,17 @@ namespace Simpiens.Simulation.Workshops
             return true;
         }
 
-        /// <summary>An artisan's grade from its practice (W4, Q8, D55): Standard, then Fine from 10 makes, Masterwork from 20.</summary>
-        public static byte GradeOf(in ArtisanContract contract, in WorkshopTuning tuning)
-        {
-            int per = tuning.MakesPerGrade > 0 ? tuning.MakesPerGrade : 10;
-            int grade = contract.Practice / per;
-            return (byte)(grade < Grades.Masterwork ? grade : Grades.Masterwork);
-        }
+        /// <summary>
+        /// The grade of what <paramref name="artisan"/> makes at a station of <paramref name="kind"/> (W4's practice, now its
+        /// skill: Epic 10 Part 3, K9.3c, Q20): its band in the station's skill. Standard for a Novice, Fine for an
+        /// Apprentice, Masterwork from Journeyman; Standard with no artisan.
+        /// </summary>
+        public static byte GradeOf(AgentState artisan, StationKind kind) =>
+            artisan == null ? Grades.Standard : Simpiens.Simulation.Skills.SkillRules.GradeOf(LevelOf(artisan, kind));
+
+        /// <summary>An artisan's effective level at a station of <paramref name="kind"/>'s makes (Epic 10 Part 3, K9.8a); 0 with no artisan or no such skill.</summary>
+        public static int LevelOf(AgentState artisan, StationKind kind) =>
+            Simpiens.Simulation.Skills.CrawlerSkills.Level(artisan, Simpiens.Simulation.Skills.SkillWork.Make(kind));
 
         /// <summary>One tick of an artisan's work at the station, on the session's stall (<see cref="Crafting.Work"/>).</summary>
         public CraftStep Work(IWorkshopHost host, int index)
@@ -501,13 +505,18 @@ namespace Simpiens.Simulation.Workshops
             var stall = host.ActiveStalls[0]; // the session's one stall: what the stations draw on and stock (Q7)
             ref var station = ref _stations[index];
             var item = station.Order;
-            // The make is at its artisan's grade, and a finished one is practice (W4, D55)
-            int artisan = -1;
-            for (int i = 0; i < _artisans.Count && artisan < 0; i++) if (_artisans[i].StationIndex == index) artisan = i;
-            byte grade = artisan >= 0 ? GradeOf(_artisans[artisan], Tuning(host)) : Grades.Standard;
+            // The make is at its artisan's grade and pace, by its skill at the station, and a finished one is practice
+            // (W4, D55; Epic 10 Part 3, K9.2, K9.3c)
+            AgentState hand = null;
+            for (int i = 0; i < _artisans.Count && hand == null; i++)
+            {
+                if (_artisans[i].StationIndex == index) host.TryGetCrawler(_artisans[i].CrawlerId, out hand);
+            }
+            int level = LevelOf(hand, station.Kind);
             uint made = station.Made;
-            var step = Crafting.Work(ref station, ref stall, out bool stallChanged, grade);
-            if (station.Made > made && artisan >= 0) _artisans[artisan] = _artisans[artisan].WithPractice((ushort)Math.Min(ushort.MaxValue, _artisans[artisan].Practice + 1));
+            var step = Crafting.Work(ref station, ref stall, out bool stallChanged, GradeOf(hand, station.Kind), Simpiens.Simulation.Skills.SkillRules.MakeFactor(level));
+            if (station.Made > made && hand != null)
+                host.Practise(hand, Simpiens.Simulation.Skills.SkillWork.Make(station.Kind), Simpiens.Simulation.Skills.SkillRules.MakeExperience, Simpiens.Simulation.Skills.PracticeSource.Work);
             if (stallChanged) host.UpdateStall(stall);
             if (step == CraftStep.Made) SimLog.Economy.ZLogInformation($"The {station.Kind} made {ItemCatalog.NameOf(item)} ({station.Remaining} left in the order)");
             return step;

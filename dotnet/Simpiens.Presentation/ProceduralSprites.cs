@@ -21,7 +21,10 @@ namespace Simpiens.Presentation
         private static readonly PixelSprite _herbPatchSprite;
         private static readonly PixelSprite _glowstoneSprite;
         private static readonly PixelSprite _stallSprite;
-        private static readonly PixelSprite _forgeSprite, _stillSprite, _stationPlotSprite;
+        private static readonly PixelSprite _forgeSprite, _stillSprite, _stationPlotSprite, _cairnSprite;
+
+        /// <summary>A body's cairn (Epic 10 Part 3, K5.8b).</summary>
+        public static PixelSprite CairnSprite => _cairnSprite;
 
         /// <summary>The crawlers' hair: one colour no other palette letter uses, so a helmet recolours it (graphics V5).</summary>
         public static readonly Rgba32 Hair = new Rgba32(90, 55, 35, 255);
@@ -315,6 +318,16 @@ namespace Simpiens.Presentation
             _forgeSprite = CreateSprite(PatternForge, stationPalette, "Prop_Forge");
             _stillSprite = CreateSprite(PatternStill, stationPalette, "Prop_Still");
             _stationPlotSprite = CreateSprite(PatternStationPlot, stationPalette, "Prop_StationPlot");
+
+            // A body's cairn (Epic 10 Part 3, K5.8b): stones heaped where a crawler fell
+            var cairnPalette = new Dictionary<char, Rgba32>
+            {
+                { '.', Rgba32.Clear },
+                { '#', new Rgba32(20, 24, 33, 255) },    // Outline
+                { 'S', new Rgba32(87, 83, 78, 255) },    // Stone
+                { 's', new Rgba32(130, 124, 116, 255) }, // Stone, lit
+            };
+            _cairnSprite = CreateSprite(PatternCairn, cairnPalette, "Prop_Cairn");
         }
 
         private static PixelSprite CreateRing()
@@ -446,6 +459,26 @@ namespace Simpiens.Presentation
             "....#wOOw#.#g#..",
             "....######.###..",
             "................",
+            "................",
+            "................",
+        };
+
+        private static readonly string[] PatternCairn =
+        {
+            "................",
+            "................",
+            "................",
+            ".......##.......",
+            "......#ss#......",
+            "......#SS#......",
+            ".....##SS##.....",
+            "....#ss#sss#....",
+            "....#SS#SSS#....",
+            "...##SS##SS##...",
+            "..#ss#sss#sss#..",
+            "..#SS#SSS#SSS#..",
+            ".##SS##SS##SS##.",
+            ".##############.",
             "................",
             "................",
         };

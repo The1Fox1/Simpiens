@@ -10,6 +10,10 @@ namespace Simpiens.Presentation.Art
         Head = 1,
         /// <summary>Over the lower face: a respirator's mask (Epic 10 Part 2, W3, D52).</summary>
         Face = 2,
+        /// <summary>Over the shirt, as a coat: hazard gear's suit, worn on the body (Epic 10 Part 3, K1.5).</summary>
+        Torso = 3,
+        /// <summary>In the right hand, its blade rising up and out: a weapon (Epic 10 Part 3, K3.4).</summary>
+        Hand = 4,
     }
 
     /// <summary>How an item looks: its shape, its primary and secondary colours, and how it is worn.</summary>
@@ -42,16 +46,44 @@ namespace Simpiens.Presentation.Art
             ["iron-ore"] = new ItemLook(ItemShapes.Chunk, new Rgba32(100, 116, 139), new Rgba32(234, 88, 12)),
             ["medicinal-herb"] = new ItemLook(ItemShapes.Sprig, new Rgba32(45, 212, 191), new Rgba32(216, 180, 254)),
             ["pickaxe"] = new ItemLook(ItemShapes.Pick, new Rgba32(148, 163, 184), new Rgba32(120, 72, 32)),
-            ["hazard-gear"] = new ItemLook(ItemShapes.Helmet, new Rgba32(250, 204, 21), new Rgba32(254, 240, 138), Worn.Head),
+            // A suit in hazard yellow with silver bands, worn on the body (Epic 10 Part 3, K1.5: a helmet until the body slot took it)
+            ["hazard-gear"] = new ItemLook(ItemShapes.Vest, new Rgba32(250, 204, 21), new Rgba32(203, 213, 225), Worn.Torso),
             ["glowstone"] = new ItemLook(ItemShapes.Chunk, new Rgba32(251, 191, 36), new Rgba32(103, 232, 249)),
             ["healing-draught"] = new ItemLook(ItemShapes.Flask, new Rgba32(225, 29, 72), new Rgba32(161, 112, 66)), // ruby in glass, a cork
             // Protection by kind (Epic 10 Part 2, W3, D52): the respirator a mask over the mouth, its filters teal; the hard hat
-            // a steel helm on the head, as hazard gear's yellow one
+            // a steel helm on the head
             ["respirator"] = new ItemLook(ItemShapes.Mask, new Rgba32(71, 85, 105), new Rgba32(45, 212, 191), Worn.Face),
             ["hard-hat"] = new ItemLook(ItemShapes.Helmet, new Rgba32(148, 163, 184), new Rgba32(30, 41, 59), Worn.Head),
+            // Melee arms and armour (Epic 10 Part 3, K3.1, K3.2): the cudgel's oak and iron studs; the blade's steel and its
+            // leather grip, the edge's glowstone amber on a dark grip, each held in the hand (K3.4); the helm dark iron with a
+            // black visor; the ring coat steel
+            ["cudgel"] = new ItemLook(ItemShapes.Club, new Rgba32(146, 98, 56), new Rgba32(120, 128, 140), Worn.Hand),
+            ["iron-blade"] = new ItemLook(ItemShapes.Blade, new Rgba32(203, 213, 225), new Rgba32(120, 72, 32), Worn.Hand),
+            ["glowstone-edge"] = new ItemLook(ItemShapes.Blade, new Rgba32(251, 191, 36), new Rgba32(51, 65, 85), Worn.Hand),
+            ["iron-helm"] = new ItemLook(ItemShapes.Helmet, new Rgba32(100, 110, 124), new Rgba32(15, 18, 24), Worn.Head),
+            ["ring-coat"] = new ItemLook(ItemShapes.Mail, new Rgba32(160, 170, 182), new Rgba32(84, 92, 104), Worn.Torso),
+            // Loot (Epic 10 Part 3, K4.2, K4.4): the rat's hide and the beetle's chitin; the jerkin in its leather, the plate in
+            // the shell's slate; the rare pieces, the fang knife's ivory on a dark grip and the stoneheart coat's deep stone
+            ["hide"] = new ItemLook(ItemShapes.Pelt, new Rgba32(150, 112, 84), new Rgba32(96, 70, 52)),
+            ["chitin"] = new ItemLook(ItemShapes.Plates, new Rgba32(104, 116, 132), new Rgba32(118, 150, 96)),
+            ["leather-jerkin"] = new ItemLook(ItemShapes.Vest, new Rgba32(138, 92, 56), new Rgba32(92, 60, 36), Worn.Torso),
+            ["chitin-plate"] = new ItemLook(ItemShapes.Mail, new Rgba32(92, 104, 122), new Rgba32(118, 150, 96), Worn.Torso),
+            ["fang-knife"] = new ItemLook(ItemShapes.Blade, new Rgba32(236, 226, 200), new Rgba32(60, 40, 44), Worn.Hand),
+            // Ranged arms (Epic 10 Part 3, K8.1): a leather sling on its cords, a crossbow's steel prod on a wooden stock
+            ["sling"] = new ItemLook(ItemShapes.Sling, new Rgba32(150, 104, 64), new Rgba32(196, 178, 140), Worn.Hand),
+            ["crossbow"] = new ItemLook(ItemShapes.Crossbow, new Rgba32(176, 186, 198), new Rgba32(126, 84, 46), Worn.Hand),
+            ["stoneheart-coat"] = new ItemLook(ItemShapes.Mail, new Rgba32(70, 64, 92), new Rgba32(196, 120, 220), Worn.Torso),
+            // The bosses' trophies (Epic 10 Part 3, K10): the Matriarch's silvered grey pelt, the Gatekeeper's stone with its
+            // ember core
+            ["matriarch-pelt"] = new ItemLook(ItemShapes.Pelt, new Rgba32(118, 112, 128), new Rgba32(214, 210, 224)),
+            ["keeper-stone"] = new ItemLook(ItemShapes.Chunk, new Rgba32(82, 78, 90), new Rgba32(255, 140, 60)),
         };
 
         public static bool TryGet(string artKey, out ItemLook look) => _looks.TryGetValue(artKey ?? string.Empty, out look);
+
+        /// <summary>Where <paramref name="item"/> shows when worn, by its art key; None for an item with no look, or one that doesn't show.</summary>
+        public static Worn WornOf(Simpiens.Simulation.Economy.ItemType item)
+            => item != Simpiens.Simulation.Economy.ItemType.None && TryGet(Simpiens.Simulation.Items.ItemCatalog.Get(item)?.ArtKey, out var look) ? look.Worn : Worn.None;
 
         /// <summary>Every look, by art key in ordinal order.</summary>
         public static IEnumerable<KeyValuePair<string, ItemLook>> All => _looks.OrderBy(p => p.Key, System.StringComparer.Ordinal);

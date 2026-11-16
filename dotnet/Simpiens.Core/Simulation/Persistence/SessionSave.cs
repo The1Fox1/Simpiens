@@ -43,6 +43,10 @@ namespace Simpiens.Simulation.Persistence
         public long NextDrifterTick { get; set; }
         public int DriftersArrived { get; set; }
         public DepartedSave[] Departed { get; set; }
+
+        /// <summary>Newcomers due after residents' deaths, and how many have come (Epic 10 Part 3, K5.6; inside format 11).</summary>
+        public uint[] NewcomersDue { get; set; }
+        public int NewcomersArrived { get; set; }
     }
 
     /// <summary>A crawler who has left the session: who it was and what it looked like.</summary>
@@ -52,5 +56,10 @@ namespace Simpiens.Simulation.Persistence
         public EntityId Id { get; set; }
         public string GivenName { get; set; }
         public Simpiens.Simulation.People.CrawlerLook Look { get; set; }
+
+        /// <summary>Whether it died and of what, and when it left (Epic 10 Part 3, K5.4a; inside format 11).</summary>
+        public Simpiens.Simulation.DeathCause Cause { get; set; }
+        public byte CauseDetail { get; set; }
+        public uint Tick { get; set; }
     }
 }

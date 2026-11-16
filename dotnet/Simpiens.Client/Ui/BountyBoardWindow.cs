@@ -66,17 +66,18 @@ namespace Simpiens.Client.Ui
             form.Children.Add(Window.Gap(4f));
 
             form.Children.Add(Label("Kind of work:"));
-            TypeBox = Dropdown(new[] { nameof(BountyType.GatherResource), nameof(BountyType.ScoutSector) });
+            TypeBox = Dropdown(new[] { nameof(BountyType.GatherResource), nameof(BountyType.ScoutSector), nameof(BountyType.Hunt) });
             form.Children.Add(TypeBox.Visual);
             TypeBox.SelectionChanged += (_, _) =>
             {
                 if (_binding) return;
-                _model.SetType(TypeBox.SelectedIndex == 1 ? BountyType.ScoutSector : BountyType.GatherResource);
+                _model.SetType(TypeBox.SelectedIndex == 1 ? BountyType.ScoutSector : TypeBox.SelectedIndex == 2 ? BountyType.Hunt : BountyType.GatherResource);
                 Bind();
             };
 
             var sectorLabelRow = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 18f };
-            sectorLabelRow.Children.Add(Label("Sector:"));
+            _targetLabel = Label("Sector:");
+            sectorLabelRow.Children.Add(_targetLabel);
             _sectorState = UiParts.Text(string.Empty, UiStyle.Accent, UiText.SmallBold);
             _sectorState.XUnits = GeneralUnitType.PixelsFromLarge;
             _sectorState.XOrigin = HorizontalAlignment.Right;
@@ -161,6 +162,8 @@ namespace Simpiens.Client.Ui
             return group;
         }
 
+        private TextRuntime _targetLabel;
+
         private static TextRuntime Label(string text) => UiParts.Text(text, UiStyle.TextLight, UiText.SmallBold);
 
         private static ComboBox Dropdown(string[] choices)
@@ -200,7 +203,7 @@ namespace Simpiens.Client.Ui
         public void LoadForm()
         {
             _binding = true;
-            TypeBox.SelectedIndex = _model.Type == BountyType.ScoutSector ? 1 : 0;
+            TypeBox.SelectedIndex = _model.Type == BountyType.ScoutSector ? 1 : _model.Type == BountyType.Hunt ? 2 : 0;
             int itemIndex = System.Array.IndexOf((ItemType[])BountyBoardModel.GatherItems, _model.Item);
             ItemBox.SelectedIndex = itemIndex >= 0 ? itemIndex : 0;
             QuantitySlider.Value = _model.Quantity;
@@ -224,16 +227,22 @@ namespace Simpiens.Client.Ui
             // The sector choices change with the type and the chart: rebuild only when they did
             int signature = _model.SectorChoiceIds.Count * 1000 + (int)_model.Type;
             for (int i = 0; i < _model.SectorChoiceIds.Count; i++) signature = signature * 31 + _model.SectorChoiceIds[i];
-            if (signature != _choicesShown)
+            bool refilled = signature != _choicesShown;
+            if (refilled)
             {
                 SectorBox.Items.Clear();
                 foreach (var label in _model.SectorChoiceLabels) SectorBox.Items.Add(label);
                 _choicesShown = signature;
             }
-            if (SectorBox.SelectedIndex != _model.SelectedSectorIndex) SectorBox.SelectedIndex = _model.SelectedSectorIndex;
+            bool reselected = SectorBox.SelectedIndex != _model.SelectedSectorIndex;
+            if (reselected) SectorBox.SelectedIndex = _model.SelectedSectorIndex;
+            // Its list opens on the choice, not where filling it left the scroll (the last row: with the Old Stair, Epic 10 Part 3,
+            // K10.1b, the sectors outgrew the list's height and the first rows opened hidden above it)
+            if ((refilled || reselected) && SectorBox.SelectedIndex >= 0) SectorBox.ListBox?.ScrollIndexIntoView(SectorBox.SelectedIndex, Gum.Forms.Controls.ScrollIntoViewStyle.Top);
             _binding = false;
 
             UiParts.SetText(_sectorState, _model.SectorState);
+            UiParts.SetText(_targetLabel, _model.TargetLabel); // a hunt's lair (Epic 10 Part 3, K6.3)
             _itemGroup.Visible = _model.ShowsItem;
             _quantityGroup.Visible = _model.ShowsItem;
             PostButton.IsEnabled = _model.CanPost;

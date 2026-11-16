@@ -33,6 +33,32 @@ namespace Simpiens.Simulation.Economy
             sinkName != null && _sinkTotals.TryGetValue(sinkName, out var total) ? total : 0u;
 
         public uint TotalEscrowGold { get; private set; }
+
+        /// <summary>
+        /// Gold lying in piles on the ground (Epic 10 Part 3, K5.4b: a body's purse), held by the ledger as escrow is, so
+        /// conservation counts it. Not saved: a load derives it from the piles (<see cref="RestoreGroundGold"/>).
+        /// </summary>
+        public uint TotalGroundGold { get; private set; }
+
+        /// <summary>The sink gold on the ground leaves by when its pile fades (K5.4b).</summary>
+        public const string GroundFadeSinkName = "GoldFadedOnTheGround";
+
+        /// <summary>A purse put down in a pile (a body's): it leaves the purses and lies on the ground, still in circulation.</summary>
+        public void DropToGround(uint amount) => TotalGroundGold += amount;
+
+        /// <summary>Gold picked up from a pile into a purse: back in the purses.</summary>
+        public void TakeFromGround(uint amount) => TotalGroundGold -= amount < TotalGroundGold ? amount : TotalGroundGold;
+
+        /// <summary>Gold faded with its pile: it leaves the economy (<see cref="GroundFadeSinkName"/>).</summary>
+        public void FadeFromGround(uint amount)
+        {
+            uint faded = amount < TotalGroundGold ? amount : TotalGroundGold;
+            TotalGroundGold -= faded;
+            RecordSink(faded, GroundFadeSinkName);
+        }
+
+        /// <summary>After a load, the gold the restored piles hold (derived, as the piles are the truth).</summary>
+        public void RestoreGroundGold(uint amount) => TotalGroundGold = amount;
         public uint TotalFaucetedGold { get; private set; }
         public uint TotalSinkedGold { get; private set; }
 
@@ -81,6 +107,27 @@ namespace Simpiens.Simulation.Economy
 
             releasedAmount = 0;
             return false;
+        }
+
+        /// <summary>
+        /// Releases a bounty's escrow in shares (Epic 10 Part 3, K6.1: a hunt's reward, by damage dealt): each claimant found is
+        /// paid its share; the shares must add up to the escrow. False, paying nothing, when they don't or there is none.
+        /// </summary>
+        public bool TryReleaseEscrowSplit(ushort bountyId, ReadOnlySpan<EntityId> claimants, ReadOnlySpan<uint> shares, IAgentRegistry agentRegistry)
+        {
+            if (!_bountyEscrows.TryGetValue(bountyId, out uint escrow) || escrow == 0 || claimants.Length != shares.Length) return false;
+            uint total = 0;
+            for (int i = 0; i < shares.Length; i++) total += shares[i];
+            if (total != escrow) return false;
+            _bountyEscrows.Remove(bountyId);
+            TotalEscrowGold -= escrow;
+            _escrowReleasedGold += escrow;
+            for (int i = 0; i < claimants.Length; i++)
+            {
+                if (agentRegistry != null && agentRegistry.TryGetAgent(claimants[i], out var agent)) agent.Inventory?.AddGold((int)shares[i]);
+                SimLog.Economy.ZLogDebug($"Ledger: released {shares[i]}g of bounty #{bountyId}'s escrow to {SimLog.Agent(claimants[i])}");
+            }
+            return true;
         }
 
         public bool TryRefundEscrow(ushort bountyId, EntityId stallId, ref TradeStallData stall, out uint refundedAmount)
@@ -197,6 +244,7 @@ namespace Simpiens.Simulation.Economy
         {
             _bountyEscrows.Clear();
             TotalEscrowGold = 0;
+            TotalGroundGold = 0;
             TotalFaucetedGold = 0;
             TotalSinkedGold = 0;
             _faucetTotals.Clear();
@@ -304,12 +352,12 @@ namespace Simpiens.Simulation.Economy
 
         public bool ValidateConservation(uint currentTotalStallGold, uint currentTotalAgentGold, out int discrepancy)
         {
-            uint actualTotal = currentTotalStallGold + currentTotalAgentGold + TotalEscrowGold;
+            uint actualTotal = currentTotalStallGold + currentTotalAgentGold + TotalEscrowGold + TotalGroundGold;
             long expectedTotal = (long)TotalFaucetedGold - (long)TotalSinkedGold;
             discrepancy = (int)(actualTotal - expectedTotal);
             if (discrepancy != 0)
             {
-                SimLog.Economy.ZLogError($"Ledger conservation violated by {discrepancy}g: stalls {currentTotalStallGold} + agents {currentTotalAgentGold} + escrow {TotalEscrowGold} != faucets {TotalFaucetedGold} - sinks {TotalSinkedGold}");
+                SimLog.Economy.ZLogError($"Ledger conservation violated by {discrepancy}g: stalls {currentTotalStallGold} + agents {currentTotalAgentGold} + escrow {TotalEscrowGold} + ground {TotalGroundGold} != faucets {TotalFaucetedGold} - sinks {TotalSinkedGold}");
             }
             return discrepancy == 0;
         }

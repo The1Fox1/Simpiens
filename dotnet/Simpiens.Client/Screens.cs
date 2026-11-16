@@ -126,9 +126,34 @@ namespace Simpiens.Client
             _game.Ui.Root.Children.Add(Tooltips.Panel);
         }
 
+        private uint _breachEpoch = uint.MaxValue;
+        private bool _breachSeen;
+
+        /// <summary>
+        /// The breach's cutscene (Epic 10 Part 3, K10.5d), once: the first frame of a session (a new frames epoch, as after a
+        /// load) only notes whether the gate is breached, so a save loaded breached doesn't play it again; the frame that first
+        /// shows the breach after that plays it. True when it started.
+        /// </summary>
+        private bool WatchTheBreach()
+        {
+            var frame = _game.Session.Frames.Current;
+            if (frame == null) return false;
+            if (frame.Epoch != _breachEpoch)
+            {
+                _breachEpoch = frame.Epoch;
+                _breachSeen = frame.GateBreached;
+                return false;
+            }
+            if (_breachSeen || !frame.GateBreached) return false;
+            _breachSeen = true;
+            _game.PlayCutscene(Simpiens.Presentation.Cutscenes.StoryScenes.Breach);
+            return true;
+        }
+
         public void Update(float seconds, float cameraSeconds, bool active)
         {
             var ui = _game.Ui;
+            if (active && _game.Options.StoryScenes && WatchTheBreach()) return;
             PointerInput pointer = default;
             KeyInput keys = default;
             if (active)

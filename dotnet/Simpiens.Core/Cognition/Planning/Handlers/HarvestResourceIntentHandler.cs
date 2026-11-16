@@ -17,6 +17,7 @@ namespace Simpiens.Cognition.Planning.Handlers
         {
             var agent = node.Agent;
             uint currentTick = context.CurrentTick;
+            if (harvest.WayBarred) return IntentResult.PathBlocked; // its way crosses a known lair (K10.6, D70): set aside a while
 
             // 1. Check if resource is already depleted
             bool isDepleted = !context.TryGetResource(harvest.TargetEntityId, out var resourceData) || resourceData.IsDormant || resourceData.RemainingYield <= 0;
@@ -170,7 +171,7 @@ namespace Simpiens.Cognition.Planning.Handlers
 
                 state.ElapsedTime += context.FixedTickDeltaTime;
                 float gatherDuration = harvest.GatherDuration >= 0f ? harvest.GatherDuration : context.Economy.Day.Actions.HarvestSeconds(resourceData.YieldItem);
-                gatherDuration /= MiningSpeed(agent, resourceData.YieldItem); // a pickaxe speeds mining (D36)
+                gatherDuration /= MiningSpeed(agent, resourceData.YieldItem); // a pickaxe speeds mining (D36), and skill any harvest (K9.3b)
                 if (state.ElapsedTime < gatherDuration)
                 {
                     return IntentResult.InProgress;
@@ -196,6 +197,8 @@ namespace Simpiens.Cognition.Planning.Handlers
                 context.RecordHarvest(harvest.YieldedItem);
                 var harvester = node.Agent;
                 if (harvester != null && yieldItem.IsSalvage()) harvester.Activity.RecordSalvageHarvest(context.CurrentTick);
+                // A unit mined or foraged is practice (Epic 10 Part 3, K9.2)
+                if (harvester != null) context.Practise(harvester, Simpiens.Simulation.Skills.SkillWork.Harvest(yieldItem), Simpiens.Simulation.Skills.SkillRules.UnitExperience, Simpiens.Simulation.Skills.PracticeSource.Work);
                 if (harvester != null && ItemCatalog.Is(yieldItem, ItemCategory.Mineral)) WearTool(harvester, node, context);
                 if (SimLog.Traces(SimLog.Economy, Microsoft.Extensions.Logging.LogLevel.Debug, node.Id))
                 {
@@ -255,21 +258,30 @@ namespace Simpiens.Cognition.Planning.Handlers
         private static bool SameParty(Simpiens.Cognition.AgentState a, Simpiens.Cognition.AgentState b) =>
             a != null && b != null && a.Expedition.IsActive && b.Expedition.IsActive;
             /// <summary>How much faster <paramref name="harvester"/> mines <paramref name="item"/> with what it wears (<see cref="CrawlerStats.MiningSpeed"/>).</summary>
-        public static float MiningSpeed(Simpiens.Cognition.AgentState harvester, ItemType item) => CrawlerStats.MiningSpeed(harvester?.Inventory, item);
+        public static float MiningSpeed(Simpiens.Cognition.AgentState harvester, ItemType item) =>
+            harvester == null ? 1f : (float)(CrawlerStats.MiningSpeed(harvester.Inventory, item) * SkillSpeed(harvester.Skills, harvester.Inventory, item)); // nobody: the usual pace
 
-        /// <summary>A mineral unit mined wears the tool that is used by the unit (D37); a tool worn to its end breaks and is gone, told in the chronicle.</summary>
+        /// <summary>How much faster a crawler with <paramref name="skills"/>, wearing <paramref name="worn"/>, harvests <paramref name="item"/> (Epic 10 Part 3, K9.3b): its effective level at the harvest (K9.8a), centred on a Novice 2.</summary>
+        public static float SkillSpeed(in Simpiens.Simulation.Skills.SkillSet skills, Simpiens.Cognition.Inventory.IAgentInventory worn, ItemType item) =>
+            Simpiens.Simulation.Skills.SkillRules.HarvestFactor(Simpiens.Simulation.Skills.CrawlerSkills.Level(skills, worn, Simpiens.Simulation.Skills.SkillWork.Harvest(item)));
+
+        /// <summary>
+        /// A mineral unit mined wears every piece worn that wears by the unit (D37; by its rule, whichever slot it is in, Epic
+        /// 10 Part 3, K1.3): a pickaxe. A piece worn to its end breaks and is gone, told in the chronicle.
+        /// </summary>
         private static void WearTool(Simpiens.Cognition.AgentState harvester, WorldEntity node, IIntentExecutionContext context)
         {
             var inventory = harvester.Inventory;
             if (inventory == null) return;
-            var tool = inventory.GetEquipped(EquipmentSlot.Tool);
-            if (tool.IsEmpty || ItemCatalog.Get(tool.Type)?.Equipment?.Wear != WearRule.PerUse) return;
-            harvester.Activity.ToolMinedUnits++;
-            if (!inventory.Wear(EquipmentSlot.Tool)) return;
-            harvester.Activity.ToolsWornOut++;
-            SimLog.Economy.ZLogInformation($"{SimLog.Agent(harvester.AgentId)}'s {ItemCatalog.NameOf(tool.Type)} broke at {node.Position}");
-            context.ChronicleService?.RecordEvent(new ChronicleEvent(ChronicleEventType.ToolWornOut, harvester.AgentId, default,
-                context.GetSectorForPosition(node.Position), (uint)context.CurrentTick, ChronicleIntensity.Notable, (byte)tool.Type));
+            System.Span<ItemType> broke = stackalloc ItemType[EquipmentSlots.Capacity];
+            if (inventory.WearBy(WearRule.PerHarvest, broke, out int brokeCount) > 0) harvester.Activity.ToolMinedUnits++;
+            for (int b = 0; b < brokeCount && b < broke.Length; b++)
+            {
+                harvester.Activity.ToolsWornOut++;
+                SimLog.Economy.ZLogInformation($"{SimLog.Agent(harvester.AgentId)}'s {ItemCatalog.NameOf(broke[b])} broke at {node.Position}");
+                context.ChronicleService?.RecordEvent(new ChronicleEvent(ChronicleEventType.ToolWornOut, harvester.AgentId, default,
+                    context.GetSectorForPosition(node.Position), (uint)context.CurrentTick, ChronicleIntensity.Notable, (byte)broke[b]));
+            }
         }
     }
 }

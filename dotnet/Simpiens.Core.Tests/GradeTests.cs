@@ -18,9 +18,14 @@ namespace Simpiens.Core.Tests
         [Fact]
         public void PracticeGivesTheGradeAndTheGradeLengthensLifeAndStrengthensEffect()
         {
-            var tuning = WorkshopTuning.Default;
-            byte Grade(ushort practice) => WorkshopService.GradeOf(new ArtisanContract(default, 0, 5, 0, practice: practice), tuning);
-            Assert.Equal(new byte[] { 0, 0, 1, 1, 2, 2 }, new[] { Grade(0), Grade(9), Grade(10), Grade(19), Grade(20), Grade(45) });
+            // An artisan's grade is its band in the station's skill (Epic 10 Part 3, K9.3c): ten makes to Apprentice, thirty-five to Journeyman
+            byte Grade(int makes)
+            {
+                var smith = new Simpiens.Cognition.AgentState(new EntityId(1, 0, 0, 0));
+                smith.Practise(Simpiens.Simulation.Skills.Skill.Smithing, makes * Simpiens.Simulation.Skills.SkillRules.MakeExperience, out _);
+                return WorkshopService.GradeOf(smith, StationKind.Forge);
+            }
+            Assert.Equal(new byte[] { 0, 0, 1, 1, 2, 2 }, new[] { Grade(0), Grade(9), Grade(10), Grade(34), Grade(35), Grade(90) });
 
             var pickaxe = ItemCatalog.Get(ItemType.ToolPickaxe).Equipment;
             Assert.Equal(new ushort[] { 40, 50, 60 }, new[] { pickaxe.DurabilityAt(Grades.Standard), pickaxe.DurabilityAt(Grades.Fine), pickaxe.DurabilityAt(Grades.Masterwork) });

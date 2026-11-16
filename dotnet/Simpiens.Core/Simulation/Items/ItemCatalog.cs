@@ -64,13 +64,13 @@ namespace Simpiens.Simulation.Items
                 ItemCategory.Equipment | ItemCategory.Tool | ItemCategory.Mineral, ItemRarity.Uncommon,
                 // Mines 1.5 times as fast and wears by the mineral unit (Epic 10 Part 2, D36, D37): 40 units, about a week of a
                 // miner's work while the stall's ore shelf sets how much it mines, so the forge sees its buyers again
-                equipment: new EquipmentBlock(EquipmentSlot.Tool, durability: 40, WearRule.PerUse,
+                equipment: new EquipmentBlock(SlotKind.Tool, durability: 40, WearRule.PerHarvest,
                     new StatModifier(StatKind.HarvestSpeed, ModifierOp.Multiply, 1.5f))),
             // Halves hazard damage; lasts 1,500 ticks in danger, about 3.6 game hours (Epic 10 G3; tripled with the 24-hour day's
             // longer ventures, Epic 10 Part 2, T3.2a)
             new ItemDefinition(ItemType.HazardGear, "HazardGear", "Hazard Gear",
                 ItemCategory.Equipment | ItemCategory.Protection, ItemRarity.Uncommon,
-                equipment: new EquipmentBlock(EquipmentSlot.Protection, durability: 1500, WearRule.PerHazardTick,
+                equipment: new EquipmentBlock(SlotKind.Body, durability: 1500, WearRule.PerHazardTick,
                     new StatModifier(StatKind.HazardResistance, ModifierOp.Add, 0.5f))),
             new ItemDefinition(ItemType.Glowstone, "Glowstone", "Glowstone",
                 ItemCategory.Resource | ItemCategory.Mineral | ItemCategory.Hazardous, ItemRarity.Rare),
@@ -80,15 +80,81 @@ namespace Simpiens.Simulation.Items
                 ItemCategory.Consumable | ItemCategory.Medicine, ItemRarity.Uncommon, maxStack: 5,
                 consume: new[] { new ConsumeEffect(StatKind.Health, 80f) }),
             // Protection by kind (Epic 10 Part 2, W3, Q5, D47): each cuts its own hazards by three quarters, where hazard gear
-            // cuts any by half; worn in the protection slot and worn out by exposure, as hazard gear
+            // cuts any by half; worn on the head (the respirator as a mask; Epic 10 Part 3, Q11) and worn out by exposure,
+            // as hazard gear is on the body
             new ItemDefinition(ItemType.Respirator, "Respirator", "Respirator",
                 ItemCategory.Equipment | ItemCategory.Protection, ItemRarity.Rare,
-                equipment: new EquipmentBlock(EquipmentSlot.Protection, durability: 1500, WearRule.PerHazardTick,
+                equipment: new EquipmentBlock(SlotKind.Head, durability: 1500, WearRule.PerHazardTick,
                     new StatModifier(StatKind.AirResistance, ModifierOp.Add, 0.75f))),
             new ItemDefinition(ItemType.HardHat, "HardHat", "Hard Hat",
                 ItemCategory.Equipment | ItemCategory.Protection, ItemRarity.Rare,
-                equipment: new EquipmentBlock(EquipmentSlot.Protection, durability: 1500, WearRule.PerHazardTick,
-                    new StatModifier(StatKind.RockResistance, ModifierOp.Add, 0.75f)))
+                equipment: new EquipmentBlock(SlotKind.Head, durability: 1500, WearRule.PerHazardTick,
+                    new StatModifier(StatKind.RockResistance, ModifierOp.Add, 0.75f))),
+            // Melee weapons (Epic 10 Part 3, K3.1, Q10), in the weapon slot, on the bare hand's 2 attack a swing every 1.5 s
+            // (the combat rule's D2); each wears by the blow landed. Placeholder numbers, tuned by K3's fights
+            new ItemDefinition(ItemType.Cudgel, "Cudgel", "Cudgel",
+                ItemCategory.Equipment | ItemCategory.Weapon | ItemCategory.Botanical, ItemRarity.Common,
+                equipment: new EquipmentBlock(SlotKind.Weapon, durability: 80, WearRule.PerHit,
+                    new StatModifier(StatKind.Attack, ModifierOp.Add, 3f),
+                    new StatModifier(StatKind.Reach, ModifierOp.Add, 0.1f))),
+            new ItemDefinition(ItemType.IronBlade, "IronBlade", "Iron Blade",
+                ItemCategory.Equipment | ItemCategory.Weapon | ItemCategory.Mineral, ItemRarity.Uncommon,
+                equipment: new EquipmentBlock(SlotKind.Weapon, durability: 120, WearRule.PerHit,
+                    new StatModifier(StatKind.Attack, ModifierOp.Add, 8f), // +8 since K3.3's fights (D21): a lone beetle falls to it
+                    new StatModifier(StatKind.AttackInterval, ModifierOp.Multiply, 0.9f))),
+            new ItemDefinition(ItemType.GlowstoneEdge, "GlowstoneEdge", "Glowstone Edge",
+                ItemCategory.Equipment | ItemCategory.Weapon | ItemCategory.Mineral, ItemRarity.Rare,
+                equipment: new EquipmentBlock(SlotKind.Weapon, durability: 160, WearRule.PerHit,
+                    new StatModifier(StatKind.Attack, ModifierOp.Add, 12f),
+                    new StatModifier(StatKind.AttackInterval, ModifierOp.Multiply, 0.9f))),
+            // Armour from ore (K3.2, Q11): defense cuts a blow by D / (D + 10) (the combat rule's D4), and wears by the blow taken
+            new ItemDefinition(ItemType.IronHelm, "IronHelm", "Iron Helm",
+                ItemCategory.Equipment | ItemCategory.Protection | ItemCategory.Mineral, ItemRarity.Uncommon,
+                equipment: new EquipmentBlock(SlotKind.Head, durability: 80, WearRule.PerBlowTaken,
+                    new StatModifier(StatKind.Defense, ModifierOp.Add, 3f))),
+            new ItemDefinition(ItemType.RingCoat, "RingCoat", "Ring Coat",
+                ItemCategory.Equipment | ItemCategory.Protection | ItemCategory.Mineral, ItemRarity.Uncommon,
+                equipment: new EquipmentBlock(SlotKind.Body, durability: 120, WearRule.PerBlowTaken,
+                    new StatModifier(StatKind.Defense, ModifierOp.Add, 6f))),
+            // Materials from kills (Epic 10 Part 3, K4.2, Q12): salvage the stall buys and the forge works (K4.4)
+            new ItemDefinition(ItemType.Hide, "Hide", "Hide", ItemCategory.Resource | ItemCategory.Creature, ItemRarity.Common),
+            new ItemDefinition(ItemType.Chitin, "Chitin", "Chitin", ItemCategory.Resource | ItemCategory.Creature, ItemRarity.Uncommon),
+            // The bosses' trophies (Epic 10 Part 3, K10, Q12): sure at a boss's slaying, salvage the stall buys dear
+            new ItemDefinition(ItemType.MatriarchPelt, "MatriarchPelt", "Matriarch's Pelt", ItemCategory.Resource | ItemCategory.Creature, ItemRarity.Rare),
+            new ItemDefinition(ItemType.KeeperStone, "KeeperStone", "Keeper's Stone", ItemCategory.Resource | ItemCategory.Creature, ItemRarity.Legendary),
+            // Armour from the materials (K4.4): the jerkin between the helm and the ring coat, the plate above it
+            new ItemDefinition(ItemType.LeatherJerkin, "LeatherJerkin", "Leather Jerkin",
+                ItemCategory.Equipment | ItemCategory.Protection | ItemCategory.Creature, ItemRarity.Common,
+                equipment: new EquipmentBlock(SlotKind.Body, durability: 90, WearRule.PerBlowTaken,
+                    new StatModifier(StatKind.Defense, ModifierOp.Add, 4f))),
+            new ItemDefinition(ItemType.ChitinPlate, "ChitinPlate", "Chitin Plate",
+                ItemCategory.Equipment | ItemCategory.Protection | ItemCategory.Creature, ItemRarity.Rare,
+                equipment: new EquipmentBlock(SlotKind.Body, durability: 160, WearRule.PerBlowTaken,
+                    new StatModifier(StatKind.Defense, ModifierOp.Add, 9f))),
+            // Rare pieces (K4.2, Q11: fixed items with a rarity, never random affixes), now and then at a kill
+            new ItemDefinition(ItemType.FangKnife, "FangKnife", "Fang Knife",
+                ItemCategory.Equipment | ItemCategory.Weapon | ItemCategory.Creature, ItemRarity.Epic,
+                equipment: new EquipmentBlock(SlotKind.Weapon, durability: 140, WearRule.PerHit,
+                    new StatModifier(StatKind.Attack, ModifierOp.Add, 9f),
+                    new StatModifier(StatKind.AttackInterval, ModifierOp.Multiply, 0.8f))),
+            new ItemDefinition(ItemType.StoneheartCoat, "StoneheartCoat", "Stoneheart Coat",
+                ItemCategory.Equipment | ItemCategory.Protection | ItemCategory.Creature, ItemRarity.Epic,
+                equipment: new EquipmentBlock(SlotKind.Body, durability: 220, WearRule.PerBlowTaken,
+                    new StatModifier(StatKind.Defense, ModifierOp.Add, 12f))),
+            // Ranged arms (Epic 10 Part 3, K8.1, Q15, D44): a range across the gap between bodies, and wear per shot, hit or
+            // miss (Q16: no ammunition). Weaker in a hit than a blade, so a blade stays the weapon in reach: the sling 5 to hit
+            // at 5 units, the crossbow 9 at 7 and slower
+            new ItemDefinition(ItemType.Sling, "Sling", "Sling",
+                ItemCategory.Equipment | ItemCategory.Weapon | ItemCategory.Botanical, ItemRarity.Common,
+                equipment: new EquipmentBlock(SlotKind.Weapon, durability: 100, WearRule.PerShot,
+                    new StatModifier(StatKind.Attack, ModifierOp.Add, 3f),
+                    new StatModifier(StatKind.Range, ModifierOp.Add, 5f))),
+            new ItemDefinition(ItemType.Crossbow, "Crossbow", "Crossbow",
+                ItemCategory.Equipment | ItemCategory.Weapon | ItemCategory.Mineral, ItemRarity.Uncommon,
+                equipment: new EquipmentBlock(SlotKind.Weapon, durability: 120, WearRule.PerShot,
+                    new StatModifier(StatKind.Attack, ModifierOp.Add, 7f),
+                    new StatModifier(StatKind.Range, ModifierOp.Add, 7f),
+                    new StatModifier(StatKind.AttackInterval, ModifierOp.Multiply, 1.6f)))
         };
 
         /// <summary>

@@ -3,7 +3,7 @@
 - **Status**: COMPLETED (2026-10-17). Merged to `main` as PR #5 on 2026-10-17. Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`.
 - **Track**: Independent (cross-cutting architecture)
 - **Source**: Phases 0 and 1 of the migration write-up "Simpiens: Migrating from Unity to Godot on .NET 10" (Claude Docs, 2026-10-15). Phases 2–4 (Godot spike, view parity, cutover) are outside this epic; the spike decides whether they happen.
-- **Downstream beneficiaries**: multiplayer (state as plain data, deterministic ticks: §1A.1), Epic 10 and the scaling work (§3A #8: profiling and soaks without the editor), Epic 11 (the official MCP SDK needs .NET), and any engine choice.
+- **Downstream beneficiaries**: multiplayer (state as plain data, deterministic ticks: §1A.1), Epic 10 and the scaling work (§3A #8: profiling and soaks without the editor), Epic N (the official MCP SDK needs .NET), and any engine choice.
 - **Layers**: every engine-free part of the simulation (`Simpiens.Cognition`, `Simpiens.Simulation`, `Simpiens.Intervention`, `Simpiens.Narrative`, `Simpiens.Diagnostics`, `Simpiens.Core.Session`), the views that read it (`Simpiens.Entities`, `Simpiens.UI`), the test harness, and a new `dotnet/` solution.
 
 ---
@@ -19,7 +19,7 @@ Decisions taken on the write-up's checklist:
 - **DI container:** `Microsoft.Extensions.DependencyInjection` for .NET hosts.
 - **Test framework:** xUnit (v3) for the .NET tests.
 - **UI authoring:** follow industry standards (applies to Phase 3).
-- **ROADMAP §2:** retire the VContainer, UniTask and `Unity.Collections` + Burst rows; lift the MCP SDK rejection for Epic 11.
+- **ROADMAP §2:** retire the VContainer, UniTask and `Unity.Collections` + Burst rows; lift the MCP SDK rejection for Epic N.
 
 ---
 

@@ -1,3 +1,4 @@
+using System;
 using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.Items;
 
@@ -12,9 +13,10 @@ namespace Simpiens.Simulation.Workshops
     {
         /// <summary>
         /// One tick of work at <paramref name="station"/>, drawing on and stocking <paramref name="stall"/>.
-        /// <paramref name="stallChanged"/> says whether the stall's stock moved.
+        /// <paramref name="stallChanged"/> says whether the stall's stock moved. The make is at <paramref name="grade"/>, and
+        /// its work time is divided by <paramref name="speed"/> (its artisan's skill: Epic 10 Part 3, K9.3c).
         /// </summary>
-        public static CraftStep Work(ref StationState station, ref TradeStallData stall, out bool stallChanged, byte grade = Grades.Standard)
+        public static CraftStep Work(ref StationState station, ref TradeStallData stall, out bool stallChanged, byte grade = Grades.Standard, float speed = 1f)
         {
             stallChanged = false;
             if (!station.Built || !station.HasOrder) return CraftStep.Idle;
@@ -47,7 +49,7 @@ namespace Simpiens.Simulation.Workshops
             }
 
             station.Progress++;
-            if (station.Progress < WorkTicks(recipe, station.Repair)) return CraftStep.Working;
+            if (station.Progress < WorkTicks(recipe, station.Repair, speed)) return CraftStep.Working;
 
             station.InputsTaken = false;
             station.Progress = 0;
@@ -85,6 +87,13 @@ namespace Simpiens.Simulation.Workshops
 
         /// <summary>The work a make takes: a repair half (D59).</summary>
         public static int WorkTicks(Recipe recipe, bool repair) => repair ? (recipe.WorkTicks + 1) / 2 : recipe.WorkTicks;
+
+        /// <summary>The same at an artisan's pace (Epic 10 Part 3, K9.3c): the work time divided by <paramref name="speed"/>, at least a tick.</summary>
+        public static int WorkTicks(Recipe recipe, bool repair, float speed)
+        {
+            int ticks = WorkTicks(recipe, repair);
+            return speed <= 1f ? ticks : Math.Max(1, SimMath.RoundToInt((float)(ticks / speed)));
+        }
 
         /// <summary>Whether worn pieces of <paramref name="item"/> can be mended: something worn the stations make (D58); hazard gear, the caravan's, can't.</summary>
         public static bool Repairable(ItemType item) => Grades.Graded(item);

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Simpiens.Presentation;
+using Simpiens.Presentation.Art;
 using Simpiens.Presentation.Art.People;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Economy;
@@ -17,6 +18,9 @@ namespace Simpiens.Client.Tests.People
     /// </summary>
     public class PortraitKitTests
     {
+        // A hard hat on the head and hazard gear's suit on the body (Epic 10 Part 3, K1.5)
+        private static readonly WornLook HatAndSuit = WornLook.Wearing(ItemType.HardHat).And(Simpiens.Simulation.Items.EquipmentSlot.Body, ItemType.HazardGear);
+
         private static readonly CrawlerLook Basis = CrawlerLook.Generate(PeopleSheetTests.CrowdSeed, new EntityId(3u, 0u, 0u, 0u))
             .With(LookGene.Lineage, LookCatalog.IdOf(LookGene.Lineage, "human"))
             .With(LookGene.Frame, LookCatalog.IdOf(LookGene.Frame, "male"))
@@ -30,7 +34,7 @@ namespace Simpiens.Client.Tests.People
         {
             for (uint i = 0; i < 16; i++)
             {
-                var key = new PortraitKey(CrawlerLook.Generate(PeopleSheetTests.CrowdSeed, new EntityId(i + 1u, 0u, 0u, 0u)), (Mood)(i % 7), (CrawlerStanding)(i % 3), i % 2 == 0 ? ItemType.HazardGear : ItemType.None);
+                var key = new PortraitKey(CrawlerLook.Generate(PeopleSheetTests.CrowdSeed, new EntityId(i + 1u, 0u, 0u, 0u)), (Mood)(i % 7), (CrawlerStanding)(i % 3), i % 2 == 0 ? HatAndSuit : default);
                 Assert.True(Framed(key).AsSpan().SequenceEqual(Framed(key)));
             }
         }
@@ -56,7 +60,7 @@ namespace Simpiens.Client.Tests.People
             {
                 var look = Basis.With(gene, option.Id);
                 if (look.ClothesPrimary == look.ClothesSecondary) look = look.With(gene == LookGene.ClothesPrimary ? LookGene.ClothesSecondary : LookGene.ClothesPrimary, option.Id == 1 ? (byte)2 : (byte)1);
-                string pixels = string.Join(",", Framed(new PortraitKey(look, Mood.Content, CrawlerStanding.Resident, ItemType.None)));
+                string pixels = string.Join(",", Framed(new PortraitKey(look, Mood.Content, CrawlerStanding.Resident, default)));
                 Assert.False(seen.ContainsValue(pixels), $"{gene} {option.Key} draws the same portrait as {seen.FirstOrDefault(p => p.Value == pixels).Key}.");
                 seen[option.Key] = pixels;
             }
@@ -65,23 +69,30 @@ namespace Simpiens.Client.Tests.People
         [Fact]
         public void EveryMoodIsItsOwnFaceAndEveryStandingItsOwnFrame()
         {
-            var faces = Enum.GetValues<Mood>().Select(m => string.Join(",", Framed(new PortraitKey(Basis, m, CrawlerStanding.Resident, ItemType.None)))).ToList();
+            var faces = Enum.GetValues<Mood>().Select(m => string.Join(",", Framed(new PortraitKey(Basis, m, CrawlerStanding.Resident, default)))).ToList();
             Assert.Equal(faces.Count, faces.Distinct().Count());
             var frames = Enum.GetValues<CrawlerStanding>().Select(s => PortraitKit.FrameOf(s)).ToList();
             Assert.Equal(frames.Count, frames.Distinct().Count());
             foreach (var standing in Enum.GetValues<CrawlerStanding>())
-                Assert.Equal(PortraitKit.FrameOf(standing).Outer, Framed(new PortraitKey(Basis, Mood.Content, standing, ItemType.None))[0]);
+                Assert.Equal(PortraitKit.FrameOf(standing).Outer, Framed(new PortraitKey(Basis, Mood.Content, standing, default))[0]);
         }
 
         [Fact]
-        public void TheHelmAndTheTabardShow()
+        public void TheHelmTheSuitAndTheTabardShow()
         {
-            Assert.True(Simpiens.Presentation.Art.ItemArt.TryGet(Simpiens.Simulation.Items.ItemCatalog.Get(ItemType.HazardGear).ArtKey, out var helm));
-            var bare = Framed(new PortraitKey(Basis, Mood.Content, CrawlerStanding.Resident, ItemType.None));
-            var helmed = Framed(new PortraitKey(Basis, Mood.Content, CrawlerStanding.Resident, ItemType.HazardGear));
+            Assert.True(Simpiens.Presentation.Art.ItemArt.TryGet(Simpiens.Simulation.Items.ItemCatalog.Get(ItemType.HardHat).ArtKey, out var helm));
+            Assert.True(Simpiens.Presentation.Art.ItemArt.TryGet(Simpiens.Simulation.Items.ItemCatalog.Get(ItemType.HazardGear).ArtKey, out var suit));
+            var bare = Framed(new PortraitKey(Basis, Mood.Content, CrawlerStanding.Resident, default));
+            var helmed = Framed(new PortraitKey(Basis, Mood.Content, CrawlerStanding.Resident, WornLook.Wearing(ItemType.HardHat)));
             Assert.Contains(helm.Secondary, helmed); // the lamp
             Assert.DoesNotContain(helm.Secondary, bare);
-            var member = Framed(new PortraitKey(Basis, Mood.Content, CrawlerStanding.GuildMember, ItemType.None));
+            // The suit on the shoulders (Epic 10 Part 3, K1.5): the cloth in its colour, with the hard hat over it
+            var cloth = Simpiens.Presentation.Art.SpriteKit.RampOf(suit.Primary);
+            var both = Framed(new PortraitKey(Basis, Mood.Content, CrawlerStanding.Resident, HatAndSuit));
+            Assert.True(both.Count(p => p == cloth.Base || p == cloth.Shade) >= 40, "No suit on the shoulders.");
+            Assert.True(bare.Count(p => p == cloth.Base || p == cloth.Shade) < 10, "A suit on a bare crawler.");
+            Assert.Contains(helm.Secondary, both);
+            var member = Framed(new PortraitKey(Basis, Mood.Content, CrawlerStanding.GuildMember, default));
             var tabard = Simpiens.Presentation.Art.SpriteKit.RampOf(BodyKit.TabardColour);
             Assert.True(member.Count(p => p == tabard.Base || p == tabard.Shade) >= 20, "No tabard on a guild member's chest.");
             Assert.True(bare.Count(p => p == tabard.Base || p == tabard.Shade) == 0, "A tabard on a resident.");
@@ -91,7 +102,7 @@ namespace Simpiens.Client.Tests.People
         public void ABakeIntoABufferAllocatesNothing()
         {
             var into = new Rgba32[PortraitKit.FramedSize * PortraitKit.FramedSize];
-            var key = new PortraitKey(Basis, Mood.Scared, CrawlerStanding.GuildMember, ItemType.HazardGear);
+            var key = new PortraitKey(Basis, Mood.Scared, CrawlerStanding.GuildMember, HatAndSuit);
             PortraitKit.BakeFramed(key, into); // warm
             long before = GC.GetAllocatedBytesForCurrentThread();
             for (int i = 0; i < 20; i++) PortraitKit.BakeFramed(key, into);

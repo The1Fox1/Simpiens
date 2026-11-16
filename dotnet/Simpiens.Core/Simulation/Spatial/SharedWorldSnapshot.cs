@@ -40,6 +40,46 @@ namespace Simpiens.Simulation.Spatial
         public int ActiveBountyCount;
         public ReadOnlySpan<BountyContract> Bounties => new ReadOnlySpan<BountyContract>(BountyBuffer, 0, ActiveBountyCount);
 
+        // The items on the ground (Epic 10 Part 3, K4.3b): copies, in id order, the oldest first past the cap
+        public const int MaxPiles = 64;
+        public readonly Simpiens.Simulation.Loot.PileView[] PileBuffer = new Simpiens.Simulation.Loot.PileView[MaxPiles];
+        public int ActivePileCount;
+        public ReadOnlySpan<Simpiens.Simulation.Loot.PileView> Piles => new ReadOnlySpan<Simpiens.Simulation.Loot.PileView>(PileBuffer, 0, ActivePileCount);
+
+        // The hunts' parties (Epic 10 Part 3, K6.2), by bounty id
+        public const int MaxHunts = 8;
+        public readonly Simpiens.Simulation.Economy.HuntRecord[] HuntBuffer = new Simpiens.Simulation.Economy.HuntRecord[MaxHunts];
+        public int ActiveHuntCount;
+        public ReadOnlySpan<Simpiens.Simulation.Economy.HuntRecord> Hunts => new ReadOnlySpan<Simpiens.Simulation.Economy.HuntRecord>(HuntBuffer, 0, ActiveHuntCount);
+
+        /// <summary>Copies the hunts' parties (main thread; no allocation).</summary>
+        public void SetHunts(IReadOnlyList<Simpiens.Simulation.Economy.HuntRecord> source)
+        {
+            int toCopy = source == null ? 0 : SimMath.Min(source.Count, MaxHunts);
+            for (int i = 0; i < toCopy; i++) HuntBuffer[i] = source[i];
+            ActiveHuntCount = toCopy;
+        }
+
+        // The fallen (Epic 10 Part 3, K5.3): crawlers collapsed in danger, in registration order
+        public const int MaxFallen = 16;
+        public readonly FallenView[] FallenBuffer = new FallenView[MaxFallen];
+        public int ActiveFallenCount;
+        public ReadOnlySpan<FallenView> Fallen => new ReadOnlySpan<FallenView>(FallenBuffer, 0, ActiveFallenCount);
+
+        /// <summary>Adds a fallen crawler (main thread, while the snapshot is filled); past the cap, the later are left out.</summary>
+        public void AddFallen(in FallenView fallen)
+        {
+            if (ActiveFallenCount < MaxFallen) FallenBuffer[ActiveFallenCount++] = fallen;
+        }
+
+        /// <summary>Copies the piles into the pre-allocated buffer (main thread; no allocation).</summary>
+        public void SetPiles(IReadOnlyList<Simpiens.Simulation.Loot.LootPile> source)
+        {
+            int toCopy = source == null ? 0 : SimMath.Min(source.Count, MaxPiles);
+            for (int i = 0; i < toCopy; i++) PileBuffer[i] = new Simpiens.Simulation.Loot.PileView(source[i]);
+            ActivePileCount = toCopy;
+        }
+
         // Static Navigation Grid (Section 2.6)
         public StaticNavGrid StaticGrid { get; private set; }
         public void SetStaticGrid(StaticNavGrid staticGrid) => StaticGrid = staticGrid;
@@ -79,6 +119,27 @@ namespace Simpiens.Simulation.Spatial
             return false;
         }
         public void SetExploredSectors(ulong mask) => ExploredSectorMask = mask;
+
+        /// <summary>
+        /// Which of the map's lairs are charted (Epic 10 Part 3, K2.3, D17): bit i set when lair i (in the map's order) is
+        /// known to everyone, since a crawler saw one of its creatures or was struck by one. A lone crawler keeps out of a
+        /// charted lair's reach (<c>Vitality.WouldEnterAt</c>). Defaults to none.
+        /// </summary>
+        public ulong ChartedLairMask { get; private set; }
+        public void SetChartedLairs(ulong mask) => ChartedLairMask = mask;
+
+        /// <summary>True when lair <paramref name="lairIndex"/> (in the map's order) is charted.</summary>
+        public bool IsLairCharted(int lairIndex) => lairIndex >= 0 && lairIndex < 64 && (ChartedLairMask & (1UL << lairIndex)) != 0;
+
+        /// <summary>
+        /// Which of the map's lairs have their boss alive (Epic 10 Part 3, K10.2a, D63): bit i set while lair i's boss holds its
+        /// place, so a lair is judged with its boss only while she lives (a slain Matriarch is gone for a week). Defaults to none.
+        /// </summary>
+        public ulong BossLairMask { get; private set; }
+        public void SetBossLairs(ulong mask) => BossLairMask = mask;
+
+        /// <summary>True when lair <paramref name="lairIndex"/>'s boss is alive.</summary>
+        public bool IsBossAlive(int lairIndex) => lairIndex >= 0 && lairIndex < 64 && (BossLairMask & (1UL << lairIndex)) != 0;
 
         public bool IsSectorCharted(int sectorId)
         {
@@ -131,6 +192,12 @@ namespace Simpiens.Simulation.Spatial
             ActiveStallCount = 0;
             Array.Clear(BountyBuffer, 0, ActiveBountyCount);
             ActiveBountyCount = 0;
+            Array.Clear(PileBuffer, 0, ActivePileCount);
+            ActivePileCount = 0;
+            Array.Clear(FallenBuffer, 0, ActiveFallenCount);
+            ActiveFallenCount = 0;
+            Array.Clear(HuntBuffer, 0, ActiveHuntCount);
+            ActiveHuntCount = 0;
         }
 
         /// <summary>

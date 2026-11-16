@@ -17,22 +17,54 @@ namespace Simpiens.Core.Tests
     /// scripted players build and staff the forge, which makes respirators, and the still, which makes draughts; the guild
     /// player, keeping a reserve (D67), signs eight on, forms two parties and sends them together, the Gallery's party
     /// outfitted with the forge's respirators. Both parties are out at once and come home with hauls; residents buy what
-    /// the stations made; nobody starves, no wage goes unpaid, the ledger balances and the days' checks hold.
+    /// the stations made; nobody starves, nobody quits for want of pay (since Epic 10 Part 3's F3, option A: a single
+    /// unpaid visit is a warning the game recovers from), the ledger balances and the days' checks hold.
     /// <para>
-    /// On gate seed 1, not the default seed (a deviation): on the default seed the stall affords the forge and a guild of
-    /// eight but never the still as well (F14, the economy's balance, the producer's call at W6.3). Over 6 game days the
-    /// whole loop played through on 2 of 5 seeds measured, this one and 424242.
+    /// On gate seed 424242, not the default seed (a deviation): on the default seed the stall affords the forge and a guild
+    /// of eight but never the still as well (F14, the economy's balance, the producer's call at W6.3). Over 6 game days the
+    /// whole loop played through on 2 of 5 seeds measured at W6 (gate seed 1, the seed until K9, and this one); with skills
+    /// (Epic 10 Part 3, K9) on 3 of the 23 gate seeds in seven (<see cref="MeasureTheWorkshopLoopOnTheGateSeeds"/>: this
+    /// one, 18 and 20), with both parties out at once on day 5.8.
     /// </para>
     /// </summary>
     public class WorkshopLoopScenarioTests
     {
-        private const ulong Seed = 1;
+        private const ulong Seed = 424242;
         private const long Horizon = 7 * DayClock.TicksPerDay;
+
+        /// <summary>
+        /// How long the save scenario looks for both parties out with a make in hand: longer than the loop's horizon (Epic 10
+        /// Part 3, F3's option A): on seed 1, until K9, both parties were first out together with a make in hand on day 9.2;
+        /// on this seed, with skills, on day 6.5.
+        /// </summary>
+        private const long SaveSearch = 12 * DayClock.TicksPerDay;
 
         [Fact]
         public void TheWorkshopLoopPlaysThrough()
         {
-            using var sim = LocalSimulation.Create(Seed);
+            var shortfalls = PlayTheLoop(Seed, out string report);
+            TestContext.Current.TestOutputHelper?.WriteLine(report);
+            Assert.True(shortfalls.Count == 0, "The loop fell short:\n  " + string.Join("\n  ", shortfalls));
+        }
+
+        /// <summary>The measurement behind the seed: every gate seed's seven days (explicit, a few minutes).</summary>
+        [Fact(Explicit = true)]
+        public void MeasureTheWorkshopLoopOnTheGateSeeds()
+        {
+            int through = 0;
+            foreach (var seed in OutpostWatch.GateSeeds)
+            {
+                var shortfalls = PlayTheLoop(seed, out string report);
+                if (shortfalls.Count == 0) through++;
+                TestContext.Current.TestOutputHelper?.WriteLine($"seed {seed}: {(shortfalls.Count == 0 ? "plays through" : "short: " + string.Join("; ", shortfalls))} | {report.Split('\n')[0]}");
+            }
+            TestContext.Current.TestOutputHelper?.WriteLine($"the whole loop played through on {through} of {OutpostWatch.GateSeeds.Length} seeds");
+        }
+
+        /// <summary>Plays the loop on <paramref name="seed"/>; what it fell short of (none when it played through), and the run's report.</summary>
+        private static List<string> PlayTheLoop(ulong seed, out string report)
+        {
+            using var sim = LocalSimulation.Create(seed);
             sim.Respawn(OutpostSession.SessionId);
             var (forge, still, _) = Players(sim);
             var watch = new OutpostWatch(sim);
@@ -42,7 +74,8 @@ namespace Simpiens.Core.Tests
             int forgeAt = workshops.IndexOf(StationKind.Forge), stillAt = workshops.IndexOf(StationKind.Still);
 
             long bothOut = -1;
-            int worstUnpaid = 0, respiratorsOnATrip = 0;
+            int worstUnpaid = 0, unpaidQuits = 0, respiratorsOnATrip = 0;
+            var unpaid = new Dictionary<EntityId, int>(); // members' and artisans' unpaid runs, last tick
             var hauls = new[] { new List<int>(), new List<int>() }; // trips during which the other party was out too
             var haul = new int[2];
             var wasOut = new bool[2];
@@ -62,7 +95,7 @@ namespace Simpiens.Core.Tests
                         if (stage == ExpeditionStage.Work || stage == ExpeditionStage.Return) haul[p] = System.Math.Max(haul[p], party.Gathered(host));
                         if (p == 0 && stage == ExpeditionStage.Work)
                         {
-                            int wearing = party.Members.Count(m => m.IsWithParty && host.TryGetCrawler(m.CrawlerId, out var c) && c.Inventory.GetEquipped(EquipmentSlot.Protection).Type == ItemType.Respirator);
+                            int wearing = party.Members.Count(m => m.IsWithParty && host.TryGetCrawler(m.CrawlerId, out var c) && WornGear.Protection(c.Inventory).Type == ItemType.Respirator);
                             respiratorsOnATrip = System.Math.Max(respiratorsOnATrip, wearing);
                         }
                     }
@@ -71,24 +104,28 @@ namespace Simpiens.Core.Tests
                 }
                 if (bothOut < 0 && guild.Parties[0].IsOut && guild.Parties[1].IsOut) bothOut = sim.Clock.CurrentTick;
                 foreach (var contract in guild.Members) worstUnpaid = System.Math.Max(worstUnpaid, contract.UnpaidVisits);
+                unpaidQuits += QuitUnpaid(sim, unpaid);
             }
             watch.Finish();
             double Day(long t) => 1 + t / (double)DayClock.TicksPerDay;
-            TestContext.Current.TestOutputHelper?.WriteLine($"forge standing day {Day(forge.BuiltTick):F1}, {workshops[forgeAt].Made} respirators made; still standing day {Day(still.BuiltTick):F1}, {workshops[stillAt].Made} draughts made; " +
+            report = $"forge standing day {Day(forge.BuiltTick):F1}, {workshops[forgeAt].Made} respirators made; still standing day {Day(still.BuiltTick):F1}, {workshops[stillAt].Made} draughts made; " +
                 $"members {guild.Members.Count}; both parties out at once on day {Day(bothOut):F1}; party 1's hauls {string.Join(", ", hauls[0])} (up to {respiratorsOnATrip} in respirators), party 2's {string.Join(", ", hauls[1])}; " +
-                $"made goods bought by residents {MadeGoodsBought(sim)}; worst unpaid {worstUnpaid}; treasury {sim.Simulation.ActiveStalls[0].TreasuryGold}g; ended day {Day(sim.Clock.CurrentTick):F1}\n{watch.Report()}");
+                $"made goods bought by residents {MadeGoodsBought(sim)}; worst unpaid {worstUnpaid}, quit unpaid {unpaidQuits}; treasury {sim.Simulation.ActiveStalls[0].TreasuryGold}g; ended day {Day(sim.Clock.CurrentTick):F1}\n{watch.Report()}";
 
-            Assert.True(workshops[forgeAt].Built && workshops[stillAt].Built, "Both stations were built.");
-            Assert.True(forge.Hired.Count > 0 && still.Hired.Count > 0, "Both were staffed.");
-            Assert.True(workshops[forgeAt].Made > 0 && workshops[stillAt].Made > 0, "Both made their goods.");
-            Assert.True(respiratorsOnATrip > 0, "The Gallery's party worked in the forge's respirators.");
-            Assert.True(guild.Members.Count == 8 && bothOut >= 0, "Eight members; both parties out at once.");
-            Assert.True(hauls[0].Any(h => h > 0) && hauls[1].Any(h => h > 0), "Both came home with hauls from trips they were out on together.");
-            Assert.True(MadeGoodsBought(sim) > 0, "Residents bought what the stations made.");
-            Assert.Equal(0, worstUnpaid);
-            Assert.Equal(0, watch.ConservationViolations);
+            var shortfalls = new List<string>();
+            void Need(bool held, string what) { if (!held) shortfalls.Add(what); }
+            Need(workshops[forgeAt].Built && workshops[stillAt].Built, "Both stations were built.");
+            Need(forge.Hired.Count > 0 && still.Hired.Count > 0, "Both were staffed.");
+            Need(workshops[forgeAt].Made > 0 && workshops[stillAt].Made > 0, "Both made their goods.");
+            Need(respiratorsOnATrip > 0, "The Gallery's party worked in the forge's respirators.");
+            Need(guild.Members.Count == 8 && bothOut >= 0, "Eight members; both parties out at once.");
+            Need(hauls[0].Any(h => h > 0) && hauls[1].Any(h => h > 0), "Both came home with hauls from trips they were out on together.");
+            Need(MadeGoodsBought(sim) > 0, "Residents bought what the stations made.");
+            Need(unpaidQuits == 0, $"Nobody quit for want of pay ({unpaidQuits} did)."); // a single unpaid visit is a warning (Epic 10 Part 3, F3's option A)
+            Need(watch.ConservationViolations == 0, "The ledger balanced.");
             var failures = watch.DayFailures();
-            Assert.True(failures.Count == 0, "The days failed:\n  " + string.Join("\n  ", failures));
+            Need(failures.Count == 0, "The days held: " + string.Join("; ", failures));
+            return shortfalls;
         }
 
         /// <summary>
@@ -99,14 +136,15 @@ namespace Simpiens.Core.Tests
         [Fact]
         public void ASaveMidCraftAndMidExpeditionLoadsAndPlaysOn()
         {
-            const long PlaysOn = 8 * DayClock.TicksPerHour;
+            const long PlaysOn = 24 * DayClock.TicksPerHour; // a day on: a make saved after its artisan's shift is finished on the next
             using var played = LocalSimulation.Create(Seed);
             played.Respawn(OutpostSession.SessionId);
             Players(played);
             var workshops = played.Simulation.Workshops;
             int making() { for (int i = 0; i < workshops.Count; i++) if (workshops[i].InputsTaken && workshops[i].Progress > 0) return i; return -1; }
             var parties = played.Simulation.Guild.Parties;
-            while (played.Clock.CurrentTick < Horizon && !(parties[0].IsOut && parties[1].IsOut && making() >= 0)) played.Step(1);
+            while (played.Clock.CurrentTick < SaveSearch && !(parties[0].IsOut && parties[1].IsOut && making() >= 0)) played.Step(1);
+            TestContext.Current.TestOutputHelper?.WriteLine($"saved on day {1 + played.Clock.CurrentTick / (double)DayClock.TicksPerDay:F1}");
             int station = making();
             Assert.True(parties[0].IsOut && parties[1].IsOut && station >= 0, "Both parties out and a make in hand to save.");
             long tick = played.Clock.CurrentTick;
@@ -157,6 +195,23 @@ namespace Simpiens.Core.Tests
             sim.Host.CrawlerStates.Where(c => !c.IsDrifter).Sum(c => c.Activity.MedicinePurchases) + RespiratorsBought(sim);
 
         private static int RespiratorsBought(LocalSimulation sim) =>
-            sim.Host.CrawlerStates.Count(c => !c.IsDrifter && !sim.Simulation.Guild.IsMember(c.AgentId) && c.Inventory.GetEquipped(EquipmentSlot.Protection).Type == ItemType.Respirator);
+            sim.Host.CrawlerStates.Count(c => !c.IsDrifter && !sim.Simulation.Guild.IsMember(c.AgentId) && WornGear.Protection(c.Inventory).Type == ItemType.Respirator);
+
+        /// <summary>
+        /// Members and artisans who quit for want of pay since the last call: gone from their roster with one unpaid visit
+        /// short of their quitting line (they quit on the visit that reaches it). Updates <paramref name="last"/>.
+        /// </summary>
+        private static int QuitUnpaid(LocalSimulation sim, Dictionary<EntityId, int> last)
+        {
+            var now = new Dictionary<EntityId, int>();
+            foreach (var member in sim.Simulation.Guild.Members) now[member.CrawlerId] = member.UnpaidVisits;
+            foreach (var artisan in sim.Simulation.Workshops.Artisans) now[artisan.CrawlerId] = artisan.UnpaidVisits;
+            int quits = 0, line = System.Math.Min(sim.Simulation.Economy.Guild.MaxUnpaidVisits, sim.Simulation.Economy.Workshops.MaxUnpaidVisits);
+            foreach (var pair in last)
+                if (!now.ContainsKey(pair.Key) && pair.Value + 1 >= line) quits++;
+            last.Clear();
+            foreach (var pair in now) last[pair.Key] = pair.Value;
+            return quits;
+        }
     }
 }

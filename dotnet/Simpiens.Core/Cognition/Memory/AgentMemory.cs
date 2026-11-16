@@ -183,6 +183,9 @@ namespace Simpiens.Cognition.Memory
             {
                 var entity = _queryResults[i];
 
+                // Creatures are perceived from K2.3 (Epic 10 Part 3), with their own memory and reflex
+                if (entity.Type == EntityType.Creature || entity.Type == EntityType.Pile) continue; // they move, or come and go: the snapshot has them
+
                 // Line-of-sight check: agents cannot perceive through walls
                 if (snapshot != null && !snapshot.HasLineOfSight(queryPos, entity.Position))
                 {

@@ -34,6 +34,33 @@ namespace Simpiens.Simulation
         /// <summary>The loaded map's stations (Epic 10 Part 2): built or not, their orders and makes.</summary>
         Simpiens.Simulation.Workshops.WorkshopService Workshops { get; }
 
+        /// <summary>The lairs and their creatures (Epic 10 Part 3, K2).</summary>
+        Simpiens.Simulation.Creatures.CreatureService Creatures { get; }
+
+        /// <summary>What has happened to the world that stays happened (Epic 10 Part 3, K10.4): the gate's breach.</summary>
+        Simpiens.Simulation.World.WorldFlags WorldFlags { get; }
+
+        /// <summary>The items on the ground (Epic 10 Part 3, K4.1).</summary>
+        Simpiens.Simulation.Loot.PileService Piles { get; }
+
+        /// <summary>A crawler dies (Epic 10 Part 3, K5.4a): its body a pile where it fell, gone from the world at the tick's end.</summary>
+        void Die(WorldEntity node, Simpiens.Simulation.DeathCause cause, byte detail = 0, EntityId by = default);
+
+        /// <summary>Danger for the fallen (K5.1): a hazard sector, or the reach of a lair with a living creature.</summary>
+        bool InDanger(Vec2 position);
+
+        /// <summary>The open hunts' parties (Epic 10 Part 3, K6.1), by bounty id.</summary>
+        System.Collections.Generic.IReadOnlyList<Simpiens.Simulation.Economy.HuntRecord> Hunts { get; }
+
+        /// <summary>A claim on a hunt joins its party while it has room (K6.1); true when the crawler is in it.</summary>
+        bool TryJoinHunt(ushort bountyId, EntityId crawler);
+
+        /// <summary>Fills the map's lairs on the session's seed (K2.1).</summary>
+        void PopulateLairs(ulong seed);
+
+        /// <summary>The creatures' phase, after the crawlers' runtime (seam A4).</summary>
+        void TickCreatures(uint tick);
+
         /// <summary>Applies a session's economy tuning: the supply caravan, trade rules and the snapshot cognition reads.</summary>
         void SetEconomy(Simpiens.Simulation.Economy.EconomyTuning economy);
         void RecordStoryEvent(in Simpiens.Narrative.ChronicleEvent evt);

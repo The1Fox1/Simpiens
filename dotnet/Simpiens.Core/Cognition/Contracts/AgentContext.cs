@@ -60,6 +60,27 @@ namespace Simpiens.Cognition.Contracts
         /// <summary>The bunk the guild keeps for it in the barracks, if it is a member (Epic 10 Part 2, W5.2).</summary>
         public readonly KeptBunk Bunk;
 
+        /// <summary>When a creature last swung at it, hit or miss (Epic 10 Part 3, K2.3); 0 for never. Flight reads it.</summary>
+        public readonly uint StruckAtTick;
+
+        /// <summary>The creature whose blow fell on it last (K3.3: whom it fights back).</summary>
+        public readonly EntityId StruckBy;
+
+        /// <summary>Downed in danger, the tick it bleeds out (Epic 10 Part 3, K5.1); 0 while it isn't bleeding.</summary>
+        public readonly uint BleedsOutAt;
+
+        /// <summary>Its party's group, if it is in one (Epic 10 Part 3, K5.3: party mates come for each other); 0 for none.</summary>
+        public readonly byte PartyGroupId;
+
+        /// <summary>Its skills (Epic 10 Part 3, K9.4): a copy, for what its own trade pays it an hour.</summary>
+        public readonly Simpiens.Simulation.Skills.SkillSet Skills;
+
+        /// <summary>Collapsed in danger, its clock running (K5.1): it lies where it fell.</summary>
+        public bool IsCollapsed => IsDowned && BleedsOutAt != 0;
+
+        /// <summary>True when a creature's blow fell on it within <see cref="Vitality.FlightSeconds"/>: it flees.</summary>
+        public bool StruckRecently => Vitality.StruckRecently(StruckAtTick, CurrentTick);
+
         public AgentContext(EntityId agentId, Vec2 position, in AgentNeeds needs, float frustration,
                             SharedWorldSnapshot snapshot, Simpiens.Cognition.Memory.IAgentMemory memory, uint currentTick,
                             in GroupMembership directiveMembership = default, in IdentityTag identity = default,
@@ -71,8 +92,18 @@ namespace Simpiens.Cognition.Contracts
                             bool isDowned = false,
                             in ExpeditionOrder expedition = default,
                             in StationOrder station = default,
-                            in KeptBunk bunk = default)
+                            in KeptBunk bunk = default,
+                            uint struckAtTick = 0,
+                            EntityId struckBy = default,
+                            uint bleedsOutAt = 0,
+                            byte partyGroupId = 0,
+                            in Simpiens.Simulation.Skills.SkillSet skills = default)
         {
+            Skills = skills;
+            BleedsOutAt = bleedsOutAt;
+            PartyGroupId = partyGroupId;
+            StruckAtTick = struckAtTick;
+            StruckBy = struckBy;
             Expedition = expedition;
             Station = station;
             Bunk = bunk;

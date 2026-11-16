@@ -153,7 +153,7 @@ Only the core writes a look; everything after it reads. The roadmap's invariants
 | Clothes and accessories as items | Epic 10 Part 2 (crafting) |
 | Ageing, scars from hazards, tattoos | When the game has a calendar |
 | Lineage traits that change play | A design of its own, later (Q5) |
-| Pronouns in prose (the chronicle keeps names and "their") | Epic 11 |
+| Pronouns in prose (the chronicle keeps names and "their") | Epic N |
 | Real art: imported layers, 64×64, an art direction | Epic CLIENT M7 |
 | UI scaling by display density; phones' portrait layout | Epic CLIENT M4 and M6 |
 | Animation beyond two-frame loops | M7 |

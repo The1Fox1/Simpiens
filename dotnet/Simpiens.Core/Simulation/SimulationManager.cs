@@ -50,7 +50,7 @@ namespace Simpiens.Simulation
     /// Handles the real-time simulation tick, driven strictly by logical ticks (ISimulationClock at 10 Hz).
     /// Decoupled from Unity's render frames to guarantee multiplayer-ready determinism and consistent speeds.
     /// </summary>
-    public partial class SimulationManager : ISimulationManager, IIntentExecutionContext, ISupplyHost, Simpiens.Simulation.Guild.IGuildHost, Simpiens.Simulation.Workshops.IWorkshopHost, System.IDisposable
+    public partial class SimulationManager : ISimulationManager, IIntentExecutionContext, ISupplyHost, Simpiens.Simulation.Guild.IGuildHost, Simpiens.Simulation.Workshops.IWorkshopHost, Simpiens.Simulation.Creatures.ICreatureWorld, Simpiens.Simulation.Loot.IPileWorld, System.IDisposable
     {
         public const float FixedTickDeltaTime = 0.1f;
         float IIntentExecutionContext.FixedTickDeltaTime => FixedTickDeltaTime;
@@ -103,6 +103,236 @@ namespace Simpiens.Simulation
         /// <summary>The loaded map's stations (Epic 10 Part 2): built or not, their orders and makes.</summary>
         public Simpiens.Simulation.Workshops.WorkshopService Workshops => _workshops.Follow(_sectors?.Map);
 
+        private readonly Simpiens.Simulation.Creatures.CreatureService _creatures = new Simpiens.Simulation.Creatures.CreatureService();
+
+        /// <summary>The lairs and their creatures (Epic 10 Part 3, K2), following the loaded map.</summary>
+        public Simpiens.Simulation.Creatures.CreatureService Creatures => _creatures.Follow(_sectors?.Map);
+
+        /// <summary>The items on the ground (Epic 10 Part 3, K4.1): kills' drops, and bodies from K5.</summary>
+        public Simpiens.Simulation.Loot.PileService Piles { get; } = new Simpiens.Simulation.Loot.PileService();
+
+        /// <summary>The loaded map (immutable); null before one is loaded.</summary>
+        public Simpiens.Simulation.World.MapDefinition Map => _sectors?.Map;
+
+        /// <summary>Fills the map's lairs on <paramref name="seed"/> (a session's start, K2.1). Main thread.</summary>
+        public void PopulateLairs(ulong seed)
+        {
+            Creatures.Populate(this, seed);
+            Piles.Begin(this, seed); // no piles at a session's start (K4.1)
+        }
+
+        /// <summary>The creatures' phase (seam A4), after the crawlers' runtime, then the piles' (K4.1: fading). Main thread.</summary>
+        public void TickCreatures(uint tick)
+        {
+            Creatures.Tick(this, tick);
+            Piles.Tick(this, tick);
+            TickTheFallen(tick);
+            _market.SettleHunts(Creatures.Lairs, _agentRegistry, tick); // a hunted lair emptied pays its hunters (K6.1)
+        }
+
+        /// <summary>
+        /// The fallen (Epic 10 Part 3, K5.1, Q3), after every blow of the tick: a downed crawler in danger (a hazard sector, or
+        /// the reach of a lair with a living creature) collapses where it lies and its clock starts, 2 game hours; out of
+        /// danger (carried out, K5.2), or back on its feet, the clock stops. When it runs out, it dies of what downed it.
+        /// In registration order; allocates nothing.
+        /// </summary>
+        private void TickTheFallen(uint tick)
+        {
+            var entities = _worldRegistry?.ActiveEntities;
+            if (entities == null) return;
+            // A carry holds only while the rescuer's carry runs for this fallen and the fallen is still down (K5.2b): however
+            // it ended (struck, downed, gone, turned to something else), the two part where they are
+            for (int i = 0; i < entities.Count; i++)
+            {
+                var agent = entities[i]?.Agent;
+                if (agent == null) continue;
+                if (agent.CarriedBy != default && !CarryHolds(_worldRegistry.GetEntity(agent.CarriedBy)?.Agent, agent)) agent.CarriedBy = default;
+                if (agent.Carrying != default && !CarryHolds(agent, _worldRegistry.GetEntity(agent.Carrying)?.Agent)) agent.Carrying = default;
+            }
+            for (int i = 0; i < entities.Count; i++)
+            {
+                var node = entities[i];
+                var agent = node?.Agent;
+                if (agent == null || agent.HasLeft) continue;
+                if (!agent.IsDowned || !InDanger(node.Position))
+                {
+                    agent.BleedsOutAt = 0;
+                    continue;
+                }
+                if (agent.BleedsOutAt == 0)
+                {
+                    agent.BleedsOutAt = tick + DayClock.Hours(BleedOutHours);
+                    SimLog.Drives.ZLogInformation($"{SimLog.Agent(agent.AgentId)} collapsed in danger at {node.Position}: it bleeds out at t{agent.BleedsOutAt}");
+                    continue;
+                }
+                if (tick >= agent.BleedsOutAt) Die(node, agent.DownedBy, agent.DownedDetail, agent.StruckBy);
+            }
+        }
+
+        // The rescuer still carries the fallen: both here, its carry running for this one, the fallen still down
+        private static bool CarryHolds(AgentState rescuer, AgentState fallen) =>
+            rescuer != null && fallen != null && !rescuer.HasLeft && !fallen.HasLeft && fallen.IsDowned && !rescuer.IsDowned
+            && rescuer.Carrying == fallen.AgentId && fallen.CarriedBy == rescuer.AgentId
+            && rescuer.CurrentIntent is CarryIntent carry && carry.FallenId == fallen.AgentId;
+
+        /// <summary>How long a crawler downed in danger lives, unrescued (Q3: 2 game hours).</summary>
+        public const int BleedOutHours = 2;
+
+        /// <summary>
+        /// Danger for the fallen (K5.1, Q3): a hazard sector, or within the reach of a lair holding a living creature,
+        /// charted or not (danger is the world's, not what crawlers know of it).
+        /// </summary>
+        /// <summary>
+        /// Practice (Epic 10 Part 3, K9.2, Q18), the simulation's one entry for it: adds <paramref name="experience"/> of
+        /// practice at <paramref name="work"/> to <paramref name="agent"/>'s skill for that work (the table's,
+        /// <see cref="Simpiens.Simulation.Skills.SkillTable.SkillFor"/>), no higher than <paramref name="source"/>'s ceiling
+        /// (K9.8a). A level gained is logged; a band reached (Apprentice, Journeyman, Master) is told in the chronicle. Main
+        /// thread.
+        /// </summary>
+        public void Practise(AgentState agent, in Simpiens.Simulation.Skills.SkillWork work, int experience, in Simpiens.Simulation.Skills.PracticeSource source)
+        {
+            if (agent == null || experience <= 0) return;
+            var skill = Simpiens.Simulation.Skills.SkillTable.SkillFor(work);
+            if (skill == Simpiens.Simulation.Skills.Skill.None) return;
+            var before = agent.Skills.Band(skill);
+            if (!agent.Practise(skill, experience, out int level, source.Ceiling)) return;
+            var band = Simpiens.Simulation.Skills.SkillRules.BandOf(level);
+            SimLog.Simulation.ZLogInformation($"{SimLog.Agent(agent.AgentId)} reached {Simpiens.Simulation.Skills.SkillTable.NameOf(skill)} {level} ({Simpiens.Simulation.Skills.SkillRules.NameOf(band)})");
+            if (band == before) return;
+            uint tick = (uint)(_clock?.CurrentTick ?? 0);
+            ChronicleService?.RecordEvent(new ChronicleEvent(ChronicleEventType.SkillBandReached, agent.AgentId, default,
+                GetSectorForPosition(agent.Position), tick, ChronicleIntensity.Notable, (byte)skill * 256 + (byte)band));
+        }
+
+        public bool HasLineOfSight(Vec2 from, Vec2 to)
+        {
+            var snapshot = _spatialPartition?.GetActiveSnapshot();
+            return snapshot == null || snapshot.HasLineOfSight(from, to);
+        }
+
+        public bool InDanger(Vec2 position)
+        {
+            if (Vitality.HazardAt(Map, position).IsHazardous) return true;
+            var lairs = Creatures.Lairs;
+            for (int i = 0; i < lairs.Count; i++)
+            {
+                if (lairs[i].Alive > 0 && Simpiens.Simulation.Creatures.LairReach.Holds(lairs[i].Definition, position)) return true;
+            }
+            return false;
+        }
+
+        void Simpiens.Simulation.Loot.IPileWorld.AddPile(WorldEntity entity)
+        {
+            if (entity != null) _worldRegistry?.Register(entity);
+        }
+
+        void Simpiens.Simulation.Loot.IPileWorld.RemovePile(EntityId id)
+        {
+            var entity = _worldRegistry?.GetEntity(id);
+            if (entity != null) _worldRegistry.Unregister(entity);
+        }
+
+        // Gold on the ground (Epic 10 Part 3, K5.4b): a body's purse is held by the ledger's own account, as escrow is
+        void Simpiens.Simulation.Loot.IPileWorld.GoldFaded(Simpiens.Simulation.Loot.LootPile pile, int gold)
+        {
+            _economyLedger?.FadeFromGround((uint)gold);
+            SimLog.Economy.ZLogInformation($"{gold}g faded with {pile}");
+        }
+
+        void Simpiens.Simulation.Loot.IPileWorld.GoldDropped(Simpiens.Simulation.Loot.LootPile pile, int gold) => _economyLedger?.DropToGround((uint)gold);
+
+        void Simpiens.Simulation.Loot.IPileWorld.GoldTaken(Simpiens.Simulation.Loot.LootPile pile, int gold) => _economyLedger?.TakeFromGround((uint)gold);
+
+        void Simpiens.Simulation.Creatures.ICreatureWorld.AddCreature(WorldEntity entity)
+        {
+            if (entity == null) return;
+            _worldRegistry?.Register(entity);
+            SimLog.RegisterAgentName(entity.Id, entity.Name);
+        }
+
+        void Simpiens.Simulation.Creatures.ICreatureWorld.RemoveCreature(EntityId id)
+        {
+            var entity = _worldRegistry?.GetEntity(id);
+            if (entity != null) _worldRegistry.Unregister(entity);
+        }
+
+        Simpiens.Simulation.Spatial.SharedWorldSnapshot Simpiens.Simulation.Creatures.ICreatureWorld.Snapshot => _spatialPartition?.GetActiveSnapshot();
+
+        System.Collections.Generic.IReadOnlyList<WorldEntity> Simpiens.Simulation.Creatures.ICreatureWorld.Entities => _worldRegistry?.ActiveEntities;
+
+        /// <summary>
+        /// A creature's swing at a crawler (Epic 10 Part 3, K2.2, D13): the crawler notes who swung and when, hit or miss; a
+        /// blow takes its mitigated harm from its health (the red coat shows it), wears what it wears against blows (D7), and
+        /// at none downs it, as a hazard does (until K5 a downed crawler limps out; nobody dies).
+        /// </summary>
+        void Simpiens.Simulation.Creatures.ICreatureWorld.Strike(WorldEntity crawler, EntityId attacker, in Simpiens.Simulation.Combat.SwingOutcome outcome, uint tick)
+        {
+            var state = crawler?.Agent;
+            if (state == null) return;
+            state.StruckAtTick = tick;
+            state.StruckBy = attacker;
+            if (!outcome.Hit) return;
+            Simpiens.Simulation.Combat.CombatRules.WearOnBlowTaken(outcome, state.Inventory);
+            float before = state.Health;
+            state.Health = SimMath.Max(0f, (float)(state.Health - outcome.Damage));
+            state.HurtThisTick = (float)(state.HurtThisTick + (before - state.Health));
+            if (state.Health > 0f || state.IsDowned) return;
+            state.IsDowned = true;
+            state.DownedBy = Simpiens.Simulation.DeathCause.Creature; // what it dies of, if it bleeds out (K5.1)
+            state.DownedDetail = Creatures.TryGet(attacker, out var striker) ? (byte)striker.Kind : (byte)0;
+            state.Activity.TimesDowned++;
+            SimLog.Drives.ZLogInformation($"{SimLog.Agent(state.AgentId)} was downed by {SimLog.Agent(attacker)} at {state.Position}");
+            Chronicle?.RecordEvent(new Simpiens.Narrative.ChronicleEvent(Simpiens.Narrative.ChronicleEventType.CrawlerDowned, state.AgentId, attacker,
+                GetSectorForPosition(state.Position), tick, Simpiens.Narrative.ChronicleIntensity.Crisis));
+        }
+
+        void Simpiens.Simulation.Creatures.ICreatureWorld.CreatureHit(EntityId crawler, Simpiens.Simulation.Creatures.CreatureState creature, float damage)
+            => _market.RecordHuntDamage(crawler, creature.LairIndex, damage);
+
+        void Simpiens.Simulation.Creatures.ICreatureWorld.CreatureSlain(EntityId slayer, Simpiens.Simulation.Creatures.CreatureState creature, System.ReadOnlySpan<ItemInstance> drops, uint tick)
+        {
+            Piles.Drop(this, creature.Position, drops, 0, slayer, tick); // its loot, claimed for the slayer (K4.2)
+            SimLog.Simulation.ZLogInformation($"{SimLog.Agent(slayer)} slew a {Simpiens.Simulation.Creatures.CreatureCatalog.NameOf(creature.Kind)} at {creature.Position}");
+            Chronicle?.RecordEvent(new Simpiens.Narrative.ChronicleEvent(Simpiens.Narrative.ChronicleEventType.CreatureSlain, slayer, creature.Id,
+                GetSectorForPosition(creature.Position), tick, Simpiens.Narrative.ChronicleIntensity.Dramatic, (byte)creature.Kind));
+
+            // The breach (Epic 10 Part 3, K10.4, Q13): the lair that guards the gate emptied for good (its keeper never returns)
+            if ((WorldFlags & Simpiens.Simulation.World.WorldFlags.GateBreached) == 0 && Creatures.GuardsGateEmptyForGood(creature.LairIndex))
+            {
+                WorldFlags |= Simpiens.Simulation.World.WorldFlags.GateBreached;
+                SimLog.Simulation.ZLogInformation($"{SimLog.Agent(slayer)} slew the {Simpiens.Simulation.Creatures.CreatureCatalog.NameOf(creature.Kind)}: the descent gate is breached");
+                Chronicle?.RecordEvent(new Simpiens.Narrative.ChronicleEvent(Simpiens.Narrative.ChronicleEventType.GateBreached, slayer, creature.Id,
+                    GetSectorForPosition(creature.Position), tick, Simpiens.Narrative.ChronicleIntensity.Crisis, (byte)creature.Kind));
+            }
+        }
+
+        /// <summary>What has happened to the world that stays happened (Epic 10 Part 3, K10.4): the gate's breach. Saved in the world's block.</summary>
+        public Simpiens.Simulation.World.WorldFlags WorldFlags { get; private set; }
+
+        /// <summary>True while the pile with <paramref name="id"/> lies on the ground (K4.3).</summary>
+        public bool PileExists(EntityId id) => Piles.TryGet(id, out _);
+
+        /// <summary>
+        /// <paramref name="taker"/> picks over the pile (K4.3d): what the loot rule says it takes (<see cref="Simpiens.Simulation.Loot.LootRules"/>),
+        /// if it may. The units taken; -1 when the pile is gone or not yet its to take. Gold on the ground comes with K5's
+        /// bodies, and its ledger account with it: a kill's drop holds none.
+        /// </summary>
+        public int TakeFromPile(WorldEntity taker, EntityId pileId)
+        {
+            var inventory = taker?.Agent?.Inventory;
+            uint tick = CurrentTick;
+            if (inventory == null || !Piles.TryGet(pileId, out var pile) || !pile.MayTake(taker.Id, tick)) return -1;
+            int units = Piles.Take(this, pileId, inventory, taker.Id, tick, out int gold, out int worn);
+            if (units > 0 || gold > 0) SimLog.Economy.ZLogInformation($"{SimLog.Agent(taker.Id)} took {units} from {pileId} ({worn} worn, {gold}g)");
+            return units;
+        }
+
+        /// <summary>The creature with <paramref name="id"/> (K3.3: a fight's quarry); false when there is none, or it is slain.</summary>
+        public bool TryGetCreature(EntityId id, out Simpiens.Simulation.Creatures.CreatureState creature) => Creatures.TryGet(id, out creature) && creature.IsAlive;
+
+        /// <summary>A crawler in a fight asks to swing at a creature this tick (K3.3); the creatures' phase decides it.</summary>
+        public void SwingAtCreature(WorldEntity crawler, EntityId creature) => Creatures.AskSwing(crawler, creature);
+
         bool Simpiens.Simulation.Guild.IGuildHost.TryGetCrawler(EntityId crawlerId, out AgentState crawler)
         {
             crawler = null;
@@ -112,6 +342,8 @@ namespace Simpiens.Simulation
         }
 
         int Simpiens.Simulation.Guild.IGuildHost.GetSectorForPosition(Vec2 position) => GetSectorForPosition(position);
+        IReadOnlyList<Simpiens.Simulation.Creatures.LairState> Simpiens.Simulation.Guild.IGuildHost.Lairs => Creatures.Lairs;
+        bool Simpiens.Simulation.Guild.IGuildHost.IsLairCharted(int lairIndex) => Creatures.IsCharted(lairIndex);
         int Simpiens.Simulation.Workshops.IWorkshopHost.GetSectorForPosition(Vec2 position) => GetSectorForPosition(position);
         bool Simpiens.Simulation.Workshops.IWorkshopHost.TryGetCrawler(EntityId crawlerId, out AgentState crawler) => ((Simpiens.Simulation.Guild.IGuildHost)this).TryGetCrawler(crawlerId, out crawler);
 
@@ -369,7 +601,7 @@ namespace Simpiens.Simulation
                     break;
 
                 case InfluenceCommandType.GiveGear:
-                    Guild.GiveGear(this, influence.GiveGear.CrawlerId, influence.GiveGear.Item, currentTick, influence.GiveGear.Against);
+                    Guild.GiveGear(this, influence.GiveGear.CrawlerId, influence.GiveGear.Item, currentTick, influence.GiveGear.Against, influence.GiveGear.ForFighting);
                     break;
 
                 // The workshops (Epic 10 Part 2)
@@ -543,6 +775,10 @@ namespace Simpiens.Simulation
             if (_spatialPartition != null && _worldRegistry != null)
             {
                 if (_sectors != null) _spatialPartition.SetExploredSectors(_sectors.ExploredMask);
+                _spatialPartition.SetChartedLairs(Creatures.ChartedMask); // the lairs known to everyone (Epic 10 Part 3, K2.3)
+                _spatialPartition.SetBossLairs(Creatures.BossMask); // the lairs whose boss lives (K10.2a)
+                _spatialPartition.SetPiles(Piles.Piles); // the items on the ground (K4.3b)
+                _spatialPartition.SetHunts(_market.Hunts); // the hunts' parties (K6.2)
                 ValidateBunkOccupancy();
                 _spatialPartition.SetOccupiedBunks(_lodging.OccupiedBunks);
                 _spatialPartition.UpdateFromRegistry(_worldRegistry, _groupRegistry, _market.ActiveStalls, _market.ActiveBounties);
@@ -594,6 +830,10 @@ namespace Simpiens.Simulation
             else if (intent is RetreatIntent ri)
             {
                 ri.Path?.ReturnToPool();
+            }
+            else if (intent is FleeIntent fi)
+            {
+                fi.Path?.ReturnToPool();
             }
 
             if (_consequenceService != null && _agentRegistry != null && _agentRegistry.TryGetAgent(intent.AgentId, out var agentState))

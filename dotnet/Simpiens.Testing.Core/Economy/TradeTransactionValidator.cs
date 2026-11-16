@@ -52,8 +52,9 @@ namespace Simpiens.Testing.Economy
             int stallSize = Marshal.SizeOf<TradeStallData>();
             // 96 since item system I5 (was 64): the stall's goods are a table of 8, so items can be added without changing its
             // layout; it is 84 bytes, and the outpost has one stall
-            // 136 since Epic 10 Part 2 (W3's ten goods, W4's grades and worn pieces on each): still a small copy for cognition
-            Assert(stallSize <= 136, $"TradeStallData size ({stallSize} bytes) exceeds 136-byte threshold.");
+            // 136 since Epic 10 Part 2 (W3's ten goods, W4's grades and worn pieces on each); 196 since Epic 10 Part 3's K1.2 (a
+            // table of 16); 276 since K4.4 (a table of 24, D25): still a small copy for cognition
+            Assert(stallSize <= 276, $"TradeStallData size ({stallSize} bytes) exceeds 276-byte threshold.");
 
             // Verify default empty state
             Assert(!TradeStallData.Empty.IsActive, "TradeStallData.Empty has IsActive == false.");
@@ -289,7 +290,7 @@ namespace Simpiens.Testing.Economy
 
             Assert(BuyGear(simManager, node, stallId) == IntentResult.Success, "The gear purchase succeeds.");
             Assert(agent.Inventory.Gold == 10, $"The crawler paid 40g (gold {agent.Inventory.Gold}).");
-            var worn = agent.Inventory.GetEquipped(Simpiens.Simulation.Items.EquipmentSlot.Protection);
+            var worn = agent.Inventory.GetEquipped(Simpiens.Simulation.Items.EquipmentSlot.Body);
             ushort life = Simpiens.Simulation.Items.ItemCatalog.Get(ItemType.HazardGear).Equipment.Durability;
             Assert(worn.Type == ItemType.HazardGear && worn.Durability == life, $"The gear is worn with {life} ticks of life (got {worn}, durability {worn.Durability}).");
             Assert(agent.Inventory.OccupiedSlots == 0, "Worn gear takes no pack slot.");
@@ -335,7 +336,7 @@ namespace Simpiens.Testing.Economy
             var other = HeadlessEntities.Crawler(null, emptySim, null, new Vec2(0f, 0.5f), id: EntityId.Generate(), name: "[Test_GearNone]", register: false);
             other.Agent.Inventory.Gold = 100;
             emptyRegistry.Register(other.Node);
-            Assert(BuyGear(emptySim, other.Node, emptyStall) != IntentResult.Success && other.Agent.Inventory.GetEquipped(Simpiens.Simulation.Items.EquipmentSlot.Protection).IsEmpty, "Refused: the stall has no gear.");
+            Assert(BuyGear(emptySim, other.Node, emptyStall) != IntentResult.Success && other.Agent.Inventory.GetEquipped(Simpiens.Simulation.Items.EquipmentSlot.Body).IsEmpty, "Refused: the stall has no gear.");
 
             HeadlessEntities.Remove(registry, crawler);
             HeadlessEntities.Remove(emptyRegistry, other);
@@ -365,14 +366,16 @@ namespace Simpiens.Testing.Economy
             var full = new TradeStallData(new EntityId(10, 0, 0, 0), Vec2.Zero);
             for (int i = 1; i <= TradeStallData.GoodsCapacity; i++) full = full.WithGood(new StallGood((ItemType)(100 + i), StallRole.Buys, 1, 0));
             bool refused = false;
-            try { full.WithGood(new StallGood((ItemType)120, StallRole.Buys, 1, 0)); }
+            try { full.WithGood(new StallGood((ItemType)(101 + TradeStallData.GoodsCapacity), StallRole.Buys, 1, 0)); }
             catch (InvalidOperationException) { refused = true; }
             Assert(refused, $"A stall trades at most {TradeStallData.GoodsCapacity} goods.");
 
             var prices = new Simpiens.Intervention.UpdateStallPricesCommand(default).With(ItemType.Ration, 18).With(ItemType.IronOre, 0).With(ItemType.Ration, 19);
             Assert(prices.Count == 2 && prices[0].Item == ItemType.Ration && prices[0].Price == 19 && prices[1].Price == 0, "A price command keeps one price per item, in order.");
 
-            Assert(SupplyTuning.Default.MaxSalvagePaymentPerVisit == 320, $"The default caravan's exports: 16 ore x 6 + 12 herbs x 7 + 2 glowstone x 70 = 320g (got {SupplyTuning.Default.MaxSalvagePaymentPerVisit}).");
+            Assert(SupplyTuning.Default.MaxSalvagePaymentPerVisit == 706, $"The default caravan's exports: 16 ore x 6 + 12 herbs x 7 + 2 glowstone x 70 + 8 hides x 6 + 8 chitin x 10 + 2 Matriarch's pelts x 44 + 1 Keeper's stone x 170 = 706g (got {SupplyTuning.Default.MaxSalvagePaymentPerVisit}).");
+            var keep = SupplyTuning.Default.Terms(ItemType.Hide);
+            Assert(keep.Keep == 6 && SupplyTuning.Default.Terms(ItemType.IronOre).Keep == 0, "The caravan leaves six hides for the forge (Epic 10 Part 3, K4.4, D25), and takes all the ore it may.");
             TestLog.Log("[TradeTransactionValidator] Test 17 Passed: A stall's goods are a table; prices answer by role; price commands carry pairs.");
         }
 

@@ -21,6 +21,13 @@ namespace Simpiens.Simulation.Economy
     public interface IEconomyLedger
     {
         uint TotalEscrowGold { get; }
+
+        /// <summary>Gold lying in piles on the ground (Epic 10 Part 3, K5.4b), counted by conservation.</summary>
+        uint TotalGroundGold { get; }
+        void DropToGround(uint amount);
+        void TakeFromGround(uint amount);
+        void FadeFromGround(uint amount);
+        void RestoreGroundGold(uint amount);
         uint TotalFaucetedGold { get; }
         uint TotalSinkedGold { get; }
 
@@ -30,6 +37,9 @@ namespace Simpiens.Simulation.Economy
         bool TryLockEscrow(EntityId stallId, ushort bountyId, uint amount, ref TradeStallData stall);
         bool TryReleaseEscrowToClaimant(ushort bountyId, EntityId claimantId, IAgentRegistry agentRegistry, out uint releasedAmount);
         bool TryRefundEscrow(ushort bountyId, EntityId stallId, ref TradeStallData stall, out uint refundedAmount);
+
+        /// <summary>A bounty's escrow released in shares, which must add up to it (Epic 10 Part 3, K6.1).</summary>
+        bool TryReleaseEscrowSplit(ushort bountyId, System.ReadOnlySpan<EntityId> claimants, System.ReadOnlySpan<uint> shares, IAgentRegistry agentRegistry);
 
         bool TryExecuteStallPurchase(EntityId stallId, ref TradeStallData stall, EntityId buyerAgentId, IAgentRegistry agentRegistry, uint totalCost);
         bool TryExecuteStallSale(EntityId stallId, ref TradeStallData stall, EntityId sellerAgentId, IAgentRegistry agentRegistry, uint totalPayout);

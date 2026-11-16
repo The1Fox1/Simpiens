@@ -66,8 +66,9 @@ namespace Simpiens.Cognition.Planning
                 if (record.Type != EntityType.Resource || !record.ResourceKind.IsSalvage()) continue;
                 if (requiredType != ItemType.None && record.ResourceKind != requiredType) continue;
                 if (context.Memory.IsBlacklisted(record.EntityId, context.CurrentTick)) continue;
-                // As TrySelectSalvage: a hazard sector's nodes count only for a crawler who would go in alone (Epic 10 G2, G5)
-                if (!Vitality.WouldEnter(context, Vitality.HazardAt(context.Snapshot?.Map, record.LastKnownLocation))) continue;
+                // As TrySelectSalvage: a hazard sector's nodes count only for a crawler who would go in alone (Epic 10 G2, G5),
+                // and a charted lair's only for one who would brave its pack alone (Epic 10 Part 3, K2.3)
+                if (!Vitality.WouldEnterAt(context, record.LastKnownLocation)) continue;
                 return true;
             }
             return false;
@@ -104,8 +105,9 @@ namespace Simpiens.Cognition.Planning
                 if (record.Type != EntityType.Resource || !record.ResourceKind.IsSalvage()) continue;
                 if (requiredType != ItemType.None && record.ResourceKind != requiredType) continue;
                 if (context.Memory.IsBlacklisted(record.EntityId, context.CurrentTick)) continue;
-                // Danger is for the bold and healthy (Epic 10 G2), and only within the lone limit (G5): the rest is left to them, or to expeditions
-                if (!Vitality.WouldEnter(venture, Vitality.HazardAt(map, record.LastKnownLocation), context.Inventory)) continue;
+                // Danger is for the bold and healthy (Epic 10 G2), and only within the lone limit (G5): the rest is left to them, or to expeditions;
+                // a charted lair's reach is danger too (Epic 10 Part 3, K2.3)
+                if (!Vitality.WouldEnterAt(context, record.LastKnownLocation)) continue; // the bold and armed brave a lair they can clear (K3.3, D21)
 
                 float dist = SimMath.Max(1f, Vec2.Distance(record.LastKnownLocation, context.Position));
                 float score;
@@ -123,7 +125,9 @@ namespace Simpiens.Cognition.Planning
                     if (price > treasury) continue;
                     if (stallKnown && !economy.StallHasRoom(stall, record.ResourceKind)) continue;
                     // What it earns an hour, as near as distance tells: a pickaxe's owner mines faster, so ore pays it better (D36)
-                    score = price * CrawlerStats.MiningSpeed(context.Inventory, record.ResourceKind) / dist;
+                    // and a skilled hand harvests faster, so its own trade pays it better (Epic 10 Part 3, K9.4, Q21)
+                    score = price * CrawlerStats.MiningSpeed(context.Inventory, record.ResourceKind)
+                        * Simpiens.Cognition.Planning.Handlers.HarvestResourceIntentHandler.SkillSpeed(context.Skills, context.Inventory, record.ResourceKind) / dist;
                 }
 
                 if (!found || score > bestScore || (score == bestScore && record.EntityId.CompareTo(best.EntityId) < 0))
@@ -163,6 +167,12 @@ namespace Simpiens.Cognition.Planning
             var pathResponse = await pathfinder.CalculatePathAsync(request, context.Snapshot);
             if (IsReachable(pathResponse, targetPos))
             {
+                // Judged along the way, as travel is (K10.6, D70): a way through a known lair it won't brave is barred
+                if (!Vitality.WouldWalk(context, pathResponse))
+                {
+                    pathResponse.ReturnToPool();
+                    return new HarvestResourceIntent(context.AgentId, nodeId, null, targetUnits: targetUnits, wayBarred: true);
+                }
                 return new HarvestResourceIntent(context.AgentId, nodeId, pathResponse, targetUnits: targetUnits);
             }
 
@@ -284,7 +294,9 @@ namespace Simpiens.Cognition.Planning
                 float fx = ((h >> 8) % 1000u) / 1000f * 2f - 1f;
                 float fy = ((h >> 18) % 1000u) / 1000f * 2f - 1f;
                 waypoint = bounds.Center + new Vec2(fx * jitterX, fy * jitterY);
-                return true;
+                // Not into a charted lair's reach (Epic 10 Part 3, K2.3): the sector's own point instead, or nowhere
+                if (!Vitality.WouldEnterAt(context, waypoint)) waypoint = sector.TargetPoint;
+                return Vitality.WouldEnterAt(context, waypoint);
             }
             return false;
         }
@@ -324,7 +336,8 @@ namespace Simpiens.Cognition.Planning
             };
 
             var pathResponse = await pathfinder.CalculatePathAsync(request, context.Snapshot);
-            if (pathResponse != null && pathResponse.IsValid)
+            // Judged along the way, not only where it ends: not through a charted lair's reach it wouldn't enter (K10.6, D70)
+            if (pathResponse != null && pathResponse.IsValid && Vitality.WouldWalk(context, pathResponse))
             {
                 return new WanderIntent(context.AgentId, pathResponse);
             }
@@ -400,24 +413,27 @@ namespace Simpiens.Cognition.Planning
             var access = GetStallAccess(context, out var stall);
             if (access == StallAccess.None) return true;
             if (access == StallAccess.Unreachable) return false;
-            // The cheapest price the stall pays for a resource that isn't hazardous (ore, herbs): it must be able to pay that
+            // The cheapest price the stall pays for a resource that isn't hazardous or a creature's (ore, herbs): it must be able to pay that
             uint cheapest = uint.MaxValue;
             var resources = ItemCatalog.InCategory(ItemCategory.Resource);
             for (int i = 0; i < resources.Count; i++)
             {
-                if (ItemCatalog.Is(resources[i], ItemCategory.Hazardous) || !stall.TryGetGood(resources[i], out var good) || good.Role != StallRole.Buys) continue;
+                if (ItemCatalog.Is(resources[i], ItemCategory.Hazardous) || ItemCatalog.Is(resources[i], ItemCategory.Creature)
+                    || !stall.TryGetGood(resources[i], out var good) || good.Role != StallRole.Buys) continue;
                 if (good.Price < cheapest) cheapest = good.Price;
             }
             if (cheapest == uint.MaxValue) cheapest = 0;
             var economy = Considerations.Economy(context);
             // A hazardous kind's shelf counts only for a crawler who would go into danger for it, and only while the stall
-            // pays for it (Epic 10 G2)
+            // pays for it (Epic 10 G2); a kind the stall doesn't buy has no shelf, and a creature's material isn't gathered at a
+            // node, so its shelf says nothing of the work (Epic 10 Part 3, K4.2, K4.4: an empty hide shelf kept a full stall open)
             bool venture = Vitality.WouldVenture(context);
             bool room = false;
             var salvage = ItemCatalog.InCategory(ItemCategory.Resource);
             for (int i = 0; i < salvage.Count && !room; i++)
             {
                 var kind = salvage[i];
+                if (ItemCatalog.Is(kind, ItemCategory.Creature) || !stall.TryGetGood(kind, out var shelf) || shelf.Role != StallRole.Buys) continue;
                 if (ItemCatalog.Is(kind, ItemCategory.Hazardous) && (!venture || stall.BuyPriceOf(kind) == 0)) continue;
                 room = economy.StallHasRoom(stall, kind);
             }
@@ -508,29 +524,33 @@ namespace Simpiens.Cognition.Planning
         }
 
         /// <summary>
-        /// Epic 10 G3: the nearest reachable stall sells hazard gear at or below this crawler's price, and the crawler can
-        /// pay for it and still buy a ration after (gear never costs it a meal).
-        /// </summary>
-        public static bool CanBuyGear(in AgentContext context) => CanBuy(context, ItemCategory.Protection);
-
-        /// <summary>
-        /// The protection this crawler would buy for danger now (Epic 10 G3; by kind since Epic 10 Part 2, W3, D51): among
-        /// the protection the nearest reachable stall has in stock at or under its price with a ration's price to spare,
-        /// the first (id order) that opens hazardous salvage it knows but can't brave alone as it is (a respirator, once
-        /// it knows the Gallery's glowstone); else the first that lets it work hazardous salvage it knows (hazard gear, as
-        /// G3). False when there is none.
+        /// The piece this crawler would buy for danger now (Epic 10 G3; by kind since Epic 10 Part 2, W3, D51; slot by slot
+        /// and by stats since Epic 10 Part 3, K1.4). Among the equipment the nearest reachable stall sells and has in stock,
+        /// at or under its price with a ration's price to spare:
+        /// <list type="bullet">
+        /// <item>first, a piece that would open hazardous salvage it knows but can't brave alone as it is (a respirator, once
+        /// it knows the Gallery's glowstone), the first in id order; worn in place of what its slot holds if it must be (D53);</item>
+        /// <item>else the piece that most cuts the harm of the hazards where it works hazardous salvage, for a slot it has
+        /// bare (<see cref="Outfitting"/>): hazard gear for a crawler with none, a hard hat over hazard gear for one who works
+        /// the Glow Caves; the first in id order on a tie.</item>
+        /// </list>
+        /// False when there is none.
         /// </summary>
         public static bool TryChooseProtection(in AgentContext context, out ItemType protection) => TryChooseProtection(context, out protection, out _);
 
         /// <summary>
-        /// True when a bold crawler wearing protection would trade it for a piece in stock that opens salvage it can't reach
-        /// as it is (Epic 10 Part 2, W3, D53): its world state then says it lacks the gear it needs.
+        /// True when a bold crawler already protected would buy another piece (<see cref="TryChooseProtection(in AgentContext, out ItemType)"/>):
+        /// one that opens salvage it can't reach as it is (D53), or one for a bare slot that cuts the harm where it works
+        /// (K1.4). Its world state then says it lacks the gear it needs.
         /// </summary>
-        public static bool WouldUpgradeProtection(in AgentContext context)
+        public static bool WantsMoreProtection(in AgentContext context)
         {
-            if (context.Inventory == null || !Simpiens.Cognition.Inventory.InventoryGroups.IsWearing(context.Inventory, ItemCategory.Protection) || !Vitality.WouldVenture(context)) return false;
-            return TryChooseProtection(context, out _, out bool opens) && opens;
+            if (!Protects(context.Inventory) || !Vitality.WouldVenture(context)) return false;
+            return TryChooseProtection(context, out _);
         }
+
+        /// <summary>True when what the crawler wears cuts some hazard's harm, by its stats (K1.4; G3 asked for the protection group).</summary>
+        public static bool Protects(Simpiens.Cognition.Inventory.IAgentInventory inventory) => inventory != null && Outfitting.Score(inventory, OutfitNeed.EveryHazard) > 0f;
 
         /// <summary>As <see cref="TryChooseProtection(in AgentContext, out ItemType)"/>, saying whether the piece opens salvage it can't reach as it is.</summary>
         public static bool TryChooseProtection(in AgentContext context, out ItemType protection, out bool opens)
@@ -538,38 +558,68 @@ namespace Simpiens.Cognition.Planning
             protection = ItemType.None;
             opens = false;
             if (GetStallAccess(context, out var stall) != StallAccess.Reachable) return false;
-            int gold = context.Inventory != null ? context.Inventory.Gold : 0;
+            var inventory = context.Inventory;
+            int gold = inventory != null ? inventory.Gold : 0;
             ushort food = stall.SellPriceOf(FoodForSale(stall));
-            var usable = ItemType.None;
-            var items = ItemCatalog.InCategory(ItemCategory.Protection);
+            var worked = HazardsWorked(context);
+            var best = ItemType.None;
+            float bestGain = 0f;
+            var items = ItemCatalog.All;
             for (int i = 0; i < items.Count; i++)
             {
-                var item = items[i];
-                if (!stall.TryGetGood(item, out var good) || good.Role != StallRole.Sells || stall.SellStockOf(item) < 1) continue;
+                var item = items[i].Id;
+                if (items[i].Equipment == null || stall.SellStockOf(item) < 1) continue;
                 ushort price = stall.SellPriceOf(item);
                 if (price == 0 || price > Considerations.GearReservationPrice(context, item) || gold < price + food) continue;
-                int reach = HazardousReach(context, item);
-                if (reach == 2)
+                if (!Simpiens.Simulation.Items.WornGear.TryReplacing(inventory, item, out var slot)) continue;
+                var piece = Outfitting.NewPiece(item, stall.BestGradeOf(item));
+                if (Opens(context, slot, piece))
                 {
                     protection = item;
                     opens = true;
                     return true;
                 }
-                if (reach == 1 && usable == ItemType.None) usable = item;
+                if (worked.IsEmpty || (inventory != null && !inventory.GetEquipped(slot).IsEmpty)) continue;
+                float gain = Outfitting.Gain(inventory, worked, slot, piece);
+                if (gain <= bestGain) continue;
+                bestGain = gain;
+                best = item;
             }
-            protection = usable;
-            return usable != ItemType.None;
+            protection = best;
+            return best != ItemType.None;
         }
 
         /// <summary>
-        /// What wearing <paramref name="item"/> would do for this crawler's hazardous salvage: 2 when it would open a node it
-        /// can't brave alone as it is, 1 when it knows one it could work with it, 0 otherwise. For the first, what lies in
-        /// charted hazard sectors is known from the map's plan (D54: charted is mapped, as the bunks' plan is common
-        /// knowledge); the second is what it has seen, as G3's.
+        /// The hazards where this crawler works hazardous salvage now (K1.4): the hazard sectors of the nodes it remembers
+        /// (and isn't steering clear of) that it braves alone as it is. What a piece for a bare slot is scored against.
         /// </summary>
-        private static int HazardousReach(in AgentContext context, ItemType item)
+        private static OutfitNeed HazardsWorked(in AgentContext context)
+        {
+            var need = default(OutfitNeed);
+            if (context.Memory == null || context.Memory.SpatialMemoryMap == null) return need;
+            bool venture = Vitality.WouldVenture(context);
+            var map = context.Snapshot?.Map;
+            foreach (var kvp in context.Memory.SpatialMemoryMap)
+            {
+                var record = kvp.Value;
+                if (record.Type != EntityType.Resource || !record.ResourceKind.IsSalvage() || !ItemCatalog.Is(record.ResourceKind, ItemCategory.Hazardous)) continue;
+                if (context.Memory.IsBlacklisted(record.EntityId, context.CurrentTick)) continue;
+                var hazard = Vitality.HazardAt(map, record.LastKnownLocation);
+                if (hazard.IsHazardous && Vitality.WouldEnter(venture, hazard, context.Inventory)) need = need.And(hazard.Kind);
+            }
+            return need;
+        }
+
+        /// <summary>
+        /// True when wearing <paramref name="piece"/> in <paramref name="slot"/> (in place of what is there) would let this
+        /// crawler brave alone hazardous salvage it can't as it is (D51), judged by its resistance to the hazard's kind with
+        /// the piece worn. For what lies in charted hazard sectors, it is known from the map's plan (D54: charted is mapped,
+        /// as the bunks' plan is common knowledge); otherwise, what it has seen.
+        /// </summary>
+        private static bool Opens(in AgentContext context, EquipmentSlot slot, in ItemInstance piece)
         {
             bool venture = Vitality.WouldVenture(context);
+            var swap = new WornSwap(slot, piece);
             var snapshot = context.Snapshot;
             var map = snapshot?.Map;
             if (map != null && venture)
@@ -581,29 +631,95 @@ namespace Simpiens.Cognition.Planning
                     var sector = map.FindSector(nodes[i].Position);
                     if (!sector.Hazard.IsHazardous || !snapshot.IsSectorCharted(sector.Id)) continue;
                     if (Vitality.WouldEnter(venture, sector.Hazard, context.Inventory)) continue;
-                    if (Vitality.LoneDanger(sector.Hazard, CrawlerStats.KindResistanceOf(item, sector.Hazard.Kind)) <= Vitality.LoneHazardLimit) return 2;
+                    if (Vitality.LoneDanger(sector.Hazard, CrawlerStats.KindResistance(context.Inventory, sector.Hazard.Kind, swap)) <= Vitality.LoneHazardLimit) return true;
                 }
             }
-            if (context.Memory == null || context.Memory.SpatialMemoryMap == null) return 0;
-            int reach = 0;
+            if (!venture || context.Memory == null || context.Memory.SpatialMemoryMap == null) return false;
             foreach (var kvp in context.Memory.SpatialMemoryMap)
             {
                 var record = kvp.Value;
                 if (record.Type != EntityType.Resource || !record.ResourceKind.IsSalvage() || !ItemCatalog.Is(record.ResourceKind, ItemCategory.Hazardous)) continue;
                 if (context.Memory.IsBlacklisted(record.EntityId, context.CurrentTick)) continue;
                 var hazard = Vitality.HazardAt(map, record.LastKnownLocation);
-                bool with = !hazard.IsHazardous || (venture && Vitality.LoneDanger(hazard, CrawlerStats.KindResistanceOf(item, hazard.Kind)) <= Vitality.LoneHazardLimit);
-                if (!with) continue;
-                if (!Vitality.WouldEnter(venture, hazard, context.Inventory)) return 2;
-                reach = 1;
+                if (!hazard.IsHazardous || Vitality.WouldEnter(venture, hazard, context.Inventory)) continue;
+                if (Vitality.LoneDanger(hazard, CrawlerStats.KindResistance(context.Inventory, hazard.Kind, swap)) <= Vitality.LoneHazardLimit) return true;
             }
-            return reach;
+            return false;
         }
 
-        /// <summary>Epic 10 Part 2, W1.4 (D38): as <see cref="CanBuyGear"/>, for the tool the stall sells (a pickaxe).</summary>
-        public static bool CanBuyTool(in AgentContext context) => CanBuy(context, ItemCategory.Tool);
+        /// <summary>
+        /// The piece this resident would buy for work now (Epic 10 Part 2, W1.4, D38; by stats since Epic 10 Part 3, K1.4):
+        /// among the equipment the nearest reachable stall sells and has in stock, at or under its price with a ration's price
+        /// to spare, the one that most speeds its mining, for a slot it has bare (a pickaxe); the first in id order on a tie.
+        /// </summary>
+        public static bool TryChooseWorkGear(in AgentContext context, out ItemType gear)
+        {
+            gear = ItemType.None;
+            if (GetStallAccess(context, out var stall) != StallAccess.Reachable) return false;
+            var inventory = context.Inventory;
+            int gold = inventory != null ? inventory.Gold : 0;
+            ushort food = stall.SellPriceOf(FoodForSale(stall));
+            float bestGain = 0f;
+            var items = ItemCatalog.All;
+            for (int i = 0; i < items.Count; i++)
+            {
+                var item = items[i].Id;
+                if (items[i].Equipment == null || stall.SellStockOf(item) < 1) continue;
+                ushort price = stall.SellPriceOf(item);
+                if (price == 0 || price > Considerations.GearReservationPrice(context, item) || gold < price + food) continue;
+                if (!Simpiens.Simulation.Items.WornGear.TryReplacing(inventory, item, out var slot) || (inventory != null && !inventory.GetEquipped(slot).IsEmpty)) continue;
+                float gain = Outfitting.Gain(inventory, OutfitNeed.ForMining, slot, Outfitting.NewPiece(item, stall.BestGradeOf(item)));
+                if (gain <= bestGain) continue;
+                bestGain = gain;
+                gear = item;
+            }
+            return gear != ItemType.None;
+        }
 
-        /// <summary>Epic 10 Part 2, W2.3 (D45): as <see cref="CanBuyGear"/>, for the medicine the stall sells (a draught; it buys herbs, so they don't count).</summary>
+        /// <summary>
+        /// The arms this bold resident would buy now (Epic 10 Part 3, K3.3, Q6: the bold buy their own weapons, as residents
+        /// who mine buy pickaxes): among the equipment the nearest reachable stall sells and has in stock, at or under its price
+        /// with a ration's price to spare, the piece that most raises its fighting outfit (<see cref="OutfitNeed.ForFighting"/>):
+        /// a weapon that raises its attack over what it wields (a blade over a cudgel, the old one traded in), or, once armed,
+        /// armour for a head or body slot it leaves bare (K4.4, D26: never in place of what it wears, so hazard gear stays).
+        /// The first in id order on a tie. False for a drifter, a crawler that wouldn't venture into danger, or one armed as
+        /// well as it would buy.
+        /// </summary>
+        public static bool TryChooseArms(in AgentContext context, out ItemType arms)
+        {
+            arms = ItemType.None;
+            if (context.IsDrifter || context.Personality.RiskTolerancePercent < Vitality.VentureRiskTolerancePercent) return false;
+            if (GetStallAccess(context, out var stall) != StallAccess.Reachable) return false;
+            var inventory = context.Inventory;
+            int gold = inventory != null ? inventory.Gold : 0;
+            ushort food = stall.SellPriceOf(FoodForSale(stall));
+            bool armed = Vitality.IsArmed(inventory);
+            float unarmed = Simpiens.Simulation.Combat.CombatRules.UnarmedAttack;
+            float bestGain = 0f;
+            var items = ItemCatalog.All;
+            for (int i = 0; i < items.Count; i++)
+            {
+                var item = items[i].Id;
+                if (items[i].Equipment == null || stall.SellStockOf(item) < 1) continue;
+                ushort price = stall.SellPriceOf(item);
+                if (price == 0 || price > Considerations.GearReservationPrice(context, item) || gold < price + food) continue;
+                if (!Simpiens.Simulation.Items.WornGear.TryReplacing(inventory, item, out var slot)) continue;
+                var piece = Outfitting.NewPiece(item, stall.BestGradeOf(item));
+                bool weapon = CrawlerStats.Get(inventory, StatKind.Attack, unarmed, new WornSwap(slot, piece)) > unarmed;
+                // Armour once armed, for a slot left bare (D26); a weapon whenever it raises the attack (K3.3)
+                if (!weapon && (!armed || !items[i].Is(ItemCategory.Protection) || (inventory != null && !inventory.GetEquipped(slot).IsEmpty))) continue;
+                float gain = Outfitting.Gain(inventory, OutfitNeed.ForFighting, slot, piece);
+                if (gain <= bestGain) continue;
+                bestGain = gain;
+                arms = item;
+            }
+            return arms != ItemType.None;
+        }
+
+        /// <summary>True when what the crawler wears speeds its mining, by its stats (K1.4; W1.4 asked for the tool group).</summary>
+        public static bool EquippedForWork(Simpiens.Cognition.Inventory.IAgentInventory inventory) => inventory != null && Outfitting.Score(inventory, OutfitNeed.ForMining) > 0f;
+
+        /// <summary>Epic 10 Part 2, W2.3 (D45): the nearest reachable stall sells medicine (a draught; it buys herbs, so they don't count) this crawler will pay for, with a ration's price to spare.</summary>
         public static bool CanBuyMedicine(in AgentContext context) => CanBuy(context, ItemCategory.Medicine);
 
         /// <summary>
@@ -624,12 +740,6 @@ namespace Simpiens.Cognition.Planning
 
         /// <summary>The first food the stall sells, in id order (a ration); None when it sells none.</summary>
         public static ItemType FoodForSale(in TradeStallData stall) => FirstForSale(stall, ItemCategory.Food);
-
-        /// <summary>The first protection the stall sells, in id order (hazard gear, Epic 10 G3); None when it sells none.</summary>
-        public static ItemType ProtectionForSale(in TradeStallData stall) => FirstForSale(stall, ItemCategory.Protection);
-
-        /// <summary>The first tool the stall sells, in id order (a pickaxe, Epic 10 Part 2); None when it sells none.</summary>
-        public static ItemType ToolForSale(in TradeStallData stall) => FirstForSale(stall, ItemCategory.Tool);
 
         /// <summary>The first medicine the stall sells, in id order (a draught, Epic 10 Part 2; herbs it buys); None when it sells none.</summary>
         public static ItemType MedicineForSale(in TradeStallData stall) => FirstForSale(stall, ItemCategory.Medicine);

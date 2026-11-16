@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using Simpiens.Entities;
 using Simpiens.Presentation;
+using Simpiens.Presentation.Art;
 using Simpiens.Presentation.Art.People;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Economy;
@@ -69,8 +70,10 @@ namespace Simpiens.Client.Tests.People
             Section("Frames by standing, the helm and the tabard", new[]
             {
                 Make("resident", basis), Make("drifter", basis, standing: CrawlerStanding.Drifter), Make("guild member", basis, standing: CrawlerStanding.GuildMember),
-                Make("helm", basis, gear: ItemType.HazardGear), Make("helm, long hair", Set(basis, LookGene.HairStyle, "long"), gear: ItemType.HazardGear),
-                Make("guild, helm", delver, standing: CrawlerStanding.GuildMember, gear: ItemType.HazardGear),
+                Make("helm", basis, gear: ItemType.HardHat), Make("helm, long hair", Set(basis, LookGene.HairStyle, "long"), gear: ItemType.HardHat),
+                Make("guild, helm", delver, standing: CrawlerStanding.GuildMember, gear: ItemType.HardHat),
+                Make("hazard suit", basis, worn: WornLook.Wearing(ItemType.HazardGear)), Make("hard hat, hazard suit", basis, worn: HatAndSuit),
+                Make("guild, hat and suit", delver, standing: CrawlerStanding.GuildMember, worn: HatAndSuit),
                 // Protection by kind (Epic 10 Part 2, W3, D52): the hard hat a steel helm, the respirator a mask
                 Make("hard hat", basis, gear: ItemType.HardHat), Make("respirator", basis, gear: ItemType.Respirator),
                 Make("respirator, beard", Set(basis, LookGene.FacialHair, "beard"), gear: ItemType.Respirator),
@@ -83,7 +86,7 @@ namespace Simpiens.Client.Tests.People
                 var look = CrawlerLook.Generate(CrowdSeed, new EntityId((uint)i, 0u, 0u, 0u));
                 var framedPortrait = new Rgba32[PortraitKit.FramedSize * PortraitKit.FramedSize];
                 var standing = (CrawlerStanding)(i % 3);
-                PortraitKit.BakeFramed(new PortraitKey(look, (Mood)(i % 7), standing, ItemType.None), framedPortrait);
+                PortraitKit.BakeFramed(new PortraitKey(look, (Mood)(i % 7), standing, default), framedPortrait);
                 var face = new Rgba32[PortraitKit.FaceSize * PortraitKit.FaceSize];
                 PortraitKit.Face(framedPortrait, standing, face);
                 return new Cell { Label = ((Mood)(i % 7)).ToString().ToLowerInvariant(), Portrait = face, PortraitSide = PortraitKit.FaceSize, PortraitScale = 2 };
@@ -91,10 +94,11 @@ namespace Simpiens.Client.Tests.People
 
             // The helm over every hair style (D4), and the guild's tabard on every build (D8)
             Section("The helm over each hair style", LookCatalog.Options(LookGene.HairStyle).Select(o =>
-                BodyOnly(o.Key, Set(Set(basis, LookGene.Frame, "female"), LookGene.HairStyle, o.Key), AgentVisualState.Idle, 0, ItemType.HazardGear, tabard: false)));
+                BodyOnly(o.Key, Set(Set(basis, LookGene.Frame, "female"), LookGene.HairStyle, o.Key), AgentVisualState.Idle, 0, ItemType.HardHat, tabard: false)));
             Section("The guild's tabard on each build, then a delver", LookCatalog.Options(LookGene.Build).Select(o =>
                 BodyOnly(o.Key, Set(basis, LookGene.Build, o.Key), AgentVisualState.Idle, 0, ItemType.None, tabard: true))
-                .Concat(new[] { BodyOnly("delver", delver, AgentVisualState.Idle, 0, ItemType.None, tabard: true), BodyOnly("helm, tabard", delver, AgentVisualState.Walking, 0, ItemType.HazardGear, tabard: true),
+                .Concat(new[] { BodyOnly("delver", delver, AgentVisualState.Idle, 0, ItemType.None, tabard: true), BodyOnly("helm, tabard", delver, AgentVisualState.Walking, 0, ItemType.HardHat, tabard: true),
+                    BodyOnly("hazard suit", basis, AgentVisualState.Walking, 0, WornLook.Wearing(ItemType.HazardGear), tabard: false), BodyOnly("hat and suit, tabard", delver, AgentVisualState.Walking, 0, HatAndSuit, tabard: true),
                     BodyOnly("hard hat", basis, AgentVisualState.Walking, 0, ItemType.HardHat, tabard: false), BodyOnly("respirator", basis, AgentVisualState.Harvesting, 0, ItemType.Respirator, tabard: false),
                     BodyOnly("respirator, asleep", basis, AgentVisualState.Sleeping, 0, ItemType.Respirator, tabard: false) }));
 
@@ -104,7 +108,7 @@ namespace Simpiens.Client.Tests.People
                 ("long hair, broad", Set(Set(basis, LookGene.HairStyle, "long"), LookGene.Build, "broad"), ItemType.None, false),
                 ("a delver with a bun", Set(delver, LookGene.HairStyle, "bun"), ItemType.None, false),
                 ("coils, slight, a guild member", Set(Set(Set(basis, LookGene.HairStyle, "coils"), LookGene.Build, "slight"), LookGene.SkinTone, "tone-9"), ItemType.None, true),
-                ("braids, heavy, in the helm", Set(Set(Set(basis, LookGene.HairStyle, "braids"), LookGene.Build, "heavy"), LookGene.Frame, "female"), ItemType.HazardGear, false),
+                ("braids, heavy, in the helm", Set(Set(Set(basis, LookGene.HairStyle, "braids"), LookGene.Build, "heavy"), LookGene.Frame, "female"), ItemType.HardHat, false),
             })
             {
                 var posed = new List<Cell>();
@@ -133,28 +137,35 @@ namespace Simpiens.Client.Tests.People
             File.WriteAllLines(Path.Combine(AppContext.BaseDirectory, "render-output", "people-sheet.txt"), report);
         }
 
-        private Cell Make(string label, CrawlerLook look, int scale = 1, Mood mood = Mood.Content, CrawlerStanding standing = CrawlerStanding.Resident, ItemType gear = ItemType.None)
+        // A hard hat on the head and hazard gear's suit on the body, worn together (Epic 10 Part 3, K1.3, K1.5)
+        private static readonly WornLook HatAndSuit = WornLook.Wearing(ItemType.HardHat).And(Simpiens.Simulation.Items.EquipmentSlot.Body, ItemType.HazardGear);
+
+        private Cell Make(string label, CrawlerLook look, int scale = 1, Mood mood = Mood.Content, CrawlerStanding standing = CrawlerStanding.Resident, ItemType gear = ItemType.None, WornLook worn = default)
         {
             Assert.True(LookCatalog.IsValid(look), $"{label}: {look} is not a valid look.");
+            if (gear != ItemType.None) worn = WornLook.Wearing(gear);
             var portrait = new Rgba32[PortraitKit.FramedSize * PortraitKit.FramedSize];
-            PortraitKit.BakeFramed(new PortraitKey(look, mood, standing, gear), portrait);
+            PortraitKit.BakeFramed(new PortraitKey(look, mood, standing, worn), portrait);
             bool tabard = standing == CrawlerStanding.GuildMember;
             return new Cell
             {
                 Label = label,
                 Portrait = portrait,
                 PortraitScale = scale,
-                Body = Body(label, look, mood == Mood.Asleep ? AgentVisualState.Sleeping : AgentVisualState.Idle, 0, gear, tabard),
+                Body = Body(label, look, mood == Mood.Asleep ? AgentVisualState.Sleeping : AgentVisualState.Idle, 0, worn, tabard),
             };
         }
 
         private static Cell BodyOnly(string label, CrawlerLook look, AgentVisualState state, int frame, ItemType headGear, bool tabard)
-            => new Cell { Label = label, Body = Body(label, look, state, frame, headGear, tabard) };
+            => BodyOnly(label, look, state, frame, WornLook.Wearing(headGear), tabard);
 
-        private static PixelSprite Body(string label, CrawlerLook look, AgentVisualState state, int frame, ItemType headGear, bool tabard)
+        private static Cell BodyOnly(string label, CrawlerLook look, AgentVisualState state, int frame, WornLook worn, bool tabard)
+            => new Cell { Label = label, Body = Body(label, look, state, frame, worn, tabard) };
+
+        private static PixelSprite Body(string label, CrawlerLook look, AgentVisualState state, int frame, WornLook worn, bool tabard)
         {
             var pixels = new Rgba32[BodyKit.PixelsPerFrame];
-            BodyKit.BakeFrame(look, headGear, tabard, state, frame, pixels);
+            BodyKit.BakeFrame(look, worn, tabard, state, frame, pixels);
             return new PixelSprite(label, BodyKit.Size, BodyKit.Size, pixels);
         }
 

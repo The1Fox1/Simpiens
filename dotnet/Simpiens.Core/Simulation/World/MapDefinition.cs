@@ -10,7 +10,9 @@ namespace Simpiens.Simulation.World
         Bunk,
         SpawnPoint,
         /// <summary>A bunk in the guild's barracks, kept for a member (Epic 10 Part 2, W5.2, D62).</summary>
-        GuildBunk
+        GuildBunk,
+        /// <summary>The sealed descent gate (Epic 10 Part 3, K10.1, Q13): drawn by the view, sealed or breached by the world's flag.</summary>
+        DescentGate
     }
 
     /// <summary>What makes a sector dangerous (Epic 10 G2): the environment, never creatures (producer decision Q2).</summary>
@@ -161,6 +163,50 @@ namespace Simpiens.Simulation.World
         }
     }
 
+    /// <summary>
+    /// A creatures' lair (Epic 10 Part 3, K2.1; Q5: "lairs are map data"): where a pack of one kind lives, rests and heals.
+    /// Its pack is drawn from the session's seed and a slain member returns there (<see cref="Simpiens.Simulation.Creatures.CreatureService"/>).
+    /// </summary>
+    public readonly struct LairDefinition
+    {
+        public readonly string Key;
+
+        /// <summary>The kind its pack is of (its brood, under a boss).</summary>
+        public readonly Simpiens.Simulation.Creatures.CreatureKind Kind;
+
+        /// <summary>The lair's heart: its pack rests around it.</summary>
+        public readonly Vec2 Position;
+
+        /// <summary>
+        /// A boss that heads the pack (Epic 10 Part 3, K10, Q13: the Matriarch heads the warren), holding the lair's first
+        /// place at its heart, the brood in the places after; None for a lair without one. A boss alone (the Gatekeeper) is a
+        /// lair of its own kind instead.
+        /// </summary>
+        public readonly Simpiens.Simulation.Creatures.CreatureKind Boss;
+
+        /// <summary>
+        /// The lair guards the descent gate (K10, Q13): it is charted with the sector it stands in (the gate is the room's
+        /// landmark), and emptied for good, it breaches the gate.
+        /// </summary>
+        public readonly bool GuardsGate;
+
+        public LairDefinition(string key, Simpiens.Simulation.Creatures.CreatureKind kind, Vec2 position,
+            Simpiens.Simulation.Creatures.CreatureKind boss = Simpiens.Simulation.Creatures.CreatureKind.None, bool guardsGate = false)
+        {
+            Key = key;
+            Kind = kind;
+            Position = position;
+            Boss = boss;
+            GuardsGate = guardsGate;
+        }
+
+        /// <summary>True for a lair headed by a boss.</summary>
+        public bool HasBoss => Boss != Simpiens.Simulation.Creatures.CreatureKind.None;
+
+        /// <summary>The kind that holds <paramref name="slot"/>: the boss in the first place of a lair with one, else its pack's kind.</summary>
+        public Simpiens.Simulation.Creatures.CreatureKind KindIn(int slot) => slot == 0 && HasBoss ? Boss : Kind;
+    }
+
     /// <summary>Presentation hint: a text label drawn on the map.</summary>
     public readonly struct MapLabel
     {
@@ -202,6 +248,9 @@ namespace Simpiens.Simulation.World
 
         public readonly IReadOnlyList<MapLabel> Labels;
 
+        /// <summary>The creatures' lairs, in definition order (Epic 10 Part 3, K2.1). Empty on a map with none.</summary>
+        public readonly IReadOnlyList<LairDefinition> Lairs;
+
         /// <summary>
         /// The trade caravan's way in (Epic 10 Part 2, the stretch, D70): from where the road meets the map to the stall, in
         /// order; it walks back out the same way. Empty on a map the caravan doesn't walk.
@@ -219,9 +268,11 @@ namespace Simpiens.Simulation.World
             PoiDefinition[] pois,
             StationDefinition[] stations,
             MapLabel[] labels,
-            Vec2[] caravanRoute = null)
+            Vec2[] caravanRoute = null,
+            LairDefinition[] lairs = null)
         {
             CaravanRoute = caravanRoute ?? System.Array.Empty<Vec2>();
+            Lairs = lairs ?? System.Array.Empty<LairDefinition>();
             Name = name;
             PlayableBounds = playableBounds;
             CameraFrame = cameraFrame;
@@ -301,6 +352,20 @@ namespace Simpiens.Simulation.World
                 }
             }
             poi = default;
+            return false;
+        }
+
+        public bool TryGetLair(string key, out LairDefinition lair)
+        {
+            for (int i = 0; i < Lairs.Count; i++)
+            {
+                if (Lairs[i].Key == key)
+                {
+                    lair = Lairs[i];
+                    return true;
+                }
+            }
+            lair = default;
             return false;
         }
 

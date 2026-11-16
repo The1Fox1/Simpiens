@@ -24,7 +24,7 @@ namespace Simpiens.Core.Session
     /// Every respawn starts from tick 0 with a reset id allocator, so the same seed gives the same world. Views follow
     /// its events (the client captures its frames on <see cref="TickCompleted"/>); a headless host uses it as it is. Main thread.
     /// </summary>
-    public sealed partial class SessionHost : ISessionSwitcher, ISessionPersistence, IDisposable
+    public sealed partial class SessionHost : ISessionSwitcher, ISessionPersistence, IDisposable, IDepartedRoll
     {
         // Body radii and speed the simulation gives each kind of entity (they were the views' collider radii)
         public const float CrawlerRadius = 0.35f;
@@ -209,6 +209,9 @@ namespace Simpiens.Core.Session
                 }
             }
 
+            // 5. The lairs (Epic 10 Part 3, K2.1): their packs from the seed, with ids of their own sequence
+            _simulationManager?.PopulateLairs(_settings != null ? _settings.Seed : SimulationSettings.DefaultSeed);
+
             ScheduleFirstDrifter(map);
             SimLog.Bootstrap.ZLogInformation($"Session '{session.Id}' spawned: {_crawlers.Count} agents, map '{map.Name}', {builder.StallCount} stall(s), seeded gold {seededGold}g, {builder.SeedBounties.Count} seeded bounties");
             SessionChanged?.Invoke(session);
@@ -228,6 +231,8 @@ namespace Simpiens.Core.Session
 
             _crawlers.Clear();
             _departed.Clear();
+            _newcomersDue.Clear(); // K5.6
+            _newcomersArrived = 0;
             _identity?.ClearCustomNames(); // ids repeat per seed: a name belongs to this session's crawlers only
             _registry?.Clear();
             _idAllocator?.Reset(); // same seed + same spawn order => same entity ids on every respawn
@@ -287,7 +292,7 @@ namespace Simpiens.Core.Session
             _simulationManager?.SetEconomy(session.Economy);
 
             for (int i = 0; i < save.Crawlers.Length; i++) SpawnRestoredCrawler(save.Crawlers[i]);
-            _simulationManager?.RestoreFrom(save);
+            _simulationManager?.RestoreFrom(save); // the creatures with it (Epic 10 Part 3, K2.4)
             RestoreDriftersFrom(save, session.Map);
 
             var world = save.World;
@@ -342,6 +347,24 @@ namespace Simpiens.Core.Session
                 session = null;
                 return $"The save holds an item this game doesn't have ({unknownItem}).";
             }
+            string misworn = SaveItems.FirstMisworn(save);
+            if (misworn != null)
+            {
+                session = null;
+                return $"The save holds equipment this game can't wear ({misworn}).";
+            }
+            string piles = Simpiens.Simulation.Loot.PileService.Check(save.World.Piles);
+            if (piles != null)
+            {
+                session = null;
+                return $"The save's piles don't fit this game ({piles}).";
+            }
+            string creatures = Simpiens.Simulation.Creatures.CreatureService.Check(save.World.Creatures, session.Map);
+            if (creatures != null)
+            {
+                session = null;
+                return $"The save's creatures don't fit this game ({creatures}).";
+            }
             return null;
         }
 
@@ -394,6 +417,8 @@ namespace Simpiens.Core.Session
         {
             ulong seed = _settings != null ? _settings.Seed : SimulationSettings.DefaultSeed;
             state.Look = CrawlerLook.Generate(seed, state.AgentId);
+            // Its starting skills (Epic 10 Part 3, K9.1, Q19), on their own salt too, leaned by its personality
+            state.Skills = Simpiens.Simulation.Skills.SkillSet.Generate(seed, state.AgentId, state.Personality);
 
             var living = new HashSet<string>(_crawlers.Count);
             for (int i = 0; i < _crawlers.Count; i++)
@@ -408,7 +433,7 @@ namespace Simpiens.Core.Session
             }
             state.GivenName = GivenNames.Draw(seed, state.AgentId, state.Look.Frame, seen, living);
             _identity?.RegisterCustomName(state.AgentId, state.GivenName);
-            SimLog.Cognition.ZLogInformation($"{SimLog.Agent(state.AgentId)} is {state.GivenName}: {state.Look.ToString()}");
+            SimLog.Cognition.ZLogInformation($"{SimLog.Agent(state.AgentId)} is {state.GivenName}: {state.Look.ToString()}; skills: {state.Skills.ToString()}");
         }
 
         /// <summary>A crawler with a given id and names: its state, its entity in the world and its tick.</summary>
@@ -533,6 +558,7 @@ namespace Simpiens.Core.Session
                 var crawler = _crawlers[i].Runtime;
                 if (!crawler.IsDisposed) crawler.Tick(currentTick);
             }
+            _simulationManager?.TickCreatures((uint)currentTick); // their own phase, after the crawlers' (seam A4)
             TickPopulation(currentTick);
             TickCompleted?.Invoke(currentTick);
         }

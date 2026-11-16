@@ -13,7 +13,11 @@ namespace Simpiens.Simulation.Persistence
         public int Gold { get; set; }
         public ItemInstance[] Slots { get; set; }
 
-        /// <summary>The equipment beside the pack, one item per slot (protection, weapon, tool; format 5; format 4 held one gear item).</summary>
-        public ItemInstance[] Equipped { get; set; }
+        /// <summary>
+        /// The equipment beside the pack: a record for each of the 16 slot ids the table may define, indexed by the id, all
+        /// of them saved as raw memory (format 11, Epic 10 Part 3, K1.2), so a slot added later loads with nothing in it.
+        /// Format 5 held protection, weapon and tool; format 4 one gear item.
+        /// </summary>
+        public Simpiens.Simulation.Items.WornEquipment Equipped { get; set; }
     }
 }

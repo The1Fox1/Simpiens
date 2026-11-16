@@ -43,6 +43,12 @@ namespace Simpiens.Cognition
         private long _lastBusyPerceptionTick = -BusyPerceptionIntervalTicks;
         private bool _disposed;
 
+        /// <summary>The fallen mate the guild last sent it for that it answered (Epic 10 Part 3, K7.2c): it drops what it does once per order.</summary>
+        private EntityId _answeredCarry;
+
+        /// <summary>True once it answered its clear's fight (Epic 10 Part 3, K8.2b): it drops its march once, to fight as its weapon fights.</summary>
+        private bool _answeredFight;
+
         public AgentRuntime(
             AgentState state,
             ISpatialPartition spatialPartition,
@@ -124,21 +130,24 @@ namespace Simpiens.Cognition
                     State.Activity.GearedHazardTicks++;
                     State.Activity.GearedHazardDamage += taken;
                 }
-                for (int s = 0; inventory != null && s < AgentInventory.EquipmentSlots; s++)
+                // Every piece that wears by exposure wears, whichever slot it is in (Epic 10 Part 3, K1.3): a hard hat and
+                // hazard gear worn together both
+                if (inventory != null)
                 {
-                    var slot = (EquipmentSlot)s;
-                    var worn = inventory.GetEquipped(slot);
-                    if (worn.IsEmpty || ItemCatalog.Get(worn.Type)?.Equipment?.Wear != WearRule.PerHazardTick) continue;
-                    if (inventory.Wear(slot))
+                    System.Span<Simpiens.Simulation.Economy.ItemType> broke = stackalloc Simpiens.Simulation.Economy.ItemType[EquipmentSlots.Capacity];
+                    inventory.WearBy(WearRule.PerHazardTick, broke, out int brokeCount);
+                    for (int b = 0; b < brokeCount && b < broke.Length; b++)
                     {
                         State.Activity.GearWornOut++;
-                        SimLog.Drives.ZLogInformation($"{SimLog.Agent(State.AgentId)}'s {ItemCatalog.NameOf(worn.Type)} wore out in {hazard.Kind} at {State.Position}");
+                        SimLog.Drives.ZLogInformation($"{SimLog.Agent(State.AgentId)}'s {ItemCatalog.NameOf(broke[b])} wore out in {hazard.Kind} at {State.Position}");
                         RecordStory(ChronicleEventType.GearWornOut, ChronicleIntensity.Notable);
                     }
                 }
                 if (State.Health <= 0f && !State.IsDowned)
                 {
                     State.IsDowned = true;
+                    State.DownedBy = Simpiens.Simulation.DeathCause.Hazard; // what it dies of, if it bleeds out (Epic 10 Part 3, K5.1)
+                    State.DownedDetail = (byte)hazard.Kind;
                     State.Activity.TimesDowned++;
                     SimLog.Drives.ZLogInformation($"{SimLog.Agent(State.AgentId)} was downed by {hazard.Kind} at {State.Position}");
                     RecordStory(ChronicleEventType.CrawlerDowned, ChronicleIntensity.Crisis);
@@ -148,7 +157,10 @@ namespace Simpiens.Cognition
             bool hurtInDanger = !State.IsDowned && hazard.IsHazardous && State.Health < Vitality.RetreatBelow;
             // Tending to itself; resting counts only out of danger (a downed crawler must not rest in a hazard sector)
             bool tending = State.CurrentIntent is RetreatIntent || State.CurrentIntent is TreatWoundsIntent || State.CurrentIntent is SleepAtBunkIntent
-                || (State.CurrentIntent is IdleIntent && !hazard.IsHazardous);
+                || (State.CurrentIntent is IdleIntent && (!hazard.IsHazardous || State.IsCollapsed)); // collapsed, it lies where it fell (Epic 10 Part 3, K5.1)
+
+            // Struck by a creature (Epic 10 Part 3, K2.3, D19): on its feet, it drops what it does and flees, or fights back (K3.3)
+            bool struck = !State.IsDowned && Vitality.StruckRecently(State.StruckAtTick, (uint)currentTick);
 
             // Reflexive preemption check
             bool emergencyExhaustion = State.Energy <= MentalBreakEvaluator.ExhaustionThreshold;
@@ -160,10 +172,34 @@ namespace Simpiens.Cognition
                 State.VisualState = AgentVisualState.Resting;
             }
 
+            // Sent for a fallen mate (Epic 10 Part 3, K7.2c, D42): once its last decision has landed, it drops what it does
+            var carry = State.Expedition.Carry;
+            bool sentToCarry = !State.IsDowned && carry != default && carry != _answeredCarry && !State.IsEvaluating;
+            // The clear's fight begun (K8.2b): it leaves its march to the lair's heart once, so a shooter holds off at range
+            if (!State.Expedition.IsFighting) _answeredFight = false;
+            bool toTheFight = !State.IsDowned && State.Expedition.IsFighting && !_answeredFight && !State.IsEvaluating;
+
             bool shouldPreempt = false;
             if (emergencyExhaustion && !(State.CurrentIntent is IdleIntent))
             {
                 shouldPreempt = true;
+            }
+            else if (struck && !(State.CurrentIntent is FleeIntent) && !(State.CurrentIntent is FightIntent) && !(State.CurrentIntent is HuntIntent) // a hunter struck hunts on (K6.2)
+                && !(State.Expedition.IsActive && (State.CurrentIntent is CarryIntent || State.CurrentIntent is GiveMedicineIntent))) // a mate's rescue under orders goes on (K7.2c)
+            {
+                // Before hunger: a crawler that starves while it is bitten runs first and eats after
+                shouldPreempt = true;
+            }
+            else if (sentToCarry)
+            {
+                _answeredCarry = carry;
+                shouldPreempt = !(State.CurrentIntent is CarryIntent) && !(State.CurrentIntent is GiveMedicineIntent);
+            }
+            else if (toTheFight)
+            {
+                _answeredFight = true;
+                shouldPreempt = !(State.CurrentIntent is HuntIntent) && !(State.CurrentIntent is FightIntent) && !(State.CurrentIntent is FleeIntent)
+                    && !(State.CurrentIntent is CarryIntent) && !(State.CurrentIntent is GiveMedicineIntent);
             }
             else if (emergencyStarvation && !(State.CurrentIntent is PanicIntent) && !tending)
             {

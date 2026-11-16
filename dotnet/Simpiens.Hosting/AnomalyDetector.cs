@@ -223,6 +223,14 @@ namespace Simpiens.Hosting
         private void CheckJitter(WorldEntity node, Pawn pawn, long tick)
         {
             Vec2 position = node.Position;
+            if (node.Agent != null && node.Agent.CarriedBy != default)
+            {
+                // The carried ride their rescuer's back (Epic 10 Part 3, K5.2): their moves are its, the lift's snap included;
+                // judged afresh once set down
+                pawn.LastPosition = position;
+                pawn.HasHeading = false;
+                return;
+            }
             pawn.RecordTrail(position);
             if (!pawn.HasPosition)
             {
@@ -296,6 +304,7 @@ namespace Simpiens.Hosting
                     var b = entities[j];
                     if (b == null || b.Type != EntityType.Pawn) continue;
                     if (IsSocial(a) || IsSocial(b)) continue;
+                    if (IsDownOrCarried(a) || IsDownOrCarried(b)) continue; // the fallen lie on the ground, the carried ride (Epic 10 Part 3, K5)
                     float distance = Vec2.Distance(a.Position, b.Position);
                     if (distance >= StackingDistance) continue;
                     stacked = true;
@@ -314,6 +323,8 @@ namespace Simpiens.Hosting
         }
 
         private static bool IsSocial(WorldEntity pawn) => pawn.Agent != null && (pawn.Agent.IsGossiping || pawn.Agent.IsSharing);
+
+        private static bool IsDownOrCarried(WorldEntity pawn) => pawn.Agent != null && (pawn.Agent.IsDowned || pawn.Agent.Carrying != default);
 
         private void CheckBodies(IReadOnlyList<WorldEntity> entities, long tick, float seconds)
         {

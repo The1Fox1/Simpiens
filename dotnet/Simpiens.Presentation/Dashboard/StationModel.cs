@@ -18,7 +18,7 @@ namespace Simpiens.Presentation.Dashboard
         public string Name { get; internal set; } = string.Empty;
         public bool HasPortrait { get; internal set; }
         public PortraitKey Portrait { get; internal set; }
-        /// <summary>"Trust 62 · Warmth 41".</summary>
+        /// <summary>"Smithing 3 · Trust 62 · Warmth 41": its skill at the station first (Epic 10 Part 3, K9.5, Q21: the player hires for it).</summary>
         public string Standing { get; internal set; } = string.Empty;
         /// <summary>The least wage it takes, a visit.</summary>
         public int Ask { get; internal set; }
@@ -96,6 +96,9 @@ namespace Simpiens.Presentation.Dashboard
         public string ArtisanDoing { get; private set; } = string.Empty;
         /// <summary>"Energy 72 · on shift", "On a break until rested", "Off shift until 10:00".</summary>
         public string ArtisanState { get; private set; } = string.Empty;
+
+        /// <summary>Its skill at the station (Epic 10 Part 3, K9.5): "Smithing 4 (Apprentice)"; empty with no artisan.</summary>
+        public string ArtisanSkill { get; private set; } = string.Empty;
         public bool ArtisanOnBreak { get; private set; }
         public bool ArtisanHasPortrait { get; private set; }
         public PortraitKey ArtisanPortrait { get; private set; }
@@ -323,8 +326,9 @@ namespace Simpiens.Presentation.Dashboard
             if (contract.OnBreak) ArtisanState = Invariant($"Energy {agent?.Energy ?? 0:F0} · on a break until rested");
             else if (ShiftBlocks.Covers(contract.Shifts, Tick)) ArtisanState = Invariant($"Energy {agent?.Energy ?? 0:F0} · on shift");
             else ArtisanState = Invariant($"Energy {agent?.Energy ?? 0:F0} · {OffShiftText(contract.Shifts)}");
-            // Its grade and its practice (W4, D55)
-            ArtisanState += " · " + Grades.NameOf(WorkshopService.GradeOf(contract, tuning)) + Invariant($", {contract.Practice} made");
+            // Its skill at the station and the grade it makes (W4, D55; its practice is its skill since Epic 10 Part 3, K9.3c)
+            ArtisanSkill = agent != null ? SkillTexts.WithBand(agent.Skills, agent.Inventory, Simpiens.Simulation.Skills.SkillWork.Make(state.Kind)) : string.Empty;
+            ArtisanState += " · " + (ArtisanSkill.Length > 0 ? ArtisanSkill + ", makes " : string.Empty) + Grades.NameOf(WorkshopService.GradeOf(agent, state.Kind));
             DescribeShifts();
         }
 
@@ -358,8 +362,22 @@ namespace Simpiens.Presentation.Dashboard
                     _willing.Add((trust, crawler));
                 }
             }
-            // The most trusting first; the registry's order breaks a tie, so the list is the same every refresh
-            _willing.Sort((a, b) => b.Trust.CompareTo(a.Trust));
+            // The best hand at this station first (Epic 10 Part 3, K9.5, Q21), then the most trusting; the registry's order
+            // breaks a tie, so the list is the same every refresh
+            var work = Simpiens.Simulation.Skills.SkillWork.Make(workshops[Index].Kind);
+            var craft = Simpiens.Simulation.Skills.SkillTable.SkillFor(work);
+            for (int i = 1; i < _willing.Count; i++) // a stable insertion sort: the list is a handful
+            {
+                var item = _willing[i];
+                int j = i - 1;
+                int level = Simpiens.Simulation.Skills.CrawlerSkills.Level(item.Crawler, work);
+                while (j >= 0 && Before(item.Trust, level, _willing[j].Trust, Simpiens.Simulation.Skills.CrawlerSkills.Level(_willing[j].Crawler, work)))
+                {
+                    _willing[j + 1] = _willing[j];
+                    j--;
+                }
+                _willing[j + 1] = item;
+            }
             for (int i = 0; i < _willing.Count && _candidates.Count < MaxCandidates; i++)
             {
                 var crawler = _willing[i].Crawler;
@@ -371,7 +389,8 @@ namespace Simpiens.Presentation.Dashboard
                     Name = _context.FriendlyName(id, DossierModel.UnknownName),
                     HasPortrait = crawler.Look.IsComplete,
                     Portrait = crawler.Look.IsComplete ? PortraitKey.Of(id, crawler, _moods, tick) : default,
-                    Standing = Invariant($"Trust {trust} · Warmth {warmth}"),
+                    Standing = (craft != Simpiens.Simulation.Skills.Skill.None ? Invariant($"{Simpiens.Simulation.Skills.SkillTable.Get(craft).DisplayName} {Simpiens.Simulation.Skills.CrawlerSkills.Level(crawler, work)} · ") : string.Empty)
+                        + Invariant($"Trust {trust} · Warmth {warmth}"),
                     Ask = WorkshopRules.ReservationWage(crawler, tuning),
                 });
             }
@@ -379,6 +398,9 @@ namespace Simpiens.Presentation.Dashboard
                 ? Invariant($"Nobody yet. A cautious resident takes station work once it trusts you (trust {tuning.HireTrust}, warmth {tuning.HireWarmth}): trade fairly and pay its bounties.")
                 : _willing.Count == 1 ? "One resident would take the work." : Invariant($"{_willing.Count} residents would take the work.");
         }
+
+        /// <summary>True when a hand at <paramref name="level"/> with <paramref name="trust"/> goes before one at <paramref name="theirLevel"/> with <paramref name="theirTrust"/>: the better hand, then the more trusting.</summary>
+        private static bool Before(int trust, int level, int theirTrust, int theirLevel) => theirLevel < level || (theirLevel == level && theirTrust < trust);
 
         private void RefreshOrder(StationState state, string station)
         {

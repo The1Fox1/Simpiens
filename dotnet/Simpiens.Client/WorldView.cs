@@ -154,7 +154,7 @@ namespace Simpiens.Client
                 // The camera follows the selected crawler (Unity did this after the input, in LateUpdate); one that left the world is dropped
                 selection.Update();
                 if (_directed != default && _session.Frames.TryGetDrawnPosition(_directed, out var directed)) Rig.Follow(directed, cameraSeconds);
-                else if (selection.Following && selection.TryGetCrawlerPosition(out var crawler)) Rig.Follow(crawler, cameraSeconds);
+                else if (selection.Following && selection.TryGetSelectedPosition(out var followed)) Rig.Follow(followed, cameraSeconds); // a crawler or a creature
             }
             Scene.Advance(map, _session.Frames, _session.ViewSeconds); // fades and poses move on here, never in a draw
             _graphics?.WriteBodies(); // the bodies the scene seated, baked into the world texture before the draw

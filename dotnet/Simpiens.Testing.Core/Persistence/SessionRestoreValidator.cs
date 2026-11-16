@@ -37,13 +37,15 @@ namespace Simpiens.Testing.Persistence
             ValidateGroupsRoundTrip();
             ValidateGuildRoundTrips();
             ValidateWorkshopsRoundTrip();
+            ValidateCreaturesRoundTrip();
+            ValidatePilesRoundTrip();
             ValidateChronicleRoundTrips();
             ValidateSupplyAndFogRoundTrip();
             ValidateCrawlerRecordRoundTripsWithoutWork();
             ValidateClockAndIdsResume();
             ValidateBountyIdsResume();
 
-            TestLog.Log("<color=green>[SessionRestoreValidator] ALL 9 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[SessionRestoreValidator] ALL 11 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateMemoryRoundTrips()
@@ -166,7 +168,7 @@ namespace Simpiens.Testing.Persistence
                 },
                 // The forge's artisan, unpaid once, on the day shift and off on a break (W1.2, W1.3), and a crawler who can't
                 // be hired again yet
-                Artisans = new[] { new Simpiens.Simulation.Workshops.ArtisanContract(C, 0, 6, 120u, 1, Simpiens.Simulation.Workshops.ShiftBlocks.DayShift, onBreak: true, shiftRunTicks: 1234, practice: 14) },
+                Artisans = new[] { new Simpiens.Simulation.Workshops.ArtisanContract(C, 0, 6, 120u, 1, Simpiens.Simulation.Workshops.ShiftBlocks.DayShift, onBreak: true, shiftRunTicks: 1234) },
                 Cooldowns = new[] { new IdTickRecord { Id = A, Tick = 4000u } }
             };
             var workshops = new Simpiens.Simulation.Workshops.WorkshopService().Follow(map);
@@ -177,7 +179,7 @@ namespace Simpiens.Testing.Persistence
             Assert(workshops[0].Built && workshops[0].Progress == 240 && workshops[0].InputsTaken && workshops[0].CrewGroupId == 5 && workshops[1].HeldOutput == 1 && workshops[1].HeldGrade == 1,
                 "A make in progress and a held make, with its grade (Epic 10 Part 2, W4), come back.");
             Assert(workshops.TryGetContract(C, out var contract) && contract.Wage == 6 && contract.StationIndex == 0 && contract.UnpaidVisits == 1 && contract.JoinTick == 120u
-                && contract.Shifts == Simpiens.Simulation.Workshops.ShiftBlocks.DayShift && contract.OnBreak && contract.ShiftRunTicks == 1234 && contract.Practice == 14
+                && contract.Shifts == Simpiens.Simulation.Workshops.ShiftBlocks.DayShift && contract.OnBreak && contract.ShiftRunTicks == 1234
                 && workshops.ArtisanAt(0) == C && workshops.CooldownUntil(A) == 4000u, "The artisan's contract, its shifts and its break, and the cooldown come back.");
 
             workshops.RestoreFrom(null);
@@ -255,6 +257,112 @@ namespace Simpiens.Testing.Persistence
             TestLog.Log("[PASS] The guild round-trips: its group, contracts in join order, cooldowns, a party in its slot with its expedition mid-stage (Epic 10 G4.6, G5.3; W5).");
         }
 
+        // The lairs and their creatures (Epic 10 Part 3, K2.4): a save restored and captured again is the same bytes; every
+        // field comes back; a save that doesn't fit the map is refused; a save without the block fills the lairs afresh
+        private void ValidateCreaturesRoundTrip()
+        {
+            Assert(System.Runtime.CompilerServices.Unsafe.SizeOf<CreatureRecord>() == 80, "A creature's record is 80 bytes (the last visit to its lair since K10.3c), saved as raw memory.");
+            Assert(System.Runtime.CompilerServices.Unsafe.SizeOf<LairSlotRecord>() == 24, "A lair's place is 24 bytes, saved as raw memory.");
+            var map = Simpiens.Core.Session.Layouts.Floor1Layout.Definition;
+            int warren = -1, hollow = -1;
+            for (int i = 0; i < map.Lairs.Count; i++)
+            {
+                if (map.Lairs[i].Key == Simpiens.Core.Session.Layouts.Floor1Layout.RatWarren) warren = i;
+                if (map.Lairs[i].Key == Simpiens.Core.Session.Layouts.Floor1Layout.BeetleHollow) hollow = i;
+            }
+            Assert(warren >= 0 && hollow >= 0, "Floor 1 has the warren and the hollow.");
+            var rat = Simpiens.Simulation.Creatures.CreatureKind.BurrowRat;
+            var beetle = Simpiens.Simulation.Creatures.CreatureKind.StoneBeetle;
+            // A rat chasing mid-fight with its swing's timer, a hurt one resting, the slain Matriarch's place waiting for her return;
+            // a beetle roaming toward its goal; the hollow charted
+            var packs = new byte[map.Lairs.Count];
+            packs[warren] = 3;
+            packs[hollow] = 1;
+            var save = new CreatureSave
+            {
+                IdCounter = 9,
+                ChartedLairs = 1UL << hollow,
+                Packs = packs,
+                Slots = new[]
+                {
+                    new LairSlotRecord((byte)warren, 0, default, 2400u), // the Matriarch's place (K10.2a), waiting for her return
+                    new LairSlotRecord((byte)warren, 1, A, 0u),
+                    new LairSlotRecord((byte)warren, 2, B, 0u),
+                    new LairSlotRecord((byte)hollow, 0, C, 0u),
+                },
+                Creatures = new[]
+                {
+                    Record(A, rat, warren, 1, new Vec2(19.5f, 14.25f), 20f, Simpiens.Simulation.Creatures.CreatureMode.Chase, target: new EntityId(9u, 9u, 9u, 9u), nextSwingAt: 1337, restUntil: 0, goal: new Vec2(19f, 14f)),
+                    Record(B, rat, warren, 2, new Vec2(20.2f, 16.4f), 7.5f, Simpiens.Simulation.Creatures.CreatureMode.Rest, target: default, nextSwingAt: 900, restUntil: 1500, goal: new Vec2(20.2f, 16.4f)),
+                    Record(C, beetle, hollow, 0, new Vec2(-19f, 15f), 60f, Simpiens.Simulation.Creatures.CreatureMode.Roam, target: default, nextSwingAt: 0, restUntil: 400, goal: new Vec2(-18.5f, 14.5f)),
+                },
+            };
+            Assert(Simpiens.Simulation.Creatures.CreatureService.Check(save, map) == null, "The save fits Floor 1.");
+            var creatures = new Simpiens.Simulation.Creatures.CreatureService().Follow(map);
+            creatures.Restore(null, save, 424242UL);
+            AssertSameBytes(SaveSerializer.Serialize(save), SaveSerializer.Serialize(creatures.Capture()), "The creatures restored from their save");
+            Assert(creatures.Creatures.Count == 3 && creatures.IdCounter == 9 && creatures.IsCharted(hollow) && !creatures.IsCharted(warren), "The creatures, the id counter and the charted lair come back.");
+            Assert(creatures.TryGet(A, out var chaser) && chaser.Mode == Simpiens.Simulation.Creatures.CreatureMode.Chase && chaser.NextSwingAt == 1337 && chaser.Target == new EntityId(9u, 9u, 9u, 9u)
+                && chaser.Position == new Vec2(19.5f, 14.25f) && chaser.Home == Simpiens.Simulation.Creatures.CreatureService.PlaceOf(map.Lairs[warren].Position, 1), "A chase mid-fight comes back with its swing's timer.");
+            Assert(creatures.TryGet(B, out var resting) && resting.Health == 7.5f && resting.RestUntil == 1500, "A hurt rat's health and rest come back.");
+            Assert(creatures.Lairs[warren].MemberIn(0) == default && creatures.Lairs[warren].ReturnAt(0) == 2400u && creatures.Lairs[warren].Alive == 2, "The slain Matriarch's place waits for her return.");
+
+            // Refused, before anything changes: another map's lairs, a kind out of its lair, a place past a pack, ids out of order
+            var shortPacks = new CreatureSave { Packs = new byte[] { 3 }, Slots = save.Slots, Creatures = save.Creatures };
+            Assert(Simpiens.Simulation.Creatures.CreatureService.Check(shortPacks, map) != null, "A save with another number of lairs is refused.");
+            var misplaced = new CreatureSave { Packs = packs, Slots = save.Slots, Creatures = new[] { Record(A, beetle, warren, 0, Vec2.Zero, 1f, default, default, 0, 0, Vec2.Zero) } };
+            Assert(Simpiens.Simulation.Creatures.CreatureService.Check(misplaced, map) != null, "A beetle in the warren is refused.");
+            var pastPack = new CreatureSave { Packs = packs, Slots = new[] { new LairSlotRecord((byte)hollow, 1, C, 0u) }, Creatures = System.Array.Empty<CreatureRecord>() };
+            Assert(Simpiens.Simulation.Creatures.CreatureService.Check(pastPack, map) != null, "A place past a lair's pack is refused.");
+            var unordered = new CreatureSave { Packs = packs, Slots = save.Slots, Creatures = new[] { save.Creatures[1], save.Creatures[0] } };
+            Assert(Simpiens.Simulation.Creatures.CreatureService.Check(unordered, map) != null, "Creatures out of id order are refused.");
+
+            creatures.Restore(null, null, 424242UL);
+            Assert(creatures.IdCounter > 0 && creatures.Creatures.Count >= 4 && creatures.ChartedMask == 0UL, "A save without the block fills the lairs afresh, nothing charted.");
+        }
+
+        // The items on the ground (Epic 10 Part 3, K4.1): a save restored and captured again is the same bytes; claims, fades,
+        // gold and stacks come back; a save that doesn't add up is refused; a save without the block starts with none
+        private void ValidatePilesRoundTrip()
+        {
+            Assert(System.Runtime.CompilerServices.Unsafe.SizeOf<PileRecord>() == 72, "A pile's record is 72 bytes (whose body since K5.4a), saved as raw memory.");
+            var save = new PileSave
+            {
+                IdCounter = 3,
+                Piles = new[]
+                {
+                    new PileRecord { Id = A, ClaimedFor = C, Position = new Vec2(-20f, 14f), FadesAt = 12000u, ClaimUntil = 2420u, Gold = 0, StackCount = 2 },
+                    new PileRecord { Id = B, BodyOf = C, Position = new Vec2(3f, -4f), FadesAt = 9000u, Gold = 17, StackCount = 1 }, // a body (K5.4a)
+                },
+                Stacks = new[]
+                {
+                    new ItemInstance(1, ItemType.IronOre, 2, 0),
+                    new ItemInstance(1, ItemType.MedicinalHerb, 1, 0),
+                    new ItemInstance(1, ItemType.Cudgel, 1, 0, durability: 33),
+                },
+            };
+            Assert(Simpiens.Simulation.Loot.PileService.Check(save) == null, "The save adds up.");
+            var piles = new Simpiens.Simulation.Loot.PileService();
+            piles.Restore(null, save, 424242UL);
+            AssertSameBytes(SaveSerializer.Serialize(save), SaveSerializer.Serialize(piles.Capture()), "The piles restored from their save");
+            Assert(piles.TryGet(A, out var claimed) && claimed.ClaimedFor == C && claimed.ClaimUntil == 2420u && claimed.Count == 2 && !claimed.MayTake(B, 2000u) && claimed.MayTake(B, 2420u),
+                "A claimed pile comes back with its claim and its stacks.");
+            Assert(piles.TryGet(B, out var purse) && purse.Gold == 17 && purse.StackAt(0).Durability == 33 && purse.FadesAt == 9000u, "A pile's gold, its worn piece and its fading come back.");
+            Assert(purse.IsBody && purse.BodyOf == C && piles.TotalGold == 17u, "A body comes back as whose it was, its purse gold on the ground (K5.4).");
+            Assert(Simpiens.Simulation.Loot.PileService.Check(new PileSave { Piles = save.Piles, Stacks = new ItemInstance[1] }) != null, "Stacks that don't add up are refused.");
+            Assert(Simpiens.Simulation.Loot.PileService.Check(new PileSave { Piles = new[] { save.Piles[1], save.Piles[0] }, Stacks = save.Stacks }) != null, "Piles out of id order are refused.");
+            piles.Restore(null, null, 424242UL);
+            Assert(piles.Piles.Count == 0 && piles.IdCounter == 0, "A save without the block starts with no piles.");
+        }
+
+        private static CreatureRecord Record(EntityId id, Simpiens.Simulation.Creatures.CreatureKind kind, int lair, byte slot, Vec2 position, float health,
+            Simpiens.Simulation.Creatures.CreatureMode mode, EntityId target, long nextSwingAt, long restUntil, Vec2 goal)
+            => new CreatureRecord
+            {
+                Id = id, Kind = kind, Lair = (byte)lair, Slot = slot, Position = position, Health = health, Mode = mode, Target = target,
+                NextSwingAt = nextSwingAt, RestUntil = restUntil, Goal = goal
+            };
+
         private void ValidateChronicleRoundTrips()
         {
             var chronicle = new NarrativeChronicleService(globalCapacity: 8, sectorCapacity: 3);
@@ -324,8 +432,10 @@ namespace Simpiens.Testing.Persistence
                 ScoutReportTick = 312u,
                 IsExhaustionCollapsed = true,
                 DepartsAtTick = 2750u,
-                Look = Simpiens.Simulation.People.CrawlerLook.Generate(11, A)
+                Look = Simpiens.Simulation.People.CrawlerLook.Generate(11, A),
+                Skills = Simpiens.Simulation.Skills.SkillSet.Generate(11, A, new AgentPersonality(-0.3f, 0.6f, 0.2f, -0.9f, 0.1f))
             };
+            state.Practise(Simpiens.Simulation.Skills.Skill.Mining, 137, out _); // mid-level experience comes back too
             state.Activity.RecordSalvageHarvest(80u);
             state.Activity.RecordSalvageSale(95u);
             var record = state.CaptureRecord();
@@ -346,6 +456,8 @@ namespace Simpiens.Testing.Persistence
             Assert(fresh.Activity.Cycles == 1 && fresh.Activity.FirstCycleTick == 95, "The activity tally came back.");
             Assert(fresh.IsDrifter && fresh.DepartsAtTick == 2750u, "A drifter is still a drifter, leaving at the same tick.");
             Assert(fresh.Look == state.Look && fresh.Look.IsComplete, "The look came back (Epic UI-Beta B1).");
+            Assert(fresh.Skills == state.Skills && fresh.Skills.Experience(Simpiens.Simulation.Skills.Skill.Mining) == state.Skills.Experience(Simpiens.Simulation.Skills.Skill.Mining)
+                && fresh.Skills != default, "The skills came back, experience and all (Epic 10 Part 3, K9.1).");
 
             bool refused = false;
             try

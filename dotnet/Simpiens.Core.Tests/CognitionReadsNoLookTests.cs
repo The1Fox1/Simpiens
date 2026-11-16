@@ -19,6 +19,7 @@ namespace Simpiens.Core.Tests
             ["Simpiens.Core/Cognition/AgentState.cs"] = "holds the look, and copies it into and out of the save record",
             ["Simpiens.Core/Session/SessionHost.cs"] = "draws each crawler's look and name at spawn",
             ["Simpiens.Core/Session/SessionHost.Drifters.cs"] = "keeps departed crawlers' looks, and saves them",
+            ["Simpiens.Core/Session/IDepartedRoll.cs"] = "the departed list, for the dashboard's dossier of the dead (Epic 10 Part 3, K5.8c)",
             ["Simpiens.Core/Simulation/Persistence/CrawlerSave.cs"] = "the save record",
             ["Simpiens.Core/Simulation/Persistence/SessionSave.cs"] = "the departed crawlers' save record",
         };

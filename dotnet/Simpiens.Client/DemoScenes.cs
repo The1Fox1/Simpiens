@@ -51,11 +51,30 @@ namespace Simpiens.Client
             .Say("walker", "The walls are full of iron.")
             .Build();
 
-        /// <summary>Arms the dynamic demonstrations: the first gossip, and the first crawler into the deep seam, once per world each.</summary>
+        /// <summary>
+        /// A rescue (Epic 10 Part 3, K5.8d): the one carried out of danger, or stood up by a draught, and the friend who came,
+        /// as the chronicle tells it (its first actor the rescuer, its second the rescued).
+        /// </summary>
+        public static CutsceneScript Rescue { get; } = new CutsceneBuilder("demo-rescue", CutsceneKind.Dynamic)
+            .Actors("rescuer", "rescued")
+            .Focus("rescued")
+            .Say("rescued", "I thought that was the end of me.")
+            .Focus("rescuer")
+            .Say("rescuer", "Not while I could hear you. Rest now.")
+            .Build();
+
+        /// <summary>A rescue's scene waits at least a game hour after the last (420 ticks).</summary>
+        public const long RescueCooldownTicks = 420;
+
+        /// <summary>
+        /// Arms the dynamic demonstrations: the first gossip, and the first crawler into the deep seam, once per world each; and
+        /// every rescue, a game hour apart at the most often (K5.8d).
+        /// </summary>
         public static void AddTo(SceneDirector director)
         {
             director.Add(SceneTrigger.OnInteraction(FirstGossip, once: true, cooldownTicks: 0, ChronicleEventType.CampfireGossip));
             director.Add(SceneTrigger.OnEntering(Floor1Layout.DeepSeamSectorId, DeepSeamEntry));
+            director.Add(SceneTrigger.OnInteraction(Rescue, once: false, cooldownTicks: RescueCooldownTicks, ChronicleEventType.CrawlerRescued));
         }
     }
 }

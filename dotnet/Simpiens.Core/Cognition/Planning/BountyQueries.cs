@@ -89,6 +89,7 @@ namespace Simpiens.Cognition.Planning
         /// </summary>
         public static bool IsFulfillableFrom(in AgentContext context, in BountyContract bounty)
         {
+            if (bounty.Type == BountyType.Hunt) return false; // a hunt has its own goal and party (Epic 10 Part 3, K6.2)
             // Fog of war: nobody can gather in a sector no scout has charted
             if (bounty.Type == BountyType.GatherResource && bounty.TargetSectorId != 0 && context.Snapshot != null
                 && !context.Snapshot.IsSectorCharted(bounty.TargetSectorId)) return false;

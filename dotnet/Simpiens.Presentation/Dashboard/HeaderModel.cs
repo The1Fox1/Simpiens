@@ -119,7 +119,7 @@ namespace Simpiens.Presentation.Dashboard
 
         public void Refresh()
         {
-            // The food the stall sells, and the resources it buys that aren't hazardous (ore, herbs), by the client's words
+            // The food the stall sells, and the resources it buys that aren't hazardous or a creature's (ore, herbs), by the client's words
             bool open = _context.TryGetStall(out var stall);
             GoldAmount = open ? stall.TreasuryGold : 0;
             Gold = Invariant($"{GoldAmount}");
@@ -131,7 +131,9 @@ namespace Simpiens.Presentation.Dashboard
             var parts = new System.Collections.Generic.List<string>(resources.Count);
             for (int i = 0; i < resources.Count; i++)
             {
-                if (Simpiens.Simulation.Items.ItemCatalog.Is(resources[i], Simpiens.Simulation.Items.ItemCategory.Hazardous)) continue;
+                // The staples only: not a hazard's, and not a creature's (Epic 10 Part 3, K4.2), which the merchant window lists
+                if (Simpiens.Simulation.Items.ItemCatalog.Is(resources[i], Simpiens.Simulation.Items.ItemCategory.Hazardous)
+                    || Simpiens.Simulation.Items.ItemCatalog.Is(resources[i], Simpiens.Simulation.Items.ItemCategory.Creature)) continue;
                 parts.Add(Invariant($"{(open ? stall.StockOf(resources[i]) : 0)} {ItemTexts.Of(resources[i]).HeaderWord}"));
                 _stock.Add(new HeaderStock(resources[i], ItemIcons.Of(resources[i]), open ? stall.StockOf(resources[i]) : 0));
             }

@@ -59,6 +59,9 @@ A day is 4 caravan visits. Measured per day on the gate seeds (T4.2b): the carav
 | Transfer | expedition shares (Epic 10 G5) | 30% of the haul's caravan value, split among the party | conserved; `Shares` in the ledger's flows |
 | Sink | `Construction` (Epic 10 Part 2) | 300g per station, the forge and the still (`WorkshopTuning`) | once per station; refused when the treasury can't pay |
 | Transfer | artisans' wages (Epic 10 Part 2) | each artisan's wage a visit (5g by default), after the guild's members | conserved; `ArtisanWages` in the ledger's flows; no signing fee |
+| Faucet | `CaravanSalvageSales` (creatures' materials, Epic 10 Part 3, K4.4) | hides and chitin past six of each kept for the forge, 6g and 10g (the stall pays 5g and 8g) | 8 of each a visit |
+| Faucet | `CaravanSalvageSales` (bosses' trophies, Epic 10 Part 3, K10.1a) | the Matriarch's pelt at 44g (the stall pays 36g), the Keeper's stone at 170g (140g) | a pelt a game week at most (her return); the stone once a session (the Gatekeeper never returns) |
+| Transfer | hunt bounties (Epic 10 Part 3, K6) | escrow posted by the player, paid out by damage dealt among up to three hunters | conserved; released in shares |
 
 **What follows:** the stall's net a day ≈ the caravan's payment − upkeep − wholesale − what crawlers keep.
 - Crawlers spend what they earn, so their gold passes through; purses stay near 40–55g, under the 80g they earn toward.
@@ -115,6 +118,7 @@ The default prices (15 / 5 / 6) are fair to a neutral crawler. A remembered affi
 | Generous | 5 / 9 / 10; gear 20 | the stall goes broke (treasury 0 or in arrears); trust up for ≥ 8 of 12 at its peak | broke by day 1–2 on every seed; trust up 12 |
 | Guild (Epic 10 G6, D14) | fair, plus the scripted guild player: four recruited as they qualify, outfitted from stock and sent to the Drowned Gallery whenever its seam is back | treasury 400–1,200g; trust up for ≥ 8 of 12; 0 starving; no wage unpaid; a guild full 8 game hours before the end brings an expedition home | 578–998g; full on day 1.6–2.9; every wage paid; 1–2 hauls home whenever full in time |
 | Crafting (Epic 10 Part 2, W6.3, D67–D68; measured 2026-11-06, same seeds) | fair, plus the forge making respirators, the still draughts, and the guildhall's guild of eight (two parties sent together), keeping a 200g reserve | proposed by exception: treasury 0–1,200g; trust up for ≥ 8 of 12; 0 starving; no member unpaid; a station standing and something made | 1–390g; trust up 10–12; 0 starving; stations 1–2 standing, 0–8 made; a member unpaid once on 2 seeds; nothing made on 2 (no glowstone or herbs to work); eight members by day 3 only on the default seed. 12 of 16 within the band, the soak's 3 seeds all |
+| Hunting (Epic 10 Part 3, K11.2, D73; measured 2026-11-15, seeds 1–20) | fair, plus the forge making blades and ring coats, the still draughts, the scripted hunt player, and a guild of four clearing the first charted lair with two draughts each, every player keeping a 150g reserve | proposed by exception: treasury 0–1,200g; trust up for ≥ 8 of 12; 0 starving; no quit for pay; at most one death (kills counted, not banded: the fighting starts at the horizon's edge) | 66–397g; trust up 11–12; 0 starving; no quit; no death; 0–2 kills by day 3. Over eight days: 0–8 kills a seed, 0–3 hunts paid, no rescue, no death, a quit for pay after day 3 on 4 of the 20 seeds (finding F14 of Part 3) |
 
 - **The bands are proposed** from T4.4's measurement and stand by the producer's rule of answering by exception. Before the day: fair and guild 1,000–2,000g at 30 minutes (the producer, 2026-10-25), greedy trust up for 2 at most.
 - **Lower treasuries than Part 1's:** a day pays 320g of upkeep, and salvage earns the stall about 1g a unit instead of 4–5g. The guild's wages, fees and outfitting take about 260g more over three days than the fair player's.
@@ -125,7 +129,25 @@ The default prices (15 / 5 / 6) are fair to a neutral crawler. A remembered affi
 
 ## 8. Deferred
 - ~~**Drifters**, **gear**, **wages and recruitment**, **expeditions**:~~ delivered by Epic 10 G1–G5 (§1, §2).
-- **Made goods** (the pickaxe, draughts, gear for each hazard): Epic 10 Part 2, W1–W4. They are what the 80g purse is for.
+- ~~**Made goods** (the pickaxe, draughts, gear for each hazard):~~ delivered by Epic 10 Part 2, W1–W4. They are what the 80g purse is for.
+- **The whole loop's balance** (Epic 10 Part 2's F14, joined by Part 3's F14, F8 and F10). This is open and the producer's decision, and unscheduled: the next epic that re-tunes the economy re-sets the `crafting` and `hunting` bands (§7) with it.
+  - **What happens:**
+    - With both stations and a guild of eight, the stall ends day 3 at 1–390g, where the fair player ends at 771–1,277g.
+    - On the default seed it affords the forge and a guild of eight, but never the still as well.
+    - With every player at once (the `hunting` profile), the guild or an artisan quits for want of pay after day 3 on 4 of seeds 1–20.
+  - **Where the money goes** (Part 2's W6 measurement, 6 game days, 5 seeds):
+    - upkeep, 320g a day;
+    - eight members' wages, about 130g a day after lodging;
+    - two artisans' wages, about 40g a day;
+    - the stations, 600g once.
+    - The guild's glowstone feeds the forge's respirators instead of the caravan's exports.
+  - **What holds it today:** the scripted players keep a reserve (150–200g, D67 and D71), as a careful player would. That is input, not a rule, and it holds every DoD's run.
+  - **The levers:**
+    - the stations' cost (300g each);
+    - upkeep;
+    - members' wages (5g a visit);
+    - glowstone's export price;
+    - the made goods' prices.
 - ~~**Lodging fees:**~~ delivered by Epic 10 Part 2, W5 (2026-11-06, D63): a guild member with a bunk in the barracks is paid its wage less 1g each caravan visit (`GuildTuning.LodgingFee`), never below nothing. It is a deduction, not a transfer: the fee stays in the treasury and the ledger records the wage paid.
 - **Other crawler sinks:** not needed while crawler wallets stay flat.
 - **Rival shops and guilds** (the producer's long-term direction, 2026-11-04): other shops and guilds competing for the crawlers' trade, trust and service, as a sink and a pressure on prices and wages. Unscheduled; the vision is in the [Game Design Proposal §5](Game%20Design%20Proposal.md).
