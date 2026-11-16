@@ -7,7 +7,7 @@
 # "Done" = emerges in the live simulation: a live scenario on the real session with
 # nothing injected, headless in dotnet test since 2026-10-23 (ROADMAP §1B).
 # Keep this file short: history lives in the epic docs, .agents/architecture_history.md and git.
-# Last reconciled: 2026-11-15 (the roadmap re-sequenced: Epic 10 ends with Part 3; Epic 11 is the skill system [QUEUED, Milestone 5]; the descent is Epic 12 [QUEUED, Milestone 6]; the MCP narrative is Epic N [QUEUED, unscheduled]. Epic 10 Part 3 ACTIVE: K0-K8 done, K8's look passed by exception with "Let's tackle the skills system now"; K9 the skill system done 2026-11-14 (D49-D53 for review, F9-F11); K9.8 skill foundation reinforcement done 2026-11-15 (D54-D56); K10-K11 done 2026-11-15 under the AFK go but for the play session (D57-D73, F12-F14); Part 2 ACTIVE: merged as PR #23, its play session and close-out remain)
+# Last reconciled: 2026-11-16 (Epic 10 COMPLETED: "Part 3 passes. Close out Epic 10"; Parts 2 and 3 closed out together, Milestones 3 and 4 COMPLETED, Epics UI-4 and UI-5 delivered; the close-out merged as PR #24; Epic 11 next, QUEUED until the producer's go)
 # ------------------------------------------------------------------------------
 
 CURRENT FOCUS
@@ -21,117 +21,24 @@ CURRENT FOCUS
   rules (F12, F19) with a packed world sheet; item icons and map sprites from a sprite kit, icons in the dashboard;
   the stall with its goods, worn gear and carried salvage, in the live outpost. V3-V5 under the producer's
   provisional authority; the producer's look passed 2026-10-29. On feat/graphics-catalogue: one PR into main.
-- Epic 10 Part 1, The Guild and Its Expeditions (Milestone 2) [COMPLETED 2026-11-01] (docs/epics/epic-10.md)
-  - G0-G6 done: the day on every seed, drifters, health and hazards, gear, the guild (PR #18), expeditions (PR #19),
-    and the gate (feat/epic10-g6, PR into main): the whole loop live, a save mid-expedition, the soak's guild profile
-    (D14), every scenario together. The producer's play session passed ("Everything looks good"). Save format 9.
-  - Milestone 2 COMPLETED. Findings F3, F6, F7 handed on to Part 2; deferred items with owners in the epic's §5.
-- NOW: Epic 10 Part 2, Workshops and the Guildhall (Milestone 3) [ACTIVE 2026-11-04] (docs/epics/epic-10-part-2.md):
-  the producer said "Begin Epic 10 part 2 work"; the draft's Q1-Q12 stand as proposed. W0, groundwork, done
-  2026-11-04 on feat/epic10-part2 (one PR for all of Part 2, a commit per step: PR #23, merged into main 2026-11-07): recipes, stations,
-  the workshop row and the guildhall (facilities: nobody explores them), crafting, the Workshop group; D1-D7 in the
-  epic. W1.1 (building a station) and W1.2 (hiring an artisan) done the same day. The producer then widened the
-  scope: milestone T, a 24-hour day (RimWorld-paced; hunger over a day, 8 hours' sleep), before W1.3's shifts;
-  D17-D22 proposed, waiting for answers. Plan: .agents/epic10_part2_plan.md.
+- Epic 10, Guild, Workshops & Combat (Milestones 2-4) [COMPLETED 2026-11-16]: the producer's "Part 3 passes.
+  Close out Epic 10". History is in the epics; decisions in .agents/architecture_history.md; the plans are deleted.
+  - Part 1, The Guild and Its Expeditions [COMPLETED 2026-11-01] (docs/epics/epic-10.md): G0-G6; PRs #18-#20.
+  - Part 2, Workshops and the Guildhall [COMPLETED 2026-11-16] (docs/epics/epic-10-part-2.md): W0-W6, milestone
+    T (the 24-hour day, docs/time-model.md) and the stretch (animated hazards, the caravan on the map, the red
+    coat); merged as PR #23. Its play session and W3's look were taken as passed within Part 3's.
+  - Part 3, Creatures, Combat and the Gatekeeper [COMPLETED 2026-11-16] (docs/epics/epic-10-part-3.md): K0-K11
+    with K9.8 (slots as a table, creatures and lairs, melee and ranged, loot, death and rescue, hunting, the
+    guild's clears, skills as a table, the bosses and the breach); D1-D73, F1-F14; merged with the close-out as
+    PR #24. Save format 11.
+  - Open, the producer's: the whole loop's economy (Part 2's F14 with Part 3's F14, F8, F10), data and levers
+    in docs/economy-model.md section 8; unscheduled. Watches: Part 2's F8, F10, F13; Part 3's F2, F4, F5, F11, F13.
 - Epic UI-Beta B2-B5 (bodies, portraits and the dossier, faces everywhere, the interface pass) and the UI polish,
   Lantern & Stone (U0-U12; in Epic UI-Beta by default), merged as one PR, #22 (2026-11-04); every look passed.
   B6, the gate with a play session, waits.
-- NOW within Part 2: milestone T, a 24-hour day (go 2026-11-04). T0-T3 done behind DayTuning (Legacy stays the
-  default until the cut-over, T5): the clock, hunger, sleep (reviewed), beds, stretched work, schedules, danger.
-  T4, the economy per day (supervised): D23-D28 approved; T4.1-T4.3 done (the caravan every 6 h, an 80g purse,
-  trust fading over 12 h); T4.2b done 2026-11-05 (D29, the developer's option c: salvage at a quarter of today's
-  price, in bigger lots; about 5.7 h of earning a day, the guild's standing by about day 2).
-  T4.4 done 2026-11-05: the soak over three game days (EconomySoak.Pace.Day), bands proposed (fair 600-1,600g,
-  guild 400-1,200g, greedy trust up for 3 at most); drifters work on the day (F11).
-  2026-11-05, under the producer's AFK directive to finish Part 2 (.agents/local/): T5 done, the 24-hour day is
-  the game (golden and renders re-recorded; seeds 1-120 120/120; D30 earning's need as a share of the purse, D31 a
-  muster rouses a rested sleeper; F12 herbs unneeded on the day).
-  T6 (the client on the day) and T7 (docs, the economy model rewritten) done: milestone T is done.
-  W1, the forge and its artisan, done 2026-11-05: shifts (D32-D35, with D33/D34 for everyone's sleep), the
-  pickaxe (D36-D40: faster mining, 40 units of wear, bought at 30g by residents who mine), the scripted workshop
-  player, the stations on the map and the station window (Workshop button), the dossier's tool; live scenario
-  AForgeTurnsOreIntoPickaxes. Finding F13 (a new artisan works half its shift) watched at W6.
-  W2, the still and draughts, done 2026-11-05: the healing draught (D41-D46: two herbs, heals 80, 20g), drunk by the
-  herb reflex; under orders a member with one drinks instead of turning the party back; the party builder's
-  draughts each; the bold buy their own; live scenario ADraughtKeepsAPartyWorking.
-  W3, gear for each hazard, done 2026-11-05: the respirator and the hard hat (D47-D54: protection by kind, made at
-  the forge from glowstone; outfitting by the target's hazard; a lone crawler judges a hazard by gear made for it,
-  "D51 is fine" from the producer; the bold upgrade and know the charted; the respirator worn as a mask); live
-  scenario TheRightGearForTheRightHazard. The producer's look at W3 is prepared and pending.
-  W4, practice and repair, done 2026-11-05: practice raises an artisan's grade (Standard, Fine, Masterwork) and a
-  grade lengthens a piece's life and strengthens its effect; the stall's shelf keeps grades and worn pieces; the forge
-  mends worn pieces for half their inputs (D55-D59); live scenarios PracticeMakesBetterGear, TheForgeMendsWornGear.
-  W5, the guildhall, done 2026-11-06: expeditions per party first (a refactor with no change in behaviour), eight
-  members in two tabs, the barracks (a bunk kept for each member, a 1g lodging fee from the wage), FormParty (parties
-  outlive their trips), two parties out at once with a tracker each (D60-D66); live scenario TwoPartiesOutAtOnce.
-  W6, the gate, done 2026-11-06 but for the producer's play session: the lone-venture check judges by D51; the
-  scripted players keep a reserve; TheWorkshopLoopPlaysThrough (gate seed 1: on the default seed the stall can't
-  afford both stations and a guild of eight, F14) and a save mid-craft and mid-expedition; the soak's crafting
-  profile, its band proposed by exception (integrity only: treasuries end day 3 at 1-390g); seeds 1-120 120/120 with
-  and without the guild.
-  The stretch, done 2026-11-06: the hazards animate in the view (D69), and the trade caravan walks in from the Road
-  Gate to the stall for each visit and back out, its place a pure function of the clock (D70).
-  The producer's last stretch, done 2026-11-07 (S3, D71): a crawler taking damage wears a blinking red coat, a flat
-  silhouette of its own sprite drawn through the stock BasicEffect with full fog; the core only records each
-  crawler's damage in its last tick (unsaved; golden unchanged).
-  Merged into main as PR #23 (2026-11-07, the producer's word), before the play session.
-  NEXT: the producer's play session (W6.5: the brief is in the epic's §4; F14 to decide), then the close-out (W6.6).
-- NOW: Epic 10 Part 3, Creatures, Combat and the Gatekeeper (Milestone 4) [ACTIVE 2026-11-08]
-  (docs/epics/epic-10-part-3.md): re-scoped by the producer 2026-11-07 to combat, equipment, death, loot, creatures
-  and bosses, with Floor 2 out (to a Part 4, the descent). Its draft (K0-K11) was answered in part the same day:
-  melee then ranged on seeded hit rolls, hazards kill the downed if nobody rescues them, death as proposed, an
-  appendable equipment system (head and body for now), a skill system as K9, and Milestone 4 ends with Part 3
-  (Part 4 and Epic 11, then the narrative, to a Milestone 5; re-sequenced 2026-11-15, below). The rest stands by exception. The go, 2026-11-08: "The revised epic plan
-  looks good. Please proceed with K0". K0, groundwork, done the same day on feat/epic10-part3 (one PR for all of
-  Part 3): the docs; measurements (F1: hazards alone down nobody on the gate seeds); the combat rule (Combatant,
-  CombatRules, D1-D8); the creature catalogue (rats, beetles, spinners as rows). Approved the same day: "Approved.
-  Proceed with developing K1". K1, the equipment system: K1.1 (slots as a table: head, body, weapon, tool) and K1.2
-  (worn equipment saved whole, 16 records; the goods table at 16; save format 11) done; the save design approved
-  ("continue with k1.3-k1.6"); K1.3 (stats and wear over every slot), K1.4 (outfitting by slot, by stats; the live
-  GearByTheSlot: a hard hat over hazard gear on 17 of 23 gate seeds), K1.5 (the client from the slot table; hazard
-  gear a suit on the body) and K1.6 (a slot added as data; AGENTS.md's recipe) done. K1 done; its look passed ("K1
-  looks good") with the go for K2. K2.1 (lairs, filled on the seed) and K2.2 (the creature's rule, D9-D15; hunting off
-  in the live session until K2.3) done. 2026-11-09, at the producer's word: the creatures drawn on the map ahead of
-  K2.3 (K2.5a: side-view placeholders, both view modes, hidden by the fog). 2026-11-10 "Proceed": K2.3 (lairs' reach,
-  danger and charting; lone crawlers keep out of known lairs; flight); F3 settled by option A ("Chose A. Proceed"),
-  hunting live; K2.4 (the creatures saved) and the strike pose done; K2's DoD VerminDriveTheLoneAway passes. K2 is
-  delivered: "Continue" brought the inspector's creature the same day. K3, melee arms and armour, done 2026-11-11
-  (decision D21: the bold and armed brave a lair they can clear; the DoD AnArmedCrawlerFightsBack on gate seed 18).
-  K3's look passed ("Looks good") with the producer's AFK directive for K4-K5. K4, loot, done 2026-11-11 (piles,
-  drops, picking up, the materials feeding the forge, piles drawn; D22-D26 for review; the DoD KillsFeedTheForge on
-  gate seed 18). K5, death and rescue, done the same day (D27-D34; TheCarefulLoseFew live; F6: nobody is downed
-  in danger live yet, so AFriendCarriesTheFallenOut and DeathHasItsCost are recommended to move to K7's Clear order).
-  K5's look passed by exception with "Proceed with K6-K8" (F6's option A). K6, hunting, done 2026-11-11 (D35-D37;
-  AHuntBountyClearsALair on gate seed 18). K7, the guild goes to war, done 2026-11-12: the Clear order, the party's
-  fight (focus fire, the party's rule over each member's line, the guild sending the carrier) and the client's builder
-  and tracker (AnArmedPartyClearsANest, AFriendCarriesTheFallenOut, DeathHasItsCost; D38-D43 for the developer's
-  review; F7, F8). K8, ranged combat, done 2026-11-12 (slings and crossbows; shots with range, falloff and a clear line;
-  shooters keep their distance; bows at the back of a party; spinners spit on a test floor; shots drawn; ArchersHoldTheLine
-  on gate seed 19; D44-D48 for the developer's review; golden re-recorded for the caravan's slings).
-  K8's look passed by exception with "Let's tackle the skills system now" (2026-11-14). K9, the skill system, done
-  2026-11-14: seven skills as a table on each crawler, drawn at spawn (talents leaned by personality) and saved inside
-  format 11; practice from blows, shots, harvests, makes and rescues; what a level does (hit chance and damage, the
-  harvest's pace centred on a Novice 2, a make's grade by band and speed with W4's practice folded in, carrying and
-  healing); skills in the dossier and on the roster's cards; a skill added as data; PracticeMakesAVeteran on the
-  default seed over seven days (D53, not three); D49-D53 for the developer's review of the supervised K9.3; F9 (the
-  greedy band at 6), F10 (seed 12's trust, untraced), F11 (a thrash on seed 64). Three DoDs moved seed.
-  K9.8, the skill foundation's reinforcement (the producer's word, 2026-11-15), done the same day: a seam keyed by
-  the kind of work (SkillWork) for reading an effective level (CrawlerSkills) and practising (a PracticeSource with
-  a ceiling), and a lair judged by the crawler's skill; D54-D56; AHuntBountyClearsALair moved to gate seed 3; golden
-  unchanged.
-  2026-11-15, the producer's AFK go ("Let's close his out by finishing K10-K11"): K10, bosses and the gate, done the
-  same day (the Old Stair at the floor's west edge; the Matriarch heading the warren and calling her brood; the
-  Gatekeeper's slam, fury, healing between attempts and single defeat; the breach as a saved world flag with its
-  chronicle line and hard cutscene; boss art, health bars and the gate on the map; TheGuildBreaksTheGatekeeper on the
-  default seed; D57-D72 for the developer's review), and K11 done but for the play session (every scenario together,
-  saves at the hard moments, the soak's hunting profile D73, seeds 1-120; findings F12-F14).
-  NEXT: the producer's play session (K11.4, its brief in the epic's §4), then Part 3 and Milestone 4 COMPLETED.
-  2026-11-15, the producer: "Epic 10 will need to end with part 3, it's already too long as is." Part 3's close-out
-  (with Part 2's) ends Epic 10. Then Epic 11, the skill system (docs/epics/epic-11.md, QUEUED, S0-S9, its Q1-Q16
-  by exception; no plan until the producer's go). The descent, once Part 4, is Epic 12; the MCP narrative is Epic N.
-  Nothing pushed.
-  Plan: .agents/epic10_part3_plan.md.
-  Part 2's play session and close-out stay open beside it.
+- NEXT, on the producer's word: Epic 11, the skill system (Milestone 5; docs/epics/epic-11.md, QUEUED, S0-S9, its
+  Q1-Q16 by exception; no plan until the go), and Epic UI-Beta's B6 (the gate, a play session). The descent is
+  Epic 12; the MCP narrative is Epic N.
 
 - Epic UI-Beta, Crawler Identity and the Interface Pass [ACTIVE 2026-11-02] (docs/epics/epic-ui-beta.md): B0 and B1
   (every crawler's look and given name, saved; save format 7) merged as PR #17; B2-B5 and the UI polish merged as
@@ -157,14 +64,15 @@ TRACK A: CORE SIMULATION & COGNITION (Epics 1-12, and Epic N unscheduled)
 - Epics 1-6, Alpha, 7, Beta [COMPLETED] (foundations, GOAP, needs and watchdog, social affinity, interdependence)
 - Epic 8: Groups & Directives [COMPLETED] (docs/epics/epic-8.md)
 - Epic 9: The Outpost Economy & Public Bounties [COMPLETED 2026-10-15] (docs/epics/epic-9.md; model: docs/economy-model.md)
-- Epic 10 (ends with Part 3, the producer 2026-11-15): Part 1 The Guild and Its Expeditions [COMPLETED 2026-11-01]; Part 2 Workshops and the Guildhall
-  (Milestone 3) [ACTIVE 2026-11-04: W0-W6, milestone T and the stretch done, PR #23; the play session and close-out remain]; Part 3 creatures, combat and the gatekeeper (Milestone 4) [ACTIVE 2026-11-08: K0-K11 done; the producer's play session is next], re-scoped by the producer 2026-11-07 (combat, equipment, death, loot, creatures, bosses; no Floor 2)
+- Epic 10: Guild, Workshops & Combat (Milestones 2-4) [COMPLETED 2026-11-16]: Part 1 [COMPLETED 2026-11-01],
+  Part 2 Workshops and the Guildhall and Part 3 Creatures, Combat and the Gatekeeper [COMPLETED 2026-11-16]
 - Epic 11: Skills, the Heart and Engine of a Crawler (Milestone 5) [QUEUED 2026-11-15] (docs/epics/epic-11.md): Craft,
   Technique, Calling and Legend over K9's foundation, S0-S9; Doctrine and careers later
 - Epic 12: The Descent (Floor 2, the move; Milestone 6) [QUEUED], not drafted (Epic 10 Part 4 until 2026-11-15)
 - Epic N: The Agentic Narrative Engine (MCP) [QUEUED, unscheduled] (Epic 11 until 2026-11-15)
 - Milestone 1 (the outpost loop) [COMPLETED 2026-10-15]; the producer's save/load check passed.
 - Milestone 2 (guild roster and expeditions) [COMPLETED 2026-11-01]; the producer's play session passed.
+- Milestones 3 (workshops and crafting) and 4 (combat and the Gatekeeper) [COMPLETED 2026-11-16]; Part 3's play session passed.
 
 ================================================================================
 TRACK B: UI / UX (Epic UI-X) - built in Unity's UI Toolkit, now removed; UI goes into the KNI client
@@ -172,6 +80,7 @@ TRACK B: UI / UX (Epic UI-X) - built in Unity's UI Toolkit, now removed; UI goes
 - Epic UI-1 Facility Dashboard, UI-Alpha Narrative Chronicle, UI-2 Merchant Terminal & Bounty Board [COMPLETED]
 - Epic UI-Beta: Crawler Identity and the Interface Pass [ACTIVE 2026-11-02: B2-B5 and the UI polish merged; B6] (docs/epics/epic-ui-beta.md)
 - Epic UI-3 Guild Roster & Expeditions: folded into Epic 10 Part 1 (G4-G5), built in the KNI client; delivered 2026-11-01.
+- Epic UI-4 Workshops and UI-5 Combat: folded into Epic 10 Parts 2 and 3, built in the KNI client; delivered 2026-11-16.
 
 ================================================================================
 TRACK C: HARNESS & DIAGNOSTICS (Epic Test-X)

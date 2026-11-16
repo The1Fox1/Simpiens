@@ -129,7 +129,25 @@ The default prices (15 / 5 / 6) are fair to a neutral crawler. A remembered affi
 
 ## 8. Deferred
 - ~~**Drifters**, **gear**, **wages and recruitment**, **expeditions**:~~ delivered by Epic 10 G1–G5 (§1, §2).
-- **Made goods** (the pickaxe, draughts, gear for each hazard): Epic 10 Part 2, W1–W4. They are what the 80g purse is for.
+- ~~**Made goods** (the pickaxe, draughts, gear for each hazard):~~ delivered by Epic 10 Part 2, W1–W4. They are what the 80g purse is for.
+- **The whole loop's balance** (Epic 10 Part 2's F14, joined by Part 3's F14, F8 and F10). This is open and the producer's decision, and unscheduled: the next epic that re-tunes the economy re-sets the `crafting` and `hunting` bands (§7) with it.
+  - **What happens:**
+    - With both stations and a guild of eight, the stall ends day 3 at 1–390g, where the fair player ends at 771–1,277g.
+    - On the default seed it affords the forge and a guild of eight, but never the still as well.
+    - With every player at once (the `hunting` profile), the guild or an artisan quits for want of pay after day 3 on 4 of seeds 1–20.
+  - **Where the money goes** (Part 2's W6 measurement, 6 game days, 5 seeds):
+    - upkeep, 320g a day;
+    - eight members' wages, about 130g a day after lodging;
+    - two artisans' wages, about 40g a day;
+    - the stations, 600g once.
+    - The guild's glowstone feeds the forge's respirators instead of the caravan's exports.
+  - **What holds it today:** the scripted players keep a reserve (150–200g, D67 and D71), as a careful player would. That is input, not a rule, and it holds every DoD's run.
+  - **The levers:**
+    - the stations' cost (300g each);
+    - upkeep;
+    - members' wages (5g a visit);
+    - glowstone's export price;
+    - the made goods' prices.
 - ~~**Lodging fees:**~~ delivered by Epic 10 Part 2, W5 (2026-11-06, D63): a guild member with a bunk in the barracks is paid its wage less 1g each caravan visit (`GuildTuning.LodgingFee`), never below nothing. It is a deduction, not a transfer: the fee stays in the treasury and the ledger records the wage paid.
 - **Other crawler sinks:** not needed while crawler wallets stay flat.
 - **Rival shops and guilds** (the producer's long-term direction, 2026-11-04): other shops and guilds competing for the crawlers' trade, trust and service, as a sink and a pressure on prices and wages. Unscheduled; the vision is in the [Game Design Proposal §5](Game%20Design%20Proposal.md).

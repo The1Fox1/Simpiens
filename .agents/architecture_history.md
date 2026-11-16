@@ -1773,3 +1773,20 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
 - **K11:** every scenario together, saves at the hard moments (compared at the save's tick: work in progress isn't saved), the soak's `hunting` profile (D73), seeds 1-120. Findings: F12 (the crafting band at its own rate), F13 (a third allocation flake: a pass that allocates is measured again), F14 (pay quits past day 3 with every player at once).
 - **Process lesson:** build the whole solution before the host's golden check; one project's build left the host stale, and a commit claimed golden unchanged until the next re-recorded it.
 - **Open:** the producer's play session (K11.4), then Part 3 and Milestone 4 COMPLETED.
+
+## 2026-11-16: Epic 10 COMPLETED (Parts 2 and 3 closed out together)
+- **The producer:** "Part 3 passes. Close out Epic 10 by creating a PR and closing it out". Part 3's play session (K11.4) passed. The bosses' strength (D71) and the soak's `hunting` band (D73) stand by exception.
+- **Part 2 closed out with Part 3:**
+  - *The reading:* Part 2's own play session (W6.5) and W3's look never happened apart from Part 3's. "Close out Epic 10" is taken as passing them within Part 3's session, which played the workshops, the still and the guildhall on the default seed.
+  - *If the producer reads it otherwise:* those two looks are the items to reopen.
+- **Milestones 3 and 4 COMPLETED;** Epics UI-4 and UI-5 delivered within Parts 2 and 3 (the roadmap's Track B now lists both).
+- **The economy is left open, not tuned:** Part 2's F14 (the whole loop's balance), joined by Part 3's F14, F8 and F10, is the producer's economy decision.
+  - Its data and levers moved from Part 2's plan to `docs/economy-model.md` §8.
+  - It is unscheduled: the next epic that re-tunes the economy re-sets the `crafting` and `hunting` bands with it.
+  - The scripted players' reserves (D67, D71) hold every DoD's run until then.
+- **Every Epic 10 plan deleted:** `.agents/epic10_plan.md` (the index), `epic10_part2_plan.md` and `epic10_part3_plan.md`.
+  - Their open findings were already in the epics' §7, each now with an owner at the close-out.
+  - Part 3's gate numbers (K11) and the economy's numbers moved into the epic and the economy model.
+  - Milestone T's rules were already in `docs/time-model.md`.
+  - Git keeps the plans: `git log --diff-filter=D -- .agents/`.
+- **One PR for Part 3 and the close-out** (#24, `feat/epic10-part3`), per the producer's one-PR-per-plan rule. Part 2's code reached main as PR #23.

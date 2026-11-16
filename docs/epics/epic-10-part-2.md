@@ -1,11 +1,11 @@
 # Epic 10, Part 2: Workshops and the Guildhall
 
-- **Status**: ACTIVE (2026-11-04). W0, groundwork, is done (2026-11-04, `feat/epic10-part2`, §4). W1, the forge and its artisan, is split in the plan; W1.1 (building a station) and W1.2 (hiring an artisan) are done (2026-11-04, §4). The producer widened the scope the same day with milestone T, a 24-hour day (§0, §2.2): done 2026-11-05 (T0–T7), and the day is the game. On 2026-11-05 the producer gave a directive to finish Part 2 in their absence. W1, the forge and its artisan, is done the same day (§4): shifts, the pickaxe, the scripted player, the station window, and its live scenario `AForgeTurnsOreIntoPickaxes`. So is W2, the still and draughts, with `ADraughtKeepsAPartyWorking`, and W3, gear for each hazard, with `TheRightGearForTheRightHazard`; the producer's look at W3 is prepared and pending (§4). W4, practice and repair, is done too, with `PracticeMakesBetterGear` and `TheForgeMendsWornGear`. So is W5, the guildhall (2026-11-06), with `TwoPartiesOutAtOnce`. W6, the gate, is done but for the producer's play session (2026-11-06, §4), which is Part 2's last stop, with F14 (the whole loop's economy) to decide there. All of it, with the stretch, was merged into main as PR #23 on 2026-11-07, before the play session. Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`. The working plan, with every step stamped: `.agents/epic10_part2_plan.md`.
+- **Status**: COMPLETED (2026-11-16), closed out with Part 3 at the producer's "Part 3 passes. Close out Epic 10": Part 2's play session (W6.5) and W3's look are taken as passed within Part 3's play session, which played the workshops, the still and the guildhall on the default seed. F14, the whole loop's economy, stays open as the producer's decision (§7). Begun 2026-11-04. W0, groundwork, is done (2026-11-04, `feat/epic10-part2`, §4). W1, the forge and its artisan, is split in the plan; W1.1 (building a station) and W1.2 (hiring an artisan) are done (2026-11-04, §4). The producer widened the scope the same day with milestone T, a 24-hour day (§0, §2.2): done 2026-11-05 (T0–T7), and the day is the game. On 2026-11-05 the producer gave a directive to finish Part 2 in their absence. W1, the forge and its artisan, is done the same day (§4): shifts, the pickaxe, the scripted player, the station window, and its live scenario `AForgeTurnsOreIntoPickaxes`. So is W2, the still and draughts, with `ADraughtKeepsAPartyWorking`, and W3, gear for each hazard, with `TheRightGearForTheRightHazard`; the producer's look at W3 is prepared and pending (§4). W4, practice and repair, is done too, with `PracticeMakesBetterGear` and `TheForgeMendsWornGear`. So is W5, the guildhall (2026-11-06), with `TwoPartiesOutAtOnce`. W6, the gate, is done (2026-11-06, §4). All of it, with the stretch, was merged into main as PR #23 on 2026-11-07, and the close-out's docs with Part 3's PR (#24). Status is owned by [ROADMAP.md](../ROADMAP.md). Decisions and deviations: `.agents/architecture_history.md`. The working plan, with every step stamped, was deleted at the close-out (git keeps it: `git log --diff-filter=D -- .agents/`).
 - **Track**: Track A: Core Simulation & Cognition Engine. Epic UI-4 (the workshops' UI) is folded in, as Epic UI-3 was into Part 1, because its UI is the KNI client's.
 - **Milestone**: Production Milestone 3, Facility Workshops & Crafting (ROADMAP §3).
-- **Source**: the draft plan `.agents/epic10_part2_plan.md` (2026-10-29), whose design (§1–§4) moved here when the producer said "Begin Epic 10 part 2 work" (2026-11-04).
+- **Source**: Part 2's draft plan (2026-10-29; deleted at the close-out), whose design (§1–§4) moved here when the producer said "Begin Epic 10 part 2 work" (2026-11-04).
 - **Preceding**: [Epic 10 Part 1](epic-10.md), the guild and its expeditions. **Builds on**: Epic 8 (groups and directives), Epic 9 (the economy), the item system (I1–I8), the core refactor (R1–R6), Epic UI-Beta (the client's UI kit).
-- **Following**: [Epic 10 Part 3](epic-10-part-3.md), creatures, combat and the gatekeeper (Milestone 4; re-scoped by the producer on 2026-11-07, with Floor 2 moved to a Part 4; ACTIVE since 2026-11-08).
+- **Following**: [Epic 10 Part 3](epic-10-part-3.md), creatures, combat and the gatekeeper (Milestone 4; re-scoped by the producer on 2026-11-07; COMPLETED 2026-11-16, and with it Epic 10).
 - **Complexity** ([rubric](../../.agents/rules/complexity-grading.md)): **Very Complex** as an epic, for its size. Each milestone is stamped in §2.2; W1 and W5 are split in the plan before they start.
 
 ---
@@ -90,7 +90,7 @@ Shifts exposed that time doesn't hold together: the dashboard's day is 9,000 tic
 - a crawler needs 8 hours of sleep a day;
 - hunger goes from fed to starving over 24 hours.
 
-The design (D17–D22: the day's length, two kinds of time, hunger, sleep, beds, the pace of work) and its phases, T0–T7, are in the plan's milestone T. **The answers (2026-11-04):**
+The design (D17–D22: the day's length, two kinds of time, hunger, sleep, beds, the pace of work) and its phases, T0–T7, were in the plan's milestone T, deleted at the close-out: the rules are in [docs/time-model.md](../time-model.md), the decisions in `.agents/architecture_history.md`. **The answers (2026-11-04):**
 - **D22, the pace of work:** the producer chose to stretch work RimWorld-style, so a crawler does tens of tasks a day rather than hundreds (a unit of ore takes half a game hour to harvest).
 - **D17, D19, D20, D21** are accepted as proposed:
   - D17, the day: 10,080 ticks, so a game minute is 7 ticks;
@@ -165,7 +165,7 @@ Done means the workshop loop emerges in the live outpost with nothing injected (
 
 ### W0. Groundwork (done 2026-11-04, `feat/epic10-part2`)
 - [x] **Docs:** this file, the roadmap, the focus file; the plan keeps the steps.
-- [x] **Measurements** (W0.2, seeds 1–15 with the guild player, and 1–120 without): in the plan, with findings F8 and F9 below.
+- [x] **Measurements** (W0.2, seeds 1–15 with the guild player, and 1–120 without): summarised in findings F8 and F9 below (the plan that held them was deleted at the close-out).
 - [x] **Recipes as item data** (D1, D2): `Recipe`, `RecipeBook`, `StationKind`; the pickaxe's at the forge. `RecipeValidator`.
 - [x] **Stations as map data and the two rooms** (D3, D4, D7): `StationDefinition`; the workshop row and the guildhall on Floor 1; facilities that nobody explores and no bounty targets. The map, exploration and charting validators check them.
 - [x] **The crafting rule and its owner** (D5): `Crafting`, `WorkshopService` (`SimulationManager.Workshops`), `WorkshopSave`, save format 10. `CraftingValidator`; the restore validator round-trips a make in progress and a held make; `ItemSystemProofTests` makes a test-only item, added as data, from the stall's stock.
@@ -188,14 +188,14 @@ Done means the workshop loop emerges in the live outpost with nothing injected (
 - [x] **W2.4, the client:** the party builder's draughts each, with the stock on the dispatch line; the still's recipe and the draught's merchant row came from W1's pieces. Renders re-recorded in the pinned image (466/466).
 - [x] **W2.5, the live scenario `ADraughtKeepsAPartyWorking`**, nothing injected: the scripted players build and staff the still, and the guild waits for eight draughts, then sends four bare members to the Drowned Gallery under Steady, twice on the default seed, the same until the dispatch. Without draughts the party works 281 ticks and turns back; with two each it works 302, drinks 4 and brings the whole seam home; nobody downed; the ledger and the days' checks hold. *Deviation:* the haul is asserted as at least as big, not bigger, since the Gallery's seam yields 4 and a party turning back has usually taken it.
 
-### W3. Gear for each hazard (done 2026-11-05, `feat/epic10-part2`; the producer's look pending)
+### W3. Gear for each hazard (done 2026-11-05, `feat/epic10-part2`; the look taken as passed at the close-out)
 - [x] **W3.1, protection by kind** (D47–D49): the respirator (the air hazards, foul air and the Gallery's flooding, cut by three quarters) and the hard hat (falling rock), made at the forge from a glowstone and herbs or ore, sold at 60g; hazard gear still cuts any hazard by half. Kinds are item data: `AirResistance`, `RockResistance`, `CrawlerStats.HazardResistance(inventory, kind)` read by the damage. The stall holds ten goods (inside format 10); the merchant terminal's nine rows fit at 720.
 - [x] **W3.2, outfitting by the target's hazard** (D50): the best protection in stock for the target (`GuildRules.BestProtectionInStock`), given for a hazard so it may replace worse gear, the sound piece going back to stock; the party builder and the guild player use it.
 - [x] **W3.3, lone crawlers judge a hazard by gear made for it** (D51, the producer's review: "D51 is fine"): hazard gear softens the harm, not the judgment, so the Gallery stays the guild's unless the player sells respirators; the bold buy the piece that opens what they can't reach.
 - [x] **W3.4, the client** (D52): the respirator worn as a mask (`Worn.Face`) on today's figures, the bodies and the portraits; the hard hat a steel helm; the outfit button names its gear.
 - [x] **W3.5a, the bold upgrade and know the charted** (D53, D54): found by W3.5's probe; a bold crawler trades its gear in for a piece that opens salvage it can't reach, and knows a charted hazard sector's salvage from the map's plan.
 - [x] **W3.5, the live scenario `TheRightGearForTheRightHazard`**, nothing injected: with the guild, the forge's respirators replace hazard gear trip by trip; members in respirators take half the harm (0.0375 a tick against 0.075) and bring home as much; without the guild, a bold resident trades its gear for a respirator and works the Gallery alone on day 4.
-- [ ] **The producer's look** (pending): the art review sheet (`render-output/art-sheet.png`: the mask and the steel helm, today's figures wearing them), the people sheet (`render-output/people-sheet.png`: "Frames by standing, the helm and the tabard" and the bodies' row), and the references `render-outpost-merchant-t300.png` (nine goods), `render-iso-station-window-at-work.png` (the forge's three recipes) and `render-outpost-guild.png` (the outfit button), in `dotnet/Simpiens.Client.Tests/Baselines/`.
+- [x] **The producer's look**, taken as passed within Part 3's play session at the close-out (2026-11-16). It covered the art review sheet (`render-output/art-sheet.png`: the mask and the steel helm, today's figures wearing them), the people sheet (`render-output/people-sheet.png`: "Frames by standing, the helm and the tabard" and the bodies' row), and the references `render-outpost-merchant-t300.png` (nine goods), `render-iso-station-window-at-work.png` (the forge's three recipes) and `render-outpost-guild.png` (the outfit button), in `dotnet/Simpiens.Client.Tests/Baselines/`.
 
 ### W4. Practice and repair (done 2026-11-05, `feat/epic10-part2`)
 - [x] **W4.1, practice and grades** (D55–D57): an artisan's makes count on its contract, its grade Standard, Fine from 10, Masterwork from 20; each grade above Standard lengthens a worn piece's life a quarter and strengthens its effect a tenth (item data on the equipment); the stall's shelf keeps each good's Fine and Masterwork pieces, the forge stocks a make at its artisan's grade and a sale or a gift hands out the best first. `ItemInstance.Quality` is in use. The stall is 136 bytes, inside format 10.
@@ -212,19 +212,19 @@ Done means the workshop loop emerges in the live outpost with nothing injected (
 - [x] **W5.4, the live scenario** `TwoPartiesOutAtOnce`, nothing injected: eight members on day 2.9; both parties out at once on day 3.3, to the Drowned Gallery and the Glow Caves, each working its own sector; hauls of 4 and 3 home; every wage paid; all eight slept in their own barracks bunks.
 - **Found on the way:** each party alone, the caravan's hazard gear outfits one party a visit and they take turns; sent together, both are out at once on every seed that filled the guild. F14 (a guild of eight with both workshops runs the treasury dry) and F15 (a respirator bought for the Gallery may not find its seam) are in §7.
 
-### W6. The gate (2026-11-06, `feat/epic10-part2`; the producer's play session pending)
+### W6. The gate (2026-11-06, `feat/epic10-part2`; closed out 2026-11-16)
 - [x] **W6.0, the day's lone-venture check judges by D51** (what a crawler's gear leaves of the hazard); the scripted players take an optional cash reserve.
 - [x] **W6.1, `TheWorkshopLoopPlaysThrough`**, nothing injected: both stations built and staffed, respirators and draughts made, the guild of eight in two parties sent together, the Gallery's party in the forge's respirators, both out at once and home with hauls, residents buying the stations' goods, no wage unpaid. *Deviation (D67):* on gate seed 1, not the default seed. On the default seed the stall affords the forge and a guild of eight but never the still as well (F14).
 - [x] **W6.2, a save mid-craft and mid-expedition**: with both parties out and the still mid-make it loads byte for byte with the same world hash, and plays on.
 - [x] **W6.3, the soak's `crafting` profile**, its band proposed by exception (D68; economy model §7): the loop's integrity, since its treasuries end day 3 at 1–390g. The other four bands hold on their seeds.
 - [x] **W6.4, the seeds:** 1–120 pass the outpost's day without and with the guild player; the 23 gate seeds hold two days with the workshop players and the crafting guild.
-- [ ] **W6.5, the producer's play session** (pending). What to play and look at:
+- [x] **W6.5, the producer's play session**, taken as passed within Part 3's (2026-11-16: "Part 3 passes. Close out Epic 10"). The brief was:
   - **The guild window:** its two tabs; eight cards, each with its bunk and party; the party buttons; the Expeditions tab's party selector; two parties out with two trackers on the map (`render-outpost-guild-eight.png`, `render-outpost-two-trackers.png` in the client tests' `Baselines/`).
   - **The guildhall's barracks** on the map, and members walking there to sleep.
   - **The workshops:** building, hiring, shifts, orders, Mend; made goods on the shelf by grade.
   - **W3's look**, still pending (§4, W3).
-  - **To decide, F14:** the whole loop leaves the stall near broke (treasuries of 1–390g at day 3 where the fair player ends at 771–1,277g). The levers, measured in the plan's W6 design: the stations' 300g each, upkeep (320g a day), members' wages (5g a visit, about 130g a day for eight after lodging), glowstone's export price, or the made goods' prices. The `crafting` band follows the choice.
-- [ ] **W6.6, the close-out** (after the play session): the roadmap's COMPLETED, Milestone 3, Epic UI-4; the plan deleted.
+  - **To decide, F14** (left open at the close-out, §7): the whole loop leaves the stall near broke (treasuries of 1–390g at day 3 where the fair player ends at 771–1,277g). The levers, measured in W6's design ([docs/economy-model.md](../economy-model.md) §8): the stations' 300g each, upkeep (320g a day), members' wages (5g a visit, about 130g a day for eight after lodging), glowstone's export price, or the made goods' prices. The `crafting` band follows the choice.
+- [x] **W6.6, the close-out** (2026-11-16, with Part 3's): the roadmap's Part 2 and Milestone 3 COMPLETED and Epic UI-4 delivered; the epic, the focus file, `architecture_history.md` and the economy model reconciled; the plan deleted.
 
 ### The stretch (2026-11-06, `feat/epic10-part2`, the AFK directive's stretch goal)
 - [x] **S1, the hazards move** (D69): in the view only, from the scene's time. Sickly puffs rise and thin in the Sump, ripples spread in the Drowned Gallery, and pebbles fall with their dust in the Glow Caves, at spots laid out clear of walls and nodes, hidden by the fog. Art generated on the CPU (`HazardSprites`); no simulation change.
@@ -236,12 +236,12 @@ Done means the workshop loop emerges in the live outpost with nothing injected (
 
 | Left out | Owner |
 | :--- | :--- |
-| Weapons, and armour against creatures | Part 3 (K3, K4, K8) |
-| More stations; station upgrades | After Epic 10 |
+| Weapons, and armour against creatures | Part 3 (K3, K4, K8): delivered |
+| More stations; station upgrades | Unscheduled, after Epic 10 |
 | Artisans who also go out with the guild | Q4's alternative, if the producer wants it |
 | The caravan buying made goods | Q7's alternative |
-| Loot in play | Part 3 (K4) |
-| Combat and death | Part 3 (K0–K5, K8; its draft's Q2–Q4) |
+| Loot in play | Part 3 (K4): delivered |
+| Combat and death | Part 3 (K0–K5, K8; its draft's Q2–Q4): delivered |
 | Safe zones; placing the shop and the guildhall where the player chooses, each grown as one building; rival shops and guilds | Unscheduled: the producer's long-term direction ([Game Design Proposal §5](../Game%20Design%20Proposal.md)) |
 | Quitting on soured feelings (the producer, 2026-11-04). Today a guild member (Part 1's D4) and an artisan (W1.2) quit at a caravan visit when trust toward the player is under 30, or after 2 unpaid visits in a row. Later: quitting on warmth (affection) as well as trust, thresholds per role as tuning, quitting at any time rather than only at a visit, and perhaps going to a rival (Game Design Proposal §5) | Unscheduled; any epic that reworks contracts |
 
@@ -273,3 +273,9 @@ Found in Part 2:
 - **F12 (2026-11-05): herbs aren't needed on the 24-hour day.** A venture costs about 40 health and a night in a bunk heals 80, so a crawler rarely falls under the herb line (60): 3 herbs eaten in 23 seed-days. G2's scenario no longer asserts herbs; the herb rule stays as a reflex for the badly hurt. W2's draughts are where healing matters next. [Basic: watch at W2]
 - **F14 (2026-11-05): a guild of eight with both workshops runs the treasury dry.** A probe with the guild's limit at 8, the scripted guild recruiting to 8, and the forge's and the still's players (4 game days, 12 gate seeds) reached eight members on only 3 seeds. The treasury hit 0 on every seed (the two stations' 600g, the artisans' wages, eight members' wages), and members quit unpaid on 4 seeds. Without the workshops, eight sign on by day 3–5 on 8 of 12 seeds and no wage goes unpaid. This is W6's loop, whose band is set with the producer. [Possibly Complex: measure at W6]
 - **F15 (2026-11-06): a crawler who buys a respirator for the Gallery may not find its seam.** D54 lets the charted plan justify the purchase, but salvage choice needs a remembered node, and which sector a crawler searches next is luck. On the default seed after W5.2, the one bold resident bought a respirator and spent the day in the Herb Grove and the Deep Seam. W3's live scenario still sees a resident work the Gallery alone in one; the mechanism test now shows it the seam by hand. A fix would apply D54 to targeting as well (the plan's nodes in a sector the worn gear opens count as known), which needs cognition to find a plan node's entity. [Possibly Complex: a targeting rule, unscheduled]
+
+**At the close-out (2026-11-16), each finding's owner:**
+- **Settled:** F3 (seeds 1–120 pass on the day), F6 (draughts and gear for each hazard), F7 (the guild fills on the day), F9 (answered at W1.4, D39), F11 (G1's purse check gave way to it at T5), F12 (draughts are where healing matters).
+- **Watches, with no work of their own:** F8 (the forge drawing on ore frees room at the stall), F10 (the workshop row's threshold), F13 (a just-qualified artisan; paid wages raise its trust).
+- **Open, the producer's:** F14, the whole loop's balance, joined by Part 3's F14 (the economy under every player). Its data and levers are in [docs/economy-model.md](../economy-model.md) §8. Unscheduled: the next epic that re-tunes the economy re-sets the `crafting` and `hunting` bands with it.
+- **Unscheduled:** F15, a targeting rule (the charted map's nodes in a sector the worn gear opens count as known).
