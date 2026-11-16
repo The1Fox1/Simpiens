@@ -133,6 +133,13 @@ namespace Simpiens.Hosting
         public int Fights, Kills, MostArmed;
         private readonly int _killsAtStart;
 
+        /// <summary>
+        /// Practice granted while watched (Epic 11, S0.2): experience by skill id, and by the kind of its source (the work, and
+        /// later a mentor, a manual, the yard), from the simulation's <c>Practised</c> event.
+        /// </summary>
+        public readonly int[] PracticeBySkill = new int[Simpiens.Simulation.Skills.SkillTable.Capacity];
+        public readonly int[] PracticeBySource = new int[8];
+
         /// <summary>The rim of a lair's reach that a path may graze on its way past: an entry is deeper than this.</summary>
         public const float LairEdgeBand = 1f;
         public readonly HashSet<EntityId> Struck = new HashSet<EntityId>();
@@ -154,6 +161,11 @@ namespace Simpiens.Hosting
             _baselineSalvage = TotalSalvage(sim.Simulation);
             _faultsAtStart = sim.Simulation.IntentFaults;
             _killsAtStart = sim.Simulation.Creatures.Kills;
+            sim.Simulation.Practised += (agent, skill, experience, source) =>
+            {
+                if ((byte)skill < PracticeBySkill.Length) PracticeBySkill[(byte)skill] += experience;
+                if ((byte)source < PracticeBySource.Length) PracticeBySource[(byte)source] += experience;
+            };
             Anomalies = AnomalyDetector.For(sim);
             Anomalies.AnomalyFound += record =>
             {

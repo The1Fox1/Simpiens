@@ -23,10 +23,11 @@ namespace Simpiens.Testing.Skills
             ValidateLevelsAndBands();
             ValidateTheSkillSet();
             ValidateTheSeam();
+            ValidatePracticeIsObserved();
             ValidateLevelZeroChangesNothing();
             ValidateTheDraw();
             ValidatePersonalityLeansTheDraw();
-            TestLog.Log("<color=green>[SkillsValidator] ALL 6 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[SkillsValidator] ALL 8 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateTheTable()
@@ -126,6 +127,28 @@ namespace Simpiens.Testing.Skills
             TestLog.Log("[PASS] Test 4: the seam reads how good a crawler is at each kind of work: today, its learned level in the work's skill.");
         }
 
+        private void ValidatePracticeIsObserved()
+        {
+            // Epic 11, S0.2 (D12): practice's one entry tells observers what it granted, after the source's ceiling
+            var sim = new SimulationManager(new WorldRegistry(), null);
+            var crawler = new Simpiens.Cognition.AgentState(EntityId.Generate());
+            var seen = new List<(Skill Skill, int Experience, PracticeKind Kind)>();
+            sim.Practised += (agent, skill, experience, kind) =>
+            {
+                Assert(agent == crawler, "The event names the crawler that practised.");
+                seen.Add((skill, experience, kind));
+            };
+            sim.Practise(crawler, SkillWork.Harvest(ItemType.IronOre), 40, PracticeSource.Work);
+            Assert(seen.Count == 1 && seen[0] == (Skill.Mining, 40, PracticeKind.Work), "A harvest's practice is told: mining, 40, from the work.");
+            sim.Practise(crawler, SkillWork.Fight(ranged: false), 5000, new PracticeSource(PracticeKind.Work, 2));
+            Assert(seen.Count == 2 && seen[1] == (Skill.Melee, SkillRules.ExperienceFor(2), PracticeKind.Work), "What is told is what was granted, held to the ceiling.");
+            sim.Practise(crawler, SkillWork.Fight(ranged: false), 50, new PracticeSource(PracticeKind.Work, 2));
+            sim.Practise(crawler, SkillWork.Harvest(ItemType.Ration), 50, PracticeSource.Work);
+            sim.Practise(null, SkillWork.Tend(), 50, PracticeSource.Work);
+            Assert(seen.Count == 2, "Nothing granted, no skill for the work, or nobody: nothing is told.");
+            TestLog.Log("[PASS] Test 5: practice's one entry tells observers the experience it granted, after the ceiling.");
+        }
+
         private void ValidateLevelZeroChangesNothing()
         {
             Assert(SkillRules.HitBonus(0) == 0f && SkillRules.DamageFactor(0) == 1f && SkillRules.MakeFactor(0) == 1f
@@ -135,7 +158,7 @@ namespace Simpiens.Testing.Skills
             Assert(Math.Abs(SkillRules.HitBonus(10) - 0.2f) < 1e-6f && Math.Abs(SkillRules.DamageFactor(10) - 1.2f) < 1e-6f
                 && Math.Abs(SkillRules.MakeFactor(10) - 1.5f) < 1e-6f && Math.Abs(SkillRules.CarryBonus(10) - 0.3f) < 1e-6f && Math.Abs(SkillRules.HealFactor(10) - 1.5f) < 1e-6f, "A Master 10's factors.");
             Assert(SkillRules.HarvestFactor(99) == SkillRules.HarvestFactor(10) && SkillRules.HarvestFactor(-3) == SkillRules.HarvestFactor(0), "Levels outside 0 to 10 count as the nearest.");
-            TestLog.Log("[PASS] Test 5: unskilled, a crawler fights, makes and tends by the numbers before skills; the harvest is centred on a Novice 2.");
+            TestLog.Log("[PASS] Test 6: unskilled, a crawler fights, makes and tends by the numbers before skills; the harvest is centred on a Novice 2.");
         }
 
         private void ValidateTheDraw()
@@ -176,7 +199,7 @@ namespace Simpiens.Testing.Skills
                 float share = talentOf[(byte)skill.Id] / (float)(talents1 + 2 * talents2);
                 Assert(share > 0.11f && share < 0.18f, $"With no lean each skill is a talent as often as the next ({skill.Name}: {share:P0}).");
             }
-            TestLog.Log($"[PASS] Test 6: the draw is seeded; one talent ({talents1}) or two ({talents2}) at an Apprentice's level, the rest a Novice's.");
+            TestLog.Log($"[PASS] Test 7: the draw is seeded; one talent ({talents1}) or two ({talents2}) at an Apprentice's level, the rest a Novice's.");
         }
 
         private void ValidatePersonalityLeansTheDraw()
@@ -199,7 +222,7 @@ namespace Simpiens.Testing.Skills
             Assert(boldMelee > timidMelee * 2, $"The bold lean toward melee ({boldMelee} against {timidMelee} of {Crawlers}).");
             Assert(timidRanged > boldRanged * 2, $"The cautious lean toward ranged ({timidRanged} against {boldRanged}).");
             Assert(SkillSet.Lean(SkillLean.None, bold) == 0f && SkillSet.Lean(SkillLean.Bold, bold) == 1f && SkillSet.Lean(SkillLean.Cautious, bold) == -1f, "A lean reads its trait.");
-            TestLog.Log($"[PASS] Test 7: personality leans the talents: the bold toward melee ({boldMelee} against {timidMelee}), the cautious toward ranged ({timidRanged} against {boldRanged}).");
+            TestLog.Log($"[PASS] Test 8: personality leans the talents: the bold toward melee ({boldMelee} against {timidMelee}), the cautious toward ranged ({timidRanged} against {boldRanged}).");
         }
 
         private static void Assert(bool condition, string message)

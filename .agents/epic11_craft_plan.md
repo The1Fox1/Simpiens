@@ -105,7 +105,7 @@ Working document (AGENTS.md, Documentation Protocol 6), one of Epic 11's plans (
 - [x] **S0.1 The hand-over checked, and the skills model** (done 2026-11-16: §0 matches the code; `docs/skills-model.md`) [Basic: docs from the code as it stands]
   - Check §0 against the code, and record any difference as a finding.
   - Create `docs/skills-model.md` with what stands today: the levels and bands, what each act is worth, what a level does, the draw, the seam and practice's entry. Link it from the epic and from AGENTS.md's skills paragraph.
-- [ ] **S0.2 Practice observed** [Basic: an event; no behaviour change]
+- [x] **S0.2 Practice observed** (done 2026-11-16) [Basic: an event; no behaviour change]
   - D12's `Practised` event, raised after the ceiling.
   - `OutpostWatch` tallies practice by skill and by kind of source.
   - Golden unchanged.

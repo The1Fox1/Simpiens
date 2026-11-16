@@ -189,13 +189,20 @@ namespace Simpiens.Simulation
         /// (K9.8a). A level gained is logged; a band reached (Apprentice, Journeyman, Master) is told in the chronicle. Main
         /// thread.
         /// </summary>
+        /// <inheritdoc/>
+        public event Action<AgentState, Simpiens.Simulation.Skills.Skill, int, Simpiens.Simulation.Skills.PracticeKind> Practised;
+
         public void Practise(AgentState agent, in Simpiens.Simulation.Skills.SkillWork work, int experience, in Simpiens.Simulation.Skills.PracticeSource source)
         {
             if (agent == null || experience <= 0) return;
             var skill = Simpiens.Simulation.Skills.SkillTable.SkillFor(work);
             if (skill == Simpiens.Simulation.Skills.Skill.None) return;
             var before = agent.Skills.Band(skill);
-            if (!agent.Practise(skill, experience, out int level, source.Ceiling)) return;
+            int had = agent.Skills.Experience(skill);
+            bool gained = agent.Practise(skill, experience, out int level, source.Ceiling);
+            int granted = agent.Skills.Experience(skill) - had;
+            if (granted > 0) Practised?.Invoke(agent, skill, granted, source.Kind);
+            if (!gained) return;
             var band = Simpiens.Simulation.Skills.SkillRules.BandOf(level);
             SimLog.Simulation.ZLogInformation($"{SimLog.Agent(agent.AgentId)} reached {Simpiens.Simulation.Skills.SkillTable.NameOf(skill)} {level} ({Simpiens.Simulation.Skills.SkillRules.NameOf(band)})");
             if (band == before) return;
