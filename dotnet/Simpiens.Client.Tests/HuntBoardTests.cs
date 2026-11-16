@@ -41,8 +41,8 @@ namespace Simpiens.Client.Tests
             }
             board.Refresh();
             Assert.True(board.CanPost);
-            Assert.Contains("The Matriarch and the burrow rats of Overgrowth", board.SectorChoiceLabels); // her warren (K10.2a, K10.5d)
-            board.SelectedSectorIndex = board.SectorChoiceLabels.ToList().IndexOf("The Matriarch and the burrow rats of Overgrowth");
+            Assert.Contains("The Matriarch's brood of Overgrowth", board.SectorChoiceLabels); // her warren (K10.2a, K10.5d)
+            board.SelectedSectorIndex = board.SectorChoiceLabels.ToList().IndexOf("The Matriarch's brood of Overgrowth");
             board.Reward = 60;
             board.Post();
             sim.Step(1);
@@ -50,7 +50,7 @@ namespace Simpiens.Client.Tests
             board.Refresh();
             var row = board.Contracts.Single(r => r.BountyId == hunt.BountyId);
             Assert.Contains("Hunt a Lair", row.Title);
-            Assert.Contains("Hunt the Matriarch and the burrow rats of Overgrowth · 0 of 3 hunters", row.Details);
+            Assert.Contains("Hunt the Matriarch's brood of Overgrowth · 0 of 3 hunters", row.Details);
         }
     }
 }

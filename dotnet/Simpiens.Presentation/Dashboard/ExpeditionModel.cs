@@ -384,7 +384,8 @@ namespace Simpiens.Presentation.Dashboard
             string sector = _context.Sectors != null && _context.Sectors.TryGetSector(expedition.TargetSectorId, out var target) ? target.Name : "the sector";
             tracker.IsClear = expedition.IsClear;
             string foes = expedition.IsClear ? LairWords.Pack(_context.Simulation?.Creatures?.Lairs, expedition.LairIndex) : string.Empty;
-            tracker.Title = expedition.IsClear ? Invariant($"Clear: {Capitalised(LairName(expedition.LairIndex))} · {expedition.Rule}") : Invariant($"{sector} · {expedition.Rule}");
+            // A clear's title names the pack, not its place, so a boss's fits the tracker (K10.5d: "the Matriarch's brood")
+            tracker.Title = expedition.IsClear ? Invariant($"Clear: {Capitalised(foes)} · {expedition.Rule}") : Invariant($"{sector} · {expedition.Rule}");
             tracker.StageText = expedition.Stage switch
             {
                 ExpeditionStage.Muster => "Mustering at the stall",
