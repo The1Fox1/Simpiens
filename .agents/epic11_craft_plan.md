@@ -109,7 +109,7 @@ Working document (AGENTS.md, Documentation Protocol 6), one of Epic 11's plans (
   - D12's `Practised` event, raised after the ceiling.
   - `OutpostWatch` tallies practice by skill and by kind of source.
   - Golden unchanged.
-- [ ] **S0.3 The measurement** [Possibly Complex: measuring]
+- [x] **S0.3 The measurement** (done 2026-11-16: `docs/skills-model.md` §5.1; findings F1, F2) [Possibly Complex: measuring]
   - **The test:** `MeasureGrowthOnTheGateSeeds`, explicit, over the 23 gate seeds and 14 game days. Two runs: no player, and the `hunting` profile's players.
   - **Per seed:**
     - levels and bands gained, per skill, per resident;

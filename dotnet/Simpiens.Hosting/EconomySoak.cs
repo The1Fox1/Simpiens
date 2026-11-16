@@ -316,6 +316,40 @@ namespace Simpiens.Hosting
         /// Plays the outpost with <paramref name="seed"/> for <paramref name="horizonTicks"/> as one kind of player.
         /// Without <paramref name="drifters"/> the outpost is closed, as it was before Epic 10 G1.
         /// </summary>
+        /// <summary>
+        /// The scripted players a profile plays with, acting only through typed commands (the guild profile's D14, the
+        /// crafting profile's Epic 10 Part 2 W6.3, the hunting profile's Part 3 K11.2); the guild's player, or null for a
+        /// profile without one. Prices are the caller's. Shared with measurements that play a profile's players (Epic 11, S0.3).
+        /// </summary>
+        public static GuildPlayer AttachPlayers(LocalSimulation sim, string profile)
+        {
+            GuildPlayer guildPlayer = null;
+            if (profile == "guild")
+            {
+                guildPlayer = new GuildPlayer(sim, targetSize: GuildProfileSize);
+                guildPlayer.SendExpeditions(Floor1Layout.DrownedGallerySectorId, Floor1Layout.GallerySeamYield);
+            }
+            // The crafting profile's players (Epic 10 Part 2, W6.3, D67): both stations, and the guildhall's guild of eight
+            if (profile == "crafting")
+            {
+                new WorkshopPlayer(sim, Simpiens.Simulation.Items.StationKind.Forge, ItemType.Respirator);
+                new WorkshopPlayer(sim, Simpiens.Simulation.Items.StationKind.Still, ItemType.HealingDraught);
+                guildPlayer = new GuildPlayer(sim, targetSize: CraftingGuildSize, reserve: CraftingGuildReserve);
+                guildPlayer.SendExpeditions(Floor1Layout.DrownedGallerySectorId, Floor1Layout.GallerySeamYield);
+                guildPlayer.SendSecondParty(Floor1Layout.GlowCavesSectorId, 3, together: true);
+            }
+            // The hunting profile's players (Epic 10 Part 3, K11.2): every fighting player at once, each keeping a reserve
+            if (profile == "hunting")
+            {
+                new WorkshopPlayer(sim, Simpiens.Simulation.Items.StationKind.Forge, ItemType.IronBlade, batch: 4, reserve: HuntingReserve).Also(ItemType.RingCoat, keep: 4);
+                new WorkshopPlayer(sim, Simpiens.Simulation.Items.StationKind.Still, ItemType.HealingDraught, batch: 2, reserve: HuntingReserve);
+                new HuntPlayer(sim, Simpiens.Simulation.Creatures.CreatureKind.None);
+                guildPlayer = new GuildPlayer(sim, targetSize: GuildProfileSize, reserve: HuntingReserve);
+                guildPlayer.SendClears(new[] { Simpiens.Simulation.Creatures.CreatureKind.None }, Simpiens.Simulation.Guild.RetreatRule.Steady, draughts: 2, stockpile: 8);
+            }
+            return guildPlayer;
+        }
+
         public static Result Run(ulong seed, string profile, long horizonTicks = HorizonTicks, bool drifters = true)
         {
             using var sim = LocalSimulation.Create(seed, drifters ? null : services =>
@@ -337,33 +371,9 @@ namespace Simpiens.Hosting
                     updateStallPrices: result.Player.Prices));
             }
 
-            // The guild profile's player (D14), acting only through commands
-            GuildPlayer guildPlayer = null;
-            int guildSize = GuildProfileSize;
-            if (result.Player.Name == "guild")
-            {
-                guildPlayer = new GuildPlayer(sim, targetSize: GuildProfileSize);
-                guildPlayer.SendExpeditions(Floor1Layout.DrownedGallerySectorId, Floor1Layout.GallerySeamYield);
-            }
-            // The crafting profile's players (Epic 10 Part 2, W6.3, D67): both stations, and the guildhall's guild of eight
-            if (result.Player.Name == "crafting")
-            {
-                new WorkshopPlayer(sim, Simpiens.Simulation.Items.StationKind.Forge, ItemType.Respirator);
-                new WorkshopPlayer(sim, Simpiens.Simulation.Items.StationKind.Still, ItemType.HealingDraught);
-                guildSize = CraftingGuildSize;
-                guildPlayer = new GuildPlayer(sim, targetSize: CraftingGuildSize, reserve: CraftingGuildReserve);
-                guildPlayer.SendExpeditions(Floor1Layout.DrownedGallerySectorId, Floor1Layout.GallerySeamYield);
-                guildPlayer.SendSecondParty(Floor1Layout.GlowCavesSectorId, 3, together: true);
-            }
-            // The hunting profile's players (Epic 10 Part 3, K11.2): every fighting player at once, each keeping a reserve
-            if (result.Player.Name == "hunting")
-            {
-                new WorkshopPlayer(sim, Simpiens.Simulation.Items.StationKind.Forge, ItemType.IronBlade, batch: 4, reserve: HuntingReserve).Also(ItemType.RingCoat, keep: 4);
-                new WorkshopPlayer(sim, Simpiens.Simulation.Items.StationKind.Still, ItemType.HealingDraught, batch: 2, reserve: HuntingReserve);
-                new HuntPlayer(sim, Simpiens.Simulation.Creatures.CreatureKind.None);
-                guildPlayer = new GuildPlayer(sim, targetSize: GuildProfileSize, reserve: HuntingReserve);
-                guildPlayer.SendClears(new[] { Simpiens.Simulation.Creatures.CreatureKind.None }, Simpiens.Simulation.Guild.RetreatRule.Steady, draughts: 2, stockpile: 8);
-            }
+            // The profile's scripted players, acting only through commands
+            GuildPlayer guildPlayer = AttachPlayers(sim, result.Player.Name);
+            int guildSize = result.Player.Name == "crafting" ? CraftingGuildSize : GuildProfileSize;
             var told = new List<Simpiens.Narrative.ChronicleEvent>(16);
             int huntsOpen = 0;
             var guild = manager.Guild;

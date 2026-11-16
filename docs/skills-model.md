@@ -63,4 +63,34 @@ How good a crawler is at a work is its **effective level**, `CrawlerSkills.Level
 The harvest alone is centred on a Novice 2 (D51 of Epic 10 Part 3): the outpost's starting hands together bring in what they did before skills.
 
 ## 5. Measurements
-To come with S0.3: skill growth on the 23 gate seeds over 14 game days, who specialises, and practice by source.
+
+### 5.1 Before Epic 11 (S0.3, 2026-11-16)
+`SkillGrowthMeasurementTests.MeasureGrowthOnTheGateSeeds`: the 23 gate seeds over 14 game days, 12 residents each, drifters left out. One run with no player, and one with the soak's `hunting` players (the forge making blades and ring coats, the still, the hunt player, and a guild of four clearing with draughts, each keeping a 150g reserve).
+
+| | No player | Hunting players |
+| :--- | :--- | :--- |
+| Seeds where someone reaches Journeyman | 4 of 23 (from day 11.7) | 14 of 23 (from day 5.2) |
+| Residents holding a Journeyman's skill at day 14 | 0.26 a seed (most 3) | 0.91 a seed (most 3) |
+| Seeds where someone reaches Master | 0 | 0 |
+| Residents with two skills past Apprentice | 0 | 0 |
+| Highest level reached | 6 (mining) | 8 (alchemy) |
+
+Levels gained a seed, by skill, with the bands reached across all 23 seeds:
+
+| Skill | No player | Hunting players |
+| :--- | :--- | :--- |
+| Melee | 0.0 | 2.0 (4 to Apprentice, 1 to Journeyman) |
+| Ranged | 0.0 | 0.0 |
+| Mining | 17.5 (113 to Apprentice, 6 to Journeyman) | 13.0 (56 to Apprentice, 3 to Journeyman) |
+| Foraging | 12.0 (31 to Apprentice) | 9.2 (17 to Apprentice) |
+| Smithing | 0.0 | 3.8 (20 to Apprentice, 6 to Journeyman) |
+| Alchemy | 0.0 | 3.7 (17 to Apprentice, 11 to Journeyman) |
+| Medicine | 0.0 | 0.0 |
+
+Practice a seed with the hunting players: mining about 6,150 experience, foraging 3,930, alchemy 1,900, smithing 1,710 and melee 690. Ranged and medicine get none.
+
+**What it means for Epic 11's Craft:**
+- **Growth is slow and narrow.** The harvest carries the outpost's growth. Artisans are the only ones who reach Journeyman early, because a make is worth 60. Fighters gain a level or two in two weeks.
+- **The mastery budget wouldn't bind** (finding F1): nobody holds even two skills past Apprentice in 14 days. Passions (×1.5, ×2) and teachers speed growth, so S1.5 measures again. Unless something changes, `SpecialistsEmerge` can't ask for a skill held by the budget within 14 days.
+- **The asking wage would come early for artisans:** the forge's and the still's hands reach Journeyman on most seeds where they are hired, from day 5.
+- **Ranged and medicine never grow** (finding F2): the hunting players arm blades, and no rescue happened in these runs. Teachers (manuals, the yard) are their only road until the guild arms bows.

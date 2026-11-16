@@ -211,4 +211,5 @@ Nothing yet.
 | The traits record grows past its room. | Fixed capacity, its size pinned as the economy records' are; a bump only by plan. |
 
 ## 7. Findings
-None yet.
+- **F1 (2026-11-16, S0.3): the mastery budget wouldn't bind in 14 days.** On the 23 gate seeds over 14 game days, no resident holds two skills past Apprentice, with no player or with the `hunting` players (`docs/skills-model.md` §5.1). Nobody reaches Master, and the highest level is 8. As drafted, `SpecialistsEmerge` (S2) asks for a skill held by the budget by day 14. Passions and teachers speed growth, so S1.5 and S3 measure again. If the budget still never binds, S2's DoD asserts the rule at every tick and the asking wage live, and the budget's own outcome is proven where growth allows (a longer run, or a validator). [Possibly Complex: a DoD's shape; decided at S1.5]
+- **F2 (2026-11-16, S0.3): ranged and medicine never grow.** No resident practises either in 14 days on any gate seed. The hunting players arm blades, and no rescue happened. Teachers (manuals and the yard, S3) are these skills' only road until the guild arms bows or someone falls in danger. [Basic: a measurement that S3 reads]
