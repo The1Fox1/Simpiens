@@ -64,6 +64,10 @@ namespace Simpiens.Presentation.Art
         /// <summary>A shot in flight (Epic 10 Part 3, K8.4a): a crawler's stone or bolt, and a spinner's spit.</summary>
         public const string FxShot = "fx/shot";
         public const string FxSpit = "fx/spit";
+        /// <summary>A boss's health bar (Epic 10 Part 3, K10.5b): the row's size is the bar's for a creature a crawler's size.</summary>
+        public const string FxBar = "fx/bar";
+        /// <summary>The descent gate, sealed and breached (Epic 10 Part 3, K10.5c).</summary>
+        public const string PropGate = "prop/gate", PropGateOpen = "prop/gate-open";
 
         /// <summary>A soft shadow on the floor under a crawler; a catalogue without one draws none.</summary>
         public const string CrawlerShadow = "fx/crawler-shadow";

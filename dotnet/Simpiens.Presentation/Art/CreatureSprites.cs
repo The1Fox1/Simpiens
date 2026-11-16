@@ -5,7 +5,8 @@ namespace Simpiens.Presentation.Art
     /// <summary>
     /// The creatures (Epic 10 Part 3, K2.5): each kind seen from the side, facing right, in two frames of a scuttle (its
     /// legs alternate), on a crawler's 16-pixel canvas with its feet on row 14, so it stands in isometric as a crawler does
-    /// and is drawn at a crawler's scale in top-down. Placeholders, generated on the CPU from patterns as
+    /// and is drawn at a crawler's scale in top-down; a boss on a bigger canvas, its feet at the same share of its height
+    /// (K10.5a, <see cref="SizeOf"/>). Placeholders, generated on the CPU from patterns as
     /// <see cref="CaravanSprites"/> are; the scene mirrors a creature going left. Keyed by each kind's art key
     /// (<see cref="Simpiens.Simulation.Creatures.CreatureDefinition.ArtKey"/>), as <see cref="ItemArt"/> keys items; a
     /// generator, it reads no table and no sheet (<c>ArtInitialisationTests</c>).
@@ -60,12 +61,13 @@ namespace Simpiens.Presentation.Art
             { 'V', new Rgba32(116, 84, 156, 255) },
             { 'G', new Rgba32(150, 244, 120, 255) },
             { 'l', new Rgba32(94, 80, 116, 255) },
-            // The Matriarch (Epic 10 Part 3, K10; a placeholder until K10.5a): a rat in grizzled grey-violet with a silver ruff
+            // The Matriarch (Epic 10 Part 3, K10.5a): a heavy rat in grizzled grey-violet with a silver ruff
             { 'X', new Rgba32(112, 104, 124, 255) },
             { 'x', new Rgba32(78, 72, 90, 255) },
             { 'W', new Rgba32(210, 206, 222, 255) },
-            // The Gatekeeper (K10; a placeholder until K10.5a): a stone warden with an ember for an eye
+            // The Gatekeeper (K10.5a): a stone warden, moss in its seams, embers for eyes and for a heart
             { 'O', new Rgba32(24, 22, 28, 255) },
+            { 'U', new Rgba32(150, 144, 134, 255) },
             { 'T', new Rgba32(118, 112, 104, 255) },
             { 't', new Rgba32(82, 78, 74, 255) },
             { 'E', new Rgba32(255, 140, 60, 255) },
@@ -191,44 +193,132 @@ namespace Simpiens.Presentation.Art
             "................",
         };
 
+        private static readonly string[] Matriarch0 =
+        {
+            "........................",
+            "........................",
+            "........................",
+            "........................",
+            "........................",
+            "........................",
+            "................kk......",
+            "...............kPPk.....",
+            "..........kkkkkkPPk.....",
+            "......kkkkWWWWWkkkkk....",
+            "....kkXXXWWWWWWXXXXkk...",
+            "...kXXXXXXWWWXXXXXXRXk..",
+            "..kxXXXXXXXXXXXXXXXXXXk.",
+            ".kxXXXXXXXXXXXXXXXXXXXPk",
+            ".kxXXXXXXXXXXXXXXXXXkkk.",
+            "pkxxXXXLLLLLLLLXXXXk....",
+            "p.kxxxXLLLLLLLLXXXk.....",
+            "p..kxxxkkkkkkkkxxk......",
+            ".p..kxk......kxk........",
+            "..p.kxk......kxk........",
+            "....kPk......kPk........",
+            "....kkk......kkk........",
+            "........................",
+            "........................",
+        };
+
+        private static readonly string[] Matriarch1 =
+        {
+            "........................",
+            "........................",
+            "........................",
+            "........................",
+            "........................",
+            "........................",
+            "................kk......",
+            "...............kPPk.....",
+            "..........kkkkkkPPk.....",
+            "......kkkkWWWWWkkkkk....",
+            "....kkXXXWWWWWWXXXXkk...",
+            "...kXXXXXXWWWXXXXXXRXk..",
+            "..kxXXXXXXXXXXXXXXXXXXk.",
+            "pkxXXXXXXXXXXXXXXXXXXXPk",
+            "pkxXXXXXXXXXXXXXXXXXkkk.",
+            "p.kxXXXLLLLLLLLXXXXk....",
+            "p..kxxXLLLLLLLLXXXk.....",
+            "....kxxkkkkkkkkxxk......",
+            "...kxk........kxk.......",
+            "...kxk........kxk.......",
+            "...kPk........kPk.......",
+            "...kkk........kkk.......",
+            "........................",
+            "........................",
+        };
+
         private static readonly string[] Keeper0 =
         {
-            "................",
-            "......OOOO......",
-            ".....OTTTTO.....",
-            ".....OTEETO.....",
-            ".....OTTTTO.....",
-            "...OOOTTTTOOO...",
-            "..OTTTTTTTTTTO..",
-            "..OTtTTTTTTtTO..",
-            "..OTtTTTTTTtTO..",
-            "..OTOTTTTTTOTO..",
-            "..OTOTTttTTOTO..",
-            "..OOOTTOOTTOOO..",
-            ".....OTOOTO.....",
-            ".....OTOOTO.....",
-            "....OOTOOTOO....",
-            "................",
+            "................................",
+            "................................",
+            "................................",
+            "................................",
+            "............OOOOOOOO............",
+            "...........OUUUUUUUTO...........",
+            "...........OUTTTTTTTO...........",
+            "...........OTEETTEETO...........",
+            "...........OTTTTTTTtO...........",
+            "...........OTtTgTTttO...........",
+            "......OOOOOOOTTTTTTOOOOOOO......",
+            ".....OUUUUUUTTTTTTTTUUUUUUO.....",
+            "....OUTTTTTTTTTTTTTTTTTTTTtO....",
+            "....OTTTOTTTTTTTTTTTTTTOTTtO....",
+            "....OTTTOTTTTTEETTTTTTTOTTtO....",
+            "....OTTTOTTTTEEEETTTTTTOTTtO....",
+            "....OTTTOTTTTTEETTTTTTTOTTtO....",
+            "....OTTtOTTTTTTTTTTTTttOTTtO....",
+            "....OTTtOOTTTTTTTTTTttOOTTtO....",
+            "....OUUtO.OttttttttttO.OUUtO....",
+            "....OTTTO.OTTTTTTTTTTO.OTTTO....",
+            "....OOOOO.OTTTTOOTTTTO.OOOOO....",
+            "..........OTTTTOOTTTTO..........",
+            "..........OTTTO..OTTTO..........",
+            "..........OTTTO..OTTTO..........",
+            "..........OTTtO..OTTtO..........",
+            "..........OTTtO..OTTtO..........",
+            ".........OTTTTO..OTTTTO.........",
+            ".........OttttO..OttttO.........",
+            ".........OOOOOO..OOOOOO.........",
+            "................................",
+            "................................",
         };
 
         private static readonly string[] Keeper1 =
         {
-            "................",
-            "......OOOO......",
-            ".....OTTTTO.....",
-            ".....OTEETO.....",
-            ".....OTTTTO.....",
-            "...OOOTTTTOOO...",
-            "..OTTTTTTTTTTO..",
-            "..OTtTTTTTTtTO..",
-            "..OTtTTTTTTtTO..",
-            "..OTOTTTTTTOTO..",
-            "..OTOTTttTTOTO..",
-            "..OOOTTOOTTOOO..",
-            ".....OTOOTO.....",
-            "....OTO..OTO....",
-            "...OOTO..OTOO...",
-            "................",
+            "................................",
+            "................................",
+            "................................",
+            "................................",
+            "............OOOOOOOO............",
+            "...........OUUUUUUUTO...........",
+            "...........OUTTTTTTTO...........",
+            "...........OTEETTEETO...........",
+            "...........OTTTTTTTtO...........",
+            "...........OTtTgTTttO...........",
+            "......OOOOOOOTTTTTTOOOOOOO......",
+            ".....OUUUUUUTTTTTTTTUUUUUUO.....",
+            "....OUTTTTTTTTTTTTTTTTTTTTtO....",
+            "....OTTTOTTTTTTTTTTTTTTOTTtO....",
+            "....OTTTOTTTTTEETTTTTTTOTTtO....",
+            "....OTTTOTTTTEEEETTTTTTOTTtO....",
+            "....OTTTOTTTTTEETTTTTTTOTTtO....",
+            "....OTTtOTTTTTTTTTTTTttOTTtO....",
+            "....OTTtOOTTTTTTTTTTttOOTTtO....",
+            "....OUUtO.OttttttttttO.OUUtO....",
+            "....OTTTO.OTTTTTTTTTTO.OTTTO....",
+            "....OOOOO.OTTTTOOTTTTO.OOOOO....",
+            "..........OTTTTOOTTTTO..........",
+            "..........OTTTO..OTTTO..........",
+            "..........OTTTO...OTTTO.........",
+            "..........OTTtO...OTTtO.........",
+            ".........OTTtO.....OTTtO........",
+            "........OTTTTO.....OTTTTO.......",
+            "........OttttO.....OttttO.......",
+            "........OOOOOO.....OOOOOO.......",
+            "................................",
+            "................................",
         };
 
         static CreatureSprites()
@@ -236,38 +326,31 @@ namespace Simpiens.Presentation.Art
             Add("burrow-rat", Rat0, Rat1);
             Add("stone-beetle", Beetle0, Beetle1);
             Add("cave-spinner", Spinner0, Spinner1);
-            Add("matriarch", Recolor(Rat0, "FfL", "XxW"), Recolor(Rat1, "FfL", "XxW"));
+            Add("matriarch", Matriarch0, Matriarch1); // the bosses (K10.5a): bigger canvases, feet at the same share of their height
             Add("gatekeeper", Keeper0, Keeper1);
         }
 
-        // A pattern with each of <from>'s keys swapped for <to>'s at the same place (a placeholder kin of another kind)
-        private static string[] Recolor(string[] pattern, string from, string to)
-        {
-            var result = new string[pattern.Length];
-            for (int y = 0; y < pattern.Length; y++)
-            {
-                var row = pattern[y].ToCharArray();
-                for (int x = 0; x < row.Length; x++)
-                {
-                    int at = from.IndexOf(row[x]);
-                    if (at >= 0) row[x] = to[at];
-                }
-                result[y] = new string(row);
-            }
-            return result;
-        }
+        private static readonly Dictionary<string, int> _sizes = new Dictionary<string, int>();
+
+        /// <summary>
+        /// A kind's canvas in pixels, square (Epic 10 Part 3, K10.5a): <see cref="Size"/> for the vermin, more for a boss (the
+        /// Matriarch 24, the Gatekeeper 32), its feet at the same share of its height, so it stands in isometric as they do.
+        /// </summary>
+        public static int SizeOf(string key) => _sizes.TryGetValue(key ?? string.Empty, out int size) ? size : Size;
 
         private static void Add(string key, params string[][] frames)
         {
+            _sizes[key] = frames[0].Length;
             for (int i = 0; i < frames.Length; i++) _all.Add(Build(Name(key, i), frames[i]));
         }
 
         private static PixelSprite Build(string name, string[] pattern)
         {
-            var pixels = new Rgba32[Size * Size];
-            for (int y = 0; y < Size; y++)
-                for (int x = 0; x < Size; x++) pixels[y * Size + x] = Palette[pattern[y][x]];
-            return new PixelSprite(name, Size, Size, pixels);
+            int size = pattern.Length;
+            var pixels = new Rgba32[size * size];
+            for (int y = 0; y < size; y++)
+                for (int x = 0; x < size; x++) pixels[y * size + x] = Palette[pattern[y][x]];
+            return new PixelSprite(name, size, size, pixels);
         }
     }
 }

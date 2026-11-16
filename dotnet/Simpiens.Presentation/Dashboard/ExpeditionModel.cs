@@ -300,28 +300,19 @@ namespace Simpiens.Presentation.Dashboard
             {
                 if (!creatures.IsCharted(i) || creatures.Lairs[i].Alive == 0) continue;
                 if (had && chosen.Lair && chosen.Id == i) { _target = _targets.Count; found = true; }
-                _targets.Add(((byte)i, "Clear the " + KindName(i, plural: true), true));
+                _targets.Add(((byte)i, "Clear " + LairWords.Pack(creatures.Lairs, i), true));
             }
             if (had && !found) _target = 0;
         }
 
-        /// <summary>"burrow rat", or "burrow rats": a lair's kind in lower case (the bounty board's words, K6.3).</summary>
-        private string KindName(int lairIndex, bool plural)
-        {
-            var lairs = _context.Simulation?.Creatures?.Lairs;
-            string kind = lairs == null || lairIndex < 0 || lairIndex >= lairs.Count ? "creature"
-                : (Simpiens.Simulation.Creatures.CreatureCatalog.Get(lairs[lairIndex].Definition.Kind)?.DisplayName ?? "creature").ToLowerInvariant();
-            return plural ? kind + "s" : kind;
-        }
-
-        /// <summary>"the burrow rats of the Overgrowth": a lair by its kind and where it lies.</summary>
+        /// <summary>"the burrow rats of the Overgrowth": a lair in the player's words (<see cref="LairWords"/>) and where it lies.</summary>
         private string LairName(int lairIndex)
         {
             var lairs = _context.Simulation?.Creatures?.Lairs;
             string where = "the floor";
             if (lairs != null && lairIndex >= 0 && lairIndex < lairs.Count && _context.Sectors != null
                 && _context.Zones != null && _context.Zones.TryGetZone(_context.Sectors.GetSectorAt(lairs[lairIndex].Definition.Position).Id, out var zone)) where = zone.Name;
-            return Invariant($"the {KindName(lairIndex, plural: true)} of {where}");
+            return Invariant($"{LairWords.Pack(lairs, lairIndex)} of {where}");
         }
 
         private void RefreshBuilder()
@@ -392,14 +383,14 @@ namespace Simpiens.Presentation.Dashboard
             }
             string sector = _context.Sectors != null && _context.Sectors.TryGetSector(expedition.TargetSectorId, out var target) ? target.Name : "the sector";
             tracker.IsClear = expedition.IsClear;
-            string foes = expedition.IsClear ? KindName(expedition.LairIndex, plural: true) : string.Empty;
+            string foes = expedition.IsClear ? LairWords.Pack(_context.Simulation?.Creatures?.Lairs, expedition.LairIndex) : string.Empty;
             tracker.Title = expedition.IsClear ? Invariant($"Clear: {Capitalised(LairName(expedition.LairIndex))} · {expedition.Rule}") : Invariant($"{sector} · {expedition.Rule}");
             tracker.StageText = expedition.Stage switch
             {
                 ExpeditionStage.Muster => "Mustering at the stall",
-                ExpeditionStage.March => expedition.IsClear ? $"Marching on the {foes}" : $"Marching to {sector}",
+                ExpeditionStage.March => expedition.IsClear ? $"Marching on {foes}" : $"Marching to {sector}",
                 ExpeditionStage.Work => $"Working {sector}",
-                ExpeditionStage.Fight => $"Fighting the {foes}",
+                ExpeditionStage.Fight => $"Fighting {foes}",
                 ExpeditionStage.Return => expedition.TurnedBack ? "Turning back" : expedition.Cleared ? "The lair is clear: coming home" : "Coming home",
                 _ => "Delivering",
             };
@@ -457,7 +448,7 @@ namespace Simpiens.Presentation.Dashboard
                 health += c.Health;
                 with++;
             }
-            string foes = Capitalised(KindName(expedition.LairIndex, plural: true));
+            string foes = Capitalised(LairWords.Pack(_context.Simulation?.Creatures?.Lairs, expedition.LairIndex));
             return with == 0 ? Invariant($"{foes}: {lair.Alive} of {lair.Pack} left")
                 : Invariant($"{foes}: {lair.Alive} of {lair.Pack} left · party health {health / with:F0}");
         }

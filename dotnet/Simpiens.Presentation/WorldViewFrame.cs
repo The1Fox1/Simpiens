@@ -76,6 +76,8 @@ namespace Simpiens.Presentation
         public EntityId CreatureTarget;
         /// <summary>A creature swung during this tick, hit or miss (Epic 10 Part 3, K2.5: its strike pose).</summary>
         public bool Striking;
+        /// <summary>A creature's health as a share of its kind's whole (Epic 10 Part 3, K10.5b: a boss's health bar); 0 for the rest.</summary>
+        public float CreatureHealth;
 
         /// <summary>A creature (it has a kind), drawn as its kind (<see cref="EntityVisuals.Creature"/>).</summary>
         public readonly bool IsCreature => Creature != Simpiens.Simulation.Creatures.CreatureKind.None;
@@ -156,6 +158,12 @@ namespace Simpiens.Presentation
 
         public bool TryGetIndex(EntityId id, out int index) => _index.TryGetValue(id, out index);
 
+        /// <summary>What has happened to the world that stays happened (Epic 10 Part 3, K10.5c): the gate's breach.</summary>
+        public Simpiens.Simulation.World.WorldFlags WorldFlags { get; private set; }
+
+        /// <summary>The descent gate is breached (K10.5c): drawn open, and its cutscene played once (K10.5d).</summary>
+        public bool GateBreached => (WorldFlags & Simpiens.Simulation.World.WorldFlags.GateBreached) != 0;
+
         /// <summary>Whether the sector was charted; with no charting captured, its default (<see cref="SectorDefinition.StartsExplored"/>).</summary>
         public bool IsCharted(in SectorDefinition sector) => _knowsCharting ? _charted[sector.Id] : sector.StartsExplored;
 
@@ -167,9 +175,10 @@ namespace Simpiens.Presentation
         /// chronicle <paramref name="events"/> at <paramref name="tick"/>.
         /// </summary>
         public void Capture(IReadOnlyList<WorldEntity> entities, ISectorRegistry sectors, long tick, uint epoch, IReadOnlyList<ChronicleEvent> events = null, IReadOnlyList<TradeStallData> stalls = null, WorkshopService workshops = null,
-            in CaravanState caravan = default, IReadOnlyList<Simpiens.Simulation.Combat.ShotRecord> shots = null)
+            in CaravanState caravan = default, IReadOnlyList<Simpiens.Simulation.Combat.ShotRecord> shots = null, Simpiens.Simulation.World.WorldFlags flags = default)
         {
             Caravan = caravan;
+            WorldFlags = flags;
             ShotCount = 0;
             if (shots != null)
             {
@@ -226,6 +235,7 @@ namespace Simpiens.Presentation
                     Creature = creature != null ? creature.Kind : Simpiens.Simulation.Creatures.CreatureKind.None,
                     CreatureMode = creature != null ? creature.Mode : default,
                     CreatureTarget = creature != null ? creature.Target : default,
+                    CreatureHealth = creature?.Definition != null ? (float)(creature.Health / creature.Definition.MaxHealth) : 0f,
                     Striking = creature != null && creature.SwungAtTick != 0 && creature.SwungAtTick == (uint)tick,
                     PileItem = entity.Pile != null ? TopItem(entity.Pile) : ItemType.None,
                     IsBody = entity.Pile != null && entity.Pile.IsBody,
@@ -429,7 +439,7 @@ namespace Simpiens.Presentation
             var route = sectors?.Map?.CaravanRoute;
             uint interval = caravanInterval != 0 ? caravanInterval : _simulation?.Economy != null ? _simulation.Economy.Supply.RestockIntervalTicks : 0u;
             var caravan = route != null ? Simpiens.Simulation.Economy.Caravan.At(tick, interval, route) : default;
-            _current.Capture(entities, sectors, tick, _epoch, events, stalls, workshops, caravan, _simulation?.Creatures?.ShotsThisTick);
+            _current.Capture(entities, sectors, tick, _epoch, events, stalls, workshops, caravan, _simulation?.Creatures?.ShotsThisTick, _simulation?.WorldFlags ?? default);
         }
 
         /// <summary>The events the chronicle recorded since the last capture, oldest first (it holds the newest first).</summary>

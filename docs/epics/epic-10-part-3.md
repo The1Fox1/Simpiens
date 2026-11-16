@@ -414,6 +414,15 @@ The go: "Let's close his out by finishing K10-K11. I will not be able to supervi
   - **The DoD's bound:** on the default seed, within sixteen days and six attempts (measured: the fourth, at t126676).
   - **Found on the way:** the Old Stair's scouts went for its centre, in the web's reach, because a sector with no anchor radius sends them there; its anchor now has a radius of 1.5, and the map validator checks the scouts' target.
   - **Re-measured after D69–D71** (the gate seeds): hunts paid on 20 of 23 (20 before); armed fours clear a lair on 21, carry the fallen out alive on 17 and lose a member on 1 (as at K10.2a); under-armed pairs lose a member on 2; K3's bold, now drinking their draughts in a fight, make a kill on 9 seeds in four days (6 before) with no death, and the days hold on 22 (23 before: F10's seed 12, trust one resident short). Seeds 1–120 120/120 with and without the guild; the soak 15/15; golden unchanged.
+- **D72, the client's bosses and gate** (K10.5):
+  - **Boss art:** the Matriarch on a 24-pixel canvas and the Gatekeeper on a 32-pixel one, each at the creatures' scale. Their feet sit at the same share of their height, so they stand in isometric as the vermin do (`CreatureSprites.SizeOf`).
+  - **A boss's health bar:** hangs over its head where a name hangs, scaled with its canvas. Red, ember in its fury, faded with the fog. The frames carry a creature's health share; vermin have no bar.
+  - **The descent gate:** a 32-pixel prop at the map's gate, sealed (iron doors, brass rivets, an ember seal) or breached (a door hanging aside, stairs into the dark). The frames carry the world's flag, and the gate stands half a unit into the room so the fog hides it until the Old Stair is charted.
+  - **The breach's hard cutscene** (`StoryScenes.Breach`, over a new backdrop of the broken gate): played once the frame that first shows the breach. A save loaded already breached doesn't replay it.
+    - **When it plays:** only with the new `ClientOptions.StoryScenes`, which the desktop game turns on. Tests and the pinned renders leave it off, as they do `UiMotion`, so no capture meets a cutscene.
+    - **The lines:** placeholders until the narrative work.
+  - **The words:** the board and the guild's builder and tracker name a lair as the player would (`LairWords`): "the burrow rats", "the Gatekeeper", "the Matriarch and the burrow rats".
+  - **An open item, with the stall's:** the gate and the bosses are wider than an isometric cell and sort by their centres. The gate stands in a back wall with nothing behind it, but a crawler beside a boss can draw on the wrong side of it.
 
 ## 1. Goal
 **The player promise:** the deep sectors bite back. Arm the outpost, put a price on what lurks there, send the guild against the brood and break the gatekeeper. Any crawler you send can die, unless someone brings it home.

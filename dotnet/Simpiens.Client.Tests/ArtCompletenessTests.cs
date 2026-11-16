@@ -119,6 +119,9 @@ namespace Simpiens.Client.Tests
             used.Add(new EntityVisuals(catalog).Cairn); // a body (Epic 10 Part 3, K5.8b)
             used.Add(catalog.Id(ArtKeys.FxShot)); // shots in flight (Epic 10 Part 3, K8.4a)
             used.Add(catalog.Id(ArtKeys.FxSpit));
+            used.Add(catalog.Id(ArtKeys.FxBar)); // a boss's health bar (Epic 10 Part 3, K10.5b)
+            used.Add(catalog.Id(ArtKeys.PropGate)); // the descent gate, sealed and breached (K10.5c)
+            used.Add(catalog.Id(ArtKeys.PropGateOpen));
             foreach (Simpiens.Simulation.World.HazardKind kind in System.Enum.GetValues(typeof(Simpiens.Simulation.World.HazardKind)))
                 if (kind != Simpiens.Simulation.World.HazardKind.None) used.Add(catalog.Id(ArtKeys.Hazard(kind))); // the hazards' animations (Epic 10 Part 2, D69)
             foreach (StationKind kind in System.Enum.GetValues(typeof(StationKind)))

@@ -13,8 +13,10 @@ namespace Simpiens.Presentation.Cutscenes
         public const int BackdropWidth = 160, BackdropHeight = 90;
         public const string Outpost = "outpost";
         public const string DeepSeam = "deep-seam";
+        /// <summary>The Old Stair, its gate broken open (Epic 10 Part 3, K10.5d): the breach's backdrop.</summary>
+        public const string OldStair = "old-stair";
 
-        private static readonly List<PixelSprite> _backdrops = new List<PixelSprite>(2);
+        private static readonly List<PixelSprite> _backdrops = new List<PixelSprite>(3);
         private static readonly Dictionary<string, PixelSprite> _byName = new Dictionary<string, PixelSprite>();
 
         /// <summary>Every backdrop, by index in the backdrop sheet (<see cref="DrawSheet.Backdrop"/>).</summary>
@@ -24,6 +26,7 @@ namespace Simpiens.Presentation.Cutscenes
         {
             Add(Outpost, OutpostAtDusk());
             Add(DeepSeam, Cave());
+            Add(OldStair, BrokenGate());
         }
 
         public static bool TryGetBackdrop(string name, out PixelSprite sprite) => _byName.TryGetValue(name ?? string.Empty, out sprite);
@@ -109,6 +112,70 @@ namespace Simpiens.Presentation.Cutscenes
                         if (x >= 0 && x < BackdropWidth) pixels[y * BackdropWidth + x] = (x + y) % 3 == 0 ? new Rgba32(230, 250, 255) : glow;
                     }
                 }
+            }
+            return pixels;
+        }
+
+        /// <summary>
+        /// The Old Stair, breached (Epic 10 Part 3, K10.5d): a hall of dressed stone, the great arch in its middle, one door
+        /// fallen against it, and through it stairs going down into the dark, an ember glow from the cracks of the floor.
+        /// </summary>
+        private static Rgba32[] BrokenGate()
+        {
+            var pixels = new Rgba32[BackdropWidth * BackdropHeight];
+            const int floor = 68, archLeft = 58, archRight = 102, archTop = 12;
+            for (int y = 0; y < BackdropHeight; y++)
+            {
+                for (int x = 0; x < BackdropWidth; x++)
+                {
+                    // Dressed stone: courses of blocks, each row's joints offset
+                    var c = Lerp(new Rgba32(46, 42, 44), new Rgba32(62, 56, 54), y / (float)floor);
+                    bool course = y % 8 == 0;
+                    bool joint = (x + (y / 8 % 2) * 6) % 12 == 0;
+                    if (course || joint) c = new Rgba32(30, 27, 30);
+                    if (Hash(x, y, 17u) % 19 == 0) c = new Rgba32(38, 34, 36);
+                    if (y > floor) c = Lerp(new Rgba32(40, 36, 38), new Rgba32(28, 25, 28), (y - floor) / (float)(BackdropHeight - floor));
+                    pixels[y * BackdropWidth + x] = c;
+                }
+            }
+            // The arch: its stones, then the dark within, rounded at the top
+            int centre = (archLeft + archRight) / 2, radius = (archRight - archLeft) / 2;
+            for (int y = archTop - 4; y <= floor; y++)
+            {
+                for (int x = archLeft - 4; x <= archRight + 4; x++)
+                {
+                    float dy = y < archTop + radius ? archTop + radius - y : 0f;
+                    float dx = x - centre;
+                    float d = MathF.Sqrt(dx * dx + dy * dy);
+                    if (d <= radius) pixels[y * BackdropWidth + x] = new Rgba32(6, 6, 10); // the dark beyond
+                    else if (d <= radius + 4) pixels[y * BackdropWidth + x] = (int)d % 3 == 0 ? new Rgba32(96, 90, 84) : new Rgba32(124, 118, 108);
+                }
+            }
+            // Stairs going down: steps narrowing and darkening toward the dark
+            for (int step = 0; step < 6; step++)
+            {
+                int y = floor - step * 4;
+                int half = radius - 2 - step * 3;
+                byte shade = (byte)(84 - step * 13);
+                for (int x = centre - half; x <= centre + half; x++)
+                    for (int dy = 0; dy < 2; dy++) pixels[(y - dy) * BackdropWidth + x] = new Rgba32(shade, (byte)(shade - 4), (byte)(shade - 8));
+            }
+            // The fallen door against the arch's left, iron with brass rivets
+            for (int y = 34; y <= floor; y++)
+            {
+                int lean = (y - 34) / 4;
+                for (int x = archLeft - 14 + lean; x <= archLeft - 4 + lean; x++)
+                {
+                    bool rivet = (x - archLeft) % 4 == 0 && y % 6 == 0;
+                    pixels[y * BackdropWidth + x] = rivet ? new Rgba32(200, 168, 88) : x == archLeft - 14 + lean ? new Rgba32(24, 22, 28) : new Rgba32(92, 98, 110);
+                }
+            }
+            // Embers in the floor's cracks
+            for (int x = 0; x < BackdropWidth; x++)
+            {
+                if (Hash(x, 0, 23u) % 9 != 0) continue;
+                int y = floor + 2 + (int)(Hash(x, 1, 23u) % (BackdropHeight - floor - 4));
+                pixels[y * BackdropWidth + x] = new Rgba32(255, 140, 60);
             }
             return pixels;
         }

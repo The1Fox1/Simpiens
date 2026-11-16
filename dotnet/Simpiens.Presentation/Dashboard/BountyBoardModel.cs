@@ -203,18 +203,12 @@ namespace Simpiens.Presentation.Dashboard
                 {
                     if (hunts[i].BountyId != bounty.BountyId) continue;
                     hunters = hunts[i].Count;
-                    kind = LairKind(hunts[i].LairIndex);
+                    kind = LairWords.Pack(_context.Simulation?.Creatures?.Lairs, hunts[i].LairIndex);
                 }
             }
-            return Invariant($"Hunt the {kind}s of {sectorName} · {hunters} of {HuntRecord.MaxClaimants} hunters");
+            return Invariant($"Hunt {kind} of {sectorName} · {hunters} of {HuntRecord.MaxClaimants} hunters");
         }
 
-        private string LairKind(int lairIndex)
-        {
-            var lairs = _context.Simulation?.Creatures?.Lairs;
-            if (lairs == null || lairIndex < 0 || lairIndex >= lairs.Count) return "creature";
-            return (Simpiens.Simulation.Creatures.CreatureCatalog.Get(lairs[lairIndex].Definition.Kind)?.DisplayName ?? "creature").ToLowerInvariant();
-        }
 
         /// <summary>
         /// Fills the sector picker from the loaded map, only when the map, the type or the charted sectors changed,
@@ -250,7 +244,8 @@ namespace Simpiens.Presentation.Dashboard
                 var heart = creatures.Lairs[i].Definition.Position;
                 string where = _context.Sectors != null && _context.Zones.TryGetZone(_context.Sectors.GetSectorAt(heart).Id, out var lairZone) ? lairZone.Name : "the floor";
                 _sectorIds.Add(i);
-                _sectorLabels.Add(Invariant($"The {LairKind(i)}s of {where}"));
+                string pack = LairWords.Pack(creatures.Lairs, i); // K10.5d: a boss by its name
+                _sectorLabels.Add(Invariant($"{char.ToUpperInvariant(pack[0])}{pack.Substring(1)} of {where}"));
             }
             for (int i = 0; !TargetsLairs && i < zones.Count; i++)
             {

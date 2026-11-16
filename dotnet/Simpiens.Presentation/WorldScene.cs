@@ -55,6 +55,9 @@ namespace Simpiens.Presentation
                 _lowWall = value.Id(ArtKeys.TileWallLow);
                 _ring = value.Id(ArtKeys.SelectionRing);
                 _shadow = value.TryId(ArtKeys.CrawlerShadow, out var shadow) ? shadow : ArtId.None;
+                _bar = value.TryId(ArtKeys.FxBar, out var bar) ? bar : ArtId.None;
+                _gate = value.TryId(ArtKeys.PropGate, out var gate) ? gate : ArtId.None;
+                _gateOpen = value.TryId(ArtKeys.PropGateOpen, out var open) ? open : ArtId.None;
                 _caravan = value.TryId(ArtKeys.PropCaravan, out var caravan) ? caravan : ArtId.None;
                 _shotArt = value.TryId(ArtKeys.FxShot, out var shot) ? shot : ArtId.None;
                 _spitArt = value.TryId(ArtKeys.FxSpit, out var spit) ? spit : ArtId.None;
@@ -77,7 +80,7 @@ namespace Simpiens.Presentation
         public CrawlerBodies Bodies { get; set; }
 
         private ArtCatalog _catalog;
-        private ArtId _floor, _rock, _wall, _lowWall, _ring, _shadow, _caravan;
+        private ArtId _floor, _rock, _wall, _lowWall, _ring, _shadow, _caravan, _bar, _gate, _gateOpen;
         private readonly ArtId[] _hazards = new ArtId[4]; // by HazardKind
 
         /// <summary>Where and when the hazards' animations play (Epic 10 Part 2, the stretch, D69).</summary>
@@ -182,6 +185,7 @@ namespace Simpiens.Presentation
                 }
                 for (int i = 0; i < frame.StallCount; i++) AddStall(frame.Stall(i), viewSeconds);
                 for (int i = 0; i < frame.StationCount; i++) AddStation(frame.Station(i), viewSeconds);
+                if (map != null) AddGates(map, frame.GateBreached, viewSeconds);
                 AddCaravan(frame.Caravan, frames.DrawnCaravanPosition(), viewSeconds);
             }
             AddShots(viewSeconds);
@@ -288,6 +292,54 @@ namespace Simpiens.Presentation
             ref var item = ref Add(DrawRole.Crawler, Projection.Depth(position), _catalog.Piece(art, Creatures.Moving(entity.Id) ? viewSeconds : 0f), drawnAt, tint);
             item.FlipX = facesLeft;
             item.Pick = Items.Pickable(entity.Id); // a click selects it, and the inspector shows it
+            var kind = Simpiens.Simulation.Creatures.CreatureCatalog.Get(entity.Creature);
+            if (kind != null && kind.IsBoss) AddBossBar(kind, entity.CreatureHealth, position, shown, viewSeconds);
+        }
+
+        /// <summary>
+        /// The descent gate (Epic 10 Part 3, K10.5c, Q13), a prop at each of the map's gates: sealed, or once the world's flag
+        /// says so, breached on stairs going down into the dark. Faded with the fog, as any prop is.
+        /// </summary>
+        private void AddGates(MapDefinition map, bool breached, float viewSeconds)
+        {
+            var pois = map.Pois;
+            for (int i = 0; i < pois.Count; i++)
+            {
+                if (pois[i].Kind != PoiKind.DescentGate) continue;
+                var art = breached ? _gateOpen : _gate;
+                if (art.IsNone) continue;
+                float shown = Fog.Visibility(pois[i].Position, viewSeconds);
+                if (shown <= 0f) continue;
+                Add(DrawRole.Prop, Projection.Depth(pois[i].Position), _catalog.Piece(art, viewSeconds), pois[i].Position, Shown(White, shown));
+            }
+        }
+
+        private static readonly Rgba32 BarBack = new Rgba32(20, 18, 24, 220), BarFill = new Rgba32(220, 64, 52, 255), BarFury = new Rgba32(255, 150, 60, 255);
+
+        /// <summary>
+        /// A boss's health bar (Epic 10 Part 3, K10.5b), over its head where a name hangs, scaled with its canvas: a dark bar,
+        /// and over it the share of health left from its left edge, red, ember in its fury. Faded with the fog, as the boss is.
+        /// </summary>
+        private void AddBossBar(Simpiens.Simulation.Creatures.CreatureDefinition kind, float health, Vec2 position, float shown, float viewSeconds)
+        {
+            if (_bar.IsNone) return;
+            float scale = Art.CreatureSprites.SizeOf(kind.ArtKey) / (float)Art.CreatureSprites.Size;
+            var piece = _catalog.Piece(_bar, viewSeconds);
+            var at = position + _catalog.NameOffset * scale;
+            float depth = Projection.Depth(position);
+            ref var back = ref Add(DrawRole.Crawler, depth, piece, at, Shown(BarBack, shown));
+            back.Width = piece.Width * scale;
+            back.Height = piece.Height * scale;
+            back.Z = _catalog.NameHeight * scale;
+            back.SnapToPixel = false;
+            float share = SimMath.Clamp01(health);
+            if (share <= 0f) return;
+            ref var fill = ref Add(DrawRole.Crawler, depth, piece, at, Shown(kind.InFury(share * kind.MaxHealth) ? BarFury : BarFill, shown));
+            fill.Width = piece.Width * scale * share;
+            fill.Height = piece.Height * scale;
+            fill.Z = _catalog.NameHeight * scale;
+            fill.PivotX = 0.5f / share; // its left edge on the bar's
+            fill.SnapToPixel = false;
         }
 
         /// <summary>How far a creature's strike lunges toward its quarry at its deepest, in world units (K2.5's strike pose).</summary>

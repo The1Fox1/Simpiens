@@ -69,9 +69,9 @@ namespace Simpiens.Client.Tests
             var members = Prepare(sim);
             var model = new DashboardModel(DashboardContext.From(sim.Services));
             var expedition = Builder(model);
-            Assert.Contains(expedition.Targets, t => t.Lair && t.Name == "Clear the burrow rats");
+            Assert.Contains(expedition.Targets, t => t.Lair && t.Name == "Clear the Matriarch and the burrow rats"); // her warren (K10.2a, K10.5d)
             Assert.True(expedition.IsClear);
-            Assert.Equal("Clear the burrow rats", expedition.TargetName);
+            Assert.Equal("Clear the Matriarch and the burrow rats", expedition.TargetName);
             Assert.StartsWith("Arm: ", expedition.OutfitText);
             Assert.Contains("iron blade", expedition.OutfitText);
             expedition.ToggleOutfit(); // the back half with bows (Epic 10 Part 3, K8.2c); none in stock this early
@@ -82,7 +82,7 @@ namespace Simpiens.Client.Tests
             Assert.Equal(0, expedition.Shooters);
             expedition.ToggleOutfit();
             Assert.True(expedition.CanDispatch, expedition.DispatchText);
-            Assert.Equal("Send party 1, 4 strong, to clear the burrow rats of Overgrowth.", expedition.DispatchText);
+            Assert.Equal("Send party 1, 4 strong, to clear the Matriarch and the burrow rats of Overgrowth.", expedition.DispatchText);
 
             expedition.Dispatch();
             sim.Step(1);
@@ -115,9 +115,9 @@ namespace Simpiens.Client.Tests
             expedition.Refresh();
             var tracker = expedition.Trackers[0];
             Assert.True(tracker.IsClear);
-            Assert.Equal("Clear: The burrow rats of Overgrowth · Steady", tracker.Title);
-            Assert.Equal("Fighting the burrow rats", tracker.StageText);
-            Assert.Matches(@"^Burrow rats: \d of \d left · party health \d+$", tracker.FightText);
+            Assert.Equal("Clear: The Matriarch and the burrow rats of Overgrowth · Steady", tracker.Title);
+            Assert.Equal("Fighting the Matriarch and the burrow rats", tracker.StageText);
+            Assert.Matches(@"^The Matriarch and the burrow rats: \d of \d left · party health \d+$", tracker.FightText);
             Assert.Equal("Picked up 0 hides", tracker.HaulText);
 
             var fallen = members[1];
@@ -150,7 +150,7 @@ namespace Simpiens.Client.Tests
             dashboard.TogglePanels(); // the map
             ui.Frame();
             Assert.True(dashboard.Tracker.IsShown);
-            Assert.StartsWith("Burrow rats: ", dashboard.Tracker.FightText);
+            Assert.StartsWith("The Matriarch and the burrow rats: ", dashboard.Tracker.FightText);
             RenderTests.CompareWithReference("render-outpost-clear", FrameCapture.Capture(ui.Game, Width, Height), Width, Height);
         }
     }

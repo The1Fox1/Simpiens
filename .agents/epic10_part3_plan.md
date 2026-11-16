@@ -621,10 +621,10 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Th
   - [x] **K10.3c Whole between attempts:** [Possibly Complex: saved state] `CreatureState.EmptySince`, the tick its lair's reach last held a living crawler, saved in `CreatureRecord` (inside format 11, its size pin moved); once its lair has stood empty that long, a kind with `WholeAfterHours` is whole again; a kind that heals by resting doesn't use it. Round-trip validators.
   - [x] **K10.3d Beaten once:** [Basic: the row's `RespawnHours` 0] a slain Gatekeeper never returns, across a save; tests.
   - [x] **K10.4 The breach:** [Possibly Complex: a saved world flag, the chronicle] `WorldFlags.GateBreached` in the world's block and the world hash, set the tick the gate's lair is emptied for good; the chronicle's `GateBreached` and its line; the round-trip validators.
-  - [ ] **K10.5a Boss art:** [Possibly Complex: art and pins] the Matriarch (a rat half again as big) and the Gatekeeper (up to 64×64, a stone warden) in both view modes; the art pins after a look at the sheet.
-  - [ ] **K10.5b Health bars:** [Possibly Complex: a presentation feed and drawing] the frames carry a creature's health share; a boss's bar above it on the map, both view modes, from the UI kit's colours.
-  - [ ] **K10.5c The gate on the map:** [Possibly Complex: a prop drawn by a world flag] the gate sealed, and once breached open on stairs going down into the dark; the frames carry the flag.
-  - [ ] **K10.5d The breach's cutscene:** [Possibly Complex: a hard cutscene] written with `CutsceneBuilder`, played once when the frames first see the breach; the words for the board, the tracker and the inspector name the bosses.
+  - [x] **K10.5a Boss art:** [Possibly Complex: art and pins] the Matriarch (a rat half again as big) and the Gatekeeper (up to 64×64, a stone warden) in both view modes; the art pins after a look at the sheet.
+  - [x] **K10.5b Health bars:** [Possibly Complex: a presentation feed and drawing] the frames carry a creature's health share; a boss's bar above it on the map, both view modes, from the UI kit's colours.
+  - [x] **K10.5c The gate on the map:** [Possibly Complex: a prop drawn by a world flag] the gate sealed, and once breached open on stairs going down into the dark; the frames carry the flag.
+  - [x] **K10.5d The breach's cutscene:** [Possibly Complex: a hard cutscene] written with `CutsceneBuilder`, played once when the frames first see the breach; the words for the board, the tracker and the inspector name the bosses.
   - [x] **K10.6 The DoD:** [Possibly Complex: a live scenario and the bosses tuned by measurement] the scripted guild player clears in order (the web, then the gate), with draughts; `TheGuildBreaksTheGatekeeper` on the default seed, measured on the gate seeds first, its bound on attempts recorded; the renders recorded in the pinned image after a look.
 
 ### K11. The gate (2–3 days)

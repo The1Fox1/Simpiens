@@ -51,6 +51,12 @@ namespace Simpiens.Client
         /// </summary>
         public bool DemoScenes { get; set; }
 
+        /// <summary>
+        /// The story's hard cutscenes (Epic 10 Part 3, K10.5d: the breach), played once a session when the world reaches them.
+        /// The desktop game turns it on; tests and the pinned renders leave it off, so a capture never meets a cutscene.
+        /// </summary>
+        public bool StoryScenes { get; set; }
+
         /// <summary>Development builds: F3 shows the frame's timings by phase in a corner (review D1).</summary>
         public bool TimingsOverlay { get; set; }
 

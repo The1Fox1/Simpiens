@@ -289,7 +289,7 @@ namespace Simpiens.Core.Session.Layouts
             // guards: charted with the sector, and emptied for good it breaches the gate (Q13)
             b.Lair(SpinnerWeb, Simpiens.Simulation.Creatures.CreatureKind.CaveSpinner, new Vec2(-34f, 14f));
             b.Lair(GateLair, Simpiens.Simulation.Creatures.CreatureKind.Gatekeeper, new Vec2(-37f, 9.5f), guardsGate: true);
-            b.Poi(DescentGate, PoiKind.DescentGate, new Vec2(-39.5f, 9.5f), 1.5f);
+            b.Poi(DescentGate, PoiKind.DescentGate, new Vec2(-39f, 9.5f), 1.5f); // inside the room, so its fog hides the gate until it is charted (K10.5c)
 
             // --- Labels (sector names near each sector's top edge) ---
             b.Label("Outpost Hub", new Vec2(0f, 4.6f), new Rgba(0.95f, 0.85f, 0.4f));
