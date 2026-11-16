@@ -86,12 +86,26 @@ namespace Simpiens.Hosting
         /// </summary>
         public const float CraftingUnpaidQuitShare = 0.25f;
 
+        /// <summary>
+        /// The hunting profile (Epic 10 Part 3, K11.2): fair prices, the forge making blades and ring coats and the still
+        /// draughts, the scripted hunt player posting on a lair the bold would brave, and a guild of four clearing the first
+        /// charted lair with two draughts each, every player keeping a reserve (D71's). Its band is proposed by exception from
+        /// K11.2's measurement over seeds 1-20 (D73): the loop's integrity at day 3 (a treasury, trust rising for most, nobody
+        /// starving, no quit for pay: measured 66-397g, 11-12 up, none, none) and few deaths (measured none in eight days). The
+        /// fighting itself starts at the horizon's edge (0-2 kills in three days; 0-8 in eight), so kills aren't banded.
+        /// </summary>
+        public const uint HuntingReserve = 150;
+        public const uint HuntingTreasuryMin = 0;
+        public const uint HuntingTreasuryMax = 1200;
+        public const int HuntingTrustUpMin = 8;
+        public const int HuntingDeathsMax = 1;
+
         /// <summary>A guild full this long before the horizon has had time to send a party and see it home.</summary>
         public const long GuildSpareTicks = 8 * DayClock.TicksPerHour;
 
         /// <summary>The soak's seeds.</summary>
         public static readonly ulong[] DefaultSeeds = { 20261009UL, 1UL, 2UL };
-        public static readonly string[] Profiles = { "fair", "greedy", "generous", "guild", "crafting" };
+        public static readonly string[] Profiles = { "fair", "greedy", "generous", "guild", "crafting", "hunting" };
 
         /// <summary>A soak player: the prices it sets (item, price), as the typed command it sends on the first tick.</summary>
         public readonly struct Player
@@ -133,6 +147,7 @@ namespace Simpiens.Hosting
                 case "fair": return new Player("fair", Prices(1f, 1f, 1f, 1f), sendsCommand: false);
                 case "guild": return new Player("guild", Prices(1f, 1f, 1f, 1f), sendsCommand: false);
                 case "crafting": return new Player("crafting", Prices(1f, 1f, 1f, 1f), sendsCommand: false);
+                case "hunting": return new Player("hunting", Prices(1f, 1f, 1f, 1f), sendsCommand: false); // Epic 10 Part 3, K11.2
                 // Rations 30g, ore 2g, herbs 3g, gear 60g
                 case "greedy": return new Player("greedy", Prices(2f, 0.5f, 0.5f, 2f), sendsCommand: true);
                 // Rations 5g, ore 9g, herbs 10g, gear 20g
@@ -140,7 +155,7 @@ namespace Simpiens.Hosting
                 // Slightly greedy, for the drifters' comparison (Epic 10 G1); it has no pace band of its own. Rations 20g,
                 // ore 4g, herbs 5g, gear 35g
                 case "keen": return new Player("keen", Prices(4f / 3f, 0.9f, 0.88f, 7f / 6f), sendsCommand: true);
-                default: throw new ArgumentException($"Unknown soak profile '{name}' (fair, greedy, generous, guild, keen).", nameof(name));
+                default: throw new ArgumentException($"Unknown soak profile '{name}' (fair, greedy, generous, guild, crafting, hunting, keen).", nameof(name));
             }
         }
 
@@ -188,6 +203,9 @@ namespace Simpiens.Hosting
             /// <summary>The crafting profile's (Epic 10 Part 2, W6.3): stations standing, artisans at work at the end, and what the stations made.</summary>
             public int StationsBuilt, Artisans;
             public uint Made;
+
+            /// <summary>The hunting profile's (Epic 10 Part 3, K11.2): creatures slain, hunts paid, rescues made and deaths, over the horizon.</summary>
+            public int Kills, HuntsPaid, Rescues, Deaths;
             public long GuildFullTick = -1;
             public uint Wages, WageGold, Shares, ShareGold;
 
@@ -245,6 +263,13 @@ namespace Simpiens.Hosting
                         // Pay and makes are judged across seeds (CraftingMadeShare, CraftingUnpaidQuitShare): a seed alone is timing
                         if (StationsBuilt == 0) failures.Add($"crafting: no station built");
                         break;
+                    case "hunting":
+                        if (last.Treasury < HuntingTreasuryMin || last.Treasury > HuntingTreasuryMax) failures.Add($"hunting: treasury {last.Treasury}g at day 3, outside {HuntingTreasuryMin}-{HuntingTreasuryMax}g");
+                        if (last.TrustUp < HuntingTrustUpMin) failures.Add($"hunting: trust rose for only {last.TrustUp} crawlers (need {HuntingTrustUpMin})");
+                        if (last.StarvingEpisodes != 0) failures.Add($"hunting: {last.StarvingEpisodes} starving episodes (need 0)");
+                        if (UnpaidQuits > 0) failures.Add($"hunting: {UnpaidQuits} quit for want of pay (worst run {WorstUnpaid} unpaid)");
+                        if (Deaths > HuntingDeathsMax) failures.Add($"hunting: {Deaths} deaths (at most {HuntingDeathsMax})");
+                        break;
                     case "generous":
                         if (!(minTreasury == 0 || everInArrears)) failures.Add($"generous: the stall never went broke (lowest treasury {minTreasury}g)");
                         if (peakTrustUp < GenerousTrustUpPeakMin) failures.Add($"generous: trust rose for at most {peakTrustUp} crawlers (need {GenerousTrustUpPeakMin} at its peak)");
@@ -266,6 +291,7 @@ namespace Simpiens.Hosting
                     ? $"; guild {Members} (signed {Signed}, full at t{GuildFullTick}), wages {Wages} ({WageGold}g), worst unpaid {WorstUnpaid}, quit unpaid {UnpaidQuits}, expeditions home {ExpeditionsHome}, shares {ShareGold}g"
                     : string.Empty;
                 if (Player.Name == "crafting") guild += $"; stations {StationsBuilt}, artisans {Artisans}, made {Made}";
+                if (Player.Name == "hunting") guild = $"; guild {Members} (full at t{GuildFullTick}), quit unpaid {UnpaidQuits}; kills {Kills}, hunts paid {HuntsPaid}, rescues {Rescues}, deaths {Deaths}";
                 return $"{Player.Name,-8} seed {Seed,-9} treasury {string.Join(" ", checkpoints)}g; trust mean {last.TrustMean:F1}, up {last.TrustUp}, down {last.TrustDown}; starving {last.StarvingEpisodes}, collapses {last.Collapses}; ledger violations {ConservationViolations}{guild}";
             }
 
@@ -329,6 +355,17 @@ namespace Simpiens.Hosting
                 guildPlayer.SendExpeditions(Floor1Layout.DrownedGallerySectorId, Floor1Layout.GallerySeamYield);
                 guildPlayer.SendSecondParty(Floor1Layout.GlowCavesSectorId, 3, together: true);
             }
+            // The hunting profile's players (Epic 10 Part 3, K11.2): every fighting player at once, each keeping a reserve
+            if (result.Player.Name == "hunting")
+            {
+                new WorkshopPlayer(sim, Simpiens.Simulation.Items.StationKind.Forge, ItemType.IronBlade, batch: 4, reserve: HuntingReserve).Also(ItemType.RingCoat, keep: 4);
+                new WorkshopPlayer(sim, Simpiens.Simulation.Items.StationKind.Still, ItemType.HealingDraught, batch: 2, reserve: HuntingReserve);
+                new HuntPlayer(sim, Simpiens.Simulation.Creatures.CreatureKind.None);
+                guildPlayer = new GuildPlayer(sim, targetSize: GuildProfileSize, reserve: HuntingReserve);
+                guildPlayer.SendClears(new[] { Simpiens.Simulation.Creatures.CreatureKind.None }, Simpiens.Simulation.Guild.RetreatRule.Steady, draughts: 2, stockpile: 8);
+            }
+            var told = new List<Simpiens.Narrative.ChronicleEvent>(16);
+            int huntsOpen = 0;
             var guild = manager.Guild;
             var unpaidNow = new Dictionary<EntityId, (int Unpaid, int Max)>();
             var unpaidLast = new Dictionary<EntityId, (int Unpaid, int Max)>();
@@ -417,9 +454,27 @@ namespace Simpiens.Hosting
                     if (manager.EconomyLedger != null) sharesSeen = manager.EconomyLedger.Flows.Shares;
                 }
 
+                // The hunting profile's counts (K11.2): rescues told this tick, and a hunt paid when the hunts' list empties
+                // with a bounty fulfilled on the tick
+                if (result.Player.Name == "hunting" && sim.Chronicle != null)
+                {
+                    told.Clear();
+                    sim.Chronicle.GetAllRecentEvents(told, 16);
+                    int open = manager.Hunts.Count;
+                    for (int i = 0; i < told.Count; i++)
+                    {
+                        if (told[i].SimulationTick != sim.Clock.CurrentTick) continue;
+                        if (told[i].EventType == Simpiens.Narrative.ChronicleEventType.CrawlerRescued) result.Rescues++;
+                        if (told[i].EventType == Simpiens.Narrative.ChronicleEventType.BountyFulfilled && open < huntsOpen) { result.HuntsPaid++; huntsOpen = open; }
+                    }
+                    huntsOpen = open;
+                }
+
                 if (rel >= horizonTicks) break;
                 sim.Step(1);
             }
+            result.Kills = manager.Creatures?.Kills ?? 0;
+            foreach (var gone in sim.Host.Departed) if (gone.Died) result.Deaths++;
             if (guildPlayer != null)
             {
                 result.Members = guild.Members.Count;

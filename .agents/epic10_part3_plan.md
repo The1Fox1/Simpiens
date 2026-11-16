@@ -633,7 +633,7 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Th
 - **The plan:**
   - [x] **K11.1a Every scenario together:** [Possibly Complex: a live scenario over every player] the workshop, hunt and guild players on one seed through the gate's breach, the day's checks, deaths and rescues counted.
   - [x] **K11.1b Saves at the hard moments:** [Possibly Complex: save and load] a save mid-fight, one with a crawler bleeding out and one with a crawler being carried, each loaded to the same world hash as the run that went on, byte for byte.
-  - [ ] **K11.2 The soak's `hunting` profile:** [Possibly Complex: bands by default, for the producer] the workshop player making blades, the hunt player and the guild clearing, over three days on its seeds: treasuries, kills, rescues and deaths a day, bands proposed from the measurement; F8's option B (the guild player's reserve) and F10's trace with it.
+  - [x] **K11.2 The soak's `hunting` profile:** [Possibly Complex: bands by default, for the producer] the workshop player making blades, the hunt player and the guild clearing, over three days on its seeds: treasuries, kills, rescues and deaths a day, bands proposed from the measurement; F8's option B (the guild player's reserve) and F10's trace with it.
   - [ ] **K11.3 Seeds 1–120,** [Basic to run; any failure it finds is graded on its own] with and without the guild.
   - [ ] **K11.4 The producer's play session:** [Basic: a brief] what to play and what to look at, in the epic's §4.
   - [ ] **K11.5 Part 3's close-out:** [Basic] the epic doc, the focus file, `architecture_history.md`, the economy model and AGENTS.md reconciled; the roadmap's Part 3 and Milestone 4 marked COMPLETED once the play session passes, and this plan deleted then.
