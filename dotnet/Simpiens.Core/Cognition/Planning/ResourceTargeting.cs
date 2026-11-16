@@ -167,6 +167,12 @@ namespace Simpiens.Cognition.Planning
             var pathResponse = await pathfinder.CalculatePathAsync(request, context.Snapshot);
             if (IsReachable(pathResponse, targetPos))
             {
+                // Judged along the way, as travel is (K10.6, D70): a way through a known lair it won't brave is barred
+                if (!Vitality.WouldWalk(context, pathResponse))
+                {
+                    pathResponse.ReturnToPool();
+                    return new HarvestResourceIntent(context.AgentId, nodeId, null, targetUnits: targetUnits, wayBarred: true);
+                }
                 return new HarvestResourceIntent(context.AgentId, nodeId, pathResponse, targetUnits: targetUnits);
             }
 
@@ -330,7 +336,8 @@ namespace Simpiens.Cognition.Planning
             };
 
             var pathResponse = await pathfinder.CalculatePathAsync(request, context.Snapshot);
-            if (pathResponse != null && pathResponse.IsValid)
+            // Judged along the way, not only where it ends: not through a charted lair's reach it wouldn't enter (K10.6, D70)
+            if (pathResponse != null && pathResponse.IsValid && Vitality.WouldWalk(context, pathResponse))
             {
                 return new WanderIntent(context.AgentId, pathResponse);
             }

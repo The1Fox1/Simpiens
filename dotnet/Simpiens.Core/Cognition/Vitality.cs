@@ -107,7 +107,10 @@ namespace Simpiens.Cognition
         /// As <see cref="LairDangerAt"/>, for this crawler: a charted lair it braves is no danger to it (Epic 10 Part 3, K3.3,
         /// D21: the bold and armed brave a lair whose pack they expect to slay, <see cref="BravesLair"/>).
         /// </summary>
-        public static float LairDangerFor(in AgentContext context, Vec2 position)
+        public static float LairDangerFor(in AgentContext context, Vec2 position) => LairDangerFor(context, position, null);
+
+        /// <summary>As <see cref="LairDangerFor(in AgentContext, Vec2)"/>, leaving out the lairs whose reach holds <paramref name="ignoreAt"/> (where it stands: it may walk out).</summary>
+        public static float LairDangerFor(in AgentContext context, Vec2 position, Vec2? ignoreAt)
         {
             var snapshot = context.Snapshot;
             var map = snapshot?.Map;
@@ -117,12 +120,41 @@ namespace Simpiens.Cognition
             for (int i = 0; i < lairs.Count; i++)
             {
                 if (!snapshot.IsLairCharted(i) || !Simpiens.Simulation.Creatures.LairReach.Holds(lairs[i], position)) continue;
+                if (ignoreAt.HasValue && Simpiens.Simulation.Creatures.LairReach.Holds(lairs[i], ignoreAt.Value)) continue;
                 if (BravesLair(lairs[i], snapshot.IsBossAlive(i), context.Skills, context.Inventory, context.Health, context.Personality.RiskTolerancePercent, context.IsDowned)) continue;
                 if (defense < 0f) defense = Simpiens.Simulation.Items.CrawlerStats.Get(context.Inventory, Simpiens.Simulation.Items.StatKind.Defense);
                 float danger = Simpiens.Simulation.Creatures.LairReach.Danger(lairs[i], defense, snapshot.IsBossAlive(i));
                 if (danger > worst) worst = danger;
             }
             return worst;
+        }
+
+        /// <summary>
+        /// True when this crawler would walk <paramref name="path"/> from where it stands (Epic 10 Part 3, K10.6, D70): no point of
+        /// the way, sampled a unit apart, lies in a charted lair's reach it wouldn't enter (judged as <see cref="WouldEnterAt(in AgentContext, Vec2)"/>
+        /// judges a lair), but for the lairs whose reach already holds it, which it may walk out of. A destination alone was
+        /// judged until the Old Stair: the way from the Deep Seam's corner to its door crosses the beetle hollow's reach.
+        /// </summary>
+        public static bool WouldWalk(in AgentContext context, Simpiens.Cognition.Pathfinding.PathResponse path)
+        {
+            var snapshot = context.Snapshot;
+            var map = snapshot?.Map;
+            if (map == null || snapshot.ChartedLairMask == 0UL || path == null || !path.IsValid || path.Length == 0) return true;
+            bool venture = WouldVenture(context);
+            var from = context.Position;
+            for (int w = 0; w < path.Length; w++)
+            {
+                var to = path.Waypoints[w];
+                int steps = SimMath.Max(1, SimMath.CeilToInt(Vec2.Distance(from, to)));
+                for (int k = 1; k <= steps; k++)
+                {
+                    var point = from + (to - from) * (k / (float)steps);
+                    float danger = LairDangerFor(context, point, context.Position);
+                    if (danger > 0f && !(venture && danger <= LoneHazardLimit)) return false;
+                }
+                from = to;
+            }
+            return true;
         }
 
         /// <summary>

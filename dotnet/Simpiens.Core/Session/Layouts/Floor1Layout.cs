@@ -214,7 +214,7 @@ namespace Simpiens.Core.Session.Layouts
             // The Old Stair (Epic 10 Part 3, K10.1, Q13): at the floor's west edge, reached through the Deep Seam, uncharted at the
             // start; its survey point inside the door, out of the web's reach and sight
             b.Sector(OldStairSectorId, "The Old Stair", "An ancient stairwell at the floor's edge, sealed by a great gate. Spinners web its approach, and something of stone keeps the gate.",
-                new RectF(-40f, 6f, 16f, 12f), new Vec2(-26.5f, 9f), 0f, startsExplored: false);
+                new RectF(-40f, 6f, 16f, 12f), new Vec2(-26.5f, 9f), 1.5f, startsExplored: false); // a radius, so the anchor is the scouts' target (K10.6: the centre lies in the web's reach)
 
             // --- Hub ---
             b.Poi(Stall, PoiKind.Stall, new Vec2(0f, 2.5f), 3.0f);

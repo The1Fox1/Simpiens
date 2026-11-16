@@ -1,3 +1,6 @@
+using Simpiens.Diagnostics;
+using Simpiens.Simulation.Economy;
+using ZLogger;
 using Simpiens.Cognition.Contracts;
 using Simpiens.Entities;
 using Simpiens.Simulation;
@@ -19,6 +22,7 @@ namespace Simpiens.Cognition.Planning.Handlers
             var agent = node.Agent;
             if (agent == null || agent.IsDowned || agent.Health < Vitality.FightLine(agent.Expedition)) return IntentResult.Failed;
             if (!context.TryGetCreature(fight.Target, out var creature)) return IntentResult.Success; // slain, or gone
+            if (Melee.TryQuaff(node, context)) return IntentResult.InProgress; // a draught in place of a swing (K10.6, D69)
             if (Ranged.IsShooter(agent))
             {
                 // A shooter keeps its distance (Epic 10 Part 3, K8.2b); it lets a creature go that runs out of its range
@@ -38,6 +42,32 @@ namespace Simpiens.Cognition.Planning.Handlers
     /// </summary>
     internal static class Melee
     {
+        /// <summary>
+        /// A draught in a fight (Epic 10 Part 3, K10.6, D69; Q13: "a boss needs a party, draughts and armour"): hurt below the
+        /// treat line and holding a made medicine, a crawler whose swing is due drinks it in place of the swing, at once
+        /// (physical time, as a swing is; a herb is eaten out of the fight, over its minutes). True when it drank.
+        /// </summary>
+        public static bool TryQuaff(WorldEntity node, IIntentExecutionContext context)
+        {
+            var agent = node.Agent;
+            if (agent?.Inventory == null || agent.Health >= Vitality.TreatWoundsBelow) return false;
+            uint tick = context.CurrentTick;
+            if (!CombatRules.CanSwing(tick, agent.NextSwingAt)) return false;
+            var medicines = Simpiens.Simulation.Items.ItemCatalog.InCategory(Simpiens.Simulation.Items.ItemCategory.Medicine);
+            for (int i = 0; i < medicines.Count; i++)
+            {
+                var medicine = medicines[i];
+                if (medicine.IsSalvage() || !agent.Inventory.HasItem(medicine)) continue;
+                float before = agent.Health;
+                if (!ItemUse.Consume(agent, medicine)) continue;
+                agent.Activity.DraughtsDrunk++;
+                agent.NextSwingAt = CombatRules.NextSwingAt(tick, Combatant.ForCrawler(agent, node.Radius)); // it costs the swing
+                SimLog.Drives.ZLogInformation($"{SimLog.Agent(node.Id)} drank {Simpiens.Simulation.Items.ItemCatalog.NameOf(medicine)} in the fight: health {before:F0} -> {agent.Health:F0}");
+                return true;
+            }
+            return false;
+        }
+
         /// <summary>In reach: posed defiant, it asks for a swing (true). Out of reach: posed defiant, nothing done (false).</summary>
         public static bool TrySwing(WorldEntity node, CreatureState creature, IIntentExecutionContext context)
         {
@@ -154,6 +184,7 @@ namespace Simpiens.Cognition.Planning.Handlers
             bool walked = hunt.Path == null || state.CurrentWaypointIndex >= hunt.Path.Length;
             if (walked || (creature.Position - node.Position).SqrMagnitude <= EngageDistance * EngageDistance)
             {
+                if (Melee.TryQuaff(node, context)) return IntentResult.InProgress; // a draught in place of a swing (K10.6, D69)
                 if (Ranged.IsShooter(agent)) return Ranged.Engage(node, creature, context); // from range, keeping its distance (K8.2b)
                 if (Melee.TrySwing(node, creature, context)) return IntentResult.InProgress;
                 return Melee.StepToward(node, creature, context, besideOthers: true);

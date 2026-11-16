@@ -17,6 +17,7 @@ namespace Simpiens.Cognition.Planning.Handlers
         {
             var agent = node.Agent;
             uint currentTick = context.CurrentTick;
+            if (harvest.WayBarred) return IntentResult.PathBlocked; // its way crosses a known lair (K10.6, D70): set aside a while
 
             // 1. Check if resource is already depleted
             bool isDepleted = !context.TryGetResource(harvest.TargetEntityId, out var resourceData) || resourceData.IsDormant || resourceData.RemainingYield <= 0;

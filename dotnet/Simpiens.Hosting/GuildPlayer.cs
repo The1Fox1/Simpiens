@@ -46,6 +46,8 @@ namespace Simpiens.Hosting
             public int Shooters;
             public ItemType Bow;
             public Simpiens.Simulation.Creatures.CreatureKind MaterialsFirst;
+            /// <summary>Clears in order (Epic 10 Part 3, K10.6): the first of these kinds whose lair is charted and holds a creature; null for <see cref="LairKind"/> alone.</summary>
+            public Simpiens.Simulation.Creatures.CreatureKind[] ClearOrder;
             public readonly List<EntityId> Members = new List<EntityId>(DispatchExpeditionCommand.MaxMembers);
         }
 
@@ -136,6 +138,22 @@ namespace Simpiens.Hosting
             plan.Bow = bow;
             plan.MaterialsFirst = materialsFirst;
             plan.Target = byte.MaxValue; // planned: the lair is found when it is ready
+        }
+
+        /// <summary>
+        /// Sends party 1 to clear lairs in <paramref name="order"/> (Epic 10 Part 3, K10.6: the Old Stair's web, then its gate):
+        /// each time it is home and ready, the first kind in the order whose lair is charted and holds a creature, armed as
+        /// <see cref="SendClear"/> arms it, with <paramref name="draughts"/> each from the stall's stock once it holds
+        /// <paramref name="stockpile"/> of them.
+        /// </summary>
+        public void SendClears(Simpiens.Simulation.Creatures.CreatureKind[] order, RetreatRule rule = RetreatRule.Steady, int shooters = 0, ItemType bow = ItemType.None,
+            Simpiens.Simulation.Creatures.CreatureKind materialsFirst = Simpiens.Simulation.Creatures.CreatureKind.None, byte draughts = 0, int stockpile = 0)
+        {
+            SendClear(order.Length > 0 ? order[0] : Simpiens.Simulation.Creatures.CreatureKind.None, rule, arm: true, shooters, bow, materialsFirst);
+            var plan = _plans[0];
+            plan.ClearOrder = (Simpiens.Simulation.Creatures.CreatureKind[])order.Clone();
+            plan.Draughts = draughts;
+            plan.Stockpile = stockpile;
         }
 
         private static void Plan(PartyPlan plan, byte sectorId, byte goal, RetreatRule rule, bool outfit, byte draughts, int stockpile)
@@ -243,6 +261,8 @@ namespace Simpiens.Hosting
                 // A clear (K7.4): its lair charted and holding a creature, every member armed (from stock first) and well
                 // The bows' makings first (K8.5): while the stall holds too few of the bow, the materials' lair, with no shooters
                 var kind = plan.LairKind;
+                if (plan.ClearOrder != null)
+                    for (int k = plan.ClearOrder.Length - 1; k >= 0; k--) if (ClearTarget(plan.ClearOrder[k]) >= 0) kind = plan.ClearOrder[k]; // the first ready, in order
                 int shooters = plan.Shooters;
                 if (plan.Bow != ItemType.None && BowsInStock(plan.Bow) + BowsWorn(host, members, plan.Bow) < shooters)
                 {
@@ -252,8 +272,9 @@ namespace Simpiens.Hosting
                 int lair = ClearTarget(kind);
                 if (lair < 0) return false;
                 if (plan.Arm && !Armed(guild, host, members, shooters)) return false;
+                if (plan.Stockpile > 0 && DraughtsInStock() < plan.Stockpile) return false; // kitted (K10.6)
                 if (!AllWell(host, members)) return false;
-                order = new DispatchExpeditionCommand(plan.Slot, 0, plan.Goal, plan.Rule, 0, ExpeditionKind.Clear, (byte)lair);
+                order = new DispatchExpeditionCommand(plan.Slot, 0, plan.Goal, plan.Rule, plan.Draughts, ExpeditionKind.Clear, (byte)lair);
                 return guild.CanDispatch(host, order) == GuildRules.Check.Ok;
             }
             if (plan.Outfit && !Outfitted(guild, host, plan)) return false;

@@ -777,23 +777,38 @@ namespace Simpiens.Simulation.Guild
         /// <summary>
         /// A clear's retreat rule (K7.2b, Q8): half its members down, or the health of those with the party, on average, past
         /// the rule's line. A downed member alone doesn't turn a fighting party back, as it does a gathering one: its mates
-        /// carry it out (K7.2c).
+        /// carry it out (K7.2c). A member on its feet still carrying a draught isn't in the average (Epic 10 Part 3, K10.6, D69,
+        /// as a gathering's D43): it drinks in the fight below the treat line instead, so what the party carries is how long it
+        /// fights.
         /// </summary>
         private static bool ShouldTurnBackFromFight(IGuildHost host, GuildParty party, in ExpeditionTuning tuning)
         {
             float floor = tuning.RetreatHealth(party.Record.Rule);
             var roster = party.Roster;
-            int with = 0, down = 0;
+            int with = 0, down = 0, judged = 0;
             float health = 0f;
             for (int i = 0; i < roster.Count; i++)
             {
                 var member = roster[i];
                 if (!member.IsWithParty || !host.TryGetCrawler(member.CrawlerId, out var crawler)) continue;
                 with++;
-                if (member.Status == ExpeditionMemberStatus.Downed || crawler.IsDowned) down++;
+                bool downed = member.Status == ExpeditionMemberStatus.Downed || crawler.IsDowned;
+                if (downed) down++;
+                if (!downed && HoldsDraught(crawler)) continue;
+                judged++;
                 health += crawler.Health;
             }
-            return with == 0 || down * 2 >= with || health / with < floor;
+            return with == 0 || down * 2 >= with || (judged > 0 && health / judged < floor);
+        }
+
+        /// <summary>True when <paramref name="crawler"/> carries a made medicine, the kind it drinks in a fight (D69).</summary>
+        private static bool HoldsDraught(AgentState crawler)
+        {
+            if (crawler.Inventory == null) return false;
+            var medicines = ItemCatalog.InCategory(ItemCategory.Medicine);
+            for (int i = 0; i < medicines.Count; i++)
+                if (!medicines[i].IsSalvage() && crawler.Inventory.HasItem(medicines[i])) return true;
+            return false;
         }
 
         /// <summary>At the stall, fed (below the muster's hunger, or carrying the trip's rations to eat on the way) and well.</summary>

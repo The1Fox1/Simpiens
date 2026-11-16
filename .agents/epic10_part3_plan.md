@@ -625,7 +625,7 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Th
   - [ ] **K10.5b Health bars:** [Possibly Complex: a presentation feed and drawing] the frames carry a creature's health share; a boss's bar above it on the map, both view modes, from the UI kit's colours.
   - [ ] **K10.5c The gate on the map:** [Possibly Complex: a prop drawn by a world flag] the gate sealed, and once breached open on stairs going down into the dark; the frames carry the flag.
   - [ ] **K10.5d The breach's cutscene:** [Possibly Complex: a hard cutscene] written with `CutsceneBuilder`, played once when the frames first see the breach; the words for the board, the tracker and the inspector name the bosses.
-  - [ ] **K10.6 The DoD:** [Possibly Complex: a live scenario and the bosses tuned by measurement] the scripted guild player clears in order (the web, then the gate), with draughts; `TheGuildBreaksTheGatekeeper` on the default seed, measured on the gate seeds first, its bound on attempts recorded; the renders recorded in the pinned image after a look.
+  - [x] **K10.6 The DoD:** [Possibly Complex: a live scenario and the bosses tuned by measurement] the scripted guild player clears in order (the web, then the gate), with draughts; `TheGuildBreaksTheGatekeeper` on the default seed, measured on the gate seeds first, its bound on attempts recorded; the renders recorded in the pinned image after a look.
 
 ### K11. The gate (2–3 days)
 **Complexity:** Possibly Complex: the whole part's scenarios and bands; the close-out is Basic.

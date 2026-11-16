@@ -83,7 +83,7 @@ namespace Simpiens.Simulation.Creatures
             // once its lair has been empty of crawlers for a game hour, and it never returns once beaten
             new CreatureDefinition(CreatureKind.Gatekeeper, "Gatekeeper", "The Gatekeeper")
             {
-                MaxHealth = 400f, Attack = 12f, Defense = 8f, Reach = 1f, SwingIntervalSeconds = 2.5f,
+                MaxHealth = 320f, Attack = 12f, Defense = 8f, Reach = 1f, SwingIntervalSeconds = 2.5f,
                 Speed = 1f, BodyRadius = 0.9f, Sight = 4f, Leash = 4f,
                 PackMin = 1, PackMax = 1, HealHours = 0, RespawnHours = 0, LootTableId = CreatureLoot.Gatekeeper,
                 IsBoss = true, Slam = true, FuryBelow = 0.25f, FuryAttack = 1.5f, FuryInterval = 0.6f, WholeAfterHours = 1

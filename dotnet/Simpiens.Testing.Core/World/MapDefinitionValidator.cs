@@ -556,8 +556,10 @@ namespace Simpiens.Testing.World
                 }
             }
 
-            // The survey point: out of every lair's reach, and out of the web's sight even from the farthest a spinner roams
-            var survey = stair.Anchor;
+            // The survey point (where a scout goes, its target point): out of every lair's reach, and out of the web's sight even from
+            // the farthest a spinner roams (K10.6 found the centre, the target of a sector with no anchor radius, in the web's reach)
+            var survey = stair.TargetPoint;
+            Assert(survey == stair.Anchor, "(o) The Old Stair's scouts go to its anchor, inside the door.");
             Assert(grid.TryGetRegion(survey, out int sr) && sr == hubRegion, "(o) The survey point is reached from the Hub.");
             for (int i = 0; i < def.Lairs.Count; i++)
                 Assert(!Simpiens.Simulation.Creatures.LairReach.Holds(def.Lairs[i], survey), $"(o) The survey point lies out of {def.Lairs[i].Key}'s reach.");
