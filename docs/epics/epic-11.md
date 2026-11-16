@@ -8,6 +8,7 @@
 - **Track**: Track A: Core Simulation & Cognition Engine. Its UI is the KNI client's and is built here, as Epic 10 folded in UI-3 to UI-5.
 - **Milestone**: Production Milestone 5, Skills and Careers (ROADMAP §3; Q2).
 - **Source**: the research paper [Simpiens Skill System: Research and Long-Term Vision](https://claude.ai/artifact/5mqWWaE3F87kz45EQXuYbR) (Claude Doc, 2026-11-15). This draft starts from its five layers and its questions SQ1–SQ12, and replaces its staging (S1–S4) with the milestones in §2.4.
+- **The numbers:** [docs/skills-model.md](../skills-model.md), the skills' rules and measurements, kept up to date as each milestone lands.
 - **Preceding**: [Epic 10 Part 3](epic-10-part-3.md), whose K9 laid the skill foundation and K9.8 its seam. **Builds on**:
   - K9: seven skills as a table, practice, levels 0–10 in four bands, what a level does;
   - K9.8: `SkillWork`, the effective level (`CrawlerSkills.Level`) and `PracticeSource`;
