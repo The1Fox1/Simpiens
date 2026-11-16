@@ -1,0 +1,57 @@
+# Epic 11: the implementation plans (index)
+
+Working document (AGENTS.md, Documentation Protocol 6). The producer asked for it on 2026-11-16, after Epic 10's close-out: "Prepare to work on Epic 11. Decide how many implementation plans you will need to complete the work and have the first one drafted and ready to start". The design is the epic, [`docs/epics/epic-11.md`](../docs/epics/epic-11.md); its questions Q1–Q16 stand by exception.
+
+**Complexity:** Very Complex as an epic ([rubric](rules/complexity-grading.md)): its size, and four systems with no precedent (techniques, callings, named creatures, unique items). Each plan breaks its share below that.
+
+## The decision: four plans, one PR each
+
+| Plan | Milestones | What the player gets | Estimate (agent days) | Complexity | The producer's stops |
+| :--- | :--- | :--- | :-: | :--- | :--- |
+| [`epic11_craft_plan.md`](epic11_craft_plan.md) | S0–S3, **Craft** | Passions, practice by challenge, the mastery budget and upkeep, teachers (mentors, manuals, the drill yard) | 11–15 | Very Complex as a whole; every step Basic or Possibly Complex | The go; the look at S1; S2's soak bands (by exception); the merge |
+| Technique and Calling (drafted when plan 1 merges) | S4–S5 | A technique chosen at each band, sponsored by the patron; callings, party roles, capstones, Leadership | 8–11 | Very Complex; S4's effects step supervised | The look at S4; the merge |
+| Legend (drafted when plan 2 merges) | S6–S7 | Epithets, scars and earned traits from deeds; named creatures after the Nemesis system | 8–11 | Very Complex; S7 supervised | The looks at S6 and S7; the merge |
+| Masterworks and the gate (drafted when plan 3 merges) | S8–S9 | Masterworks with a maker and a story; every scenario together; the play session; the close-out | 5–8 | Very Complex; S8 supervised | The play session; the merge |
+
+In all, 32–45 agent days. Epic 10 Part 3's single plan (K0–K11) was estimated at 31–44 and took eight calendar days.
+
+**Why four:**
+- **Not one.** Part 3 ran as one plan and one branch: 267 commits, and the producer found Epic 10 "already too long as is". Ten milestones on one branch would stay off `main` for weeks and end in one unreviewable PR.
+- **Not ten.** Each PR costs the producer a review and a merge, and three pairs of milestones share their foundations:
+  - Craft's three milestones change the numbers everything after them is tuned on. The epic's order measures them and re-picks the DoDs' seeds once, early.
+  - A calling is built from techniques, so S4 and S5 share one table and one round of balance.
+  - A named creature's name comes from the deeds ledger, which S6 builds into legend.
+- **The layers are the seams.** The plans follow the epic's own layers (Craft, Technique and Calling, Legend, Masterworks). Each ends at one of the producer's looks.
+- **Each plan leaves `main` whole.** Each ends with its DoDs live and the game playable. Craft alone makes a richer outpost, and no earlier plan needs a later one to make sense.
+- **S8 can leave.** If the producer moves masterworks out (Q14's alternative), plan 4 shrinks to the gate.
+- **Later plans are drafted late on purpose.** Each is drafted when its predecessor merges, from what that plan measured: S0's growth curves set S4's numbers, and S6's deeds set S7's names. A plan drafted today would be written twice.
+
+## Order
+1. **Plan 1, Craft:** branch `feat/epic11-craft`, cut from `main` at `30c931b` (after PR #24). Work starts at the producer's go.
+2. **Plan 2:** drafted when plan 1 merges, from its measurements, on a new branch cut from `main`.
+3. **Plans 3 and 4** in turn, the same way.
+4. **The epic's close-out** comes with plan 4. Every plan here is then deleted, and this index with them.
+
+## What every plan shares
+- **Branches and PRs:** one PR per plan into `main`, from one branch cut from `main` after the previous merge, with a commit per step. Never stacked.
+  - Check `git branch --show-current` before every commit.
+  - Push only on the producer's word, with an explicit refspec: `git push origin <branch>`. Merge only on the producer's word.
+- **Decisions are defaults.** The producer answers only where they disagree. Silence keeps a default, but silence is not a go.
+- **Numbering:** the epic's decisions run D1 onward across all four plans, and its findings F1 onward. Each moves to the epic's §0 or §7 as its step lands. The questions stay Q1–Q16.
+- **One record of who a crawler has become** (A3): plan 1 lays out `CrawlerTraits` with room for every later plan's fields (techniques, a calling, an epithet, earned traits, scars). Plans 2 and 3 then fill reserved bytes without changing its shape.
+- **Saves:**
+  - Format 12 comes with plan 1, for the traits record. Plan 3 raises it again if the creature record grows (named creatures), and plan 4 if items become instances.
+  - At most one raise per PR. Old saves are refused with a reason.
+- **The numbers' home:** `docs/skills-model.md`, created at S0. It holds the skills' rules and measurements, as the economy and time models hold theirs, and outlives the plans.
+- **Cards and the dossier still fit 720 rows** (the epic's risk row). The roster shows a calling and a best band; the dossier holds the rest.
+- **Each plan shrinks as it closes:**
+  - its open findings go to the epic, and data still needed for a decision goes to `docs/`;
+  - its decisions go to `architecture_history.md`;
+  - then the plan is deleted (Documentation Protocol 6).
+
+## Gates (every milestone of every plan)
+- `dotnet build dotnet/Simpiens.slnx`, then `dotnet test dotnet/Simpiens.slnx`. Commit messages give only the counts that ran. (Build the whole solution first: a one-project build once left the host stale for the golden check.)
+- `golden check` 3/3. The hashes are re-recorded only for a deliberate change, in a commit of their own that names the cause.
+- `scripts/test-client-in-container.sh`, with renders matching byte for byte. Changed renders are looked at first, then re-recorded there, in a commit of their own.
+- `dotnet build dotnet/Simpiens.Desktop -p:XnaFramework=MonoGame` and `scripts/build-android.sh` compile, with 0 warnings.
+- The 23 gate seeds and the soak. Seeds 1–120, with and without the guild, at each milestone's end.
