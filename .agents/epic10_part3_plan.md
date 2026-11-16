@@ -631,8 +631,8 @@ Each step is a commit. After each: a build with 0 warnings and `dotnet test`. Th
 **Complexity:** Possibly Complex: the whole part's scenarios and bands; the close-out is Basic.
 - **Under the same go** (K10's). The play session (K11.4) is the producer's: its brief is written for the producer's return, and Part 3 is marked COMPLETED only after it.
 - **The plan:**
-  - [ ] **K11.1a Every scenario together:** [Possibly Complex: a live scenario over every player] the workshop, hunt and guild players on one seed through the gate's breach, the day's checks, deaths and rescues counted.
-  - [ ] **K11.1b Saves at the hard moments:** [Possibly Complex: save and load] a save mid-fight, one with a crawler bleeding out and one with a crawler being carried, each loaded to the same world hash as the run that went on, byte for byte.
+  - [x] **K11.1a Every scenario together:** [Possibly Complex: a live scenario over every player] the workshop, hunt and guild players on one seed through the gate's breach, the day's checks, deaths and rescues counted.
+  - [x] **K11.1b Saves at the hard moments:** [Possibly Complex: save and load] a save mid-fight, one with a crawler bleeding out and one with a crawler being carried, each loaded to the same world hash as the run that went on, byte for byte.
   - [ ] **K11.2 The soak's `hunting` profile:** [Possibly Complex: bands by default, for the producer] the workshop player making blades, the hunt player and the guild clearing, over three days on its seeds: treasuries, kills, rescues and deaths a day, bands proposed from the measurement; F8's option B (the guild player's reserve) and F10's trace with it.
   - [ ] **K11.3 Seeds 1–120,** [Basic to run; any failure it finds is graded on its own] with and without the guild.
   - [ ] **K11.4 The producer's play session:** [Basic: a brief] what to play and what to look at, in the epic's §4.
