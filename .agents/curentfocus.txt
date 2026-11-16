@@ -7,7 +7,7 @@
 # "Done" = emerges in the live simulation: a live scenario on the real session with
 # nothing injected, headless in dotnet test since 2026-10-23 (ROADMAP §1B).
 # Keep this file short: history lives in the epic docs, .agents/architecture_history.md and git.
-# Last reconciled: 2026-11-15 (the roadmap re-sequenced: Epic 10 ends with Part 3; Epic 11 is the skill system [QUEUED, Milestone 5]; the descent is Epic 12 [QUEUED, Milestone 6]; the MCP narrative is Epic N [QUEUED, unscheduled]. Epic 10 Part 3 ACTIVE: K0-K8 done, K8's look passed by exception with "Let's tackle the skills system now"; K9 the skill system done 2026-11-14 (D49-D53 for review, F9-F11); K9.8 skill foundation reinforcement done 2026-11-15 (D54-D56); stop for the producer's word; Part 2 ACTIVE: merged as PR #23, its play session and close-out remain)
+# Last reconciled: 2026-11-15 (the roadmap re-sequenced: Epic 10 ends with Part 3; Epic 11 is the skill system [QUEUED, Milestone 5]; the descent is Epic 12 [QUEUED, Milestone 6]; the MCP narrative is Epic N [QUEUED, unscheduled]. Epic 10 Part 3 ACTIVE: K0-K8 done, K8's look passed by exception with "Let's tackle the skills system now"; K9 the skill system done 2026-11-14 (D49-D53 for review, F9-F11); K9.8 skill foundation reinforcement done 2026-11-15 (D54-D56); K10-K11 done 2026-11-15 under the AFK go but for the play session (D57-D73, F12-F14); Part 2 ACTIVE: merged as PR #23, its play session and close-out remain)
 # ------------------------------------------------------------------------------
 
 CURRENT FOCUS
@@ -119,7 +119,13 @@ CURRENT FOCUS
   the kind of work (SkillWork) for reading an effective level (CrawlerSkills) and practising (a PracticeSource with
   a ceiling), and a lair judged by the crawler's skill; D54-D56; AHuntBountyClearsALair moved to gate seed 3; golden
   unchanged.
-  NEXT: the producer's word on K9.8, then K10, bosses and the gate.
+  2026-11-15, the producer's AFK go ("Let's close his out by finishing K10-K11"): K10, bosses and the gate, done the
+  same day (the Old Stair at the floor's west edge; the Matriarch heading the warren and calling her brood; the
+  Gatekeeper's slam, fury, healing between attempts and single defeat; the breach as a saved world flag with its
+  chronicle line and hard cutscene; boss art, health bars and the gate on the map; TheGuildBreaksTheGatekeeper on the
+  default seed; D57-D72 for the developer's review), and K11 done but for the play session (every scenario together,
+  saves at the hard moments, the soak's hunting profile D73, seeds 1-120; findings F12-F14).
+  NEXT: the producer's play session (K11.4, its brief in the epic's §4), then Part 3 and Milestone 4 COMPLETED.
   2026-11-15, the producer: "Epic 10 will need to end with part 3, it's already too long as is." Part 3's close-out
   (with Part 2's) ends Epic 10. Then Epic 11, the skill system (docs/epics/epic-11.md, QUEUED, S0-S9, its Q1-Q16
   by exception; no plan until the producer's go). The descent, once Part 4, is Epic 12; the MCP narrative is Epic N.
@@ -152,7 +158,7 @@ TRACK A: CORE SIMULATION & COGNITION (Epics 1-12, and Epic N unscheduled)
 - Epic 8: Groups & Directives [COMPLETED] (docs/epics/epic-8.md)
 - Epic 9: The Outpost Economy & Public Bounties [COMPLETED 2026-10-15] (docs/epics/epic-9.md; model: docs/economy-model.md)
 - Epic 10 (ends with Part 3, the producer 2026-11-15): Part 1 The Guild and Its Expeditions [COMPLETED 2026-11-01]; Part 2 Workshops and the Guildhall
-  (Milestone 3) [ACTIVE 2026-11-04: W0-W6, milestone T and the stretch done, PR #23; the play session and close-out remain]; Part 3 creatures, combat and the gatekeeper (Milestone 4) [ACTIVE 2026-11-08: K0-K9.8 done; the producer's word on K9.8 is next], re-scoped by the producer 2026-11-07 (combat, equipment, death, loot, creatures, bosses; no Floor 2)
+  (Milestone 3) [ACTIVE 2026-11-04: W0-W6, milestone T and the stretch done, PR #23; the play session and close-out remain]; Part 3 creatures, combat and the gatekeeper (Milestone 4) [ACTIVE 2026-11-08: K0-K11 done; the producer's play session is next], re-scoped by the producer 2026-11-07 (combat, equipment, death, loot, creatures, bosses; no Floor 2)
 - Epic 11: Skills, the Heart and Engine of a Crawler (Milestone 5) [QUEUED 2026-11-15] (docs/epics/epic-11.md): Craft,
   Technique, Calling and Legend over K9's foundation, S0-S9; Doctrine and careers later
 - Epic 12: The Descent (Floor 2, the move; Milestone 6) [QUEUED], not drafted (Epic 10 Part 4 until 2026-11-15)
