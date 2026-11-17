@@ -56,10 +56,10 @@ namespace Simpiens.Simulation.Items
                 ItemCategory.Consumable | ItemCategory.Food, ItemRarity.Common,
                 consume: new[] { new ConsumeEffect(StatKind.Hunger, -40f) }),
             new ItemDefinition(ItemType.IronOre, "IronOre", "Iron Ore",
-                ItemCategory.Resource | ItemCategory.Mineral, ItemRarity.Common),
+                ItemCategory.Resource | ItemCategory.Mineral, ItemRarity.Common) { HarvestChallenge = 4 }, // Epic 11, D5
             new ItemDefinition(ItemType.MedicinalHerb, "MedicinalHerb", "Medicinal Herb",
                 ItemCategory.Resource | ItemCategory.Botanical | ItemCategory.Consumable | ItemCategory.Medicine, ItemRarity.Common,
-                consume: new[] { new ConsumeEffect(StatKind.Health, 30f) }),
+                consume: new[] { new ConsumeEffect(StatKind.Health, 30f) }) { HarvestChallenge = 3 },
             new ItemDefinition(ItemType.ToolPickaxe, "Pickaxe", "Pickaxe",
                 ItemCategory.Equipment | ItemCategory.Tool | ItemCategory.Mineral, ItemRarity.Uncommon,
                 // Mines 1.5 times as fast and wears by the mineral unit (Epic 10 Part 2, D36, D37): 40 units, about a week of a
@@ -73,7 +73,7 @@ namespace Simpiens.Simulation.Items
                 equipment: new EquipmentBlock(SlotKind.Body, durability: 1500, WearRule.PerHazardTick,
                     new StatModifier(StatKind.HazardResistance, ModifierOp.Add, 0.5f))),
             new ItemDefinition(ItemType.Glowstone, "Glowstone", "Glowstone",
-                ItemCategory.Resource | ItemCategory.Mineral | ItemCategory.Hazardous, ItemRarity.Rare),
+                ItemCategory.Resource | ItemCategory.Mineral | ItemCategory.Hazardous, ItemRarity.Rare) { HarvestChallenge = 7 }, // a Journeyman's seam
             // Made at the still from two herbs; heals 80 at once (Epic 10 Part 2, W2, Q5, D42). Medicine, so the herb reflex
             // drinks it under the treat line; not salvage: the stall doesn't buy it back
             new ItemDefinition(ItemType.HealingDraught, "HealingDraught", "Healing Draught",

@@ -59,6 +59,9 @@ namespace Simpiens.Simulation.Items
         /// <summary>Ticks of an artisan's work one make takes.</summary>
         public ushort WorkTicks { get; }
 
+        /// <summary>The level a make demands (Epic 11, S1.3, Q8, D5): an artisan above it learns less from each. An Apprentice's 3 unless the row says.</summary>
+        public byte Challenge { get; init; } = 3;
+
         public int InputCount => _inputs.Length;
         public RecipeInput GetInput(int index) => _inputs[index];
 

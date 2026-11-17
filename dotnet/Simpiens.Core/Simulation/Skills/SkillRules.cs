@@ -63,6 +63,21 @@ namespace Simpiens.Simulation.Skills
         /// <summary>A fallen crawler carried out of danger, or stood up with a medicine.</summary>
         public const int RescueExperience = 100;
 
+        // --- Practice by challenge (Epic 11, S1.3, Q8, D5) ---
+
+        /// <summary>
+        /// What share of an act's practice a crawler takes, in hundredths, by how far its level stands above the act's
+        /// challenge: all of it at or below, then 75, 55, 40, 25, 20, 15, and a tenth at seven levels or more above. A rat
+        /// (2) teaches a Novice fully and a Journeyman 6 a quarter; a beetle (7) teaches a Journeyman fully.
+        /// </summary>
+        private static readonly int[] ChallengeShares = { 100, 75, 55, 40, 25, 20, 15, 10 };
+
+        public static int ChallengePercent(int level, int challenge)
+        {
+            int above = Clamp(level) - Clamp(challenge);
+            return above <= 0 ? 100 : ChallengeShares[above < ChallengeShares.Length ? above : ChallengeShares.Length - 1];
+        }
+
         // --- What a level does (K9.3, Q20) ---
 
         /// <summary>A fighter's hit chance rises by this a level: 70% unskilled, 90% at Master 10 (the combat rule caps it at 95%).</summary>

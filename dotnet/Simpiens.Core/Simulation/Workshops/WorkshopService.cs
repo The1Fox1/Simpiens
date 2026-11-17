@@ -517,7 +517,8 @@ namespace Simpiens.Simulation.Workshops
             var step = Crafting.Work(ref station, ref stall, out bool stallChanged, GradeOf(hand, station.Kind), Simpiens.Simulation.Skills.SkillRules.MakeFactor(level));
             if (station.Made > made && hand != null)
             {
-                host.Practise(hand, Simpiens.Simulation.Skills.SkillWork.Make(station.Kind), Simpiens.Simulation.Skills.SkillRules.MakeExperience, Simpiens.Simulation.Skills.PracticeSource.Work);
+                host.Practise(hand, Simpiens.Simulation.Skills.SkillWork.Make(station.Kind), Simpiens.Simulation.Skills.SkillRules.MakeExperience,
+                    Simpiens.Simulation.Skills.PracticeSource.WorkAt(RecipeBook.For(item)?.Challenge ?? Simpiens.Simulation.Skills.SkillRules.MaxLevel)); // by the recipe's challenge (Epic 11, S1.3)
                 hand.AddDeed(Simpiens.Simulation.Skills.Deed.Make); // a make is a deed (Epic 11, S0.5)
             }
             if (stallChanged) host.UpdateStall(stall);

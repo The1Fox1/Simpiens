@@ -200,9 +200,11 @@ namespace Simpiens.Simulation
             if (skill == Simpiens.Simulation.Skills.Skill.None) return;
             var before = agent.Skills.Band(skill);
             int had = agent.Skills.Experience(skill);
-            // A passion speeds every source of practice, and work at it eases frustration (Epic 11, S1.2, Q7, D4)
+            // A passion speeds every source of practice, and work at it eases frustration (Epic 11, S1.2, Q7, D4); an act
+            // below the crawler's level teaches it less (S1.3, Q8, D5)
             var passion = Simpiens.Simulation.Skills.PassionTable.Get(agent.Traits.PassionFor(skill));
-            experience = (int)(((long)experience * passion.PracticePercent + 50) / 100);
+            int challenge = Simpiens.Simulation.Skills.SkillRules.ChallengePercent(agent.Skills.Level(skill), source.Challenge);
+            experience = (int)(((long)experience * passion.PracticePercent * challenge + 5000) / 10000);
             if (passion.FrustrationEased > 0f) agent.RelieveFrustration(passion.FrustrationEased);
             bool gained = agent.Practise(skill, experience, out int level, source.Ceiling);
             int granted = agent.Skills.Experience(skill) - had;

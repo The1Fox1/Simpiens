@@ -352,17 +352,17 @@ namespace Simpiens.Testing.Economy
         /// <summary>
         /// Practice (Epic 10 Part 2, W4, D55, D57; a skill since Epic 10 Part 3, K9.3c): each make is practice in the
         /// station's skill, an artisan's grade is its band, and the forge stocks each make at it. A new hand's thirty-six
-        /// pickaxes: ten Standard as a Novice, twenty-five Fine as an Apprentice, the last Masterwork as a Journeyman; and a
+        /// ring coats (a recipe that demands a Journeyman's level, so each make is full practice: Epic 11, D5): ten Standard as a Novice, twenty-five Fine as an Apprentice, the last Masterwork as a Journeyman; and a
         /// skilled hand's makes go faster.
         /// </summary>
         private void ValidatePracticeRaisesTheGrade()
         {
             var o = NewOutpost(1000);
-            o.Sim.UpdateStall(o.Sim.ActiveStalls[0].WithGood(new StallGood(ItemType.ToolPickaxe, StallRole.Sells, 30, 0)).WithStock(ItemType.IronOre, 200));
+            o.Sim.UpdateStall(o.Sim.ActiveStalls[0].WithGood(new StallGood(ItemType.RingCoat, StallRole.Sells, 30, 0)).WithStock(ItemType.IronOre, 200));
             Assert(o.Sim.Workshops.Build(o.Sim, o.Forge, 0) == WorkshopRules.Check.Ok, "The forge is built.");
             var smith = Crawler(o, 80, 60);
             Assert(o.Sim.Workshops.Hire(o.Sim, smith.AgentId, o.Forge, 10, 0) == WorkshopRules.Check.Ok, "The smith is hired.");
-            Assert(o.Sim.Workshops.SetOrder(o.Sim, o.Forge, ItemType.ToolPickaxe, 36), "Thirty-six pickaxes are ordered.");
+            Assert(o.Sim.Workshops.SetOrder(o.Sim, o.Forge, ItemType.RingCoat, 36), "Thirty-six ring coats are ordered (a recipe that demands a Journeyman's 6, so practice is full all the way: Epic 11, D5).");
             smith.Skills = default; // by hand: a new hand, unskilled
             var smithing = Simpiens.Simulation.Skills.Skill.Smithing;
             Assert(WorkshopService.GradeOf(smith, StationKind.Forge) == Grades.Standard && WorkshopService.GradeOf(null, StationKind.Forge) == Grades.Standard, "A new artisan works at Standard, as a station with none.");
@@ -377,14 +377,14 @@ namespace Simpiens.Testing.Economy
                 if (made == 10) eleventhMake = ticks;
                 ticks = 0;
             }
-            o.Sim.ActiveStalls[0].TryGetGood(ItemType.ToolPickaxe, out var shelf);
+            o.Sim.ActiveStalls[0].TryGetGood(ItemType.RingCoat, out var shelf);
             int experience = smith.Skills.Experience(smithing);
             Assert(o.Sim.Workshops[o.Forge].Made == 36 && experience == 36 * Simpiens.Simulation.Skills.SkillRules.MakeExperience, $"Each make is practice ({experience} experience after {o.Sim.Workshops[o.Forge].Made}).");
             Assert(smith.Skills.Level(smithing) == 6 && WorkshopService.GradeOf(smith, StationKind.Forge) == Grades.Masterwork, "From thirty-five makes a Journeyman, who makes Masterwork.");
             Assert(shelf.Stock == 36 && shelf.Fine == 25 && shelf.Masterwork == 1 && shelf.BestGrade == Grades.Masterwork,
                 $"The shelf holds them by grade: 10 Standard, 25 Fine, 1 Masterwork (stock {shelf.Stock}, Fine {shelf.Fine}, Masterwork {shelf.Masterwork}).");
-            int work = RecipeBook.For(ItemType.ToolPickaxe).WorkTicks;
-            Assert(firstMake == work && eleventhMake == Crafting.WorkTicks(RecipeBook.For(ItemType.ToolPickaxe), false, Simpiens.Simulation.Skills.SkillRules.MakeFactor(3)) && eleventhMake < firstMake,
+            int work = RecipeBook.For(ItemType.RingCoat).WorkTicks;
+            Assert(firstMake == work && eleventhMake == Crafting.WorkTicks(RecipeBook.For(ItemType.RingCoat), false, Simpiens.Simulation.Skills.SkillRules.MakeFactor(3)) && eleventhMake < firstMake,
                 $"An unskilled hand takes the recipe's time, an Apprentice less ({firstMake} then {eleventhMake} ticks against {work}).");
             TestLog.Log("[PASS] Test 11: each make is practice; an artisan's band is the grade it makes, and skill quickens its work.");
         }

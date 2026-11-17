@@ -153,7 +153,7 @@ Working document (AGENTS.md, Documentation Protocol 6), one of Epic 11's plans (
   - **The checks:**
     - a validator: a burning hand gains twice a passionless one's practice from the same act, the ceiling still holds, and frustration falls;
     - golden re-recorded in its own commit.
-- [ ] **S1.3 Practice by challenge** [Possibly Complex: a behaviour change, numbers for each kind]
+- [x] **S1.3 Practice by challenge** (done 2026-11-16; the draught set at 5, the still's only recipe) [Possibly Complex: a behaviour change, numbers for each kind]
   - **The source:** `PracticeSource.Challenge`, and D5's table.
   - **The columns:** creatures, items and recipes.
   - **The callers:** the four callers pass the challenge of what they practise on.

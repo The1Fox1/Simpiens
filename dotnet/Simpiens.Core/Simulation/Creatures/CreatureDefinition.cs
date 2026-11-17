@@ -86,6 +86,12 @@ namespace Simpiens.Simulation.Creatures
         /// <summary>A boss: one of its kind, drawn with a health bar and named by the chronicle.</summary>
         public bool IsBoss { get; init; }
 
+        /// <summary>
+        /// The level a fight with this kind demands (Epic 11, S1.3, Q8, D5): a crawler above it learns less from its blows and
+        /// shots (<see cref="Simpiens.Simulation.Skills.SkillRules.ChallengePercent"/>). A rat 2, a beetle 7, a boss 9 or 10.
+        /// </summary>
+        public byte Challenge { get; init; } = 5;
+
         /// <summary>Its swing strikes every crawler on its feet in its reach, one roll a foe in id order (the combat rule's D3).</summary>
         public bool Slam { get; init; }
 

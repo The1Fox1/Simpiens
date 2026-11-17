@@ -25,16 +25,18 @@ namespace Simpiens.Simulation.Skills
     }
 
     /// <summary>
-    /// Where practice comes from and the highest level it can teach (Epic 10 Part 3, K9.8a). The work itself teaches to the
-    /// last level. A source that teaches less (a book to the end of Apprentice, a mentor to below its own level) is a kind
-    /// and a ceiling, and the simulation's one entry for practice holds the skill to it.
+    /// Where practice comes from, the highest level it can teach (Epic 10 Part 3, K9.8a) and the level the act demands (Epic
+    /// 11, S1.3, Q8). The work itself teaches to the last level. A source that teaches less (a book to the end of Apprentice,
+    /// a mentor to below its own level) is a kind and a ceiling, and the simulation's one entry for practice holds the skill
+    /// to it. A crawler whose level stands above the act's challenge learns less from it (<see cref="SkillRules.ChallengePercent"/>).
     /// </summary>
     public readonly struct PracticeSource
     {
-        public PracticeSource(PracticeKind kind, int ceiling)
+        public PracticeSource(PracticeKind kind, int ceiling, int challenge = SkillRules.MaxLevel)
         {
             Kind = kind;
-            Ceiling = (byte)(ceiling < 0 ? 0 : ceiling > SkillRules.MaxLevel ? SkillRules.MaxLevel : ceiling);
+            Ceiling = Clamp(ceiling);
+            Challenge = Clamp(challenge);
         }
 
         public PracticeKind Kind { get; }
@@ -42,9 +44,17 @@ namespace Simpiens.Simulation.Skills
         /// <summary>The highest level this practice can bring a skill to; experience past that level's is lost.</summary>
         public byte Ceiling { get; }
 
-        /// <summary>Doing the work itself: it teaches to the last level.</summary>
+        /// <summary>The level the act demands (Q8): a rat a Novice's, a beetle a Journeyman's; full practice at or above it.</summary>
+        public byte Challenge { get; }
+
+        /// <summary>Doing the work itself, at the highest challenge: it teaches to the last level, fully.</summary>
         public static PracticeSource Work => new PracticeSource(PracticeKind.Work, SkillRules.MaxLevel);
 
-        public override string ToString() => $"{Kind} (to {Ceiling})";
+        /// <summary>Doing the work itself on something that demands <paramref name="challenge"/> (Epic 11, S1.3): a creature, a node, a recipe.</summary>
+        public static PracticeSource WorkAt(int challenge) => new PracticeSource(PracticeKind.Work, SkillRules.MaxLevel, challenge);
+
+        private static byte Clamp(int level) => (byte)(level < 0 ? 0 : level > SkillRules.MaxLevel ? SkillRules.MaxLevel : level);
+
+        public override string ToString() => $"{Kind} (to {Ceiling}, challenge {Challenge})";
     }
 }

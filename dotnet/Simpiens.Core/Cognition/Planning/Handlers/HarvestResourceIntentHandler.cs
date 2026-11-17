@@ -198,7 +198,8 @@ namespace Simpiens.Cognition.Planning.Handlers
                 var harvester = node.Agent;
                 if (harvester != null && yieldItem.IsSalvage()) harvester.Activity.RecordSalvageHarvest(context.CurrentTick);
                 // A unit mined or foraged is practice (Epic 10 Part 3, K9.2)
-                if (harvester != null) context.Practise(harvester, Simpiens.Simulation.Skills.SkillWork.Harvest(yieldItem), Simpiens.Simulation.Skills.SkillRules.UnitExperience, Simpiens.Simulation.Skills.PracticeSource.Work);
+                if (harvester != null) context.Practise(harvester, Simpiens.Simulation.Skills.SkillWork.Harvest(yieldItem), Simpiens.Simulation.Skills.SkillRules.UnitExperience,
+                    Simpiens.Simulation.Skills.PracticeSource.WorkAt(ItemCatalog.Get(yieldItem)?.HarvestChallenge ?? Simpiens.Simulation.Skills.SkillRules.MaxLevel)); // by the item's challenge (Epic 11, S1.3)
                 if (harvester != null && ItemCatalog.Is(yieldItem, ItemCategory.Mineral)) WearTool(harvester, node, context);
                 if (SimLog.Traces(SimLog.Economy, Microsoft.Extensions.Logging.LogLevel.Debug, node.Id))
                 {
