@@ -161,7 +161,7 @@ Working document (AGENTS.md, Documentation Protocol 6), one of Epic 11's plans (
     - `SkillsValidator` repeats Q8's examples: a rat teaches a Novice fully and a Journeyman a quarter, and a beetle teaches a Journeyman fully;
     - the creature catalogue's validator requires a challenge on every kind;
     - golden re-recorded in its own commit.
-- [ ] **S1.4 Passions weigh the work** [Possibly Complex: cognition reads the copy]
+- [x] **S1.4 Passions weigh the work** (done 2026-11-16) [Possibly Complex: cognition reads the copy]
   - **The rule:** D6 through `Considerations`; no planner fact.
   - **The check:** given two equal nodes, a crawler burning for foraging picks the herbs and a passionless one picks by today's score.
 - [ ] **S1.5 Re-measured** [Possibly Complex: measuring]

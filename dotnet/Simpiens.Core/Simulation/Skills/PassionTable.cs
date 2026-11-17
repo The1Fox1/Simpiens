@@ -7,8 +7,9 @@ namespace Simpiens.Simulation.Skills
     /// <summary>One step of the passions' scale: a row of <see cref="PassionTable"/>.</summary>
     public sealed class PassionDefinition
     {
-        public PassionDefinition(Passion id, string name, string displayName, int practicePercent, float frustrationEased, string glyph)
+        public PassionDefinition(Passion id, string name, string displayName, int practicePercent, float frustrationEased, string glyph, float workWeight = 1f)
         {
+            WorkWeight = workWeight;
             Id = id;
             Name = name;
             DisplayName = displayName;
@@ -31,6 +32,9 @@ namespace Simpiens.Simulation.Skills
         /// <summary>Frustration each act of practice at the skill eases (Q7: "work at a passion relieves frustration").</summary>
         public float FrustrationEased { get; }
 
+        /// <summary>How much more the crawler weighs work at the skill when it chooses what to do (Epic 11, S1.4, D6): ×1, ×1.15, ×1.3.</summary>
+        public float WorkWeight { get; }
+
         /// <summary>The UI kit's glyph the dashboard marks it with; null for none.</summary>
         public string Glyph { get; }
 
@@ -47,8 +51,8 @@ namespace Simpiens.Simulation.Skills
         private static readonly PassionDefinition[] ById =
         {
             new PassionDefinition(Passion.None, "None", "", 100, 0f, null),
-            new PassionDefinition(Passion.Keen, "Keen", "keen", 150, 2f, "glyph/passion-keen"),
-            new PassionDefinition(Passion.Burning, "Burning", "burning", 200, 4f, "glyph/passion-burning")
+            new PassionDefinition(Passion.Keen, "Keen", "keen", 150, 2f, "glyph/passion-keen", workWeight: 1.15f),
+            new PassionDefinition(Passion.Burning, "Burning", "burning", 200, 4f, "glyph/passion-burning", workWeight: 1.3f)
         };
 
         /// <summary>Every step, in id order.</summary>

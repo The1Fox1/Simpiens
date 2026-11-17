@@ -11,6 +11,13 @@ namespace Simpiens.Cognition.Planning
     /// </summary>
     public static class Considerations
     {
+        /// <summary>
+        /// How much more a crawler weighs <paramref name="work"/> for the passion it holds for the work's skill (Epic 11, S1.4,
+        /// A10, D6): ×1 with none, ×1.15 keen, ×1.3 burning. From its copy of the traits record; no planner fact.
+        /// </summary>
+        public static float PassionWeight(in AgentContext context, in Simpiens.Simulation.Skills.SkillWork work) =>
+            Simpiens.Simulation.Skills.PassionTable.Get(context.Traits.PassionFor(Simpiens.Simulation.Skills.SkillTable.SkillFor(work))).WorkWeight;
+
         /// <summary>The session's economy tuning as seen by cognition (published on the world snapshot).</summary>
         public static EconomyTuning Economy(in AgentContext context)
         {

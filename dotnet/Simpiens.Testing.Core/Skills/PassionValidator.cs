@@ -23,7 +23,8 @@ namespace Simpiens.Testing.Skills
             ValidateTheDrawAndItsCaps();
             ValidateTheLeans();
             ValidatePassionSpeedsPractice();
-            TestLog.Log("<color=green>[PassionValidator] ALL 4 TESTS PASSED SUCCESSFULLY!</color>");
+            ValidatePassionWeighsTheWork();
+            TestLog.Log("<color=green>[PassionValidator] ALL 5 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateTheTable()
@@ -117,6 +118,34 @@ namespace Simpiens.Testing.Skills
             sim.Practise(burning, SkillWork.Fight(ranged: false), 40, PracticeSource.Work);
             Assert(burning.Skills.Experience(Skill.Melee) == 40, "A passion speeds only the skill it is for.");
             TestLog.Log("[PASS] Test 4: a passion speeds its skill's practice, x1.5 or x2, to the ceiling and no further, and eases frustration.");
+        }
+
+        private void ValidatePassionWeighsTheWork()
+        {
+            // Epic 11, S1.4 (D6): two salvage nodes alike and as far, one ore and one herbs; the passionless pick by today's score
+            // (here a tie, broken by id), the burning go for the work they love
+            var ore = new EntityId(1, 0, 0, 1);
+            var herbs = new EntityId(2, 0, 0, 1);
+            Simpiens.Cognition.Memory.AgentMemory Memory()
+            {
+                var memory = new Simpiens.Cognition.Memory.AgentMemory();
+                memory.SpatialMemoryMap[ore] = new Simpiens.Cognition.Memory.SpatialMemoryRecord(ore, Simpiens.Simulation.Spatial.EntityType.Resource, new GridPoint(5, 0), 1, ItemType.IronOre);
+                memory.SpatialMemoryMap[herbs] = new Simpiens.Cognition.Memory.SpatialMemoryRecord(herbs, Simpiens.Simulation.Spatial.EntityType.Resource, new GridPoint(-5, 0), 1, ItemType.MedicinalHerb);
+                return memory;
+            }
+            EntityId Choice(Skill loved, Passion passion)
+            {
+                var traits = default(CrawlerTraits);
+                traits.SetPassion(loved, passion);
+                var context = new AgentContext(EntityId.Generate(), Vec2.Zero, new AgentNeeds(20f, 100f, 100f), 0f, null, Memory(), 10, traits: traits);
+                Assert(Simpiens.Cognition.Planning.ResourceTargeting.TrySelectSalvage(context, ItemType.None, out var best), "Salvage is chosen.");
+                return best.EntityId;
+            }
+            Assert(Choice(Skill.None, Passion.None) == ore, "Alike and as far, the passionless take the lower id.");
+            Assert(Choice(Skill.Foraging, Passion.Burning) == herbs && Choice(Skill.Foraging, Passion.Keen) == herbs, "Burning or keen for foraging, it goes for the herbs.");
+            Assert(Choice(Skill.Mining, Passion.Burning) == ore, "Burning for mining, the ore.");
+            Assert(Simpiens.Cognition.Planning.Considerations.PassionWeight(default, SkillWork.Harvest(ItemType.IronOre)) == 1f, "No passion weighs nothing.");
+            TestLog.Log("[PASS] Test 5: a passion weighs the salvage choice toward the work it loves.");
         }
 
         private static void Near(int count, float share, string what)
