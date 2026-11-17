@@ -1,6 +1,8 @@
 using System;
 using Simpiens.Cognition.Contracts;
 using Simpiens.Simulation;
+using Simpiens.Simulation.Economy;
+using Simpiens.Simulation.Items;
 using Simpiens.Simulation.Skills;
 
 namespace Simpiens.Testing.Skills
@@ -20,7 +22,8 @@ namespace Simpiens.Testing.Skills
             ValidateTheTable();
             ValidateTheDrawAndItsCaps();
             ValidateTheLeans();
-            TestLog.Log("<color=green>[PassionValidator] ALL 3 TESTS PASSED SUCCESSFULLY!</color>");
+            ValidatePassionSpeedsPractice();
+            TestLog.Log("<color=green>[PassionValidator] ALL 4 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateTheTable()
@@ -87,6 +90,33 @@ namespace Simpiens.Testing.Skills
             Assert(boldMelee > cautiousMelee * 1.5, $"The bold love melee more often ({boldMelee} against the cautious's {cautiousMelee}).");
             Assert(talentLoved > plainLoved * 1.5, $"A talent is loved more often ({talentLoved} against {plainLoved} untalented).");
             TestLog.Log($"[PASS] Test 3: personality and talent lean the draw: melee loved by {boldMelee} bold against {cautiousMelee} cautious; alchemy by {talentLoved} talented against {plainLoved}.");
+        }
+
+        private void ValidatePassionSpeedsPractice()
+        {
+            // Epic 11, S1.2 (D4): practice's one entry multiplies by the passion, holds the ceiling, and eases frustration
+            var sim = new SimulationManager(new WorldRegistry(), null);
+            Simpiens.Cognition.AgentState Crawler(Passion passion)
+            {
+                var state = new Simpiens.Cognition.AgentState(EntityId.Generate()) { Frustration = 50f };
+                var traits = default(CrawlerTraits);
+                traits.SetPassion(Skill.Mining, passion);
+                state.Traits = traits;
+                return state;
+            }
+            var plain = Crawler(Passion.None);
+            var keen = Crawler(Passion.Keen);
+            var burning = Crawler(Passion.Burning);
+            foreach (var c in new[] { plain, keen, burning }) sim.Practise(c, SkillWork.Harvest(ItemType.IronOre), 40, PracticeSource.Work);
+            Assert(plain.Skills.Experience(Skill.Mining) == 40 && keen.Skills.Experience(Skill.Mining) == 60 && burning.Skills.Experience(Skill.Mining) == 80,
+                $"Practice x1, x1.5, x2 ({plain.Skills.Experience(Skill.Mining)}, {keen.Skills.Experience(Skill.Mining)}, {burning.Skills.Experience(Skill.Mining)}).");
+            Assert(plain.Frustration == 50f && keen.Frustration == 50f - PassionTable.Get(Passion.Keen).FrustrationEased
+                && burning.Frustration == 50f - PassionTable.Get(Passion.Burning).FrustrationEased, "Work at a passion eases frustration; work without one doesn't.");
+            sim.Practise(burning, SkillWork.Harvest(ItemType.IronOre), 5000, new PracticeSource(PracticeKind.Work, 2));
+            Assert(burning.Skills.Level(Skill.Mining) == 2 && burning.Skills.Experience(Skill.Mining) == SkillRules.ExperienceFor(2), "A passion speeds practice but never past the source's ceiling.");
+            sim.Practise(burning, SkillWork.Fight(ranged: false), 40, PracticeSource.Work);
+            Assert(burning.Skills.Experience(Skill.Melee) == 40, "A passion speeds only the skill it is for.");
+            TestLog.Log("[PASS] Test 4: a passion speeds its skill's practice, x1.5 or x2, to the ceiling and no further, and eases frustration.");
         }
 
         private static void Near(int count, float share, string what)

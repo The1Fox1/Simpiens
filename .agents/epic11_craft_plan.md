@@ -148,7 +148,7 @@ Working document (AGENTS.md, Documentation Protocol 6), one of Epic 11's plans (
   - **The draw:** D3's `PassionTable` and the draw on its own salt, for residents and drifters alike.
   - **The checks:** `PassionValidator` checks the odds and caps over 10,000 draws (at most two keen, one burning), and that no earlier draw moves (looks, names and skills compared with and without passions).
   - **Golden:** only the hashes move, since every record is now non-empty. Re-recorded in its own commit.
-- [ ] **S1.2 Passion speeds practice and eases frustration** [Possibly Complex: a behaviour change]
+- [x] **S1.2 Passion speeds practice and eases frustration** (done 2026-11-16; two DoDs moved, re-picked at S1.5) [Possibly Complex: a behaviour change]
   - **The rule:** D4 in practice's one entry; each act at a passion eases frustration by its row's amount.
   - **The checks:**
     - a validator: a burning hand gains twice a passionless one's practice from the same act, the ceiling still holds, and frustration falls;

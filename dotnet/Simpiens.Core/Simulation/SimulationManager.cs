@@ -187,7 +187,7 @@ namespace Simpiens.Simulation
         /// Practice (Epic 10 Part 3, K9.2, Q18), the simulation's one entry for it: adds <paramref name="experience"/> of
         /// practice at <paramref name="work"/> to <paramref name="agent"/>'s skill for that work (the table's,
         /// <see cref="Simpiens.Simulation.Skills.SkillTable.SkillFor"/>), no higher than <paramref name="source"/>'s ceiling
-        /// (K9.8a). A level gained is logged; a band reached (Apprentice, Journeyman, Master) is told in the chronicle. Main
+        /// (K9.8a). The crawler's passion for the skill multiplies it, and work at a passion eases frustration (Epic 11, D4). A level gained is logged; a band reached (Apprentice, Journeyman, Master) is told in the chronicle. Main
         /// thread.
         /// </summary>
         /// <inheritdoc/>
@@ -200,6 +200,10 @@ namespace Simpiens.Simulation
             if (skill == Simpiens.Simulation.Skills.Skill.None) return;
             var before = agent.Skills.Band(skill);
             int had = agent.Skills.Experience(skill);
+            // A passion speeds every source of practice, and work at it eases frustration (Epic 11, S1.2, Q7, D4)
+            var passion = Simpiens.Simulation.Skills.PassionTable.Get(agent.Traits.PassionFor(skill));
+            experience = (int)(((long)experience * passion.PracticePercent + 50) / 100);
+            if (passion.FrustrationEased > 0f) agent.RelieveFrustration(passion.FrustrationEased);
             bool gained = agent.Practise(skill, experience, out int level, source.Ceiling);
             int granted = agent.Skills.Experience(skill) - had;
             if (granted > 0) Practised?.Invoke(agent, skill, granted, source.Kind);
