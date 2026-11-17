@@ -164,7 +164,7 @@ Working document (AGENTS.md, Documentation Protocol 6), one of Epic 11's plans (
 - [x] **S1.4 Passions weigh the work** (done 2026-11-16) [Possibly Complex: cognition reads the copy]
   - **The rule:** D6 through `Considerations`; no planner fact.
   - **The check:** given two equal nodes, a crawler burning for foraging picks the herbs and a passionless one picks by today's score.
-- [ ] **S1.5 Re-measured** [Possibly Complex: measuring]
+- [x] **S1.5 Re-measured** (done 2026-11-16: `docs/skills-model.md` §5.2; F1 settled, F3, F4; four DoDs re-picked) [Possibly Complex: measuring]
   - **Again:** S0.3's measurement, with passions and challenge.
   - **Every scenario that leans on growth or fights:** `PracticeMakesAVeteran`, `AHuntBountyClearsALair`, `AnArmedCrawlerFightsBack`, `ArchersHoldTheLine`, `TheGuildBreaksTheGatekeeper`, `EveryScenarioPlaysTogether` and the soak's 18 runs.
   - **Moved DoDs:** a DoD whose seed moves is re-picked from a measurement across the gate seeds, never from one seed, in its own commit (Epic 10's lesson).

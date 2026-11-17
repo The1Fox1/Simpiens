@@ -199,8 +199,11 @@ namespace Simpiens.Core.Tests
         /// 23 gate seeds in eight days (9 before the fight's start sent the whole party in together; with four, the mates carry
         /// everyone out); seed 7 until the Matriarch joined the warren (Epic 10 Part 3, K10.2a) moved every creature's id and
         /// timing: still 2 of 23 (seeds 8 and 17), here first at t30345.
+        /// Seed 62 since passions and practice by challenge (Epic 11, S1.5), off the gate seeds: over ten days a death on 1 of
+        /// the 23 (seed 20, too late for its newcomer within the horizon) and on 12 of seeds 21 to 100, rescuers now carrying
+        /// most of the fallen out (Epic 11's finding F4). On this one the first death is at t16981, and a newcomer settles at t37141.
         /// </summary>
-        private const ulong DeathSeed = 8;
+        private const ulong DeathSeed = 62;
 
         [Fact]
         public void DeathHasItsCost()
@@ -233,19 +236,32 @@ namespace Simpiens.Core.Tests
             TestContext.Current.TestOutputHelper?.WriteLine($"a lair cleared on {cleared}, a fallen member carried out alive on {carried}, a death on {died} of {OutpostWatch.GateSeeds.Length} seeds");
         }
 
-        /// <summary>The measurement behind the death's seed: two unarmed against the beetles, under the Bold rule (explicit, a few minutes).</summary>
+        /// <summary>
+        /// The measurement behind the death's seed: two unarmed against the beetles, under the Bold rule, over the DoD's ten days
+        /// (explicit, a few minutes). SIMPIENS_SEEDS ("21..100") measures other seeds than the gate's, eight at a time.
+        /// </summary>
         [Fact(Explicit = true)]
         public void MeasureUnderArmedClearsOnTheGateSeeds()
         {
-            int died = 0;
-            foreach (var seed in OutpostWatch.GateSeeds)
+            var seeds = OutpostWatch.GateSeeds;
+            var range = System.Environment.GetEnvironmentVariable("SIMPIENS_SEEDS");
+            if (!string.IsNullOrEmpty(range) && range.Contains(".."))
             {
-                var run = Play(seed, 8 * DayClock.TicksPerDay, null, RetreatRule.Bold, arm: false, CreatureKind.StoneBeetle, size: 2);
-                if (run.Deaths > 0) died++;
-                var failures = run.Watch.DayFailures();
-                TestContext.Current.TestOutputHelper?.WriteLine($"seed {seed}: {run}; days {(failures.Count == 0 ? "hold" : "FAIL: " + string.Join("; ", failures))}{(run.Jitters.Count > 0 ? "; jitter " + string.Join(" | ", run.Jitters) : "")}");
+                var ends = range.Split("..");
+                ulong from = ulong.Parse(ends[0]), to = ulong.Parse(ends[1]);
+                seeds = Enumerable.Range(0, (int)(to - from + 1)).Select(i => from + (ulong)i).ToArray();
             }
-            TestContext.Current.TestOutputHelper?.WriteLine($"a death on {died} of {OutpostWatch.GateSeeds.Length} seeds");
+            var lines = new string[seeds.Length];
+            int died = 0;
+            System.Threading.Tasks.Parallel.For(0, seeds.Length, new System.Threading.Tasks.ParallelOptions { MaxDegreeOfParallelism = 8 }, i =>
+            {
+                var run = Play(seeds[i], 10 * DayClock.TicksPerDay, null, RetreatRule.Bold, arm: false, CreatureKind.StoneBeetle, size: 2);
+                if (run.Deaths > 0) System.Threading.Interlocked.Increment(ref died);
+                var failures = run.Watch.DayFailures();
+                lines[i] = $"seed {seeds[i]}: {run}; days {(failures.Count == 0 ? "hold" : "FAIL: " + string.Join("; ", failures))}{(run.Jitters.Count > 0 ? "; jitter " + string.Join(" | ", run.Jitters) : "")}";
+            });
+            foreach (var line in lines) TestContext.Current.TestOutputHelper?.WriteLine(line);
+            TestContext.Current.TestOutputHelper?.WriteLine($"a death on {died} of {seeds.Length} seeds");
         }
     }
 }

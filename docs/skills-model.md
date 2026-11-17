@@ -94,3 +94,21 @@ Practice a seed with the hunting players: mining about 6,150 experience, foragin
 - **The mastery budget wouldn't bind** (finding F1): nobody holds even two skills past Apprentice in 14 days. Passions (×1.5, ×2) and teachers speed growth, so S1.5 measures again. Unless something changes, `SpecialistsEmerge` can't ask for a skill held by the budget within 14 days.
 - **The asking wage would come early for artisans:** the forge's and the still's hands reach Journeyman on most seeds where they are hired, from day 5.
 - **Ranged and medicine never grow** (finding F2): the hunting players arm blades, and no rescue happened in these runs. Teachers (manuals, the yard) are their only road until the guild arms bows.
+
+### 5.2 With passions and practice by challenge (S1.5, 2026-11-16)
+The same measurement after S1.1–S1.4: passions drawn at spawn, practice ×1.5 or ×2 at a passion, practice scaled by challenge, and passions weighing the salvage choice.
+
+| | No player | Hunting players |
+| :--- | :--- | :--- |
+| Seeds where someone reaches Journeyman | 4 of 23 (from day 9.8) | 15 of 23 (from day 4.5) |
+| Residents holding a Journeyman's skill at day 14 | 0.17 a seed (most 1) | 0.96 a seed (most 3) |
+| Seeds where someone reaches Master | 0 | 0 |
+| Residents with two skills past Apprentice | 0 | 0 |
+| Highest level reached | 6 (mining) | 7 (smithing and alchemy) |
+
+Levels gained a seed with the hunting players: melee 2.0, mining 14.0, foraging 9.3, smithing 4.5 (9 reached Journeyman across the seeds), alchemy 4.1 (10). Ranged and medicine still get no practice.
+
+**What it means:**
+- **Passions widen growth, while challenge caps it.** More crawlers reach Apprentice (mining 67 against 56, foraging 21 against 17), but past Apprentice the common seams and the pickaxe teach less, so the top of the curve barely moves.
+- **The budget still wouldn't bind** (F1, settled here): two skills past Apprentice would need a crawler to reach Journeyman twice, and nobody does it once on most seeds. `SpecialistsEmerge` (S2) asserts the rule at every tick and the asking wage live. The budget's own outcome is proven by a validator.
+

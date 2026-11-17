@@ -70,8 +70,10 @@ namespace Simpiens.Core.Tests
         /// K6's seed, by one hunter alone. Since a lair is judged by the crawler's skill (Epic 10 Part 3, K9.8b) it is still paid
         /// on 20, to two or more on 7 (8 before): on seed 1, K9's seed, a skilled hunter now clears it alone at t10450. On this
         /// one the hunt is posted at t13016 and paid at t17755 to three hunters.
+        /// Gate seed 8 since passions and practice by challenge (Epic 11, S1.5): a hunt paid on 19 of 23, to two or more on 5
+        /// (5, 8, 13, 19, 20); seed 3 draws a single hunter now. On this one the hunt is posted at t12938 and paid at t17557 to two.
         /// </summary>
-        private const ulong Seed = 3;
+        private const ulong Seed = 8;
 
         [Fact]
         public void AHuntBountyClearsALair()
