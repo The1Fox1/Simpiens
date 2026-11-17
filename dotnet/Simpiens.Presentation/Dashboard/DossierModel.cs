@@ -117,6 +117,13 @@ namespace Simpiens.Presentation.Dashboard
 
         /// <summary>Its skills, the best four first (Epic 10 Part 3, K9.5): "Smithing 5 · Foraging 4 · Melee 1 · Mining 1"; so a recruit's show before it is signed.</summary>
         public string Skills { get; private set; } = string.Empty;
+
+        /// <summary>
+        /// Its skills as the dossier lists them, each with its passion (Epic 11, S1.6): the best four, and every skill it loves
+        /// even at 0 (its nature); a flame marks keen and burning.
+        /// </summary>
+        public System.Collections.Generic.IReadOnlyList<SkillTexts.Shown> SkillsShown => _skillsShown;
+        private readonly System.Collections.Generic.List<SkillTexts.Shown> _skillsShown = new System.Collections.Generic.List<SkillTexts.Shown>(Simpiens.Simulation.Skills.SkillTable.Capacity);
         public const string NoGear = "None";
 
         public float Hunger { get; private set; }
@@ -162,6 +169,7 @@ namespace Simpiens.Presentation.Dashboard
             _shownRows.Clear();
             Equipment.Refresh(null);
             Skills = string.Empty;
+            _skillsShown.Clear();
             if (!HasCrawler)
             {
                 if (crawler != default) ShowTheDead(crawler);
@@ -180,6 +188,7 @@ namespace Simpiens.Presentation.Dashboard
             Describe(node.Id, agent);
             Equipment.Refresh(agent.Inventory);
             Skills = SkillTexts.Best(agent.Skills, 4);
+            SkillTexts.BestShown(agent.Skills, agent.Traits, 4, keepPassions: true, _skillsShown);
             Hunger = agent.Hunger;
             Energy = agent.Energy;
             Social = agent.Social;

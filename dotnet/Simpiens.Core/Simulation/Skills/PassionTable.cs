@@ -51,8 +51,8 @@ namespace Simpiens.Simulation.Skills
         private static readonly PassionDefinition[] ById =
         {
             new PassionDefinition(Passion.None, "None", "", 100, 0f, null),
-            new PassionDefinition(Passion.Keen, "Keen", "keen", 150, 2f, "glyph/passion-keen", workWeight: 1.15f),
-            new PassionDefinition(Passion.Burning, "Burning", "burning", 200, 4f, "glyph/passion-burning", workWeight: 1.3f)
+            new PassionDefinition(Passion.Keen, "Keen", "keen", 150, 2f, "Ui_PassionKeen", workWeight: 1.15f),
+            new PassionDefinition(Passion.Burning, "Burning", "burning", 200, 4f, "Ui_PassionBurning", workWeight: 1.3f)
         };
 
         /// <summary>Every step, in id order.</summary>

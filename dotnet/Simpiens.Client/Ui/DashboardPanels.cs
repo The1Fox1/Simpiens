@@ -33,7 +33,7 @@ namespace Simpiens.Client.Ui
         private readonly GraphicalUiElement _residentsList, _eventsList, _affinitiesList;
         private readonly TextRuntime _sectorTitle, _sectorDescription, _residentsEmpty, _eventsEmpty, _dossierEmpty, _dossierName, _dossierBadge, _goal, _action, _affinitiesEmpty;
         private readonly TextRuntime _groups, _recruitText; // Epic 10 G4
-        private readonly TextRuntime _skills; // Epic 10 Part 3, K9.5
+        private readonly SkillLine _skills; // Epic 10 Part 3, K9.5; with passions' flames since Epic 11, S1.6
         private readonly TextRuntime _description, _moodLine; // Epic UI-Beta B3
         private readonly PortraitAtlas _portraits;
         private readonly ContainerRuntime _detail, _dossier, _who;
@@ -151,9 +151,11 @@ namespace Simpiens.Client.Ui
             Equipment = new WornLine(icons);
             gearLine.Children.Add(Equipment.Visual);
             _dossierDetails.Children.Add(gearLine);
-            // Its skills, the best first (Epic 10 Part 3, K9.5): one line, as the gear's
-            _skills = UiParts.Text(string.Empty, UiStyle.TextSecondary, UiText.Small);
-            _dossierDetails.Children.Add(_skills);
+            // Its skills, the best first (Epic 10 Part 3, K9.5): one line, as the gear's, a flame on each skill it loves (Epic 11, S1.6)
+            var skillLine = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, HeightUnits = DimensionUnitType.RelativeToChildren, Height = 0f };
+            _skills = new SkillLine();
+            skillLine.Children.Add(_skills.Visual);
+            _dossierDetails.Children.Add(skillLine);
             // Its groups (Epic 10 G4): "Settlement: led by Mara · Guild: member, 5g a visit"
             _groups = UiParts.Text(string.Empty, UiStyle.TextSecondary, UiText.Small);
             _dossierDetails.Children.Add(_groups);
@@ -408,7 +410,7 @@ namespace Simpiens.Client.Ui
             _affinitiesEmpty.Visible = affinities.Count == 0;
             CalmButton.IsEnabled = dossier.CanCalm;
             UiParts.SetText(_groups, dossier.Groups);
-            UiParts.SetText(_skills, dossier.Skills.Length > 0 ? "Skills: " + dossier.Skills : string.Empty);
+            _skills.Show(dossier.SkillsShown);
             UiParts.SetText(_recruitText, dossier.RecruitText);
             RecruitButton.IsEnabled = dossier.CanRecruit;
         }

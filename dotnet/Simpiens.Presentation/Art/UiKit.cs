@@ -54,6 +54,10 @@ namespace Simpiens.Presentation.Art
         public const string Lantern = "Ui_Lantern";
         /// <summary>The workshop's glyph (Epic 10 Part 2, W1.6a): an anvil, horn to the left.</summary>
         public const string Anvil = "Ui_Anvil";
+        /// <summary>A keen passion (Epic 11, S1.6): one flame beside the skill it is for.</summary>
+        public const string PassionKeen = "Ui_PassionKeen";
+        /// <summary>A burning passion (Epic 11, S1.6): two flames.</summary>
+        public const string PassionBurning = "Ui_PassionBurning";
 
         // The palette as art (UiStyle's values): warm grey stone, never brown
         private static readonly Rgba32 StoneDark = Rgb(0x1c1815);
@@ -102,6 +106,8 @@ namespace Simpiens.Presentation.Art
             Glyph(Close, "#.....#", ".#...#.", "..#.#..", "...#...", "..#.#..", ".#...#.", "#.....#"),
             Glyph(Lantern, "..##..", ".####.", "##..##", "#.##.#", "#.##.#", "##..##", ".####.", "..##.."),
             Glyph(Anvil, "########", ".#######", "...####.", "....##..", "...####.", "..######"),
+            Glyph(PassionKeen, "..#...", "..##..", ".###..", ".####.", "######", "##.###", ".####."),
+            Glyph(PassionBurning, ".#....#.", ".##..##.", "###.###.", "########", "########", "##.##.##", ".######."),
         };
 
         /// <summary>

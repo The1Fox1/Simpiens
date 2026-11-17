@@ -41,6 +41,70 @@ namespace Simpiens.Presentation.Dashboard
             return text.ToString();
         }
 
+        /// <summary>A skill as the dashboard lists it (Epic 11, S1.6): its words ("Smithing 5") and the passion the crawler holds for it.</summary>
+        public readonly struct Shown
+        {
+            public Shown(string text, Passion passion)
+            {
+                Text = text;
+                Passion = passion;
+            }
+
+            public string Text { get; }
+            public Passion Passion { get; }
+
+            /// <summary>The UI kit's flame for its passion; null for none.</summary>
+            public string Glyph => PassionTable.Get(Passion).Glyph;
+        }
+
+        /// <summary>
+        /// The skills to list, into <paramref name="into"/> (cleared first), the higher level first and ties in display order
+        /// (Epic 11, S1.6): up to <paramref name="most"/> of those above nothing, each with its passion. With
+        /// <paramref name="keepPassions"/> every skill the crawler loves is listed even at 0 (its nature: the dossier), taking
+        /// the place of the lowest; without, a passion shows only on a skill listed by its level (the roster's two).
+        /// </summary>
+        public static void BestShown(in SkillSet skills, in CrawlerTraits traits, int most, bool keepPassions, System.Collections.Generic.List<Shown> into)
+        {
+            into.Clear();
+            var shown = SkillTable.InDisplayOrder;
+            System.Span<int> order = stackalloc int[SkillTable.Capacity];
+            int count = 0;
+            for (int i = 0; i < shown.Count; i++)
+            {
+                bool loved = keepPassions && traits.PassionFor(shown[i].Id) != Passion.None;
+                if (skills.Level(shown[i].Id) <= 0 && !loved) continue;
+                int at = count;
+                while (at > 0 && skills.Level(shown[order[at - 1]].Id) < skills.Level(shown[i].Id))
+                {
+                    order[at] = order[at - 1];
+                    at--;
+                }
+                order[at] = i;
+                count++;
+            }
+            // Keep the loved within the most shown: drop the lowest unloved first
+            System.Span<bool> keep = stackalloc bool[SkillTable.Capacity];
+            int kept = 0;
+            for (int i = 0; i < count; i++)
+            {
+                if (!keepPassions || traits.PassionFor(shown[order[i]].Id) == Passion.None) continue;
+                keep[i] = true;
+                kept++;
+            }
+            for (int i = 0; i < count && kept < most; i++)
+            {
+                if (keep[i]) continue;
+                keep[i] = true;
+                kept++;
+            }
+            for (int i = 0; i < count; i++)
+            {
+                if (!keep[i]) continue;
+                var skill = shown[order[i]];
+                into.Add(new Shown(Invariant($"{skill.DisplayName} {skills.Level(skill.Id)}"), traits.PassionFor(skill.Id)));
+            }
+        }
+
         /// <summary>
         /// "Smithing 4 (Apprentice)": how good a crawler is at <paramref name="work"/> (its effective level, Epic 10 Part 3,
         /// K9.8a), named by the skill that answers for it, with its band; empty for work no skill answers.

@@ -22,6 +22,8 @@ namespace Simpiens.Client.Ui
     /// </summary>
     public sealed class GuildWindow
     {
+        private static readonly System.Collections.Generic.List<Simpiens.Presentation.Dashboard.SkillTexts.Shown> NoSkills = new System.Collections.Generic.List<Simpiens.Presentation.Dashboard.SkillTexts.Shown>(0);
+
         public const float Width = 960f;
 
         /// <summary>Two lines (Epic 10 Part 2, W5.1), so the guild's eight cards fit a 720-row window.</summary>
@@ -44,7 +46,7 @@ namespace Simpiens.Client.Ui
             public TextRuntime Name, Doing, Health, Standing, Unpaid, Wage;
             public SpriteRuntime Face;
             public WornLine Equipment;
-            public TextRuntime Skills;
+            public SkillLine Skills;
             public ContainerRuntime FaceBox;
             public Slider WageSlider;
             public Button Dismiss, Party;
@@ -236,10 +238,10 @@ namespace Simpiens.Client.Ui
             card.Unpaid = UiParts.Text(string.Empty, UiStyle.Warning, UiText.Small);
             UiParts.CentreVertically(card.Unpaid);
             // Its two best skills beside its name (Epic 10 Part 3, K9.5); they give way to an unpaid warning
-            card.Skills = UiParts.Text(string.Empty, UiStyle.TextSecondary, UiText.Small);
-            UiParts.CentreVertically(card.Skills);
+            card.Skills = new SkillLine(label: null); // with a flame on a skill it loves (Epic 11, S1.6)
+            UiParts.CentreVertically(card.Skills.Visual);
             nameLine.Children.Add(card.Name);
-            nameLine.Children.Add(card.Skills);
+            nameLine.Children.Add(card.Skills.Visual);
             nameLine.Children.Add(card.Unpaid);
             // Clipped short of the standing column: a ten-letter name beside two masters' skills would reach it
             var nameClip = new ContainerRuntime { Width = StandingX - who.X - 8f, HeightUnits = DimensionUnitType.RelativeToChildren, Height = 0f, ClipsChildren = true };
@@ -363,8 +365,8 @@ namespace Simpiens.Client.Ui
                 card.Equipment.Show(row.Equipment, brief: true, suffix: row.Bunk.Length > 0 ? "· " + row.Bunk : string.Empty);
                 UiParts.SetText(card.Standing, row.Standing);
                 UiParts.SetText(card.Unpaid, UnpaidText(row.UnpaidVisits));
-                card.Skills.Visible = row.UnpaidVisits == 0;
-                UiParts.SetText(card.Skills, row.UnpaidVisits == 0 && row.Skills != Simpiens.Presentation.Dashboard.SkillTexts.None ? row.Skills : string.Empty);
+                card.Skills.Visual.Visible = row.UnpaidVisits == 0;
+                card.Skills.Show(row.UnpaidVisits == 0 ? row.SkillsShown : NoSkills);
                 if ((int)Math.Round(card.WageSlider.Value) != row.PendingWage) card.WageSlider.Value = row.PendingWage;
                 UiParts.SetText(card.Wage, WageText(row.PendingWage));
                 string party = PartyText(row.Party);
