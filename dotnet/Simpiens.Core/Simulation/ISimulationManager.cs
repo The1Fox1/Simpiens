@@ -96,10 +96,11 @@ namespace Simpiens.Simulation
 
         /// <summary>
         /// Practice granted (Epic 11, S0.2, D12): the crawler, the skill, the experience it gained after every ceiling, and
-        /// the source's kind. Raised on the main thread from practice's one entry, for observers (measurements, the live
-        /// scenarios, <c>OutpostWatch</c>); no rule reads it.
+        /// its source (its kind, ceiling and challenge: S1.7 compares a blow on a beetle with one on a rat). Raised on the main
+        /// thread from practice's one entry, for observers (measurements, the live scenarios, <c>OutpostWatch</c>); no rule
+        /// reads it.
         /// </summary>
-        event System.Action<Simpiens.Cognition.AgentState, Simpiens.Simulation.Skills.Skill, int, Simpiens.Simulation.Skills.PracticeKind> Practised;
+        event System.Action<Simpiens.Cognition.AgentState, Simpiens.Simulation.Skills.Skill, int, Simpiens.Simulation.Skills.PracticeSource> Practised;
         string FirstIntentFault { get; }
     }
 }

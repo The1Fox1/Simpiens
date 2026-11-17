@@ -178,7 +178,7 @@ namespace Simpiens.Hosting
             sim.Simulation.Practised += (agent, skill, experience, source) =>
             {
                 if ((byte)skill < PracticeBySkill.Length) PracticeBySkill[(byte)skill] += experience;
-                if ((byte)source < PracticeBySource.Length) PracticeBySource[(byte)source] += experience;
+                if ((byte)source.Kind < PracticeBySource.Length) PracticeBySource[(byte)source.Kind] += experience;
             };
             Anomalies = AnomalyDetector.For(sim);
             Anomalies.AnomalyFound += record =>

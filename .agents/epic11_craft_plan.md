@@ -174,7 +174,7 @@ Working document (AGENTS.md, Documentation Protocol 6), one of Epic 11's plans (
   - **Where they show:** the dossier's skill list, and the roster card's best skills (`SkillTexts` gains the passion).
   - **A presentation test.**
   - **Pins and renders:** look at the art review sheet, then re-record the art pins. Changed renders are recorded in the pinned image after a look, each in its own commit.
-- [ ] **S1.7 DoD `PassionBurnsBright`** [Possibly Complex: a live scenario]
+- [x] **S1.7 DoD `PassionBurnsBright`** (done 2026-11-16: gate seed 17; F5) [Possibly Complex: a live scenario]
   - **The run:** on a seed S1.5's measurement picks, with nothing injected.
   - **Passion:** a crawler burning for a skill reaches its next band before every passionless peer that started in the same band of that skill and practised it.
   - **Challenge:** over the run, the practice a Journeyman draws per hit from beetles exceeds what it draws from rats (from S0.2's tally).

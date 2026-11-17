@@ -134,10 +134,10 @@ namespace Simpiens.Testing.Skills
             var sim = new SimulationManager(new WorldRegistry(), null);
             var crawler = new Simpiens.Cognition.AgentState(EntityId.Generate());
             var seen = new List<(Skill Skill, int Experience, PracticeKind Kind)>();
-            sim.Practised += (agent, skill, experience, kind) =>
+            sim.Practised += (agent, skill, experience, source) =>
             {
                 Assert(agent == crawler, "The event names the crawler that practised.");
-                seen.Add((skill, experience, kind));
+                seen.Add((skill, experience, source.Kind));
             };
             sim.Practise(crawler, SkillWork.Harvest(ItemType.IronOre), 40, PracticeSource.Work);
             Assert(seen.Count == 1 && seen[0] == (Skill.Mining, 40, PracticeKind.Work), "A harvest's practice is told: mining, 40, from the work.");
