@@ -156,6 +156,7 @@ namespace Simpiens.Simulation
                 if (agent == null || agent.HasLeft) continue;
                 if (!agent.IsDowned || !InDanger(node.Position))
                 {
+                    if (agent.BleedsOutAt != 0) agent.AddDeed(Simpiens.Simulation.Skills.Deed.DowningSurvived); // its clock stopped and it lives (Epic 11, S0.5)
                     agent.BleedsOutAt = 0;
                     continue;
                 }
@@ -299,6 +300,12 @@ namespace Simpiens.Simulation
         void Simpiens.Simulation.Creatures.ICreatureWorld.CreatureSlain(EntityId slayer, Simpiens.Simulation.Creatures.CreatureState creature, System.ReadOnlySpan<ItemInstance> drops, uint tick)
         {
             Piles.Drop(this, creature.Position, drops, 0, slayer, tick); // its loot, claimed for the slayer (K4.2)
+            var killer = _worldRegistry?.GetEntity(slayer)?.Agent; // the slayer's deeds (Epic 11, S0.5)
+            if (killer != null)
+            {
+                killer.AddDeed(Simpiens.Simulation.Skills.Deed.CreatureSlain);
+                if (creature.Definition != null && creature.Definition.IsBoss) killer.AddDeed(Simpiens.Simulation.Skills.Deed.BossSlain);
+            }
             SimLog.Simulation.ZLogInformation($"{SimLog.Agent(slayer)} slew a {Simpiens.Simulation.Creatures.CreatureCatalog.NameOf(creature.Kind)} at {creature.Position}");
             Chronicle?.RecordEvent(new Simpiens.Narrative.ChronicleEvent(Simpiens.Narrative.ChronicleEventType.CreatureSlain, slayer, creature.Id,
                 GetSectorForPosition(creature.Position), tick, Simpiens.Narrative.ChronicleIntensity.Dramatic, (byte)creature.Kind));

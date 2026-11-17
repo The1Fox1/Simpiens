@@ -54,6 +54,8 @@ namespace Simpiens.Core.Tests
             Assert.True(slayer.Activity.GearPurchases > 0, "It bought its own arms.");
             Assert.Contains(slayer.AgentId, fought);
             Assert.False(slayer.IsDowned);
+            Assert.True(slayer.Traits.Count(Simpiens.Simulation.Skills.Deed.CreatureSlain) >= 1, "The kill is the slayer's deed (Epic 11, S0.5).");
+            Assert.Equal(watch.Kills, watch.DeedTotal(Simpiens.Simulation.Skills.Deed.CreatureSlain));
             Assert.Equal(0, watch.ConservationViolations);
             Assert.Equal(0, watch.IntentFaults);
             var failures = watch.DayFailures();

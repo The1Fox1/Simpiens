@@ -83,6 +83,7 @@ namespace Simpiens.Core.Tests
             Assert.True(run.JoinedAt > run.PostedAt, "Residents joined it.");
             Assert.True(run.Hunters >= 2, $"More than one hunted ({run.Hunters}).");
             Assert.True(run.PaidAt > run.JoinedAt, "The lair was emptied and the hunt paid.");
+            Assert.True(watch.DeedTotal(Simpiens.Simulation.Skills.Deed.HuntPaid) >= 2, "Each hunter paid has the deed (Epic 11, S0.5).");
             Assert.Equal(0, watch.ConservationViolations);
             Assert.Equal(0, watch.IntentFaults);
             var failures = watch.DayFailures();

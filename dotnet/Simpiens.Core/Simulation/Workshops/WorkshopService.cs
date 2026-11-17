@@ -516,7 +516,10 @@ namespace Simpiens.Simulation.Workshops
             uint made = station.Made;
             var step = Crafting.Work(ref station, ref stall, out bool stallChanged, GradeOf(hand, station.Kind), Simpiens.Simulation.Skills.SkillRules.MakeFactor(level));
             if (station.Made > made && hand != null)
+            {
                 host.Practise(hand, Simpiens.Simulation.Skills.SkillWork.Make(station.Kind), Simpiens.Simulation.Skills.SkillRules.MakeExperience, Simpiens.Simulation.Skills.PracticeSource.Work);
+                hand.AddDeed(Simpiens.Simulation.Skills.Deed.Make); // a make is a deed (Epic 11, S0.5)
+            }
             if (stallChanged) host.UpdateStall(stall);
             if (step == CraftStep.Made) SimLog.Economy.ZLogInformation($"The {station.Kind} made {ItemCatalog.NameOf(item)} ({station.Remaining} left in the order)");
             return step;

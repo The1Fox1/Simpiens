@@ -125,6 +125,7 @@ namespace Simpiens.Core.Tests
             Assert.True(run.GateAttempts >= 1 && run.GateAttempts <= MaxAttempts, $"The guild went at the gate {run.GateAttempts} times (at most {MaxAttempts}).");
             Assert.True(run.BreachedAt > run.FirstGateSentAt, "The Gatekeeper fell and the gate is breached.");
             Assert.True(run.Breaker != default && run.Party.Contains(run.Breaker), "The chronicle names the member who broke it.");
+            Assert.True(watch.DeedTotal(Simpiens.Simulation.Skills.Deed.BossSlain) >= 1, "Breaking the Gatekeeper is a boss slain (Epic 11, S0.5).");
             Assert.Equal(0, run.Deaths);
             Assert.Equal(0, watch.ConservationViolations);
             Assert.Equal(0, watch.IntentFaults);

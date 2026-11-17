@@ -125,7 +125,7 @@ Working document (AGENTS.md, Documentation Protocol 6), one of Epic 11's plans (
   - **The round trip** in `SessionCaptureValidator` and `SessionRestoreValidator`.
   - **The world hash** mixes the record only when it isn't empty, so golden doesn't move in this step.
   - **Old saves:** a format 11 save is refused with its reason.
-- [ ] **S0.5 Deeds** [Possibly Complex: call sites across the core, saved]
+- [x] **S0.5 Deeds** (done 2026-11-16; golden unchanged) [Possibly Complex: call sites across the core, saved]
   - **The table:** D2's `Deed` and `DeedTable`, counted in the record.
   - **The counts,** each where its deed happens:
     - the creatures' kill: the slayer, and the boss's;

@@ -145,6 +145,14 @@ namespace Simpiens.Cognition
         /// </summary>
         public Simpiens.Simulation.Skills.CrawlerTraits Traits { get; set; }
 
+        /// <summary>Counts one <paramref name="deed"/> in its traits record (Epic 11, S0.5, A7): where the deed happens, on the main thread.</summary>
+        internal void AddDeed(Simpiens.Simulation.Skills.Deed deed)
+        {
+            var traits = Traits;
+            traits.Add(deed);
+            Traits = traits;
+        }
+
         /// <summary>The crawler's given name (Epic UI-Beta B1): drawn at spawn to fit its body frame, never shared, saved. Null for a crawler built by hand.</summary>
         public string GivenName { get; set; }
 

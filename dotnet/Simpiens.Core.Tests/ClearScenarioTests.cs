@@ -172,6 +172,7 @@ namespace Simpiens.Core.Tests
             Assert.True(run.ClearedAt >= 0, "It emptied the lair.");
             Assert.True(run.HomeAt >= 0 && !run.TurnedBack, "It came home as ordered.");
             Assert.True(run.Haul > 0, "With what it picked up of the lair's material.");
+            Assert.True(run.Watch.DeedTotal(Simpiens.Simulation.Skills.Deed.ClearWon) >= 1, "Home from a won clear: a deed for each member with the party (Epic 11, S0.5).");
             Assert.True(run.Collapsed.All(run.Rescued.Contains), "Everyone who fell was carried out.");
             Assert.Equal(0, run.Deaths);
             AssertTheDaysHeld(run);

@@ -140,6 +140,20 @@ namespace Simpiens.Hosting
         public readonly int[] PracticeBySkill = new int[Simpiens.Simulation.Skills.SkillTable.Capacity];
         public readonly int[] PracticeBySource = new int[8];
 
+        // Every crawler present at any watched tick, residents, drifters and newcomers, the departed kept
+        private readonly HashSet<Simpiens.Cognition.AgentState> _everyone = new HashSet<Simpiens.Cognition.AgentState>();
+
+        /// <summary>
+        /// The count of <paramref name="deed"/> over every crawler watched, the departed included (Epic 11, S0.5): what the
+        /// live scenarios compare with the outcome they saw (a kill, a make, a rescue, a hunt paid, a clear won).
+        /// </summary>
+        public int DeedTotal(Simpiens.Simulation.Skills.Deed deed)
+        {
+            int total = 0;
+            foreach (var state in _everyone) total += state.Traits.Count(deed);
+            return total;
+        }
+
         /// <summary>The rim of a lair's reach that a path may graze on its way past: an entry is deeper than this.</summary>
         public const float LairEdgeBand = 1f;
         public readonly HashSet<EntityId> Struck = new HashSet<EntityId>();
@@ -245,6 +259,7 @@ namespace Simpiens.Hosting
             for (int i = 0; i < present.Count; i++)
             {
                 var state = present[i];
+                _everyone.Add(state);
                 if (state.Inventory != null) agentGold += (uint)state.Inventory.Gold;
                 // Past the lone limit through what it wears (Epic 10 Part 2, D51: a respirator opens the Gallery to the bold), off an expedition
                 if (Vitality.LoneDanger(Vitality.HazardAt(map, state.Position), state.Inventory) > Vitality.LoneHazardLimit && !sim.Guild.IsOnExpedition(state.AgentId))
