@@ -48,6 +48,9 @@ namespace Simpiens.Core.Tests
         public void Deeds() => new Simpiens.Testing.Skills.DeedsValidator().RunAllValidationTests();
 
         [Fact]
+        public void Passions() => new Simpiens.Testing.Skills.PassionValidator().RunAllValidationTests();
+
+        [Fact]
         public void GivenNames() => new Simpiens.Testing.People.GivenNamesValidator().RunAllValidationTests();
 
         [Fact]

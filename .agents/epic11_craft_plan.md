@@ -144,7 +144,7 @@ Working document (AGENTS.md, Documentation Protocol 6), one of Epic 11's plans (
 
 ### S1. Passions and challenge (3–4 days), then the producer's look
 **Complexity:** Very Complex as the epic stamps it (bundling), split here into steps that are each Possibly Complex. The draw, the rate and the challenge each land alone, so each behaviour change is measured by itself.
-- [ ] **S1.1 Passions drawn at spawn** [Possibly Complex: a draw, saved]
+- [x] **S1.1 Passions drawn at spawn** (done 2026-11-16; golden re-recorded for the hash alone) [Possibly Complex: a draw, saved]
   - **The draw:** D3's `PassionTable` and the draw on its own salt, for residents and drifters alike.
   - **The checks:** `PassionValidator` checks the odds and caps over 10,000 draws (at most two keen, one burning), and that no earlier draw moves (looks, names and skills compared with and without passions).
   - **Golden:** only the hashes move, since every record is now non-empty. Re-recorded in its own commit.

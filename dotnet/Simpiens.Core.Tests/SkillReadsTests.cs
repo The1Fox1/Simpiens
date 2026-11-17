@@ -21,6 +21,7 @@ namespace Simpiens.Core.Tests
             ["Simpiens.Core/Simulation/Skills/CrawlerSkills.cs"] = "the seam: the effective level, from the learned one",
             ["Simpiens.Core/Simulation/SimulationManager.cs"] = "practice's one entry: a band reached is the learned band",
             ["Simpiens.Presentation/Dashboard/SkillTexts.cs"] = "the dossier's and the roster's list of what a crawler has learned",
+            ["Simpiens.Core/Simulation/Skills/PassionTable.cs"] = "the passions' draw at spawn: a starting talent is loved more often (Epic 11, D3); a draw, not an effect",
         };
 
         private static readonly string[] Projects = { "Simpiens.Core", "Simpiens.Presentation", "Simpiens.Client", "Simpiens.Hosting" };
