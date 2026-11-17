@@ -119,7 +119,7 @@ Working document (AGENTS.md, Documentation Protocol 6), one of Epic 11's plans (
     - how many reach Journeyman in anything (the asking wage's reach).
   - **The results** go to `docs/skills-model.md`. A surprise becomes a finding, numbered F1 onward.
   - **The question it answers:** whether D7's budget ever binds in 14 days. If not, S2's DoD needs a longer run or a seed where it does.
-- [ ] **S0.4 The traits record** [Possibly Complex: saved state, format 12]
+- [x] **S0.4 The traits record** (done 2026-11-16) [Possibly Complex: saved state, format 12]
   - **The record:** D1's `CrawlerTraits`, as `AgentState.Traits`, written and read in `CaptureRecord` and `RestoreRecord`, and copied to cognition as `AgentContext.Traits`, as `Skills` is.
   - **The format:** `SessionSaveHeader.CurrentFormatVersion` 12, the PR's one raise. The record's size is pinned beside the economy records' (`EconomySerializationValidator`).
   - **The round trip** in `SessionCaptureValidator` and `SessionRestoreValidator`.

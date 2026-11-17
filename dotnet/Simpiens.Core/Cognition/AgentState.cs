@@ -139,6 +139,12 @@ namespace Simpiens.Cognition
             return gained;
         }
 
+        /// <summary>
+        /// Who it has become (Epic 11, A3, D1): its passions, teachers, deeds and, later, its techniques, calling, epithet,
+        /// earned traits and scars. Written on the main thread, saved in its record; cognition reads a copy.
+        /// </summary>
+        public Simpiens.Simulation.Skills.CrawlerTraits Traits { get; set; }
+
         /// <summary>The crawler's given name (Epic UI-Beta B1): drawn at spawn to fit its body frame, never shared, saved. Null for a crawler built by hand.</summary>
         public string GivenName { get; set; }
 
@@ -510,7 +516,8 @@ namespace Simpiens.Cognition
                 BleedsOutAt = BleedsOutAt,
                 DownedBy = DownedBy,
                 DownedDetail = DownedDetail,
-                Skills = Skills
+                Skills = Skills,
+                Traits = Traits
             };
         }
 
@@ -554,6 +561,7 @@ namespace Simpiens.Cognition
             DownedBy = record.DownedBy;
             DownedDetail = record.DownedDetail;
             Skills = record.Skills;
+            Traits = record.Traits;
 
             ActivePlan.Clear();
             ScratchPlan.Clear();
@@ -593,7 +601,8 @@ namespace Simpiens.Cognition
                 StruckBy,
                 BleedsOutAt,
                 Memberships.TryGet(Simpiens.Cognition.Groups.GroupType.TemporaryParty, out var party) ? party.GroupId : (byte)0,
-                Skills);
+                Skills,
+                Traits);
         }
     }
 }
