@@ -200,6 +200,22 @@ CI (`.github/workflows/dotnet.yml`) runs the tests (the client's in the pinned i
 - **A new skill changes every seed's draw** (the talents are picked among all skills): re-record golden in its own commit.
 - **A 17th skill** changes the save format: raise `SkillTable.Capacity` and bump `SessionSaveHeader.CurrentFormatVersion`.
 
+### Who a crawler has become: the traits record
+- **One record** (Epic 11, A3): `CrawlerTraits` (`Simulation/Skills/`), 256 bytes beside the crawler's `SkillSet`, saved whole in its record (format 12) and copied for cognition (`AgentContext.Traits`). It holds passions, techniques, teachers, deeds, a calling, an epithet, earned traits and scars, and room left over.
+- **A new field** goes into the record's spare bytes, so its size and the save's format don't change (`EconomySerializationValidator` pins 256). The restore validator checks the round trip, and the world hash mixes the record once anything is written.
+- **The numbers and measurements** are in [`docs/skills-model.md`](docs/skills-model.md).
+
+### Adding a deed
+- **A deed is a row** (Epic 11, A7, D2):
+  1. A `Deed` value under `DeedTable.Capacity` (16). Never reuse one: the id is the deed's counter in a crawler's traits record and in its save.
+  2. Its row in `DeedTable`: code name and the player's words for its count.
+  3. One count where the deed happens, on the main thread (`AgentState.AddDeed`). Never rebuild a deed from the chronicle.
+- **The checks:**
+  - `DeedsValidator`: the table and the counters;
+  - `DeedNamesTests`: a deed is named only in the table and at the places listed there, and every deed is counted somewhere. List the new place.
+  - Prove it in the live scenario that brings the deed about (`OutpostWatch.DeedTotal`).
+- **A 17th deed** changes the save format.
+
 ### Adding art
 - **Art for a known kind of thing** (a tile, a prop, a node, a crawler state) is a sprite and a table row:
   1. The sprite, by name, in a generator (`ProceduralSprites`, `IsometricSprites`; an item's come from `ItemArt`, above). A new generator's sprites go into their sheet in `SpriteSheets`. Generators never read a table or a sheet: an initialisation cycle crashes depending on which class loads first (`ArtInitialisationTests`).

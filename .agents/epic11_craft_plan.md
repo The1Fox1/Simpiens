@@ -138,7 +138,7 @@ Working document (AGENTS.md, Documentation Protocol 6), one of Epic 11's plans (
     - a validator per deed: counted once, saved, and loaded;
     - `DeedNamesTests`: production code names a deed only in its table and where it is counted.
   - **Golden:** if the hash moves (a deed before t3000 on a golden seed), it is re-recorded in its own commit, named as the hash's new coverage.
-- [ ] **S0.6 S0's gate and docs** [Basic]
+- [x] **S0.6 S0's gate and docs** (done 2026-11-16: core 292/292, golden 3/3, seeds 1–120 120/120 both ways; the pinned image and the compiles at S1's gate, S0 touching no client code) [Basic]
   - **The gate:** the index's gates.
   - **Docs:** the epic's §0 (D1, D2, D12) and §4 (S0); AGENTS.md's crawler record (the traits record beside the skills) and "Adding a deed".
 

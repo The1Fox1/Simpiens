@@ -71,6 +71,19 @@ Every row is a default that stands by exception.
 
 ---
 
+### Plan 1's decisions (Craft, from 2026-11-16)
+Proposed in plan 1 as defaults; each lands here with its step. The producer answers by exception.
+- **D1, the traits record** (S0.4; A3):
+  - **The record:** `CrawlerTraits`, a fixed record of 256 bytes in the crawler's record after its skills, saved whole (format 12, plan 1's one raise) and copied to cognition. It lives in `Simulation/Skills/`, because cognition reads it and may read nothing of `People/`.
+  - **Its sections:** a passion for each skill id; 48 technique slots (three bands for each of 16 skills); the first teachers of four skills, 20 bytes each; 16 deed counters; a calling, an epithet, four earned traits and four scars; 68 spare bytes.
+  - **Why four teachers:** an `EntityId` is 16 bytes, so a teacher for every skill would take 320 bytes, and a crawler is taught in a few skills at most.
+  - **The world hash** mixes the record only once something is written, so a record nothing has touched moves no hash.
+- **D2, deeds are a table** (S0.5; A2, A7):
+  - **The table:** seven rows. A creature slain, a boss slain, a rescue, a make, a downing survived, a hunt paid, a clear won.
+  - **Counting:** on the main thread where each happens, never rebuilt from the chronicle. First blood is a count of one, derived.
+  - **Why now:** counted from the start, the deeds give the measurements their data, and S6's epithets read a real history.
+- **D12, practice is observed** (S0.2): `ISimulationManager.Practised` (the crawler, the skill, the experience granted after every ceiling, the source's kind) is raised from practice's one entry for observers (measurements, live scenarios, `OutpostWatch`). No rule reads it.
+
 ## 1. Goal
 **The player promise:** watch a crawler become someone. The miner who burns for the deep seam. The Warden who holds the line. The smith whose blade carries a dead friend's name. The patron can't make a hero, but can pay for the training, sponsor the technique and post the hunt that makes one.
 
@@ -180,7 +193,13 @@ Done means crawlers grow into someone in the live outpost with nothing injected 
 - **Docs:** the roadmap first, then this file's status, then the focus file; `architecture_history.md`; the economy model (upkeep); `AGENTS.md` (each table's recipe).
 
 ## 4. Acceptance checklist (delivered work only)
-Nothing yet.
+
+### S0. Groundwork (done 2026-11-16, `feat/epic11-craft`)
+- [x] **The hand-over checked, and the skills model:** plan 1's §0 matches the code. The skills' rules and numbers are in `docs/skills-model.md`.
+- [x] **Practice observed** (D12): the `Practised` event, and `OutpostWatch`'s tallies by skill and source.
+- [x] **The measurement** (`SkillGrowthMeasurementTests.MeasureGrowthOnTheGateSeeds`): 14 days on the 23 gate seeds, with no player and with the `hunting` players (`docs/skills-model.md` §5.1). Findings F1 (the budget wouldn't bind) and F2 (ranged and medicine never grow).
+- [x] **The traits record** (D1): `CrawlerTraits`, saved in the crawler's record. Save format 12; golden unchanged.
+- [x] **Deeds** (D2): seven deeds counted where they happen. `DeedsValidator`, `DeedNamesTests`, and each deed asserted in the live scenario that brings it about. Golden unchanged.
 
 ## 5. Deferred and out of scope
 
