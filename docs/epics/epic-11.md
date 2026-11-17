@@ -82,6 +82,20 @@ Proposed in plan 1 as defaults; each lands here with its step. The producer answ
   - **The table:** seven rows. A creature slain, a boss slain, a rescue, a make, a downing survived, a hunt paid, a clear won.
   - **Counting:** on the main thread where each happens, never rebuilt from the chronicle. First blood is a count of one, derived.
   - **Why now:** counted from the start, the deeds give the measurements their data, and S6's epithets read a real history.
+- **D3, passions are a table and a draw** (S1.1; A2, Q7):
+  - **The table:** `PassionTable` has three steps (none, keen, burning). Each row gives the practice multiplier (×1, ×1.5, ×2), the frustration each act eases (0, 2, 4), its weight in the work's choice (D6) and its flame in the UI kit.
+  - **The draw:** at spawn, after the skills' draw, on its own salt (`SimRandomSalt.Passions`, 17), so no earlier draw moves.
+  - **The odds:** a burning passion with a quarter's chance, then none (40%), one (40%) or two (20%) keen ones. Each is picked at odds of the skill's lean, as talents are, and a starting talent counts double. One passion a skill at most.
+- **D4, a passion speeds every source** (S1.2): practice's one entry multiplies by the passion before the source's ceiling, for the work and every teacher alike. The passionless keep K9's rate.
+- **D5, practice by challenge** (S1.3; Q8):
+  - **The rule:** `PracticeSource` carries the level an act demands. A crawler above it takes 75, 55, 40, 25, 20, 15 hundredths a level above, and a tenth from seven above (`SkillRules.ChallengePercent`).
+  - **The numbers:**
+    - creatures: rats 2, spinners 5, beetles 7, the Matriarch 9, the Gatekeeper 10;
+    - harvested items: herbs 3, ore 4, glowstone 7;
+    - recipes: from 3 (a pickaxe) to 7 (a glowstone edge, a chitin plate). The draught is 5 as the still's only recipe, so alchemy doesn't stall at Apprentice.
+    - A rescue is always full.
+  - **What the player sees:** veterans learn from beetles, the Gallery's glowstone and the forge's harder recipes, not from rats and pickaxes.
+- **D6, passions weigh the work** (S1.4; A10): the salvage choice multiplies a node's score by the passion's weight (keen ×1.15, burning ×1.3), through `Considerations.PassionWeight`. No planner fact. The fight's choices and the guild's orders don't read passions yet.
 - **D12, practice is observed** (S0.2): `ISimulationManager.Practised` (the crawler, the skill, the experience granted after every ceiling, the source's kind) is raised from practice's one entry for observers (measurements, live scenarios, `OutpostWatch`). No rule reads it.
 
 ## 1. Goal
@@ -200,6 +214,21 @@ Done means crawlers grow into someone in the live outpost with nothing injected 
 - [x] **The measurement** (`SkillGrowthMeasurementTests.MeasureGrowthOnTheGateSeeds`): 14 days on the 23 gate seeds, with no player and with the `hunting` players (`docs/skills-model.md` §5.1). Findings F1 (the budget wouldn't bind) and F2 (ranged and medicine never grow).
 - [x] **The traits record** (D1): `CrawlerTraits`, saved in the crawler's record. Save format 12; golden unchanged.
 - [x] **Deeds** (D2): seven deeds counted where they happen. `DeedsValidator`, `DeedNamesTests`, and each deed asserted in the live scenario that brings it about. Golden unchanged.
+
+### S1. Passions and challenge (done 2026-11-16, `feat/epic11-craft`; the producer's look next)
+- [x] **Passions drawn at spawn** (D3): `PassionTable`, drawn on their own salt. `PassionValidator` checks the odds over 10,000 crawlers, the caps, and the leans by personality and talent. Golden re-recorded for the hash alone.
+- [x] **A passion speeds practice and eases frustration** (D4).
+- [x] **Practice by challenge** (D5): a challenge on every creature, harvested item and recipe; `SkillsValidator` repeats Q8's examples.
+- [x] **Passions weigh the work** (D6): the salvage choice, through `Considerations`. No planner fact.
+- [x] **Re-measured** (`docs/skills-model.md` §5.2): F1 settled. Four DoDs re-picked across seeds: the hunt (8), the forge's kills (424242), the workshop loop (1; F3) and the death (62, off the gate seeds; F4).
+- [x] **The client:** a flame in the dossier and on the guild's cards beside each skill a crawler loves, amber for keen, ember for burning. The dossier lists a loved skill even at 0. Two UI kit glyphs; renders recorded in the pinned image.
+- [x] **DoD `PassionBurnsBright`** (gate seed 17): a resident burning for foraging reaches Apprentice ahead of every passionless peer who started where it did, and fighters above a rat's challenge draw 10 a blow from beetles against 4 from rats. Drafted as "a Journeyman learns more from a beetle than from a rat"; the scenario reads the rule over every fighter above a rat's challenge, since melee Journeymen are rare (S0.3). F5 found on the way.
+- [ ] **The producer's look.** What to look at:
+  - **Start:** the desktop game on the default seed (`dotnet run --project dotnet/Simpiens.Desktop -- --seed 20261009`), at 5× or 10×.
+  - **The flames:** click a resident and read its dossier's skills: an amber flame for a keen passion, two ember flames for a burning one. A skill it loves shows even at 0. Open the guild and read the cards' two best skills.
+  - **A passion at work:** follow a crawler burning for mining or foraging. It goes for the salvage it loves, and its skill climbs faster than its neighbours'.
+  - **Veterans and harder work:** an Apprentice miner learns less from ore, a forge's hand less from pickaxes than from ring coats, and a fighter more from a beetle than from a rat (not visible directly; the dossier's levels show it over days).
+  - **To decide, by exception:** the passions' odds and numbers (D3, D4), the challenge numbers (D5), and the flames' look.
 
 ## 5. Deferred and out of scope
 

@@ -169,7 +169,7 @@ Working document (AGENTS.md, Documentation Protocol 6), one of Epic 11's plans (
   - **Every scenario that leans on growth or fights:** `PracticeMakesAVeteran`, `AHuntBountyClearsALair`, `AnArmedCrawlerFightsBack`, `ArchersHoldTheLine`, `TheGuildBreaksTheGatekeeper`, `EveryScenarioPlaysTogether` and the soak's 18 runs.
   - **Moved DoDs:** a DoD whose seed moves is re-picked from a measurement across the gate seeds, never from one seed, in its own commit (Epic 10's lesson).
   - **Findings** for anything that surprises.
-- [ ] **S1.6 The client: flames** [Possibly Complex: UI kit pieces, renders]
+- [x] **S1.6 The client: flames** (done 2026-11-16: art pins `c151527`, renders in the pinned image) [Possibly Complex: UI kit pieces, renders]
   - **The glyphs:** a flame in the UI kit for keen, and a brighter double flame for burning.
   - **Where they show:** the dossier's skill list, and the roster card's best skills (`SkillTexts` gains the passion).
   - **A presentation test.**
@@ -179,7 +179,7 @@ Working document (AGENTS.md, Documentation Protocol 6), one of Epic 11's plans (
   - **Passion:** a crawler burning for a skill reaches its next band before every passionless peer that started in the same band of that skill and practised it.
   - **Challenge:** over the run, the practice a Journeyman draws per hit from beetles exceeds what it draws from rats (from S0.2's tally).
   - **The bound** comes from the measurement.
-- [ ] **S1.8 S1's gate and docs; STOP for the producer's look** [Basic]
+- [x] **S1.8 S1's gate and docs; STOP for the producer's look** (done 2026-11-16: core 294/294, client 521/521 in the pinned image, golden 3/3, seeds 1–120 120/120 both ways, MonoGame and Android 0 warnings; waiting for the look) [Basic]
   - **Docs:** the epic's §0 (D3–D6) and §4 (S1); `skills-model.md`; AGENTS.md's "Adding a passion".
   - **The look's brief,** in the epic's §4: the flames on the roster and in the dossier; a burning crawler outgrowing its peers; veterans drawn to beetles over rats.
 
@@ -275,3 +275,4 @@ Working document (AGENTS.md, Documentation Protocol 6), one of Epic 11's plans (
 ## Log
 - 2026-11-16: drafted after Epic 10's close-out merged (PR #24, `30c931b`); waiting for the producer's go to start S0.
 - 2026-11-16: the go ("Economy flukes are tolerable until they completely ruin our testing scenarios. For now proceed with epic 11 Craft"). S0 begins.
+- 2026-11-16: S0 and S1 done; stopped for the producer's look at S1 (the brief in the epic's §4).

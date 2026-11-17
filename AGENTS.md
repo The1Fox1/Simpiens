@@ -205,6 +205,10 @@ CI (`.github/workflows/dotnet.yml`) runs the tests (the client's in the pinned i
 - **A new field** goes into the record's spare bytes, so its size and the save's format don't change (`EconomySerializationValidator` pins 256). The restore validator checks the round trip, and the world hash mixes the record once anything is written.
 - **The numbers and measurements** are in [`docs/skills-model.md`](docs/skills-model.md).
 
+### Passions and challenge
+- **A passion** (Epic 11, S1): a step of `PassionTable` (none, keen, burning), saved in the traits record. A new step is a `Passion` value and a row: its practice multiplier, the frustration it eases, its weight in the work's choice and its UI kit glyph (`UiKit`, then the art pins). The draw's odds are `PassionTable`'s constants.
+- **A challenge** is the level an act demands (`PracticeSource.WorkAt(challenge)`): a column on each creature kind (`CreatureDefinition.Challenge`), harvested item (`ItemDefinition.HarvestChallenge`) and recipe (`Recipe.Challenge`). A new kind, item or recipe sets its own (`SkillsValidator` requires one on every creature, salvage and recipe).
+
 ### Adding a deed
 - **A deed is a row** (Epic 11, A7, D2):
   1. A `Deed` value under `DeedTable.Capacity` (16). Never reuse one: the id is the deed's counter in a crawler's traits record and in its save.

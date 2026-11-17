@@ -50,6 +50,36 @@ On its own salt (`SimRandomSalt.Skills`), for residents and drifters alike:
 
 - **Sources:** `PracticeSource` is a kind and a ceiling. Today's only kind is the work itself, which teaches to 10.
 
+### 3.1 Passions (Epic 11, S1)
+- **Three steps** (`PassionTable`): none, keen and burning. A passion multiplies every act of practice at its skill (×1.5 keen, ×2 burning), eases frustration with each act (2, 4), and weighs the salvage choice toward its work (×1.15, ×1.3).
+- **Drawn at spawn** on their own salt, after the skills: a burning passion with a quarter's chance, then none (40%), one (40%) or two (20%) keen ones. Each is picked at odds of the skill's lean (as talents are), doubled for a starting talent; one passion a skill at most.
+
+### 3.2 Practice by challenge (Epic 11, S1)
+Each act names the level it demands (`PracticeSource.Challenge`). A crawler at or below it takes the whole act; above it, less:
+
+| Levels above the challenge | 0 or less | 1 | 2 | 3 | 4 | 5 | 6 | 7+ |
+| :--- | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+| Share of the act | 100% | 75% | 55% | 40% | 25% | 20% | 15% | 10% |
+
+| What is practised on | Challenge |
+| :--- | :-: |
+| Rats | 2 |
+| Spinners | 5 |
+| Beetles | 7 |
+| The Matriarch | 9 |
+| The Gatekeeper | 10 |
+| Herbs | 3 |
+| Ore | 4 |
+| Glowstone | 7 |
+| A pickaxe | 3 |
+| An iron helm, a leather jerkin | 4 |
+| An iron blade, a hard hat, a healing draught (the still's only recipe) | 5 |
+| A ring coat, a respirator, a crossbow | 6 |
+| A glowstone edge, a chitin plate | 7 |
+| A rescue | always the whole act |
+
+The order in practice's one entry: the act's experience, times the passion, times the challenge's share (rounded to the nearest), then held to the source's ceiling.
+
 ## 4. What a level does
 How good a crawler is at a work is its **effective level**, `CrawlerSkills.Level(skills, worn, work)`, the one number every effect and choice reads. Today it equals the learned level. Gear, techniques or callings that change how good a crawler is enter there (`SkillReadsTests` guards it).
 
