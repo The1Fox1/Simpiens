@@ -20,6 +20,9 @@ namespace Simpiens.Simulation.Economy
         public const string UpkeepSinkName = "OutpostUpkeep";
         public const string GearSinkName = "GearWholesale";
 
+        /// <summary>The ledger's sink for manuals the caravan brings (Epic 11, S3.2, D11).</summary>
+        public const string ManualSinkName = "ManualWholesale";
+
         private readonly struct DormantEntry
         {
             public readonly EntityId ResourceId;

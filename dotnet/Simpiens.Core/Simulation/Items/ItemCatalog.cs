@@ -154,8 +154,19 @@ namespace Simpiens.Simulation.Items
                 equipment: new EquipmentBlock(SlotKind.Weapon, durability: 120, WearRule.PerShot,
                     new StatModifier(StatKind.Attack, ModifierOp.Add, 7f),
                     new StatModifier(StatKind.Range, ModifierOp.Add, 7f),
-                    new StatModifier(StatKind.AttackInterval, ModifierOp.Multiply, 1.6f)))
+                    new StatModifier(StatKind.AttackInterval, ModifierOp.Multiply, 1.6f))),
+            // Manuals (Epic 11, S3.2, Q10, D11): a primer a skill, each naming the work it teaches; read and used up
+            Primer(ItemType.MeleePrimer, "MeleePrimer", "Primer of the Blade", Simpiens.Simulation.Skills.SkillWork.Fight(ranged: false)),
+            Primer(ItemType.RangedPrimer, "RangedPrimer", "Primer of the Sling", Simpiens.Simulation.Skills.SkillWork.Fight(ranged: true)),
+            Primer(ItemType.MiningPrimer, "MiningPrimer", "Primer of the Seam", Simpiens.Simulation.Skills.SkillWork.Harvest(ItemType.IronOre)),
+            Primer(ItemType.ForagingPrimer, "ForagingPrimer", "Primer of the Grove", Simpiens.Simulation.Skills.SkillWork.Harvest(ItemType.MedicinalHerb)),
+            Primer(ItemType.SmithingPrimer, "SmithingPrimer", "Primer of the Forge", Simpiens.Simulation.Skills.SkillWork.Make(StationKind.Forge)),
+            Primer(ItemType.AlchemyPrimer, "AlchemyPrimer", "Primer of the Still", Simpiens.Simulation.Skills.SkillWork.Make(StationKind.Still)),
+            Primer(ItemType.MedicinePrimer, "MedicinePrimer", "Primer of Mending", Simpiens.Simulation.Skills.SkillWork.Tend())
         };
+
+        private static ItemDefinition Primer(ItemType id, string name, string displayName, Simpiens.Simulation.Skills.SkillWork work) =>
+            new ItemDefinition(id, name, displayName, ItemCategory.Manual, ItemRarity.Uncommon, maxStack: 4) { Manual = ManualBlock.Primer(work) };
 
         /// <summary>
         /// Tests only: the catalog with <paramref name="extra"/> added, until the returned scope is disposed (item system

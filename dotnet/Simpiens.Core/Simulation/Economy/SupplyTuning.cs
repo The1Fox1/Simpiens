@@ -100,7 +100,16 @@ namespace Simpiens.Simulation.Economy
             CaravanTerms.Exports(ItemType.Chitin, quota: 8, marketPrice: 10, keep: 6),
             // The bosses' trophies (Epic 10 Part 3, K10): about 20% over the stall's price, none kept
             CaravanTerms.Exports(ItemType.MatriarchPelt, quota: 2, marketPrice: 44),
-            CaravanTerms.Exports(ItemType.KeeperStone, quota: 1, marketPrice: 170));
+            CaravanTerms.Exports(ItemType.KeeperStone, quota: 1, marketPrice: 170),
+            // Manuals (Epic 11, S3.2, D11): one primer of each on the shelf, 8g wholesale, so the stall's first visit pays 56g
+            // for the set and after that only for what was sold
+            CaravanTerms.Supplies(ItemType.MeleePrimer, stockCap: 1, wholesaleCost: 8, SupplyService.ManualSinkName),
+            CaravanTerms.Supplies(ItemType.RangedPrimer, stockCap: 1, wholesaleCost: 8, SupplyService.ManualSinkName),
+            CaravanTerms.Supplies(ItemType.MiningPrimer, stockCap: 1, wholesaleCost: 8, SupplyService.ManualSinkName),
+            CaravanTerms.Supplies(ItemType.ForagingPrimer, stockCap: 1, wholesaleCost: 8, SupplyService.ManualSinkName),
+            CaravanTerms.Supplies(ItemType.SmithingPrimer, stockCap: 1, wholesaleCost: 8, SupplyService.ManualSinkName),
+            CaravanTerms.Supplies(ItemType.AlchemyPrimer, stockCap: 1, wholesaleCost: 8, SupplyService.ManualSinkName),
+            CaravanTerms.Supplies(ItemType.MedicinePrimer, stockCap: 1, wholesaleCost: 8, SupplyService.ManualSinkName));
 
         /// <summary>The most gold the caravan can pay a stall for its exports in one visit.</summary>
         public uint MaxSalvagePaymentPerVisit

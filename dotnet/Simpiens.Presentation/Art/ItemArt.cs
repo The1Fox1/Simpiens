@@ -77,6 +77,14 @@ namespace Simpiens.Presentation.Art
             // ember core
             ["matriarch-pelt"] = new ItemLook(ItemShapes.Pelt, new Rgba32(118, 112, 128), new Rgba32(214, 210, 224)),
             ["keeper-stone"] = new ItemLook(ItemShapes.Chunk, new Rgba32(82, 78, 90), new Rgba32(255, 140, 60)),
+            // Manuals (Epic 11, S3.2): a book each, its cover the colour of its craft, a brass band
+            ["melee-primer"] = new ItemLook(ItemShapes.Book, new Rgba32(150, 40, 44), new Rgba32(214, 178, 96)),
+            ["ranged-primer"] = new ItemLook(ItemShapes.Book, new Rgba32(70, 110, 60), new Rgba32(214, 178, 96)),
+            ["mining-primer"] = new ItemLook(ItemShapes.Book, new Rgba32(90, 100, 118), new Rgba32(214, 178, 96)),
+            ["foraging-primer"] = new ItemLook(ItemShapes.Book, new Rgba32(34, 140, 124), new Rgba32(214, 178, 96)),
+            ["smithing-primer"] = new ItemLook(ItemShapes.Book, new Rgba32(60, 60, 68), new Rgba32(234, 120, 40)),
+            ["alchemy-primer"] = new ItemLook(ItemShapes.Book, new Rgba32(110, 60, 140), new Rgba32(214, 178, 96)),
+            ["medicine-primer"] = new ItemLook(ItemShapes.Book, new Rgba32(226, 222, 210), new Rgba32(200, 40, 40)),
         };
 
         public static bool TryGet(string artKey, out ItemLook look) => _looks.TryGetValue(artKey ?? string.Empty, out look);

@@ -49,6 +49,14 @@ namespace Simpiens.Presentation
             _texts[(int)ItemType.IronBlade] = new ItemText("Iron blade", "Forged from three ore", "Iron blade", "Iron blade", "IRON BLADE");
             _texts[(int)ItemType.Sling] = new ItemText("Sling", "From the caravan; a cheap sling", "Sling", "Sling", "SLING");
             _texts[(int)ItemType.Crossbow] = new ItemText("Crossbow", "Forged from ore and a hide", "Crossbow", "Crossbow", "CROSSBOW");
+            // Manuals (Epic 11, S3.2): read at rest, teaching a skill to Apprentice's door
+            _texts[(int)ItemType.MeleePrimer] = new ItemText("Primer of the Blade", "From the caravan; teaches melee to 3", "Blade primer", "Primer", "BLADE PRIMER");
+            _texts[(int)ItemType.RangedPrimer] = new ItemText("Primer of the Sling", "From the caravan; teaches ranged to 3", "Sling primer", "Primer", "SLING PRIMER");
+            _texts[(int)ItemType.MiningPrimer] = new ItemText("Primer of the Seam", "From the caravan; teaches mining to 3", "Seam primer", "Primer", "SEAM PRIMER");
+            _texts[(int)ItemType.ForagingPrimer] = new ItemText("Primer of the Grove", "From the caravan; teaches foraging to 3", "Grove primer", "Primer", "GROVE PRIMER");
+            _texts[(int)ItemType.SmithingPrimer] = new ItemText("Primer of the Forge", "From the caravan; teaches smithing to 3", "Forge primer", "Primer", "FORGE PRIMER");
+            _texts[(int)ItemType.AlchemyPrimer] = new ItemText("Primer of the Still", "From the caravan; teaches alchemy to 3", "Still primer", "Primer", "STILL PRIMER");
+            _texts[(int)ItemType.MedicinePrimer] = new ItemText("Primer of Mending", "From the caravan; teaches medicine to 3", "Mending primer", "Primer", "MENDING PRIMER");
             _texts[(int)ItemType.GlowstoneEdge] = new ItemText("Glowstone edge", "Forged from ore and glowstone", "Glowstone edge", "Glowstone edge", "GLOWSTONE EDGE");
             _texts[(int)ItemType.IronHelm] = new ItemText("Iron helm", "Forged from two ore; turns blows", "Iron helm", "Iron helm", "IRON HELM");
             _texts[(int)ItemType.RingCoat] = new ItemText("Ring coat", "Forged from four ore; turns blows", "Ring coat", "Ring coat", "RING COAT");

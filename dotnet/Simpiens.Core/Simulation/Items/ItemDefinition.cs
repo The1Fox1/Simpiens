@@ -52,6 +52,9 @@ namespace Simpiens.Simulation.Items
         /// </summary>
         public byte HarvestChallenge { get; init; } = 3;
 
+        /// <summary>What it teaches when it is a manual (Epic 11, S3.2, D11); null otherwise.</summary>
+        public ManualBlock Manual { get; init; }
+
         /// <summary>Its slot, stat modifiers and life when it is equipment (§3.7); null otherwise.</summary>
         public EquipmentBlock Equipment { get; }
 

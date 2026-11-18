@@ -54,7 +54,8 @@ namespace Simpiens.Testing.Economy
             // layout; it is 84 bytes, and the outpost has one stall
             // 136 since Epic 10 Part 2 (W3's ten goods, W4's grades and worn pieces on each); 196 since Epic 10 Part 3's K1.2 (a
             // table of 16); 276 since K4.4 (a table of 24, D25): still a small copy for cognition
-            Assert(stallSize <= 276, $"TradeStallData size ({stallSize} bytes) exceeds 276-byte threshold.");
+            // 356 since Epic 11's S3.2 (a table of 32 for the manuals, D11)
+            Assert(stallSize <= 356, $"TradeStallData size ({stallSize} bytes) exceeds 356-byte threshold.");
 
             // Verify default empty state
             Assert(!TradeStallData.Empty.IsActive, "TradeStallData.Empty has IsActive == false.");
