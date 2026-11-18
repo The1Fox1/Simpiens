@@ -209,6 +209,13 @@ namespace Simpiens.Hosting
             public long GuildFullTick = -1;
             public uint Wages, WageGold, Shares, ShareGold;
 
+            /// <summary>
+            /// The cost of mastery at the horizon (Epic 11, S2.4, D8): members and artisans past Apprentice in anything, the
+            /// gold a visit their bands add to their wages as far as it is paid (the raises paid), and the members and artisans
+            /// whose asking wage stands above their wage (the raises owed).
+            /// </summary>
+            public int Specialists, Upkeep, RaisesOwed;
+
             public Row Last => Rows[Rows.Count - 1];
 
             /// <summary>Everything that fails the soak: integrity first, then the player's pace band. Empty when it holds.</summary>
@@ -292,6 +299,7 @@ namespace Simpiens.Hosting
                     : string.Empty;
                 if (Player.Name == "crafting") guild += $"; stations {StationsBuilt}, artisans {Artisans}, made {Made}";
                 if (Player.Name == "hunting") guild = $"; guild {Members} (full at t{GuildFullTick}), quit unpaid {UnpaidQuits}; kills {Kills}, hunts paid {HuntsPaid}, rescues {Rescues}, deaths {Deaths}";
+                if (Player.Name == "guild" || Player.Name == "crafting" || Player.Name == "hunting") guild += $"; specialists {Specialists}, upkeep {Upkeep}g a visit, raises owed {RaisesOwed}";
                 return $"{Player.Name,-8} seed {Seed,-9} treasury {string.Join(" ", checkpoints)}g; trust mean {last.TrustMean:F1}, up {last.TrustUp}, down {last.TrustDown}; starving {last.StarvingEpisodes}, collapses {last.Collapses}; ledger violations {ConservationViolations}{guild}";
             }
 
@@ -505,12 +513,44 @@ namespace Simpiens.Hosting
                 result.Made += workshops[i].Made;
             }
             result.Artisans = workshops?.Artisans.Count ?? 0;
+            MeasureUpkeep(sim, result);
             if (manager.EconomyLedger != null)
             {
                 result.DrifterPurses = manager.EconomyLedger.GetFaucetTotal("DrifterPurses");
                 result.DrifterDepartures = manager.EconomyLedger.GetSinkTotal("DrifterDepartures");
             }
             return result;
+        }
+
+        // The cost of mastery at the horizon (Epic 11, S2.4): each member's and artisan's wage against its reservation and asking wages
+        private static void MeasureUpkeep(LocalSimulation sim, Result result)
+        {
+            var manager = sim.Simulation;
+            var economy = manager.Economy;
+            var guild = manager.Guild;
+            for (int i = 0; i < guild.Members.Count; i++)
+            {
+                var contract = guild.Members[i];
+                if (!((Simpiens.Simulation.Guild.IGuildHost)manager).TryGetCrawler(contract.CrawlerId, out var member)) continue;
+                Count(result, member, contract.Wage, Simpiens.Simulation.Guild.GuildRules.ReservationWage(member, economy.Guild), Simpiens.Simulation.Guild.GuildRules.AskingWage(member, economy.Guild));
+            }
+            var artisans = manager.Workshops?.Artisans;
+            for (int i = 0; artisans != null && i < artisans.Count; i++)
+            {
+                var contract = artisans[i];
+                if (!((Simpiens.Simulation.Workshops.IWorkshopHost)manager).TryGetCrawler(contract.CrawlerId, out var artisan)) continue;
+                Count(result, artisan, contract.Wage, Simpiens.Simulation.Workshops.WorkshopRules.ReservationWage(artisan, economy.Workshops),
+                    Simpiens.Simulation.Workshops.WorkshopService.AskingWage((Simpiens.Simulation.Workshops.IWorkshopHost)manager, artisan));
+            }
+
+            static void Count(Result result, AgentState hand, ushort wage, ushort reservation, ushort asking)
+            {
+                if (asking > wage) result.RaisesOwed++;
+                if (Simpiens.Simulation.Skills.CrawlerSkills.BestBand(hand) < Simpiens.Simulation.Skills.SkillBand.Journeyman) return;
+                result.Specialists++;
+                int raised = Math.Min(wage, asking) - reservation; // the raise its band asks, as far as it is paid
+                if (raised > 0) result.Upkeep += raised;
+            }
         }
 
         private static Row Sample(ISimulationManager manager, IReadOnlyList<AgentState> crawlers, long rel, long absoluteTick, uint crawlerGold,

@@ -62,6 +62,7 @@ A day is 4 caravan visits. Measured per day on the gate seeds (T4.2b): the carav
 | Faucet | `CaravanSalvageSales` (creatures' materials, Epic 10 Part 3, K4.4) | hides and chitin past six of each kept for the forge, 6g and 10g (the stall pays 5g and 8g) | 8 of each a visit |
 | Faucet | `CaravanSalvageSales` (bosses' trophies, Epic 10 Part 3, K10.1a) | the Matriarch's pelt at 44g (the stall pays 36g), the Keeper's stone at 170g (140g) | a pelt a game week at most (her return); the stone once a session (the Gatekeeper never returns) |
 | Transfer | hunt bounties (Epic 10 Part 3, K6) | escrow posted by the player, paid out by damage dealt among up to three hunters | conserved; released in shares |
+| Transfer | raises (Epic 11, S2.2, D8) | a member's or artisan's asking wage is its reservation wage ×1.25 at Journeyman, ×1.5 at Master (`GuildTuning`'s raise rows, read by the artisans too); a raise paid is part of its wage | conserved, inside `Wages` and `ArtisanWages`; a cost, not a new sink. Paid below its asking wage, a hand takes the unpaid wage's trust and warmth, no unpaid visit counted |
 
 **What follows:** the stall's net a day ≈ the caravan's payment − upkeep − wholesale − what crawlers keep.
 - Crawlers spend what they earn, so their gold passes through; purses stay near 40–55g, under the 80g they earn toward.
@@ -125,6 +126,7 @@ The default prices (15 / 5 / 6) are fair to a neutral crawler. A remembered affi
 - **Drifters (F11):** the keen profile (rations 20, ore 4, herbs 5, gear 35: slightly greedy) ends richer with drifters than in a closed outpost on every soak seed. Measured over 16 seeds: 17,254g against 11,985g, ahead on all 16, though drifters take away more than they bring (about 460g against 330g over three days). `DriftersLeaveAKeenPlayersStallRicher` asserts it; on Part 1's day the comparison was within the noise (Epic 10 F4).
 - **Why greed is judged at its lowest trust:** greed costs trust early, through stingy sales. Once the stall is empty nobody trades, and trust drifts back to neutral. The generous band is judged at its peak for the same reason.
 - **Why generous starvation isn't asserted:** a bankrupt outpost can't pay for food. Partial restocks soften that, and the soak measured 0 anyway.
+- **The cost of mastery (Epic 11, S2.4, measured 2026-11-17):** the scripted players pay each raise when it is asked (S2.3). The `guild`, `crafting` and `hunting` profiles hold their bands with raises paid on 20 of 20 seeds each (seeds 1–20). No member or artisan reaches Journeyman by day 3, so no raise falls due and upkeep costs nothing at the soak's horizon. Over 14 days (seeds 1–10), one hand under contract stands past Apprentice at the end (a member on `crafting` seed 2, 1g of raise a visit). The bands stay as they are, by exception.
 - **The regular suite** asserts the fair case over one game day: the outpost's day (`OutpostScenarioTests`, on the 23 gate seeds) checks that trust rises for ⅔ of crawlers and nobody starves. Seeds 1–120 all pass (`simpiens sweep`, 2026-11-05).
 
 ## 8. Deferred
@@ -142,6 +144,7 @@ The default prices (15 / 5 / 6) are fair to a neutral crawler. A remembered affi
     - two artisans' wages, about 40g a day;
     - the stations, 600g once.
     - The guild's glowstone feeds the forge's respirators instead of the caravan's exports.
+  - **Upkeep beside it (Epic 11, S2.4):** the raises add nothing measurable yet. Over 14 days on seeds 1–10, the `crafting` profile's guild falls apart for want of pay on 8 seeds (0–5 members left, up to 10 quits) and the `hunting` profile's on 7 (up to 18 quits). Yet a hand under contract stands past Apprentice at the end on one seed only, for 1g a visit. The strain is the open loop's, not mastery's. The `guild` profile alone holds four members, pays every wage and quits for nothing on all 10. Measured by the soak's `Specialists`, `Upkeep` and `RaisesOwed`; the scripted players keep paying raises as they come.
   - **What holds it today:** the scripted players keep a reserve (150–200g, D67 and D71), as a careful player would. That is input, not a rule, and it holds every DoD's run.
   - **The levers:**
     - the stations' cost (300g each);
