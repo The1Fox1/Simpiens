@@ -101,12 +101,13 @@ namespace Simpiens.Core.Tests
         }
 
         /// <summary>
-        /// Gate seed 17 (S1.7's measurement, <see cref="MeasurePassionsOnTheGateSeeds"/>): over fourteen days a passion burned
-        /// bright on 8 of the 23 gate seeds and harder foes taught more on 6 (fighters at Apprentice or above meet beetles
-        /// often and rats seldom), both with the days held on 2 (7 and 17). On this one Marlo, burning for foraging, reaches
-        /// Apprentice at t106904 ahead of two passionless peers, and a blow on a beetle teaches 10 against a rat's 4.
+        /// Gate seed 18, re-picked at S3.6 (the teachers moved S1.7's seed 17; measured with <see cref="MeasurePassionsOnTheGateSeeds"/>
+        /// on S3's final build): over fourteen days a passion burned bright on 14 of the 23 gate seeds and harder foes taught more
+        /// on 5, both with the days held on 4 (1, 11, 18 and 19). On this one, the earliest of the four, Arjun, burning for melee,
+        /// reaches Apprentice at t11879 ahead of a passionless peer, and over the fortnight a blow on a beetle teaches 17.6
+        /// against a rat's 12.9. (At S1.7: seed 17, Marlo burning for foraging.)
         /// </summary>
-        private const ulong Seed = 17;
+        private const ulong Seed = 18;
         private const long Horizon = 14 * DayClock.TicksPerDay;
 
         [Fact]

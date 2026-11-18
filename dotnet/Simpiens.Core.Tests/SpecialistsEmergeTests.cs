@@ -102,13 +102,14 @@ namespace Simpiens.Core.Tests
         private const long Horizon = 14 * DayClock.TicksPerDay;
 
         /// <summary>
-        /// Gate seed 5 (S2.6's measurement, <see cref="MeasureSpecialistsOnTheGateSeeds"/>): over two weeks a Journeyman
-        /// emerged on all 23 gate seeds (the still's alchemist first, nearly always), and a member or artisan asked for a raise
-        /// and was paid it on 8, the days held on every one; on the other 15 the first specialists asked no more than they were
-        /// paid (a thrifty hand's raise rounds to the default wage). On this one Ulf, the still's artisan, reaches Alchemy 6 at
-        /// t43491, asks 6g and is paid it on the next tick: the earliest of the 8.
+        /// Gate seed 10, re-picked at S3.6 (the teachers moved S2.6's seed 5; measured with <see cref="MeasureSpecialistsOnTheGateSeeds"/>
+        /// on S3's final build): over two weeks a Journeyman emerged on 22 of the 23 gate seeds (the still's alchemist first,
+        /// nearly always), and a member or artisan asked for a raise and was paid it on 4, the days held on each; on the rest the
+        /// first specialists asked no more than they were paid (a thrifty hand's raise rounds to the default wage). On this one,
+        /// the earliest of the four, Brook, the still's artisan, reaches Alchemy 6 at t83008, asks 6g and is paid it on the next
+        /// tick. (At S2.6: seed 5, Ulf, at t43491.)
         /// </summary>
-        private const ulong Seed = 5;
+        private const ulong Seed = 10;
 
         [Fact]
         public void SpecialistsEmerge()
