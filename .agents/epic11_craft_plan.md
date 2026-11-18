@@ -221,7 +221,7 @@ Working document (AGENTS.md, Documentation Protocol 6), one of Epic 11's plans (
 
 ### S3. Teachers (4–5 days)
 **Complexity:** Very Complex by bundling: three sources of practice, a station, items and two new acts. Split into steps that are each Possibly Complex, each source landing and measured alone.
-- [ ] **S3.1 Mentors** [Possibly Complex: a source in practice's entry, a spatial query on the main thread]
+- [x] **S3.1 Mentors** (done 2026-11-17: `MentorValidator`; golden re-recorded; the moved DoDs re-picked at S3.6) [Possibly Complex: a source in practice's entry, a spatial query on the main thread]
   - **The rule:** D9: `PracticeKind.Mentor`, and each crawler's last practice (unsaved).
   - **Finding a mentor:** a query of the spatial partition within 6 units, in id order, allocating nothing.
   - **Lineage and the deed:** recorded in the traits record (D1's slots) and the "taught" deed.
@@ -231,34 +231,34 @@ Working document (AGENTS.md, Documentation Protocol 6), one of Epic 11's plans (
     - a passion multiplies the lesson;
     - lineage is saved.
   - **Golden:** re-recorded in its own commit if it moves.
-- [ ] **S3.2 Manuals as items** [Possibly Complex: item rows by AGENTS.md's recipe, but a new block on the item definition, and the goods table grows inside format 12]
+- [x] **S3.2 Manuals as items** (done 2026-11-17: `ManualValidator`; art pins; golden; the wholesale 2g since S3.6) [Possibly Complex: item rows by AGENTS.md's recipe, but a new block on the item definition, and the goods table grows inside format 12]
   - **The rows:** seven `ItemType` values (25–31) with D11's `ManualBlock`, a new `ItemCategory.Manual`, economy terms (the stall sells them, the caravan supplies them), one book shape in `ItemShapes` with colours per skill, and `ItemTexts`.
   - **The goods table:** 24 → 32, inside format 12.
   - **The checks:** `ItemSystemProofTests`-style validators; art pins after a look at the sheet.
-- [ ] **S3.3 Reading a manual** [Possibly Complex: a goal, an action and an intent, on the precedent of `EquipForWorkGoal` and `BuyToolAction`]
+- [x] **S3.3 Reading a manual** (done 2026-11-17: `ReadingValidator`, `ManualReadingTests`; `HasManual`, 47 of 64; passions only, for the producer) [Possibly Complex: a goal, an action and an intent, on the precedent of `EquipForWorkGoal` and `BuyToolAction`]
   - **The acts:** `StudyGoal` and `BuyManualAction` buy one (D11's choice, passions first); `ReadManualIntent` and its handler read it over two game hours and practise at source `Manual`.
   - **The planner:** a new fact (`HasManual`, 47 of 64) only if the precondition can't reuse one, with its reason recorded under R1's guard.
   - **The checks:**
     - a validator: bought, read, used up, and up to the ceiling;
     - the ledger balances.
-- [ ] **S3.4 The drill yard** [Possibly Complex: a station on the map, a goal]
+- [x] **S3.4 The drill yard** (done 2026-11-17: `DrillValidator`; `Drilled`, 48 of 64; golden unchanged; art and picture pins) [Possibly Complex: a station on the map, a goal]
   - **The station:** D10's `StationKind.DrillYard`, in the guildhall (`Floor1Layout`), built through `BuildStationCommand`.
   - **The acts:** `DrillGoal`, `DrillAction` and `DrillIntent` for members off orders, practising at source `Yard`, up to 5.
   - **Its art:** the station's art rows in both view modes.
   - **The checks:**
     - a validator: a member drills in free hours, never over orders or needs, and stops at 5;
     - golden and renders re-recorded in their own commits if the map change moves them.
-- [ ] **S3.5 The client** [Possibly Complex: Gum, art, renders]
+- [x] **S3.5 The client** (done 2026-11-17: `TeachersOnScreenTests`; renders in the pinned image) [Possibly Complex: Gum, art, renders]
   - **The station window** builds the yard and shows who drilled today.
   - **Manuals** appear in the merchant terminal (rows from the goods table) with their icons.
   - **The dossier** says "taught by Bram" per skill, from the traits record, with departed teachers named through `IDepartedRoll`.
   - **Pins and renders:** art pins and renders after a look.
-- [ ] **S3.6 DoD `AMasterTeachesAnApprentice`** [Possibly Complex: a live scenario]
+- [x] **S3.6 DoD `AMasterTeachesAnApprentice`** (done 2026-11-17: gate seed 13; the teacher an Apprentice, F8; the wholesale to 2g, F7; eight moved DoDs re-picked) [Possibly Complex: a live scenario]
   - **The run:** on a seed S3.1's measurement picks, with nothing injected.
   - **What emerges:** a hand practising beside a better one is taught, reaches Apprentice in that skill, and records its teacher.
   - **And on the same run:** a manual is bought and read, and a member drills at the yard.
   - **The name:** the epic calls the teacher a Master. If the seed's best teacher is a Journeyman, the test is still named for the epic's scene and says so.
-- [ ] **S3.7 S3's gate and docs** [Basic]
+- [x] **S3.7 S3's gate and docs** (done 2026-11-17: core 306/306, client 527/527 in the pinned image, golden 3/3, seeds 1–120 120/120 both ways, MonoGame and Android 0 warnings) [Basic]
   - **Docs:** the epic's §0 (D9–D11) and §4 (S3); `skills-model.md` (sources and ceilings); AGENTS.md ("Adding a manual" points to the item recipe and its block).
 
 ### C. The plan's close-out and PR (1 day)
@@ -277,3 +277,4 @@ Working document (AGENTS.md, Documentation Protocol 6), one of Epic 11's plans (
 - 2026-11-16: the go ("Economy flukes are tolerable until they completely ruin our testing scenarios. For now proceed with epic 11 Craft"). S0 begins.
 - 2026-11-16: S0 and S1 done; stopped for the producer's look at S1 (the brief in the epic's §4).
 - 2026-11-17: the producer: "Complete S2-S3 I will review afterwards"; S1's look folds into that review. S2 done the same day.
+- 2026-11-17: S3 done. Stopped before C for the producer's review of S1–S3 ("Complete S2-S3 I will review afterwards").

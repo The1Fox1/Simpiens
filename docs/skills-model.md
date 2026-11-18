@@ -95,6 +95,19 @@ The order in practice's one entry: the act's experience, times the passion, time
 - **The scripted players** pay each raise when it is asked, within their reserves; `LeaveRaisesUnpaid` keeps the signed wage.
 - **On screen:** "asks 6g" in amber on the guild's card, in the dossier and on the station window's artisan line.
 
+### 3.5 Teachers (Epic 11, S3)
+Every source goes through practice's one entry, so a passion multiplies it and the mastery budget holds it, as the work's own.
+
+| Source | Who, when | How much | To |
+| :--- | :--- | :--- | :-: |
+| The work (`Work`) | doing it | the act's worth (§3), times the challenge's share | 10 |
+| A mentor (`Mentor`, D9) | practising a work beside a hand at least 3 levels better at the same work, who did it within the game hour, within 6 units | half the act | the mentor's level less 2 |
+| A manual (`Manual`, D11) | a resident who loves the manual's skill buys it (25g, from a spare purse) and reads it at the hearth for 2 game hours | 300 at the end of the reading; nothing if interrupted | 3 (a primer) |
+| The drill yard (`Yard`, D10) | a guild member with no orders, fed and rested, in a yard the player built (200g) | 30 a game hour, in six lots, at the fight work of what it wields | 5 |
+
+- **Lineage:** the first lesson in a skill records the mentor in the learner's traits record (four slots) and counts the mentor's "taught" deed; the chronicle tells it ("learned foraging at Vesna's side"), and the dossier says "Foraging taught by Vesna".
+- **Mentors aren't saved:** each crawler's last practice is work in progress, so after a load nobody teaches until it works again.
+
 ## 4. What a level does
 How good a crawler is at a work is its **effective level**, `CrawlerSkills.Level(skills, worn, work)`, the one number every effect and choice reads. Today it equals the learned level. Gear, techniques or callings that change how good a crawler is enter there (`SkillReadsTests` guards it).
 
@@ -171,4 +184,20 @@ Levels gained a seed with the hunting players: melee 2.0, mining 14.0, foraging 
 - **The still makes specialists.** Its artisan is hired as the best alchemist at hand, practises the draught at its own challenge (5), and every make teaches it fully until 5. The guild's members don't reach Journeyman in two weeks.
 - **A thrifty hand asks no more.** On the other 15 seeds the first Journeyman's raise rounds to the 5g default wage or under: its reservation wage is below 5g.
 - **The 3-day soak** sees no raise due on any profile (economy model §7), and over 14 days the `crafting` and `hunting` guilds fall apart for want of pay on most seeds with no specialist under contract: the open loop's strain, not upkeep's (economy model §8).
+
+### 5.4 Teachers (S3.6, 2026-11-17)
+`AMasterTeachesAnApprenticeTests.MeasureTeachersOnTheGateSeeds`: 14 game days on the 23 gate seeds, with the guild profile's player building the drill yard (a 150g reserve besides) and the primers on the shelf.
+
+| | Gate seeds |
+| :--- | :--- |
+| A learner taught to Apprentice, its teacher recorded | 22 of 23 (from day 1.9; 9 to 82 lessons a seed) |
+| Its teacher's band | Apprentice on all 22 (3 to 5), or since gone; never a Master |
+| A primer bought and read | 23 of 23 (from t3473, at the caravan's first visit) |
+| The yard built, and a member drilling there | 23 of 23 (built from day 0.75, drilled within the game day after) |
+| All three, the days held | 22 of 23 |
+
+**What it means:**
+- **Mentors teach at the seams.** The lessons fall where miners and foragers work side by side: 16 of the 22 learners reached Mining 3, 6 Foraging 3. Nobody reaches Master in two weeks (F1), so the epic's "a Master teaches an Apprentice" is, today, an Apprentice 5 teaching a Novice 2.
+- **Primers sell early.** Someone who loves a craft buys and reads its primer within the hour after the caravan's first visit on 8 seeds, and within days on the rest. Ranged and medicine (F2) are bought and read too: the first road into either skill.
+- **The yard is drilled in melee:** members carry no ranged weapon in the guild profile, so drill raises melee.
 
