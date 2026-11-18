@@ -185,7 +185,7 @@ Working document (AGENTS.md, Documentation Protocol 6), one of Epic 11's plans (
 
 ### S2. The cost of mastery (2–3 days)
 **Complexity:** Possibly Complex: behaviour, the economy and the soak's bands, across the core, the scripted players and the client.
-- [ ] **S2.1 The mastery budget** [Possibly Complex: a behaviour change in practice's one entry]
+- [x] **S2.1 The mastery budget** (done 2026-11-17; golden unchanged; `OutpostWatch` checks it every tick) [Possibly Complex: a behaviour change in practice's one entry]
   - **The rule:** D7, applied with the source's ceiling.
   - **The checks** (a validator):
     - the third skill to pass Apprentice stops at 5;
@@ -193,30 +193,30 @@ Working document (AGENTS.md, Documentation Protocol 6), one of Epic 11's plans (
     - slots go first come, first served;
     - a skill already past its budget keeps what it has.
   - **Golden:** re-recorded if it moves, in its own commit.
-- [ ] **S2.2 The asking wage** [Possibly Complex: the economy, trust]
+- [x] **S2.2 The asking wage** (done 2026-11-17: `UpkeepValidator`; a recruit or hire signs for no less; golden unchanged) [Possibly Complex: the economy, trust]
   - **The rule:** D8, for guild members and artisans. `GuildRules.AskingWage` and the workshops' equivalent are pure functions, read by the visit's pay and by the dashboard.
   - **The checks:**
     - a raise paid keeps trust;
     - a raise unpaid costs the unpaid wage's trust and warmth with no unpaid visit counted;
     - the chronicle tells the ask once;
     - the ledger balances.
-- [ ] **S2.3 The scripted players pay raises** [Basic: input through typed commands]
+- [x] **S2.3 The scripted players pay raises** (done 2026-11-17: `ScriptedRaisesTests`) [Basic: input through typed commands]
   - `GuildPlayer` and `WorkshopPlayer` send `SetWageCommand` up to the asking wage when it rises, within their reserves.
   - An option leaves a raise unpaid, for the trust test.
-- [ ] **S2.4 The soak with upkeep** [Possibly Complex: bands, an open economy finding]
+- [x] **S2.4 The soak with upkeep** (done 2026-11-17: 20/20 each at 3 days, bands unchanged; F6 at 14 days) [Possibly Complex: bands, an open economy finding]
   - **Re-measured:** the `guild`, `crafting` and `hunting` profiles, with raises paid.
   - **The bands** are proposed by exception.
   - **Economy model:** §2 gains the raise (a cost, not a new sink), and §7 the bands.
   - **Beside F14:** how much upkeep adds to the open loop's strain is measured and named in §8.
-- [ ] **S2.5 The client** [Possibly Complex: Gum, renders]
+- [x] **S2.5 The client** (done 2026-11-17: `UpkeepOnScreenTests`; looked at; no render moved) [Possibly Complex: Gum, renders]
   - **A skill held by the budget** reads "held at 5: two crafts past Apprentice" in the dossier.
   - **An asking wage** above the contract's shows amber beside the wage ("asks 7g") on the roster card, in the dossier and on the station window's artisan line.
   - **Renders:** recorded in the pinned image after a look.
-- [ ] **S2.6 DoD `SpecialistsEmerge`** [Possibly Complex: a live scenario]
+- [x] **S2.6 DoD `SpecialistsEmerge`** (done 2026-11-17: gate seed 5; the hold left to the validator, F1) [Possibly Complex: a live scenario]
   - **The run:** on the seed and horizon S0.3 picks (14 days by default), with the guild and workshop players.
   - **What emerges:** someone reaches Journeyman; a member or artisan past Apprentice asks for a raise and the player pays it; a skill is held by the budget.
   - **At every tick:** nobody holds more than two skills past Apprentice.
-- [ ] **S2.7 S2's gate and docs** [Basic]
+- [x] **S2.7 S2's gate and docs** (done 2026-11-17: core 300/300, client 524/524 in the pinned image, golden 3/3, seeds 1–120 120/120 both ways, MonoGame and Android 0 warnings) [Basic]
   - **Docs:** the epic's §0 (D7, D8) and §4 (S2); `skills-model.md` (the budget); the economy model (upkeep).
 
 ### S3. Teachers (4–5 days)
@@ -276,3 +276,4 @@ Working document (AGENTS.md, Documentation Protocol 6), one of Epic 11's plans (
 - 2026-11-16: drafted after Epic 10's close-out merged (PR #24, `30c931b`); waiting for the producer's go to start S0.
 - 2026-11-16: the go ("Economy flukes are tolerable until they completely ruin our testing scenarios. For now proceed with epic 11 Craft"). S0 begins.
 - 2026-11-16: S0 and S1 done; stopped for the producer's look at S1 (the brief in the epic's §4).
+- 2026-11-17: the producer: "Complete S2-S3 I will review afterwards"; S1's look folds into that review. S2 done the same day.

@@ -78,7 +78,22 @@ Each act names the level it demands (`PracticeSource.Challenge`). A crawler at o
 | A glowstone edge, a chitin plate | 7 |
 | A rescue | always the whole act |
 
-The order in practice's one entry: the act's experience, times the passion, times the challenge's share (rounded to the nearest), then held to the source's ceiling.
+The order in practice's one entry: the act's experience, times the passion, times the challenge's share (rounded to the nearest), then held to the source's ceiling and the mastery budget (§3.3), whichever is lower.
+
+### 3.3 The mastery budget (Epic 11, S2)
+- **The rule** (`SkillRules.BudgetCeiling`, D7): at most two skills past Apprentice (6 or more) and one at Master (9 or more). A third skill stops at 5 while two others stand past Apprentice; a second stops at 8 while another stands at Master.
+- **First come, first served:** the skills that got there first hold the slots, in the order practice arrives. Nobody gives a skill up, and a skill already past its budget keeps what it has.
+- **Starting skills never break it:** a starting talent is at most 5.
+- **Checked:** `SkillsValidator` test 7 proves the hold. `OutpostWatch` fails any live scenario's day if a crawler holds more than the budget at any tick, and counts the crawler-ticks a skill stands held.
+- **The dossier** says so: "Foraging held at 5: two crafts past Apprentice", or "held at 8: a Master already".
+
+### 3.4 The asking wage (Epic 11, S2)
+- **The rule** (`GuildRules.AskingWage`, `WorkshopRules.AskingWage`, D8): a member's or an artisan's reservation wage times its best band's raise: ×1 to Apprentice, ×1.25 for a Journeyman, ×1.5 for a Master. With the neutral 5g reservation: 6g and 8g. The best band is read through the seam (`CrawlerSkills.BestBand`).
+- **Signing:** a recruit or a hire signs for no less.
+- **At the caravan's visit:** a hand paid in full but below what it asks takes the unpaid wage's trust and warmth (−10, −5), with no unpaid visit counted. It quits only when its trust falls under the line, after about three such visits.
+- **Told once:** when a band reached lifts the asking wage above the contract's, the chronicle tells the ask ("asks for a raise, to 6g a visit").
+- **The scripted players** pay each raise when it is asked, within their reserves; `LeaveRaisesUnpaid` keeps the signed wage.
+- **On screen:** "asks 6g" in amber on the guild's card, in the dossier and on the station window's artisan line.
 
 ## 4. What a level does
 How good a crawler is at a work is its **effective level**, `CrawlerSkills.Level(skills, worn, work)`, the one number every effect and choice reads. Today it equals the learned level. Gear, techniques or callings that change how good a crawler is enter there (`SkillReadsTests` guards it).
@@ -141,4 +156,19 @@ Levels gained a seed with the hunting players: melee 2.0, mining 14.0, foraging 
 **What it means:**
 - **Passions widen growth, while challenge caps it.** More crawlers reach Apprentice (mining 67 against 56, foraging 21 against 17), but past Apprentice the common seams and the pickaxe teach less, so the top of the curve barely moves.
 - **The budget still wouldn't bind** (F1, settled here): two skills past Apprentice would need a crawler to reach Journeyman twice, and nobody does it once on most seeds. `SpecialistsEmerge` (S2) asserts the rule at every tick and the asking wage live. The budget's own outcome is proven by a validator.
+
+### 5.3 Specialists and their wages (S2.6, 2026-11-17)
+`SpecialistsEmergeTests.MeasureSpecialistsOnTheGateSeeds`: 14 game days on the 23 gate seeds, with the guild profile's player (four members sent to the Drowned Gallery) and the still's player (draughts, a 150g reserve), both paying raises.
+
+| | Gate seeds |
+| :--- | :--- |
+| Someone reaches Journeyman | 23 of 23 (from day 4.3); the still's alchemist first on all but one (a miner on seed 9) |
+| A member or an artisan asks for a raise | 8 of 23, each paid the next tick |
+| A skill held by the budget | 0 |
+| The days hold | 23 of 23 |
+
+**What it means:**
+- **The still makes specialists.** Its artisan is hired as the best alchemist at hand, practises the draught at its own challenge (5), and every make teaches it fully until 5. The guild's members don't reach Journeyman in two weeks.
+- **A thrifty hand asks no more.** On the other 15 seeds the first Journeyman's raise rounds to the 5g default wage or under: its reservation wage is below 5g.
+- **The 3-day soak** sees no raise due on any profile (economy model §7), and over 14 days the `crafting` and `hunting` guilds fall apart for want of pay on most seeds with no specialist under contract: the open loop's strain, not upkeep's (economy model §8).
 
