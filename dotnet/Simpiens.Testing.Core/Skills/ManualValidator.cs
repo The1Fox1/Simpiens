@@ -10,7 +10,7 @@ namespace Simpiens.Testing.Skills
     /// <summary>
     /// Manuals as items (Epic 11, S3.2, Q10, D11): a primer for every skill in the table, each a row with a manual block (the
     /// work it teaches, 300 experience, to 3) and nothing else; the stall sells them at 25g, none to start; the caravan brings
-    /// one of each at 8g into its own sink, the ledger conserved; the stall's goods table holds every good the session trades.
+    /// one of each at 2g into its own sink, the ledger conserved; the stall's goods table holds every good the session trades.
     /// Runs as a test (ValidatorTests).
     /// </summary>
     public class ManualValidator
@@ -52,10 +52,10 @@ namespace Simpiens.Testing.Skills
                 var terms = economy.Terms(item);
                 Assert(terms.StallRole == StallRole.Sells && terms.StallPrice == 25 && terms.StallStock == 0, $"{item}: the stall sells it at 25g, none to start.");
                 var term = economy.Supply.Terms(item);
-                bool supplied = term.Item == item && term.Role == CaravanRole.Supplies && term.Limit == 1 && term.Price == 8 && term.FlowName == SupplyService.ManualSinkName;
-                Assert(supplied, $"{item}: the caravan brings one at 8g into {SupplyService.ManualSinkName}.");
+                bool supplied = term.Item == item && term.Role == CaravanRole.Supplies && term.Limit == 1 && term.Price == 2 && term.FlowName == SupplyService.ManualSinkName;
+                Assert(supplied, $"{item}: the caravan brings one at 2g into {SupplyService.ManualSinkName}.");
             }
-            TestLog.Log("[PASS] Test 2: the stall sells each primer at 25g; the caravan brings one of each at 8g.");
+            TestLog.Log("[PASS] Test 2: the stall sells each primer at 25g; the caravan brings one of each at 2g.");
         }
 
         private static void ValidateTheGoodsTableHoldsThem()
@@ -87,9 +87,9 @@ namespace Simpiens.Testing.Skills
             int primers = 0;
             foreach (var item in ItemCatalog.InCategory(ItemCategory.Manual)) primers += after.SellStockOf(item);
             Assert(primers == ItemCatalog.InCategory(ItemCategory.Manual).Count, $"The caravan's visit shelves one of each primer ({primers}).");
-            Assert(ledger.GetSinkTotal(SupplyService.ManualSinkName) == 8u * (uint)primers, $"It pays 8g each into {SupplyService.ManualSinkName} ({ledger.GetSinkTotal(SupplyService.ManualSinkName)}g).");
+            Assert(ledger.GetSinkTotal(SupplyService.ManualSinkName) == 2u * (uint)primers, $"It pays 2g each into {SupplyService.ManualSinkName} ({ledger.GetSinkTotal(SupplyService.ManualSinkName)}g).");
             Assert(ledger.ValidateConservation(after.TreasuryGold, 0, out int discrepancy), $"The ledger balances ({discrepancy}g).");
-            TestLog.Log($"[PASS] Test 4: the caravan's visit shelves one of each primer, paying {8 * primers}g into its sink, the ledger balanced.");
+            TestLog.Log($"[PASS] Test 4: the caravan's visit shelves one of each primer, paying {2 * primers}g into its sink, the ledger balanced.");
         }
 
         private static void Assert(bool condition, string message)
