@@ -140,6 +140,13 @@ namespace Simpiens.Cognition
         }
 
         /// <summary>
+        /// What it last practised at its own work and when (Epic 11, S3.1, D9): a learner nearby at the same work may be taught
+        /// by it within the hour. Work in progress, not saved: after a load nobody mentors until they practise again.
+        /// </summary>
+        public Simpiens.Simulation.Skills.SkillWork LastPracticed { get; internal set; }
+        public uint LastPracticedAt { get; internal set; }
+
+        /// <summary>
         /// Who it has become (Epic 11, A3, D1): its passions, teachers, deeds and, later, its techniques, calling, epithet,
         /// earned traits and scars. Written on the main thread, saved in its record; cognition reads a copy.
         /// </summary>

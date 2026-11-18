@@ -18,7 +18,7 @@ namespace Simpiens.Core.Tests
         private static readonly Dictionary<string, string> Allowed = new Dictionary<string, string>
         {
             ["Simpiens.Core/Simulation/Skills/DeedTable.cs"] = "the table: the deeds' rows",
-            ["Simpiens.Core/Simulation/SimulationManager.cs"] = "a kill and a boss's (the creatures' world), a downing survived (the bleeding clock stopped)",
+            ["Simpiens.Core/Simulation/SimulationManager.cs"] = "a kill and a boss's (the creatures' world), a downing survived (the bleeding clock stopped), a crawler taught (a mentor's first lesson)",
             ["Simpiens.Core/Cognition/Planning/Handlers/CarryIntentHandler.cs"] = "a rescue: carried out, or stood up with a medicine",
             ["Simpiens.Core/Simulation/Workshops/WorkshopService.cs"] = "a make finished",
             ["Simpiens.Core/Simulation/Economy/Market.cs"] = "a hunt's share paid",

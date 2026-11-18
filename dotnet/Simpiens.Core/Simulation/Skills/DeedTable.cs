@@ -24,7 +24,9 @@ namespace Simpiens.Simulation.Skills
         /// <summary>It was paid a share of a hunt's bounty, its lair emptied.</summary>
         HuntPaid = 6,
         /// <summary>It came home with its party from a clear that emptied its lair.</summary>
-        ClearWon = 7
+        ClearWon = 7,
+        /// <summary>A crawler taught a skill, the first to teach it that skill (Epic 11, S3.1, D9): counted on the teacher.</summary>
+        Taught = 8
     }
 
     /// <summary>One deed: a row of <see cref="DeedTable"/>.</summary>
@@ -66,7 +68,8 @@ namespace Simpiens.Simulation.Skills
                 new DeedDefinition(Deed.Make, "Make", "makes"),
                 new DeedDefinition(Deed.DowningSurvived, "DowningSurvived", "downings survived"),
                 new DeedDefinition(Deed.HuntPaid, "HuntPaid", "hunts paid"),
-                new DeedDefinition(Deed.ClearWon, "ClearWon", "clears won")
+                new DeedDefinition(Deed.ClearWon, "ClearWon", "clears won"),
+                new DeedDefinition(Deed.Taught, "Taught", "crawlers taught")
             };
             var byId = new DeedDefinition[Capacity];
             foreach (var row in rows)

@@ -140,6 +140,23 @@ namespace Simpiens.Simulation.Skills
             return pastApprentice <= PastApprenticeSlots && masters <= MasterSlots;
         }
 
+        // --- Mentors (Epic 11, S3.1, Q10, D9) ---
+
+        /// <summary>A mentor stands at least this many levels above the learner at the work (its effective level).</summary>
+        public const int MentorLead = 3;
+
+        /// <summary>A lesson is this share of the act's experience, in percent, before the learner's passion.</summary>
+        public const int MentorPercent = 50;
+
+        /// <summary>A mentor teaches to its own level less this.</summary>
+        public const int MentorCeilingBelow = 2;
+
+        /// <summary>A mentor stands within this many units of the learner.</summary>
+        public const float MentorRange = 6f;
+
+        /// <summary>A mentor practised the same work within this many game hours.</summary>
+        public const int MentorRecentHours = 1;
+
         // --- What a level does (K9.3, Q20) ---
 
         /// <summary>A fighter's hit chance rises by this a level: 70% unskilled, 90% at Master 10 (the combat rule caps it at 95%).</summary>

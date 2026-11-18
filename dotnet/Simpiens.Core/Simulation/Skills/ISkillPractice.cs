@@ -16,12 +16,18 @@ namespace Simpiens.Simulation.Skills
         void Practise(AgentState agent, in SkillWork work, int experience, in PracticeSource source);
     }
 
-    /// <summary>What practice comes from (Epic 10 Part 3, K9.8a): doing the work itself, today.</summary>
+    /// <summary>What practice comes from (Epic 10 Part 3, K9.8a): doing the work itself, and teachers (Epic 11, S3).</summary>
     public enum PracticeKind : byte
     {
         None = 0,
         /// <summary>Doing the work: a blow landed, a shot, a unit harvested, a make, a rescue.</summary>
-        Work = 1
+        Work = 1,
+        /// <summary>A better hand at the same work nearby (Epic 11, S3.1, D9): half the act, to the mentor's level less two.</summary>
+        Mentor = 2,
+        /// <summary>A manual read (Epic 11, S3.3, D11): to its ceiling.</summary>
+        Manual = 3,
+        /// <summary>The drill yard (Epic 11, S3.4, D10): to 5.</summary>
+        Yard = 4
     }
 
     /// <summary>
@@ -49,6 +55,9 @@ namespace Simpiens.Simulation.Skills
 
         /// <summary>Doing the work itself, at the highest challenge: it teaches to the last level, fully.</summary>
         public static PracticeSource Work => new PracticeSource(PracticeKind.Work, SkillRules.MaxLevel);
+
+        /// <summary>A mentor's lesson (Epic 11, S3.1, D9): to <paramref name="ceiling"/>, the mentor's level less two, in full whatever the act demanded.</summary>
+        public static PracticeSource Mentor(int ceiling) => new PracticeSource(PracticeKind.Mentor, ceiling);
 
         /// <summary>Doing the work itself on something that demands <paramref name="challenge"/> (Epic 11, S1.3): a creature, a node, a recipe.</summary>
         public static PracticeSource WorkAt(int challenge) => new PracticeSource(PracticeKind.Work, SkillRules.MaxLevel, challenge);

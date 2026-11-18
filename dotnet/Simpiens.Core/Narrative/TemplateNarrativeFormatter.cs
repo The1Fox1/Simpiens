@@ -180,6 +180,9 @@ namespace Simpiens.Narrative
                     return $"{actorA} is now {(band.StartsWith("a") ? "an" : "a")} {band} {skill?.Practitioner ?? "hand"}.";
                 }
 
+                case ChronicleEventType.FirstLesson:
+                    return $"{actorA} learned {(Simpiens.Simulation.Skills.SkillTable.Get((Simpiens.Simulation.Skills.Skill)(byte)evt.ExtraData)?.DisplayName ?? "a craft").ToLowerInvariant()} at {actorB}'s side.";
+
                 case ChronicleEventType.RaiseAsked:
                     return $"{actorA} asks for a raise, to {(int)evt.ExtraData}g a visit.";
 

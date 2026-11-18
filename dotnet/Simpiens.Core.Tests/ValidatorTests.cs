@@ -54,6 +54,9 @@ namespace Simpiens.Core.Tests
         public void Upkeep() => new Simpiens.Testing.Skills.UpkeepValidator().RunAllValidationTests();
 
         [Fact]
+        public void Mentors() => new Simpiens.Testing.Skills.MentorValidator().RunAllValidationTests();
+
+        [Fact]
         public void GivenNames() => new Simpiens.Testing.People.GivenNamesValidator().RunAllValidationTests();
 
         [Fact]

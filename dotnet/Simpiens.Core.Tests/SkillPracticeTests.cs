@@ -31,9 +31,10 @@ namespace Simpiens.Core.Tests
             Assert.True(brawler.Inventory.TryEquip(Outfitting.NewPiece(ItemType.IronBlade, Grades.Standard)));
             Assert.True(archer.Inventory.TryEquip(Outfitting.NewPiece(ItemType.Crossbow, Grades.Standard)));
             int brawlersRanged = brawler.Skills.Experience(Skill.Ranged), archersMelee = archer.Skills.Experience(Skill.Melee);
-            // Each act of practice, as practice's one entry tells it (Epic 11, S0.2): its amount moves with passions and challenge
+            // Each act of practice at the work itself, as practice's one entry tells it (Epic 11, S0.2): its amount moves with
+            // passions and challenge; a mentor's lesson beside it is an act of its own (S3.1), not counted here
             var acts = new List<(Simpiens.Cognition.AgentState Who, Skill Skill, int Experience)>();
-            sim.Simulation.Practised += (who, skill, experience, kind) => acts.Add((who, skill, experience));
+            sim.Simulation.Practised += (who, skill, experience, source) => { if (source.Kind == PracticeKind.Work) acts.Add((who, skill, experience)); };
             var service = sim.Simulation.Creatures;
             var beetle = service.Creatures.First(c => c.Kind == CreatureKind.StoneBeetle);
             var brawlerNode = sim.Registry.GetEntity(brawler.AgentId);
@@ -67,9 +68,10 @@ namespace Simpiens.Core.Tests
             using var sim = Outpost();
             var residents = sim.Host.CrawlerStates.Where(s => !s.IsDrifter).ToList();
             var harvestsAtStart = residents.ToDictionary(r => r.AgentId, r => r.Activity.SalvageHarvests);
-            // Each act of practice, as practice's one entry tells it (Epic 11, S0.2): its amount moves with passions and challenge
+            // Each act of practice at the work itself, as practice's one entry tells it (Epic 11, S0.2): its amount moves with
+            // passions and challenge; a mentor's lesson beside it is an act of its own (S3.1), not counted here
             var acts = new List<(Simpiens.Cognition.AgentState Who, Skill Skill, int Experience)>();
-            sim.Simulation.Practised += (who, skill, experience, kind) => acts.Add((who, skill, experience));
+            sim.Simulation.Practised += (who, skill, experience, source) => { if (source.Kind == PracticeKind.Work) acts.Add((who, skill, experience)); };
             sim.Step(3000); // their own morning: nothing by hand
             int units = 0;
             foreach (var r in residents)
