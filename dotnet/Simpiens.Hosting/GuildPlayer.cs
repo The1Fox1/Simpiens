@@ -172,6 +172,37 @@ namespace Simpiens.Hosting
 
         private bool _payRaises = true;
 
+        private bool _buildYard;
+        private uint _yardReserve;
+
+        /// <summary>
+        /// Builds the guildhall's drill yard (Epic 11, S3.4, D10) once the guild has a member and the stall holds the yard's
+        /// cost and <paramref name="reserve"/> besides, through the BuildStation command the station window sends. Returns this player.
+        /// </summary>
+        public GuildPlayer BuildYard(uint reserve = 0)
+        {
+            _buildYard = true;
+            _yardReserve = reserve;
+            return this;
+        }
+
+        /// <summary>When it saw the drill yard standing; -1 until then.</summary>
+        public long YardBuiltTick { get; private set; } = -1;
+
+        // The yard's build: one command, applied on the next tick, while it stands unbuilt
+        private void BuildTheYard(GuildService guild, long tick)
+        {
+            if (!_buildYard || YardBuiltTick >= 0 || guild.Members.Count == 0) return;
+            var workshops = _sim.Simulation.Workshops;
+            int yard = workshops.IndexOf(Simpiens.Simulation.Items.StationKind.DrillYard);
+            if (yard < 0) return;
+            if (workshops[yard].Built) { YardBuiltTick = tick; return; }
+            var host = (Simpiens.Simulation.Workshops.IWorkshopHost)_sim.Simulation;
+            if (workshops.CanBuild(host, yard) != Simpiens.Simulation.Workshops.WorkshopRules.Check.Ok) return;
+            if (_sim.Simulation.ActiveStalls[0].TreasuryGold < _sim.Simulation.Economy.Workshops.CostOf(Simpiens.Simulation.Items.StationKind.DrillYard) + _yardReserve) return;
+            _commands.QueueInfluence(InfluenceEvent.CreateBuildStation(SourceId, (byte)yard));
+        }
+
         /// <summary>
         /// Leaves raises unpaid (Epic 11, S2.3): members keep the wage they signed for when they come to ask more, for the
         /// trust test. Returns this player.
@@ -221,6 +252,7 @@ namespace Simpiens.Hosting
             var guild = _sim.Simulation.Guild;
             if (_commands == null) return;
             PayRaises(guild, tick);
+            BuildTheYard(guild, tick);
             if (guild.Members.Count >= _targetSize)
             {
                 // Readying gives the unprotected their gear first, in both parties, then every slot its piece, then the parties go
