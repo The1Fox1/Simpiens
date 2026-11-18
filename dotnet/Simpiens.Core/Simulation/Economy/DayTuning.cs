@@ -168,9 +168,14 @@ namespace Simpiens.Simulation.Economy
         public readonly float LiftSeconds;
         public readonly float GiveSeconds;
 
+        /// <summary>Reading a manual through at rest (Epic 11, S3.3, D11): two game hours.</summary>
+        public readonly float ReadSeconds;
+
         public ActionTuning(float harvestRockSeconds, float harvestHerbSeconds, float harvestFoodSeconds, float eatSeconds, float waitAtPlotSeconds,
-            float tradeSeconds, float boardSeconds, float shareSeconds, float surveySeconds, float treatSeconds, float relaxSeconds, float pickUpSeconds, float liftSeconds, float giveSeconds)
+            float tradeSeconds, float boardSeconds, float shareSeconds, float surveySeconds, float treatSeconds, float relaxSeconds, float pickUpSeconds, float liftSeconds, float giveSeconds,
+            float readSeconds = -1f)
         {
+            ReadSeconds = readSeconds >= 0f ? readSeconds : Minutes(120);
             PickUpSeconds = pickUpSeconds;
             LiftSeconds = liftSeconds;
             GiveSeconds = giveSeconds;
@@ -198,7 +203,8 @@ namespace Simpiens.Simulation.Economy
         /// <summary>
         /// The 24-hour day's (<c>docs/time-model.md</c> §3.3): a unit of ore or glowstone 30 game minutes, herbs 20, a Garden
         /// ration 15; a meal 15; a trade, the board and a hand-over 10; a survey, treating wounds and the hearth 30; a pile
-        /// picked over 5 (Epic 10 Part 3, K4.3); the fallen lifted 1, a medicine handed over 2 (K5.2, K5.3).
+        /// picked over 5 (Epic 10 Part 3, K4.3); the fallen lifted 1, a medicine handed over 2 (K5.2, K5.3); a manual read
+        /// through 120 (Epic 11, S3.3).
         /// </summary>
         public static ActionTuning Default => new ActionTuning(
             harvestRockSeconds: Minutes(30),
@@ -214,7 +220,8 @@ namespace Simpiens.Simulation.Economy
             relaxSeconds: Minutes(30),
             pickUpSeconds: Minutes(5),
             liftSeconds: Minutes(1),
-            giveSeconds: Minutes(2));
+            giveSeconds: Minutes(2),
+            readSeconds: Minutes(120));
 
         private static float Minutes(int minutes) => DayClock.Minutes(minutes) * SimulationClock.FixedTickDeltaTime;
     }

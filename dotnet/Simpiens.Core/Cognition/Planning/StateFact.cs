@@ -51,6 +51,7 @@ namespace Simpiens.Cognition.Planning
         LootCollected = 42, // no pile in sight it would take from (Epic 10 Part 3, K4.3)
         FallenRescued = 43, // no fallen friend within earshot it would come for (Epic 10 Part 3, K5.3)
         HasHuntBounty = 44, // it is in a hunt's party (Epic 10 Part 3, K6.2)
-        LairHunted = 45 // no hunt it is in or would join (K6.2)
+        LairHunted = 45, // no hunt it is in or would join (K6.2)
+        HasManual = 46 // carries a manual to read (Epic 11, S3.3, D11): bought by StudyGoal, read away by ReadManualGoal. A new fact: no other says a book is in the pack (47 of 64)
     }
 }
