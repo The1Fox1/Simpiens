@@ -34,7 +34,7 @@ namespace Simpiens.Client.Ui
         private readonly StationModel _model;
         private readonly IconAtlas _icons;
         private readonly PortraitAtlas _portraits;
-        private readonly TextRuntime _status, _description, _buildNote, _artisanName, _artisanDoing, _artisanState, _wage, _shiftsNote,
+        private readonly TextRuntime _status, _description, _buildNote, _artisanName, _artisanDoing, _artisanState, _wage, _asks, _shiftsNote,
             _candidatesNote, _orderText, _orderNote, _feedback;
         private readonly ContainerRuntime _unbuilt, _built, _artisanCard, _shifts, _candidates, _artisanFace;
         private readonly SpriteRuntime _artisanFaceSprite;
@@ -142,6 +142,12 @@ namespace Simpiens.Client.Ui
             _wage.X = 420f;
             UiParts.CentreVertically(_wage);
             _artisanCard.Children.Add(_wage);
+            // What it asks above its wage, in amber beside the stepper (Epic 11, S2.5, D8): "asks 7g"; clear of the state line under the name
+            _asks = UiParts.Text(string.Empty, UiStyle.Warning, UiText.Small);
+            _asks.X = 568f;
+            UiParts.CentreVertically(_asks);
+            _asks.Visible = false;
+            _artisanCard.Children.Add(_asks);
             MoreWageButton = UiParts.Button("+", 30f, 28f, UiText.BodyBold);
             MoreWageButton.X = 530f;
             UiParts.CentreVertically(MoreWageButton.Visual);
@@ -246,6 +252,9 @@ namespace Simpiens.Client.Ui
         public string StatusText => _status.Text;
         public string BuildNoteText => _buildNote.Text;
         public string ArtisanNameText => _artisanName.Text;
+
+        /// <summary>What the artisan's line shows of its asking wage (Epic 11, S2.5): "asks 7g", or empty.</summary>
+        public string AsksShown => _asks.Visible ? _asks.Text : string.Empty;
         public string ShiftsNoteText => _shiftsNote.Text;
         public string CandidatesNoteText => _candidatesNote.Text;
         public string OrderText => _orderText.Text;
@@ -383,6 +392,9 @@ namespace Simpiens.Client.Ui
                 UiParts.SetText(_artisanState, _model.ArtisanState);
                 _artisanState.Color = _model.ArtisanOnBreak ? UiStyle.Warning : UiStyle.TextLight;
                 UiParts.SetText(_wage, WageText(_model.PendingWage));
+                bool asks = _model.Asks.Length > 0;
+                if (_asks.Visible != asks) _asks.Visible = asks;
+                if (asks) UiParts.SetText(_asks, _model.Asks);
                 for (int b = 0; b < _blocks.Count; b++) StoneSkin.SetActive(_blocks[b], _model.IsBlockOn(b));
                 UiParts.SetText(_shiftsNote, _model.ShiftsNote);
                 _shiftsNote.Color = _model.ShiftsTire ? UiStyle.Warning : UiStyle.TextSecondary;

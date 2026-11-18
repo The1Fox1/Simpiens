@@ -126,6 +126,12 @@ namespace Simpiens.Presentation.Dashboard
         private readonly System.Collections.Generic.List<SkillTexts.Shown> _skillsShown = new System.Collections.Generic.List<SkillTexts.Shown>(Simpiens.Simulation.Skills.SkillTable.Capacity);
         public const string NoGear = "None";
 
+        /// <summary>A skill the mastery budget holds (Epic 11, S2.5, D7): "Foraging held at 5: two crafts past Apprentice"; empty when none is.</summary>
+        public string SkillHeld { get; private set; } = string.Empty;
+
+        /// <summary>A member's or artisan's asking wage above its wage (Epic 11, S2.5, D8): "asks 7g"; empty otherwise.</summary>
+        public string Asks { get; private set; } = string.Empty;
+
         public float Hunger { get; private set; }
         public float Energy { get; private set; }
         public float Social { get; private set; }
@@ -170,6 +176,8 @@ namespace Simpiens.Presentation.Dashboard
             Equipment.Refresh(null);
             Skills = string.Empty;
             _skillsShown.Clear();
+            SkillHeld = string.Empty;
+            Asks = string.Empty;
             if (!HasCrawler)
             {
                 if (crawler != default) ShowTheDead(crawler);
@@ -189,6 +197,8 @@ namespace Simpiens.Presentation.Dashboard
             Equipment.Refresh(agent.Inventory);
             Skills = SkillTexts.Best(agent.Skills, 4);
             SkillTexts.BestShown(agent.Skills, agent.Traits, 4, keepPassions: true, _skillsShown);
+            SkillHeld = SkillTexts.Held(agent.Skills);
+            Asks = AsksOf(agent);
             Hunger = agent.Hunger;
             Energy = agent.Energy;
             Social = agent.Social;
@@ -221,6 +231,18 @@ namespace Simpiens.Presentation.Dashboard
                 _affinities.Add(_rows[i].Line);
                 _shownRows.Add(_rows[i]);
             }
+        }
+
+        // A member's or artisan's asking wage against its contract's (Epic 11, S2.5, D8)
+        private string AsksOf(Simpiens.Cognition.AgentState agent)
+        {
+            var sim = _context.Simulation;
+            if (sim == null) return string.Empty;
+            if (sim.Guild.TryGetContract(agent.AgentId, out var member))
+                return SkillTexts.Asks(member.Wage, Simpiens.Simulation.Guild.GuildRules.AskingWage(agent, sim.Economy.Guild));
+            if (sim.Workshops != null && sim.Workshops.TryGetContract(agent.AgentId, out var artisan))
+                return SkillTexts.Asks(artisan.Wage, Simpiens.Simulation.Workshops.WorkshopRules.AskingWage(agent, sim.Economy.Workshops, sim.Economy.Guild));
+            return string.Empty;
         }
 
         // The header (Epic UI-Beta B3): the portrait's key, and its words, rebuilt only when they change

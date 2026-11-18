@@ -103,6 +103,9 @@ namespace Simpiens.Presentation.Dashboard
         public bool ArtisanHasPortrait { get; private set; }
         public PortraitKey ArtisanPortrait { get; private set; }
         public int Wage { get; private set; }
+
+        /// <summary>The artisan's asking wage above its wage (Epic 11, S2.5, D8): "asks 7g"; empty when it asks no more.</summary>
+        public string Asks { get; private set; } = string.Empty;
         /// <summary>The wage the stepper sets; Apply sends it.</summary>
         public int PendingWage { get; private set; }
         public byte Shifts { get; private set; }
@@ -322,6 +325,7 @@ namespace Simpiens.Presentation.Dashboard
             ArtisanName = node != null ? _context.FriendlyName(id, node.Name) : DossierModel.UnknownName;
             ArtisanHasPortrait = agent != null && agent.Look.IsComplete;
             ArtisanPortrait = ArtisanHasPortrait ? PortraitKey.Of(id, agent, _moods, Tick) : default;
+            Asks = agent != null ? SkillTexts.Asks(contract.Wage, WorkshopRules.AskingWage(agent, tuning, _context.Simulation.Economy.Guild)) : string.Empty;
             ArtisanDoing = agent != null ? PlanText.Action(agent.HasActivePlan ? agent.ActivePlan.CurrentAction : null) : string.Empty;
             if (contract.OnBreak) ArtisanState = Invariant($"Energy {agent?.Energy ?? 0:F0} · on a break until rested");
             else if (ShiftBlocks.Covers(contract.Shifts, Tick)) ArtisanState = Invariant($"Energy {agent?.Energy ?? 0:F0} · on shift");

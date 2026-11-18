@@ -106,6 +106,25 @@ namespace Simpiens.Presentation.Dashboard
         }
 
         /// <summary>
+        /// The first skill the mastery budget holds, in the table's display order (Epic 11, S2.5, D7): "Foraging held at 5:
+        /// two crafts past Apprentice", "Smithing held at 8: a Master already"; empty when none is held.
+        /// </summary>
+        public static string Held(in SkillSet skills)
+        {
+            var shown = SkillTable.InDisplayOrder;
+            for (int i = 0; i < shown.Count; i++)
+            {
+                if (!SkillRules.HeldByBudget(skills, shown[i].Id, out int ceiling, out var hold)) continue;
+                string why = hold == BudgetHold.Master ? "a Master already" : "two crafts past Apprentice";
+                return Invariant($"{shown[i].DisplayName} held at {ceiling}: {why}");
+            }
+            return string.Empty;
+        }
+
+        /// <summary>"asks 7g" (Epic 11, S2.5, D8): an asking wage above the wage paid; empty when it asks no more.</summary>
+        public static string Asks(int wage, int asking) => asking > wage ? Invariant($"asks {asking}g") : string.Empty;
+
+        /// <summary>
         /// "Smithing 4 (Apprentice)": how good a crawler is at <paramref name="work"/> (its effective level, Epic 10 Part 3,
         /// K9.8a), named by the skill that answers for it, with its band; empty for work no skill answers.
         /// </summary>

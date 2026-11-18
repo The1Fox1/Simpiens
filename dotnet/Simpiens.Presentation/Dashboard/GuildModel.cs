@@ -37,6 +37,9 @@ namespace Simpiens.Presentation.Dashboard
         /// <summary>The wage it is paid now.</summary>
         public int Wage { get; internal set; }
 
+        /// <summary>Its asking wage above its wage (Epic 11, S2.5, D8): "asks 7g"; empty when it asks no more.</summary>
+        public string Asks { get; internal set; } = string.Empty;
+
         /// <summary>Its party, 1 or 2, or 0 for none (Epic 10 Part 2, W5, D65), as the guild holds it.</summary>
         public byte Party { get; internal set; }
 
@@ -130,7 +133,9 @@ namespace Simpiens.Presentation.Dashboard
                 var node = _context.Registry?.GetEntity(contract.CrawlerId);
                 var agent = node?.Agent;
                 row.Name = node != null ? _context.FriendlyName(node.Id, node.Name) : DossierModel.UnknownName;
+                row.Asks = string.Empty;
                 if (agent == null) continue;
+                row.Asks = SkillTexts.Asks(contract.Wage, GuildRules.AskingWage(agent, tuning));
                 row.HasPortrait = agent.Look.IsComplete;
                 row.Portrait = row.HasPortrait ? Simpiens.Presentation.Art.People.PortraitKey.Of(node.Id, agent, _moods, _context.Clock?.CurrentTick ?? 0) : default;
                 row.Doing = PlanText.Action(agent.HasActivePlan ? agent.ActivePlan.CurrentAction : null);
