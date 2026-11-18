@@ -159,8 +159,9 @@ namespace Simpiens.Client.Ui
             _skills = new SkillLine();
             skillLine.Children.Add(_skills.Visual);
             _dossierDetails.Children.Add(skillLine);
-            // A skill the mastery budget holds (Epic 11, S2.5, D7): "Foraging held at 5: two crafts past Apprentice". Shown
-            // only when one is, taking its line from the feelings' list, so the dossier keeps its height at 720 rows
+            // Who taught it (Epic 11, S3.5: "Mining taught by Bram"), then a skill the mastery budget holds (S2.5, D7: "Foraging
+            // held at 5: two crafts past Apprentice"). Shown only when there is either, taking its line from the feelings' list,
+            // so the dossier keeps its height at 720 rows
             _held = UiParts.Text(string.Empty, UiStyle.TextMuted, UiText.Small);
             _held.Visible = false;
             _dossierDetails.Children.Add(_held);
@@ -257,7 +258,7 @@ namespace Simpiens.Client.Ui
         public string GroupsShown => _groups.Text;
 
         /// <summary>A skill the budget holds, and the asking wage above the wage, as shown (Epic 11, S2.5); empty when hidden.</summary>
-        public string HeldShown => _held.Visible ? _held.Text : string.Empty;
+        public string SkillNotesShown => _held.Visible ? _held.Text : string.Empty;
         public string AsksShown => _asks.Visible ? _asks.Text : string.Empty;
         public string SkillsShown => _skills.Text;
         public string RecruitShown => _recruitText.Text;
@@ -432,13 +433,14 @@ namespace Simpiens.Client.Ui
             CalmButton.IsEnabled = dossier.CanCalm;
             UiParts.SetText(_groups, dossier.Groups);
             _skills.Show(dossier.SkillsShown);
-            bool held = dossier.SkillHeld.Length > 0;
+            string notes = dossier.SkillNotes;
+            bool held = notes.Length > 0;
             if (_held.Visible != held)
             {
                 _held.Visible = held;
                 _affinitiesViewer.Height = held ? AffinitiesHeight - HeldLineHeight : AffinitiesHeight;
             }
-            if (held) UiParts.SetText(_held, dossier.SkillHeld);
+            if (held) UiParts.SetText(_held, notes);
             bool asks = dossier.Asks.Length > 0;
             if (_asks.Visible != asks) _asks.Visible = asks;
             if (asks) UiParts.SetText(_asks, dossier.Asks);

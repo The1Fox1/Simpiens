@@ -59,7 +59,7 @@ namespace Simpiens.Client.Tests
             Assert.True(guild.IsMember(member.AgentId), "Recruit signed it on.");
             ui.Frame();
             Assert.Equal(string.Empty, panels.AsksShown);
-            Assert.Equal(string.Empty, panels.HeldShown);
+            Assert.Equal(string.Empty, panels.SkillNotesShown);
 
             // A Journeyman now (by hand): it asks 6g over its 5g
             Reach(member, Skill.Mining, 6);
@@ -74,7 +74,7 @@ namespace Simpiens.Client.Tests
             Reach(member, Skill.Smithing, 6);
             Reach(member, Skill.Foraging, 5);
             ui.Frame();
-            Assert.Equal("Foraging held at 5: two crafts past Apprentice", panels.HeldShown);
+            Assert.Equal("Foraging held at 5: two crafts past Apprentice", panels.SkillNotesShown);
         }
 
         [Fact]

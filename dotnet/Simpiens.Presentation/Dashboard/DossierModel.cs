@@ -129,6 +129,15 @@ namespace Simpiens.Presentation.Dashboard
         /// <summary>A skill the mastery budget holds (Epic 11, S2.5, D7): "Foraging held at 5: two crafts past Apprentice"; empty when none is.</summary>
         public string SkillHeld { get; private set; } = string.Empty;
 
+        /// <summary>
+        /// Who taught it (Epic 11, S3.5, D9): each skill's first teacher from its traits record, "Mining taught by Bram", the
+        /// departed named from the departed roll; joined by " · ", empty when nobody taught it.
+        /// </summary>
+        public string Taught { get; private set; } = string.Empty;
+
+        /// <summary>The line under the skills: who taught it, then a skill the budget holds; empty when neither.</summary>
+        public string SkillNotes => Taught.Length == 0 ? SkillHeld : SkillHeld.Length == 0 ? Taught : Taught + " · " + SkillHeld;
+
         /// <summary>A member's or artisan's asking wage above its wage (Epic 11, S2.5, D8): "asks 7g"; empty otherwise.</summary>
         public string Asks { get; private set; } = string.Empty;
 
@@ -178,6 +187,7 @@ namespace Simpiens.Presentation.Dashboard
             _skillsShown.Clear();
             SkillHeld = string.Empty;
             Asks = string.Empty;
+            Taught = string.Empty;
             if (!HasCrawler)
             {
                 if (crawler != default) ShowTheDead(crawler);
@@ -198,6 +208,7 @@ namespace Simpiens.Presentation.Dashboard
             Skills = SkillTexts.Best(agent.Skills, 4);
             SkillTexts.BestShown(agent.Skills, agent.Traits, 4, keepPassions: true, _skillsShown);
             SkillHeld = SkillTexts.Held(agent.Skills);
+            Taught = TaughtBy(agent.Traits);
             Asks = AsksOf(agent);
             Hunger = agent.Hunger;
             Energy = agent.Energy;
@@ -231,6 +242,31 @@ namespace Simpiens.Presentation.Dashboard
                 _affinities.Add(_rows[i].Line);
                 _shownRows.Add(_rows[i]);
             }
+        }
+
+        // Each skill's first teacher (Epic 11, S3.5): a living teacher by its name here, the departed by the roll's
+        private string TaughtBy(in Simpiens.Simulation.Skills.CrawlerTraits traits)
+        {
+            var parts = new System.Collections.Generic.List<string>(Simpiens.Simulation.Skills.CrawlerTraits.TeacherSlots);
+            for (int i = 0; i < Simpiens.Simulation.Skills.CrawlerTraits.TeacherSlots; i++)
+            {
+                var record = traits.TeacherAt(i);
+                if (record.Skill == Simpiens.Simulation.Skills.Skill.None || record.Teacher == default) continue;
+                var skill = Simpiens.Simulation.Skills.SkillTable.Get(record.Skill);
+                if (skill == null) continue;
+                parts.Add($"{skill.DisplayName} taught by {TeacherName(record.Teacher)}");
+            }
+            return string.Join(" · ", parts);
+        }
+
+        private string TeacherName(EntityId teacher)
+        {
+            var node = _context.Registry?.GetEntity(teacher);
+            if (node?.Agent != null) return _context.FriendlyName(teacher, node.Agent.GivenName ?? UnknownName);
+            var departed = _context.Departed?.Departed;
+            for (int i = departed != null ? departed.Count - 1 : -1; i >= 0; i--)
+                if (departed[i].Id == teacher && !string.IsNullOrEmpty(departed[i].GivenName)) return departed[i].GivenName;
+            return _context.FriendlyName(teacher, UnknownName);
         }
 
         // A member's or artisan's asking wage against its contract's (Epic 11, S2.5, D8)

@@ -39,6 +39,8 @@ namespace Simpiens.Client.Ui
         private readonly ContainerRuntime _unbuilt, _built, _artisanCard, _shifts, _candidates, _artisanFace;
         private readonly SpriteRuntime _artisanFaceSprite;
         private readonly List<Button> _tabs = new List<Button>(2);
+        private readonly TextRuntime _artisanHeader;
+        private readonly List<GraphicalUiElement> _orderParts = new List<GraphicalUiElement>(5);
         private readonly List<Button> _blocks = new List<Button>(ShiftBlocks.Count);
         private readonly List<CandidateCard> _candidateCards = new List<CandidateCard>(StationModel.MaxCandidates);
         private readonly List<RecipeRow> _recipeRows = new List<RecipeRow>(4);
@@ -114,7 +116,8 @@ namespace Simpiens.Client.Ui
             _built.WidthUnits = DimensionUnitType.RelativeToParent;
             _built.Width = 0f;
             body.Children.Add(_built);
-            _built.Children.Add(Window.SubHeader("ARTISAN"));
+            _artisanHeader = Window.SubHeader("ARTISAN");
+            _built.Children.Add(_artisanHeader);
             _built.Children.Add(Window.Gap(6f));
 
             _artisanCard = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = CardHeight };
@@ -195,10 +198,11 @@ namespace Simpiens.Client.Ui
             for (int i = 0; i < StationModel.MaxCandidates; i++) _candidateCards.Add(AddCandidate(_candidates, i));
             _built.Children.Add(_candidates);
 
-            // What it makes
-            _built.Children.Add(Window.Gap(10f));
-            _built.Children.Add(Window.SubHeader("ORDER"));
-            _built.Children.Add(Window.Gap(6f));
+            // What it makes (the drill yard makes nothing, Epic 11, S3.4: the section hides there)
+            _orderParts.Add(Window.Gap(10f));
+            _orderParts.Add(Window.SubHeader("ORDER"));
+            _orderParts.Add(Window.Gap(6f));
+            foreach (var part in _orderParts) _built.Children.Add(part);
             // In a list that scrolls past VisibleRecipes (Epic 10 Part 3, K3.4: the forge makes seven)
             var scroll = new ScrollViewer();
             scroll.Visual.WidthUnits = DimensionUnitType.RelativeToParent;
@@ -209,6 +213,7 @@ namespace Simpiens.Client.Ui
             list.ChildrenLayout = ChildrenLayout.TopToBottomStack;
             list.StackSpacing = 0f;
             _built.Children.Add(scroll.Visual);
+            _orderParts.Add(scroll.Visual);
             RecipeList = scroll;
             for (int i = 0; i < recipes; i++) _recipeRows.Add(AddRecipe(list, i));
             var order = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 40f };
@@ -225,6 +230,7 @@ namespace Simpiens.Client.Ui
             order.Children.Add(CancelButton.Visual);
             CancelButton.Click += (_, _) => { _model.CancelOrder(); Bind(); };
             _built.Children.Add(order);
+            _orderParts.Add(order);
 
             body.Children.Add(Window.Gap(6f));
             body.Children.Add(Window.Rule());
@@ -252,6 +258,10 @@ namespace Simpiens.Client.Ui
         public string StatusText => _status.Text;
         public string BuildNoteText => _buildNote.Text;
         public string ArtisanNameText => _artisanName.Text;
+
+        /// <summary>The artisan section's header ("ARTISAN", or "WHO DRILLS" at the drill yard), and whether the order section shows (Epic 11, S3.5).</summary>
+        public string ArtisanHeaderText => _artisanHeader.Text;
+        public bool ShowsOrders => _orderParts.Count > 0 && _orderParts[0].Visible;
 
         /// <summary>What the artisan's line shows of its asking wage (Epic 11, S2.5): "asks 7g", or empty.</summary>
         public string AsksShown => _asks.Visible ? _asks.Text : string.Empty;
@@ -381,6 +391,10 @@ namespace Simpiens.Client.Ui
             BuildButton.IsEnabled = _model.CanBuild;
 
             _built.Visible = _model.Built;
+            // The drill yard takes no artisan and no orders (Epic 11, S3.5): its members in the artisan's place, no order section
+            string header = _model.TakesWork ? "ARTISAN" : "WHO DRILLS";
+            if (_artisanHeader.Text != header) _artisanHeader.Text = header;
+            for (int i = 0; i < _orderParts.Count; i++) if (_orderParts[i].Visible != _model.TakesWork) _orderParts[i].Visible = _model.TakesWork;
             _artisanCard.Visible = _model.HasArtisan;
             _shifts.Visible = _model.HasArtisan;
             _candidates.Visible = !_model.HasArtisan;

@@ -120,6 +120,12 @@ namespace Simpiens.Presentation.Dashboard
         public IReadOnlyList<StationCandidateRow> Candidates => _candidates;
         public string CandidatesNote { get; private set; } = string.Empty;
 
+        /// <summary>The station takes an artisan and orders (the forge, the still); the drill yard takes neither (Epic 11, S3.4, D10).</summary>
+        public bool TakesWork { get; private set; } = true;
+
+        /// <summary>The drill yard's members who drilled today (Epic 11, S3.5): "Drilled today: Bram, Ione", or that nobody has.</summary>
+        public string DrilledToday { get; private set; } = string.Empty;
+
         // --- The order ---
         public IReadOnlyList<StationRecipeRow> Recipes => _recipes;
         public bool HasOrder { get; private set; }
@@ -170,14 +176,18 @@ namespace Simpiens.Presentation.Dashboard
             Title = "The " + LongName(state.Kind);
             Description = DescriptionOf(state.Kind);
             Built = state.Built;
-            Status = Built ? Invariant($"Standing · {state.Made} made") : Invariant($"An empty plot · {tuning.ConstructionCost}g to build");
+            TakesWork = state.Kind != StationKind.DrillYard;
+            ushort cost = tuning.CostOf(state.Kind);
+            DrilledToday = TakesWork ? string.Empty : DrilledTodayText();
+            Status = !Built ? Invariant($"An empty plot · {cost}g to build")
+                : TakesWork ? Invariant($"Standing · {state.Made} made") : "Standing · " + DrilledToday;
 
             var host = _context.Simulation as IWorkshopHost;
             var build = host != null ? workshops.CanBuild(host, Index) : WorkshopRules.Check.NoStall;
             CanBuild = !Built && _context.Intervention != null && build == WorkshopRules.Check.Ok;
-            BuildLabel = Invariant($"Build for {tuning.ConstructionCost}g");
+            BuildLabel = Invariant($"Build for {cost}g");
             BuildNote = Built ? string.Empty
-                : build == WorkshopRules.Check.Ok ? Invariant($"The stall pays {tuning.ConstructionCost}g and the {station} stands at once.")
+                : build == WorkshopRules.Check.Ok ? Invariant($"The stall pays {cost}g and the {station} stands at once.")
                 : WorkshopRules.Describe(build, workshops, Index, tuning);
 
             RefreshRecipes(state.Kind);
@@ -349,6 +359,11 @@ namespace Simpiens.Presentation.Dashboard
         {
             _candidates.Clear();
             CandidatesNote = string.Empty;
+            if (Built && !TakesWork)
+            {
+                CandidatesNote = Invariant($"No artisan: guild members drill here in their free hours, to Apprentice ({Simpiens.Simulation.Skills.SkillRules.YardCeiling}).");
+                return;
+            }
             if (!Built || HasArtisan || host == null) return;
             _willing.Clear();
             var entities = _context.Registry?.ActiveEntities;
@@ -464,10 +479,26 @@ namespace Simpiens.Presentation.Dashboard
             return "off shift";
         }
 
+        // The residents who drilled since the day began (Epic 11, S3.5), by the tick each last drilled
+        private string DrilledTodayText()
+        {
+            long today = DayClock.Day(_context.Clock?.CurrentTick ?? 0);
+            var names = new System.Collections.Generic.List<string>(4);
+            var entities = _context.Registry?.ActiveEntities;
+            for (int i = 0; entities != null && i < entities.Count; i++)
+            {
+                var agent = entities[i]?.Agent;
+                if (agent == null || agent.LastDrilledAt == 0 || DayClock.Day(agent.LastDrilledAt) != today) continue;
+                names.Add(_context.FriendlyName(entities[i].Id, DossierModel.UnknownName));
+            }
+            return names.Count == 0 ? "nobody has drilled today" : "drilled today: " + string.Join(", ", names);
+        }
+
         private static string LongName(StationKind kind) => kind switch
         {
             StationKind.Forge => "Forge",
             StationKind.Still => "Alchemy Still",
+            StationKind.DrillYard => "Drill Yard",
             _ => "Station"
         };
 
@@ -475,6 +506,7 @@ namespace Simpiens.Presentation.Dashboard
         {
             StationKind.Forge => "Iron ore into tools and gear, worked by an artisan you hire.",
             StationKind.Still => "Herbs into draughts, worked by an artisan you hire.",
+            StationKind.DrillYard => "Where guild members drill in their free hours: no artisan, no orders.",
             _ => "A station worked by an artisan you hire."
         };
 
