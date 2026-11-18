@@ -59,11 +59,22 @@ namespace Simpiens.Simulation.Economy
         /// </summary>
         public readonly uint BreakAfterTicks;
 
+        /// <summary>
+        /// What the guildhall's drill yard costs to build (Epic 11, S3.4, Q10, D10): the patron's payment for its teaching, paid
+        /// once into the same <c>Construction</c> sink; nothing is charged by the hour.
+        /// </summary>
+        public readonly ushort DrillYardCost;
+
+        /// <summary>What a station of <paramref name="kind"/> costs to build: the yard its own, the workshop row's stations <see cref="ConstructionCost"/>.</summary>
+        public ushort CostOf(Simpiens.Simulation.Items.StationKind kind) => kind == Simpiens.Simulation.Items.StationKind.DrillYard ? DrillYardCost : ConstructionCost;
+
         public WorkshopTuning(ushort constructionCost, sbyte hireTrust, sbyte hireWarmth, byte maxRiskTolerancePercent, ushort reservationWage,
             ushort defaultWage, ushort maxWage, uint rehireCooldownTicks, byte initialAllegiance, sbyte quitTrust, byte maxUnpaidVisits,
             TrustDelta paid, sbyte paidAllegiance, TrustDelta unpaid, sbyte unpaidAllegiance, sbyte dismissTrust,
-            float breakEnergy = 15f, TrustDelta breakCost = default, float restedEnergy = 60f, uint breakAfterTicks = 10 * DayClock.TicksPerHour)
+            float breakEnergy = 15f, TrustDelta breakCost = default, float restedEnergy = 60f, uint breakAfterTicks = 10 * DayClock.TicksPerHour,
+            ushort drillYardCost = 200)
         {
+            DrillYardCost = drillYardCost;
             BreakAfterTicks = breakAfterTicks;
             BreakEnergy = breakEnergy;
             Break = breakCost;

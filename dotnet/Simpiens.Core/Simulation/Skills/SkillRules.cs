@@ -157,6 +157,17 @@ namespace Simpiens.Simulation.Skills
         /// <summary>A mentor practised the same work within this many game hours.</summary>
         public const int MentorRecentHours = 1;
 
+        // --- The drill yard (Epic 11, S3.4, Q10, D10) ---
+
+        /// <summary>The yard teaches to the top of Apprentice.</summary>
+        public const int YardCeiling = 5;
+
+        /// <summary>A game hour's drill is worth this, before the drill's passion.</summary>
+        public const int YardExperiencePerHour = 30;
+
+        /// <summary>The drill's practice comes in this many lots a game hour (five each).</summary>
+        public const int YardLotsPerHour = 6;
+
         // --- What a level does (K9.3, Q20) ---
 
         /// <summary>A fighter's hit chance rises by this a level: 70% unskilled, 90% at Master 10 (the combat rule caps it at 95%).</summary>

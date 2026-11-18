@@ -53,6 +53,17 @@ namespace Simpiens.Simulation.Workshops
         /// <summary>The <paramref name="index"/>-th station's state, a copy.</summary>
         public StationState this[int index] => _stations[index];
 
+        /// <summary>Which stations stand (bit i = station i, Epic 11, S3.4): published in the snapshot, so cognition finds a built drill yard.</summary>
+        public ulong BuiltMask
+        {
+            get
+            {
+                ulong mask = 0;
+                for (int i = 0; i < _stations.Length && i < 64; i++) if (_stations[i].Built) mask |= 1UL << i;
+                return mask;
+            }
+        }
+
         /// <summary>Where the <paramref name="index"/>-th station stands, and what kind it is.</summary>
         public StationDefinition DefinitionAt(int index) => _map.Stations[index];
 
@@ -141,7 +152,7 @@ namespace Simpiens.Simulation.Workshops
                 SimLog.Economy.ZLogWarning($"Build refused for station {index}: {check} ({WorkshopRules.Describe(check, this, index, Tuning(host))})");
                 return check;
             }
-            uint cost = Tuning(host).ConstructionCost;
+            uint cost = Tuning(host).CostOf(_stations[index].Kind);
             var stall = host.ActiveStalls[0];
             host.UpdateStall(stall.WithTreasury(stall.TreasuryGold - cost));
             host.EconomyLedger?.RecordSink(cost, ConstructionSinkName);

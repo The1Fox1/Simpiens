@@ -63,6 +63,7 @@ namespace Simpiens.Cognition.Contracts
             registry.RegisterHandler(new Simpiens.Cognition.Planning.Handlers.FightIntentHandler());
             registry.RegisterHandler(new Simpiens.Cognition.Planning.Handlers.TreatWoundsIntentHandler());
             registry.RegisterHandler(new Simpiens.Cognition.Planning.Handlers.ReadManualIntentHandler()); // Epic 11, S3.3
+            registry.RegisterHandler(new Simpiens.Cognition.Planning.Handlers.DrillIntentHandler()); // Epic 11, S3.4
             registry.RegisterHandler(new Simpiens.Cognition.Planning.Handlers.WorkStationIntentHandler());
             registry.RegisterHandler(new Simpiens.Cognition.Planning.Handlers.PickUpIntentHandler()); // Epic 10 Part 3, K4.3
             registry.RegisterHandler(new Simpiens.Cognition.Planning.Handlers.CarryIntentHandler()); // K5.2

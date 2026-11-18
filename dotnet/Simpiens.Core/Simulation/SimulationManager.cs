@@ -894,6 +894,7 @@ namespace Simpiens.Simulation
                 if (_sectors != null) _spatialPartition.SetExploredSectors(_sectors.ExploredMask);
                 _spatialPartition.SetChartedLairs(Creatures.ChartedMask); // the lairs known to everyone (Epic 10 Part 3, K2.3)
                 _spatialPartition.SetBossLairs(Creatures.BossMask); // the lairs whose boss lives (K10.2a)
+                _spatialPartition.SetBuiltStations(Workshops.BuiltMask); // the stations standing: a drill yard (Epic 11, S3.4)
                 _spatialPartition.SetPiles(Piles.Piles); // the items on the ground (K4.3b)
                 _spatialPartition.SetHunts(_market.Hunts); // the hunts' parties (K6.2)
                 ValidateBunkOccupancy();

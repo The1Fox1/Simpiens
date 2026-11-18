@@ -146,6 +146,9 @@ namespace Simpiens.Cognition
         public Simpiens.Simulation.Skills.SkillWork LastPracticed { get; internal set; }
         public uint LastPracticedAt { get; internal set; }
 
+        /// <summary>When it last drilled at a yard (Epic 11, S3.4, D10), for the station window's "drilled today". Not saved.</summary>
+        public uint LastDrilledAt { get; internal set; }
+
         /// <summary>
         /// Who it has become (Epic 11, A3, D1): its passions, teachers, deeds and, later, its techniques, calling, epithet,
         /// earned traits and scars. Written on the main thread, saved in its record; cognition reads a copy.
@@ -617,7 +620,8 @@ namespace Simpiens.Cognition
                 BleedsOutAt,
                 Memberships.TryGet(Simpiens.Cognition.Groups.GroupType.TemporaryParty, out var party) ? party.GroupId : (byte)0,
                 Skills,
-                Traits);
+                Traits,
+                Memberships.TryGet(Simpiens.Cognition.Groups.GroupType.FactionGuild, out var guild) ? guild.GroupId : (byte)0);
         }
     }
 }

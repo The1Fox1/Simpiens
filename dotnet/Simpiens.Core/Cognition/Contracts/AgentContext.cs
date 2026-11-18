@@ -78,6 +78,10 @@ namespace Simpiens.Cognition.Contracts
         /// <summary>Who it has become (Epic 11, A3): a copy of its traits record, for what its passions weigh (S1).</summary>
         public readonly Simpiens.Simulation.Skills.CrawlerTraits Traits;
 
+        /// <summary>The player's guild it belongs to, its group id, or 0 (Epic 11, S3.4: a member may drill at the guildhall's yard).</summary>
+        public readonly byte GuildGroupId;
+        public bool IsGuildMember => GuildGroupId != 0;
+
         /// <summary>Collapsed in danger, its clock running (K5.1): it lies where it fell.</summary>
         public bool IsCollapsed => IsDowned && BleedsOutAt != 0;
 
@@ -101,8 +105,10 @@ namespace Simpiens.Cognition.Contracts
                             uint bleedsOutAt = 0,
                             byte partyGroupId = 0,
                             in Simpiens.Simulation.Skills.SkillSet skills = default,
-                            in Simpiens.Simulation.Skills.CrawlerTraits traits = default)
+                            in Simpiens.Simulation.Skills.CrawlerTraits traits = default,
+                            byte guildGroupId = 0)
         {
+            GuildGroupId = guildGroupId;
             Skills = skills;
             Traits = traits;
             BleedsOutAt = bleedsOutAt;

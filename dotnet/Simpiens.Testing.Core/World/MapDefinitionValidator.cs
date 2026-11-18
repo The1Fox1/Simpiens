@@ -294,11 +294,14 @@ namespace Simpiens.Testing.World
             for (int i = 0; i < def.Stations.Count; i++)
             {
                 var station = def.Stations[i];
-                Assert(def.FindSector(station.Position).Id == Floor1Layout.WorkshopRowSectorId, $"(i) Station '{station.Key}' stands in the workshop row.");
+                // The workshop row's stations; the drill yard in the guildhall (Epic 11, S3.4, D10)
+                int home = station.Kind == StationKind.DrillYard ? Floor1Layout.GuildhallSectorId : Floor1Layout.WorkshopRowSectorId;
+                Assert(def.FindSector(station.Position).Id == home, $"(i) Station '{station.Key}' stands in {(home == Floor1Layout.GuildhallSectorId ? "the guildhall" : "the workshop row")}.");
                 Assert(grid.TryGetRegion(station.Position, out int r) && r == hubRegion, $"(i) Station '{station.Key}' at {station.Position} is reachable from the Hub.");
                 Assert(station.Radius > 0f && kinds.Add(station.Kind), $"(i) Station '{station.Key}': a radius, and the only {station.Kind}.");
             }
-            Assert(kinds.Contains(StationKind.Forge) && kinds.Contains(StationKind.Still) && def.Stations.Count == 2, "(i) Floor 1 has a forge and a still (Q2).");
+            Assert(kinds.Contains(StationKind.Forge) && kinds.Contains(StationKind.Still) && kinds.Contains(StationKind.DrillYard) && def.Stations.Count == 3,
+                "(i) Floor 1 has a forge and a still (Q2), and the guildhall's drill yard (Epic 11, S3.4).");
 
             // (e) building twice gives identical walkability and region labels
             var again = Rasterized(def);

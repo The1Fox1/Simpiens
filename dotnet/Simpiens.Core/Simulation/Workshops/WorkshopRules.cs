@@ -61,7 +61,11 @@ namespace Simpiens.Simulation.Workshops
 
             // Repair (W4, D59)
             /// <summary>Only what is worn wears, and only what a station makes is mended there.</summary>
-            NotRepairable = 21
+            NotRepairable = 21,
+
+            // The drill yard (Epic 11, S3.4, D10)
+            /// <summary>The yard has no artisan: guild members drill there on their own.</summary>
+            NoArtisanHere = 22
         }
 
         /// <summary>Whether the station at <paramref name="index"/> can be built now (D10): it exists, stands unbuilt, and the stall can pay. Checked in that order.</summary>
@@ -70,7 +74,7 @@ namespace Simpiens.Simulation.Workshops
             if ((uint)index >= (uint)workshops.Count) return Check.NoStation;
             if (workshops[index].Built) return Check.AlreadyBuilt;
             if (!hasStall) return Check.NoStall;
-            if (treasury < tuning.ConstructionCost) return Check.CannotPay;
+            if (treasury < tuning.CostOf(workshops[index].Kind)) return Check.CannotPay;
             return Check.Ok;
         }
 
@@ -98,6 +102,7 @@ namespace Simpiens.Simulation.Workshops
         {
             if ((uint)index >= (uint)workshops.Count) return Check.NoStation;
             if (!workshops[index].Built) return Check.NotBuilt;
+            if (workshops[index].Kind == Simpiens.Simulation.Items.StationKind.DrillYard) return Check.NoArtisanHere;
             if (workshops.ArtisanAt(index) != default) return Check.Staffed;
             if (crawler == null || crawler.HasLeft) return Check.NoCrawler;
             if (crawler.IsDrifter) return Check.Drifter;
@@ -161,7 +166,8 @@ namespace Simpiens.Simulation.Workshops
                 case Check.NoStation: return "There is no such station here.";
                 case Check.AlreadyBuilt: return $"The {station} already stands.";
                 case Check.NoStall: return "There is no stall to pay for it.";
-                case Check.CannotPay: return $"The stall can't pay the {tuning.ConstructionCost}g to build the {station}.";
+                case Check.CannotPay: return $"The stall can't pay the {((uint)index < (uint)workshops.Count ? tuning.CostOf(workshops[index].Kind) : tuning.ConstructionCost)}g to build the {station}.";
+                case Check.NoArtisanHere: return $"The {station} takes no artisan: guild members drill there on their own.";
                 case Check.NotBuilt: return $"Build the {station} first.";
                 case Check.Staffed: return $"The {station} has its artisan: one to a station.";
                 case Check.NoCrawler: return "There is no such crawler here.";
@@ -192,6 +198,7 @@ namespace Simpiens.Simulation.Workshops
         {
             Simpiens.Simulation.Items.StationKind.Forge => "forge",
             Simpiens.Simulation.Items.StationKind.Still => "still",
+            Simpiens.Simulation.Items.StationKind.DrillYard => "drill yard",
             _ => "station"
         };
     }
