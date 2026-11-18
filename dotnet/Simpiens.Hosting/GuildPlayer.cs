@@ -15,7 +15,8 @@ namespace Simpiens.Hosting
     /// and recruits the first resident, in spawn order, who would sign on at its wage, until the guild reaches its target
     /// size. With <see cref="SendExpeditions"/> (Epic 10 G5) it then forms party 1 of its first four members (Epic 10
     /// Part 2, W5, D65), outfits them from the stall's stock and sends them out whenever the target's seam shows on the
-    /// map; with <see cref="SendSecondParty"/> (W5.3b, D66), party 2 of the next four, to its own target, on its own.
+    /// map; with <see cref="SendSecondParty"/> (W5.3b, D66), party 2 of the next four, to its own target, on its own. It
+    /// pays each member's raise when its asking wage rises (Epic 11, S2.3), unless told to leave raises unpaid.
     /// Shared by the Definition-of-Done scenarios, the soak's guild profile (G6) and the console.
     /// </summary>
     public sealed class GuildPlayer
@@ -169,6 +170,49 @@ namespace Simpiens.Hosting
         /// <summary>Stops acting (a scenario that takes over).</summary>
         public void Stop() => _sim.Host.TickCompleted -= Act;
 
+        private bool _payRaises = true;
+
+        /// <summary>
+        /// Leaves raises unpaid (Epic 11, S2.3): members keep the wage they signed for when they come to ask more, for the
+        /// trust test. Returns this player.
+        /// </summary>
+        public GuildPlayer LeaveRaisesUnpaid()
+        {
+            _payRaises = false;
+            return this;
+        }
+
+        /// <summary>Raises it gave (Epic 11, S2.3: a member's wage set to what it asks), and when it first did; -1 until it has.</summary>
+        public int RaisesPaid { get; private set; }
+        public long FirstRaiseTick { get; private set; } = -1;
+
+        /// <summary>
+        /// Pays raises (Epic 11, S2.3, D8): each member whose asking wage stands above its wage, as the dossier shows it, is
+        /// set to what it asks, while the treasury holds the reserve and a visit's wages at the raise besides.
+        /// </summary>
+        private void PayRaises(GuildService guild, long tick)
+        {
+            if (!_payRaises || guild.Members.Count == 0 || _sim.Simulation.ActiveStalls.Count == 0) return;
+            var host = (IGuildHost)_sim.Simulation;
+            var tuning = _sim.Simulation.Economy.Guild;
+            uint wages = 0;
+            for (int i = 0; i < guild.Members.Count; i++) wages += guild.Members[i].Wage;
+            for (int i = 0; i < guild.Members.Count; i++)
+            {
+                var contract = guild.Members[i];
+                if (!host.TryGetCrawler(contract.CrawlerId, out var member)) continue;
+                ushort asking = GuildRules.AskingWage(member, tuning);
+                if (asking <= contract.Wage) continue;
+                uint raise = (uint)(asking - contract.Wage);
+                if (_sim.Simulation.ActiveStalls[0].TreasuryGold < _reserve + wages + raise) continue;
+                if (GuildRules.CheckSetWage(guild, contract.CrawlerId, asking, tuning) != GuildRules.Check.Ok) continue;
+                _commands.QueueInfluence(InfluenceEvent.CreateSetWage(SourceId, contract.CrawlerId, asking));
+                wages += raise;
+                RaisesPaid++;
+                if (FirstRaiseTick < 0) FirstRaiseTick = tick;
+            }
+        }
+
         /// <summary>Sends a price command, as the player's merchant terminal does.</summary>
         public void SetPrices(in UpdateStallPricesCommand prices) => _commands.QueueInfluence(InfluenceEvent.CreateUpdateStallPrices(SourceId, prices));
 
@@ -176,6 +220,7 @@ namespace Simpiens.Hosting
         {
             var guild = _sim.Simulation.Guild;
             if (_commands == null) return;
+            PayRaises(guild, tick);
             if (guild.Members.Count >= _targetSize)
             {
                 // Readying gives the unprotected their gear first, in both parties, then every slot its piece, then the parties go

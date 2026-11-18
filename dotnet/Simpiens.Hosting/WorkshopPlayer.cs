@@ -11,7 +11,8 @@ namespace Simpiens.Hosting
     /// sends, as <see cref="GuildPlayer"/> does. After every tick it looks at what the station window shows (the
     /// workshops' own rules, read-only) and, for its station: builds it once the stall can pay; hires the first resident,
     /// in spawn order, who would take the work at its wage; gives the artisan its shifts (the day shift by default); and
-    /// keeps an order for the station's make, ordering again when the last is done. Shared by the Definition-of-Done
+    /// keeps an order for the station's make, ordering again when the last is done; pays its artisan's raise when its asking
+    /// wage rises (Epic 11, S2.3), unless told to leave raises unpaid. Shared by the Definition-of-Done
     /// scenarios, the soak and the console.
     /// </summary>
     public sealed class WorkshopPlayer
@@ -77,6 +78,19 @@ namespace Simpiens.Hosting
         /// <summary>Stops acting (a scenario that takes over).</summary>
         public void Stop() => _sim.Host.TickCompleted -= Act;
 
+        private bool _payRaises = true;
+
+        /// <summary>Leaves raises unpaid (Epic 11, S2.3): the artisan keeps the wage it was hired for when it comes to ask more. Returns this player.</summary>
+        public WorkshopPlayer LeaveRaisesUnpaid()
+        {
+            _payRaises = false;
+            return this;
+        }
+
+        /// <summary>Raises it gave (Epic 11, S2.3: its artisan's wage set to what it asks), and when it first did; -1 until it has.</summary>
+        public int RaisesPaid { get; private set; }
+        public long FirstRaiseTick { get; private set; } = -1;
+
         // One command a tick at most: each applies at the start of the next, so the window it reads is up to date again
         private void Act(long tick)
         {
@@ -119,6 +133,21 @@ namespace Simpiens.Hosting
             {
                 _commands.QueueInfluence(InfluenceEvent.CreateSetShifts(SourceId, artisan, _shifts));
                 return;
+            }
+
+            // Its raise (Epic 11, S2.3, D8): the wage it asks, as the station window shows it, while the treasury holds the
+            // reserve and the raise besides
+            if (_payRaises && contract.CrawlerId == artisan && host.TryGetCrawler(artisan, out var hand))
+            {
+                ushort asking = WorkshopService.AskingWage(host, hand);
+                if (asking > contract.Wage && _sim.Simulation.ActiveStalls[0].TreasuryGold >= _reserve + asking
+                    && WorkshopRules.CheckSetWage(workshops, artisan, asking, _sim.Simulation.Economy.Workshops) == WorkshopRules.Check.Ok)
+                {
+                    _commands.QueueInfluence(InfluenceEvent.CreateSetWage(SourceId, artisan, asking));
+                    RaisesPaid++;
+                    if (FirstRaiseTick < 0) FirstRaiseTick = tick;
+                    return;
+                }
             }
 
             if (workshops[index].HasOrder) return;
