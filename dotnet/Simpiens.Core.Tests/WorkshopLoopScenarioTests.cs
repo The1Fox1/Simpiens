@@ -26,12 +26,14 @@ namespace Simpiens.Core.Tests
     /// (Epic 10 Part 3, K9) on 3 of the 23 gate seeds in seven (<see cref="MeasureTheWorkshopLoopOnTheGateSeeds"/>: this
     /// one, 18 and 20), with both parties out at once on day 5.8. Gate seed 1 again since passions and practice by challenge
     /// (Epic 11, S1.5): it plays through on 1 of the 23 (seed 1, at day 5.5), the economy's strain under every station and a
-    /// guild of eight (Epic 11's finding F3; the producer tolerates such flukes until they ruin a scenario).
+    /// guild of eight (Epic 11's finding F3; the producer tolerates such flukes until they ruin a scenario). Gate seed 18
+    /// since Epic 11's teachers (S3.6, measured on S3's final build): it plays through on 3 of the 23 (7, 18 and 20), and on
+    /// this one, the earliest, both parties are out at once on day 4.0.
     /// </para>
     /// </summary>
     public class WorkshopLoopScenarioTests
     {
-        private const ulong Seed = 1;
+        private const ulong Seed = 18;
         private const long Horizon = 7 * DayClock.TicksPerDay;
 
         /// <summary>

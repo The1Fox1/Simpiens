@@ -132,9 +132,11 @@ namespace Simpiens.Core.Tests
         /// <summary>
         /// Gate seed 19: measured (K8.5) the beetles cleared by two blades and two crossbows on 8 of the 23 gate seeds in ten
         /// days (the rest wait for the crossbows' hides or a charted lair), with the bows never in a creature's reach on 7; on
-        /// this one the forge's second crossbow is made at t33229 and the party clears the hollow at t34612.
+        /// this one the forge's second crossbow is made at t33229 and the party clears the hollow at t34612. Gate seed 13 since
+        /// Epic 11's teachers (S3.6, measured on S3's final build): cleared on 6 of the 23, the bows never in reach on all six;
+        /// on this one, the earliest, the first crossbow is made at t32227 and the party clears the hollow at t43542.
         /// </summary>
-        private const ulong Seed = 19;
+        private const ulong Seed = 13;
 
         [Fact]
         public void ArchersHoldTheLine()
