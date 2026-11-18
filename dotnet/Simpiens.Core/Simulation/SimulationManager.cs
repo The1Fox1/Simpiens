@@ -187,7 +187,7 @@ namespace Simpiens.Simulation
         /// Practice (Epic 10 Part 3, K9.2, Q18), the simulation's one entry for it: adds <paramref name="experience"/> of
         /// practice at <paramref name="work"/> to <paramref name="agent"/>'s skill for that work (the table's,
         /// <see cref="Simpiens.Simulation.Skills.SkillTable.SkillFor"/>), no higher than <paramref name="source"/>'s ceiling
-        /// (K9.8a). The crawler's passion for the skill multiplies it, and work at a passion eases frustration (Epic 11, D4). A level gained is logged; a band reached (Apprentice, Journeyman, Master) is told in the chronicle. Main
+        /// (K9.8a) and its mastery budget (Epic 11, D7). The crawler's passion for the skill multiplies it, and work at a passion eases frustration (Epic 11, D4). A level gained is logged; a band reached (Apprentice, Journeyman, Master) is told in the chronicle. Main
         /// thread.
         /// </summary>
         /// <inheritdoc/>
@@ -206,7 +206,9 @@ namespace Simpiens.Simulation
             int challenge = Simpiens.Simulation.Skills.SkillRules.ChallengePercent(agent.Skills.Level(skill), source.Challenge);
             experience = (int)(((long)experience * passion.PracticePercent * challenge + 5000) / 10000);
             if (passion.FrustrationEased > 0f) agent.RelieveFrustration(passion.FrustrationEased);
-            bool gained = agent.Practise(skill, experience, out int level, source.Ceiling);
+            // The mastery budget holds the skill beside the source's ceiling (Epic 11, S2.1, Q6, D7)
+            int ceiling = Math.Min(source.Ceiling, Simpiens.Simulation.Skills.SkillRules.BudgetCeiling(agent.Skills, skill));
+            bool gained = agent.Practise(skill, experience, out int level, ceiling);
             int granted = agent.Skills.Experience(skill) - had;
             if (granted > 0) Practised?.Invoke(agent, skill, granted, source);
             if (!gained) return;

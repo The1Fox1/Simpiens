@@ -78,6 +78,68 @@ namespace Simpiens.Simulation.Skills
             return above <= 0 ? 100 : ChallengeShares[above < ChallengeShares.Length ? above : ChallengeShares.Length - 1];
         }
 
+        // --- The mastery budget (Epic 11, S2.1, Q6, D7) ---
+
+        /// <summary>How many skills may stand past Apprentice (Journeyman or Master) at once.</summary>
+        public const int PastApprenticeSlots = 2;
+
+        /// <summary>How many skills may stand at Master at once.</summary>
+        public const int MasterSlots = 1;
+
+        /// <summary>Where a skill stops while every slot past Apprentice is taken: the top of Apprentice.</summary>
+        public const int ApprenticeTop = 5;
+
+        /// <summary>Where a skill stops while the Master's slot is taken: the top of Journeyman.</summary>
+        public const int JourneymanTop = 8;
+
+        /// <summary>
+        /// The mastery budget (Q6, D7): the highest level <paramref name="skill"/> may reach while the crawler's other skills
+        /// stand where they do. It stops at 5 (<see cref="ApprenticeTop"/>) while two others stand past Apprentice, at 8
+        /// (<see cref="JourneymanTop"/>) while another stands at Master, and otherwise at the last level. Slots go first
+        /// come, first served: the skills that got there first hold them, and nobody gives a skill up. Practice's one entry
+        /// holds a skill to this beside its source's ceiling; a skill already past it keeps what it has. With why it is held.
+        /// </summary>
+        public static int BudgetCeiling(in SkillSet skills, Skill skill, out BudgetHold hold)
+        {
+            int pastApprentice = 0, masters = 0;
+            var all = SkillTable.All;
+            for (int i = 0; i < all.Count; i++)
+            {
+                if (all[i].Id == skill) continue;
+                var band = skills.Band(all[i].Id);
+                if (band >= SkillBand.Journeyman) pastApprentice++;
+                if (band >= SkillBand.Master) masters++;
+            }
+            if (pastApprentice >= PastApprenticeSlots) { hold = BudgetHold.PastApprentice; return ApprenticeTop; }
+            if (masters >= MasterSlots) { hold = BudgetHold.Master; return JourneymanTop; }
+            hold = BudgetHold.None;
+            return MaxLevel;
+        }
+
+        /// <inheritdoc cref="BudgetCeiling(in SkillSet, Skill, out BudgetHold)"/>
+        public static int BudgetCeiling(in SkillSet skills, Skill skill) => BudgetCeiling(skills, skill, out _);
+
+        /// <summary>Whether <paramref name="skill"/> stands at its budget's ceiling below the last level: practice in it is lost until nothing (it is never given up).</summary>
+        public static bool HeldByBudget(in SkillSet skills, Skill skill, out int ceiling, out BudgetHold hold)
+        {
+            ceiling = BudgetCeiling(skills, skill, out hold);
+            return hold != BudgetHold.None && skills.Level(skill) >= ceiling;
+        }
+
+        /// <summary>Whether <paramref name="skills"/> keep the budget: no more than two skills past Apprentice, no more than one at Master. What live scenarios assert at every tick.</summary>
+        public static bool KeepsTheBudget(in SkillSet skills)
+        {
+            int pastApprentice = 0, masters = 0;
+            var all = SkillTable.All;
+            for (int i = 0; i < all.Count; i++)
+            {
+                var band = skills.Band(all[i].Id);
+                if (band >= SkillBand.Journeyman) pastApprentice++;
+                if (band >= SkillBand.Master) masters++;
+            }
+            return pastApprentice <= PastApprenticeSlots && masters <= MasterSlots;
+        }
+
         // --- What a level does (K9.3, Q20) ---
 
         /// <summary>A fighter's hit chance rises by this a level: 70% unskilled, 90% at Master 10 (the combat rule caps it at 95%).</summary>

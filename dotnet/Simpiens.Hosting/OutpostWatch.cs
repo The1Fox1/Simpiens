@@ -116,6 +116,14 @@ namespace Simpiens.Hosting
         /// given name, and ticks two living crawlers shared a name; any fails the day.
         /// </summary>
         public int Faceless, SharedNames;
+
+        /// <summary>
+        /// The mastery budget (Epic 11, S2.1, D7): crawler-ticks at which a crawler held more than two skills past Apprentice
+        /// or more than one at Master, and the first; any fails the day. And crawler-ticks at which a skill stood held by the
+        /// budget, with the first (who, which skill, at what).
+        /// </summary>
+        public int BudgetBreaches, HeldByBudget;
+        public string FirstBudgetBreach, FirstHeldByBudget;
         public string FirstIdentityFault;
         private readonly HashSet<string> _livingNames = new HashSet<string>();
 
@@ -267,6 +275,7 @@ namespace Simpiens.Hosting
                     AloneInTheChamber++;
                     FirstAloneInTheChamber ??= $"t{rel}: {_sim.Host.CrawlerNames[i]} at {state.Position}";
                 }
+                ObserveBudget(state, rel, _sim.Host.CrawlerNames[i]);
                 if (!LookCatalog.IsValid(state.Look) || string.IsNullOrEmpty(state.GivenName))
                 {
                     Faceless++;
@@ -310,6 +319,23 @@ namespace Simpiens.Hosting
                     ConservationViolations++;
                     if (SimMath.Abs(discrepancy) > SimMath.Abs(WorstDiscrepancy)) WorstDiscrepancy = discrepancy;
                 }
+            }
+        }
+
+        private void ObserveBudget(Simpiens.Cognition.AgentState state, long rel, string name)
+        {
+            var skills = state.Skills;
+            if (!Simpiens.Simulation.Skills.SkillRules.KeepsTheBudget(skills))
+            {
+                BudgetBreaches++;
+                FirstBudgetBreach ??= $"t{rel}: {name} holds {skills}";
+            }
+            var all = Simpiens.Simulation.Skills.SkillTable.All;
+            for (int s = 0; s < all.Count; s++)
+            {
+                if (!Simpiens.Simulation.Skills.SkillRules.HeldByBudget(skills, all[s].Id, out int ceiling, out var hold)) continue;
+                HeldByBudget++;
+                FirstHeldByBudget ??= $"t{rel}: {name}'s {all[s].DisplayName} held at {ceiling} ({hold}; {skills})";
             }
         }
 
@@ -424,6 +450,7 @@ namespace Simpiens.Hosting
             if (Anomalies.JitterCount + Anomalies.PenetrationCount + Anomalies.BoundaryBreachCount > 0)
                 failures.Add($"{Anomalies.Summary()}; first {Anomalies.First}");
             if (IntentFaults > 0) failures.Add($"{IntentFaults} intent handlers threw (first {_sim.Simulation.FirstIntentFault})");
+            if (BudgetBreaches > 0) failures.Add($"the mastery budget broken {BudgetBreaches} crawler-ticks (first {FirstBudgetBreach})");
             if (Faceless + SharedNames > 0) failures.Add($"who's who: {Faceless} faceless or nameless, {SharedNames} shared names (first {FirstIdentityFault})");
             return failures;
         }
