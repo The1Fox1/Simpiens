@@ -356,8 +356,8 @@ namespace Simpiens.Presentation.Dashboard
                 {
                     var crawler = entities[i]?.Agent;
                     if (crawler == null || crawler.IsDrifter) continue;
-                    ushort ask = WorkshopRules.ReservationWage(crawler, tuning);
-                    if (WorkshopRules.CheckHire(workshops, guild, crawler, Index, ask, tick, tuning) != WorkshopRules.Check.Ok) continue;
+                    ushort ask = WorkshopRules.AskingWage(crawler, tuning, _context.Simulation.Economy.Guild);
+                    if (WorkshopRules.CheckHire(workshops, guild, crawler, Index, ask, tick, tuning, _context.Simulation.Economy.Guild) != WorkshopRules.Check.Ok) continue;
                     var (trust, _) = GuildRules.Standing(crawler, tick);
                     _willing.Add((trust, crawler));
                 }
@@ -391,7 +391,7 @@ namespace Simpiens.Presentation.Dashboard
                     Portrait = crawler.Look.IsComplete ? PortraitKey.Of(id, crawler, _moods, tick) : default,
                     Standing = (craft != Simpiens.Simulation.Skills.Skill.None ? Invariant($"{Simpiens.Simulation.Skills.SkillTable.Get(craft).DisplayName} {Simpiens.Simulation.Skills.CrawlerSkills.Level(crawler, work)} · ") : string.Empty)
                         + Invariant($"Trust {trust} · Warmth {warmth}"),
-                    Ask = WorkshopRules.ReservationWage(crawler, tuning),
+                    Ask = WorkshopRules.AskingWage(crawler, tuning, _context.Simulation.Economy.Guild),
                 });
             }
             CandidatesNote = _willing.Count == 0

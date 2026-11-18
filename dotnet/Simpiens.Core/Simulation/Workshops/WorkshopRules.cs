@@ -82,11 +82,19 @@ namespace Simpiens.Simulation.Workshops
         }
 
         /// <summary>
+        /// What <paramref name="crawler"/> asks a visit at a station (Epic 11, S2.2, Q9, D8): its reservation wage times its
+        /// best band's raise, from the guild's rows (<see cref="GuildTuning.RaisePercent"/>), as a member's, within the most a
+        /// wage may be.
+        /// </summary>
+        public static ushort AskingWage(AgentState crawler, in WorkshopTuning tuning, in GuildTuning raises) =>
+            GuildRules.Raised(ReservationWage(crawler, tuning), Simpiens.Simulation.Skills.CrawlerSkills.BestBand(crawler), raises, tuning.MaxWage);
+
+        /// <summary>
         /// Whether <paramref name="crawler"/> takes work at the station at <paramref name="index"/> for
         /// <paramref name="wage"/> now (Q3, D9). Checked in a fixed order, so a refusal names the first reason: the
         /// station, who it is, its roles, its trust, its boldness, its cooldown, the wage.
         /// </summary>
-        public static Check CheckHire(WorkshopService workshops, GuildService guild, AgentState crawler, int index, ushort wage, uint tick, in WorkshopTuning tuning)
+        public static Check CheckHire(WorkshopService workshops, GuildService guild, AgentState crawler, int index, ushort wage, uint tick, in WorkshopTuning tuning, in GuildTuning raises)
         {
             if ((uint)index >= (uint)workshops.Count) return Check.NoStation;
             if (!workshops[index].Built) return Check.NotBuilt;
@@ -101,7 +109,7 @@ namespace Simpiens.Simulation.Workshops
             if (crawler.Personality.RiskTolerancePercent >= tuning.MaxRiskTolerancePercent) return Check.TooBold;
             if (workshops.CooldownUntil(crawler.AgentId) > tick) return Check.CoolingDown;
             if (wage == 0 || wage > tuning.MaxWage) return Check.WageOutOfRange;
-            if (wage < ReservationWage(crawler, tuning)) return Check.WageTooLow;
+            if (wage < AskingWage(crawler, tuning, raises)) return Check.WageTooLow;
             return Check.Ok;
         }
 
@@ -144,7 +152,7 @@ namespace Simpiens.Simulation.Workshops
         /// A refusal in the player's words (allocates; call only on the refusal path and in the window).
         /// <paramref name="name"/> and <paramref name="crawler"/> are the crawler's, when the check concerns one.
         /// </summary>
-        public static string Describe(Check check, WorkshopService workshops, int index, in WorkshopTuning tuning, string name = null, AgentState crawler = null, uint tick = 0)
+        public static string Describe(Check check, WorkshopService workshops, int index, in WorkshopTuning tuning, string name = null, AgentState crawler = null, uint tick = 0, GuildTuning? raises = null)
         {
             string station = (uint)index < (uint)workshops.Count ? StationName(workshops[index].Kind) : "station";
             name ??= "That crawler";
@@ -169,7 +177,7 @@ namespace Simpiens.Simulation.Workshops
                     uint until = crawler != null ? workshops.CooldownUntil(crawler.AgentId) : 0;
                     return $"{name} left a station recently; ask again in {DayClock.SpanText(until - tick)}.";
                 case Check.WageOutOfRange: return $"A wage is 1 to {tuning.MaxWage}g a visit.";
-                case Check.WageTooLow: return $"{name} asks at least {(crawler != null ? ReservationWage(crawler, tuning) : tuning.ReservationWage)}g a visit.";
+                case Check.WageTooLow: return $"{name} asks at least {(crawler != null ? AskingWage(crawler, tuning, raises ?? GuildTuning.Default) : tuning.ReservationWage)}g a visit.";
                 case Check.NotAnArtisan: return $"{name} works no station.";
                 case Check.NotThisStationsRecipe: return $"That isn't made at the {station}.";
                 case Check.HoldingOutput: return $"The {station} holds a finished make until the stall has room for it.";

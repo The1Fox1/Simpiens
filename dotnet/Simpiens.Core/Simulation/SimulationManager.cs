@@ -218,6 +218,31 @@ namespace Simpiens.Simulation
             uint tick = (uint)(_clock?.CurrentTick ?? 0);
             ChronicleService?.RecordEvent(new ChronicleEvent(ChronicleEventType.SkillBandReached, agent.AgentId, default,
                 GetSectorForPosition(agent.Position), tick, ChronicleIntensity.Notable, (byte)skill * 256 + (byte)band));
+            TellTheAsk(agent, tick);
+        }
+
+        /// <summary>
+        /// A member or an artisan that reached a band asks for a raise (Epic 11, S2.2, Q9, D8), told once: when its asking wage
+        /// now stands above its contract's.
+        /// </summary>
+        private void TellTheAsk(AgentState agent, uint tick)
+        {
+            ushort wage, asking;
+            if (Guild.TryGetContract(agent.AgentId, out var member))
+            {
+                wage = member.Wage;
+                asking = Simpiens.Simulation.Guild.GuildRules.AskingWage(agent, Economy.Guild);
+            }
+            else if (Workshops.TryGetContract(agent.AgentId, out var artisan))
+            {
+                wage = artisan.Wage;
+                asking = Simpiens.Simulation.Workshops.WorkshopService.AskingWage(this, agent);
+            }
+            else return;
+            if (asking <= wage) return;
+            SimLog.Economy.ZLogInformation($"{SimLog.Agent(agent.AgentId)} asks for a raise, from {wage}g to {asking}g a visit");
+            ChronicleService?.RecordEvent(new ChronicleEvent(ChronicleEventType.RaiseAsked, agent.AgentId, PlayerEntityId,
+                GetSectorForPosition(agent.Position), tick, ChronicleIntensity.Notable, asking));
         }
 
         public bool HasLineOfSight(Vec2 from, Vec2 to)

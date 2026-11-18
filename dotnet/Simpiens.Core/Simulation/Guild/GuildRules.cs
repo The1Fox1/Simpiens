@@ -76,6 +76,22 @@ namespace Simpiens.Simulation.Guild
             return (ushort)SimMath.Clamp(SimMath.RoundToInt(wage), 1, ushort.MaxValue);
         }
 
+        /// <summary>
+        /// What <paramref name="crawler"/> asks a visit (Epic 11, S2.2, Q9, D8): its reservation wage times its best band's
+        /// raise (×1 to Apprentice, ×1.25 for a Journeyman, ×1.5 for a Master), within the most a wage may be. A recruit signs
+        /// for no less; a member paid less at a visit takes it as an unpaid wage (trust and warmth), with no unpaid visit
+        /// counted. The visit's pay and the dashboard read it.
+        /// </summary>
+        public static ushort AskingWage(AgentState crawler, in GuildTuning tuning) =>
+            Raised(ReservationWage(crawler, tuning), Simpiens.Simulation.Skills.CrawlerSkills.BestBand(crawler), tuning, tuning.MaxWage);
+
+        /// <summary><paramref name="wage"/> raised for <paramref name="band"/> by <paramref name="raises"/>' rows, rounded, at most <paramref name="most"/>.</summary>
+        public static ushort Raised(ushort wage, Simpiens.Simulation.Skills.SkillBand band, in GuildTuning raises, ushort most)
+        {
+            int raised = (wage * raises.RaisePercent(band) + 50) / 100;
+            return (ushort)SimMath.Clamp(raised, wage < most ? wage : most, most);
+        }
+
         /// <summary>The crawler's trust and warmth toward the player now.</summary>
         public static (int Trust, int Warmth) Standing(AgentState crawler, uint tick)
         {
@@ -100,7 +116,7 @@ namespace Simpiens.Simulation.Guild
             if (guild.Members.Count >= tuning.MaxMembers) return Check.GuildFull;
             if (guild.CooldownUntil(crawler.AgentId) > tick) return Check.CoolingDown;
             if (wage == 0 || wage > tuning.MaxWage) return Check.WageOutOfRange;
-            if (wage < ReservationWage(crawler, tuning)) return Check.WageTooLow;
+            if (wage < AskingWage(crawler, tuning)) return Check.WageTooLow;
             if (!hasStall) return Check.NoStall;
             if (treasury < tuning.SigningFee) return Check.CannotPayFee;
             return Check.Ok;
@@ -417,7 +433,7 @@ namespace Simpiens.Simulation.Guild
                 case Check.CoolingDown:
                     uint left = guild.CooldownUntil(crawler.AgentId) - tick;
                     return $"{name} left the guild recently; it can sign again in {DayClock.SpanText(left)}.";
-                case Check.WageTooLow: return $"{name} asks at least {ReservationWage(crawler, tuning)}g a visit.";
+                case Check.WageTooLow: return $"{name} asks at least {AskingWage(crawler, tuning)}g a visit.";
                 case Check.WageOutOfRange: return $"A wage is 1 to {tuning.MaxWage}g a visit.";
                 case Check.NoStall: return "There is no stall to pay the signing fee from.";
                 case Check.CannotPayFee: return $"The stall can't pay the {tuning.SigningFee}g signing fee.";

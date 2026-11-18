@@ -162,7 +162,8 @@ namespace Simpiens.Simulation.Guild
         /// The caravan's visit pays every member's wage from <paramref name="stall"/>, in join order, each in full or not at
         /// all (D3): no debt, as with upkeep. A member with a bunk in the barracks is paid its wage less the lodging fee
         /// (Epic 10 Part 2, W5.2, D63): the fee stays in the treasury. A paid member's trust, warmth and allegiance rise (the payment is an
-        /// interaction, so its trust doesn't drift back); an unpaid one's fall, and its unpaid visits count up. Then a
+        /// interaction, so its trust doesn't drift back), unless it was paid below its asking wage (Epic 11, S2.2, D8), which
+        /// costs an unpaid wage's trust and warmth with no unpaid visit counted; an unpaid one's fall, and its unpaid visits count up. Then a
         /// member quits below the trust floor or after too many unpaid visits in a row (D4), leaving the guild only.
         /// Wages are transfers from the stall to the member, conserved. Returns the stall as it is after.
         /// </summary>
@@ -188,8 +189,18 @@ namespace Simpiens.Simulation.Guild
                         member.Inventory.AddGold((int)pay);
                     }
                     changed = true;
-                    member.Memory?.RecordInteraction(WorldRegistry.PlayerEntityId, tuning.Paid.Warmth, tuning.Paid.Trust, 0, tuning.Paid.Respect, tick);
-                    groups?.UpdateAllegiance(contract.CrawlerId, _groupId, tuning.PaidAllegiance);
+                    // Paid below what it asks (Epic 11, S2.2, Q9, D8): taken as an unpaid wage's trust and warmth, no unpaid visit counted
+                    ushort asking = GuildRules.AskingWage(member, tuning);
+                    if (contract.Wage < asking)
+                    {
+                        member.Memory?.RecordInteraction(WorldRegistry.PlayerEntityId, tuning.Unpaid.Warmth, tuning.Unpaid.Trust, 0, tuning.Unpaid.Respect, tick);
+                        SimLog.Economy.ZLogWarning($"{SimLog.Agent(contract.CrawlerId)} was paid {contract.Wage}g, below the {asking}g it asks");
+                    }
+                    else
+                    {
+                        member.Memory?.RecordInteraction(WorldRegistry.PlayerEntityId, tuning.Paid.Warmth, tuning.Paid.Trust, 0, tuning.Paid.Respect, tick);
+                        groups?.UpdateAllegiance(contract.CrawlerId, _groupId, tuning.PaidAllegiance);
+                    }
                     _members[i] = contract.WithUnpaidVisits(0);
                 }
                 else

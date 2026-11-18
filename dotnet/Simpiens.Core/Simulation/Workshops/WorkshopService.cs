@@ -156,11 +156,17 @@ namespace Simpiens.Simulation.Workshops
 
         private static WorkshopTuning Tuning(IWorkshopHost host) => host?.Economy?.Workshops ?? WorkshopTuning.Default;
 
+        /// <summary>The asking wage's raises, the guild's rows (Epic 11, S2.2, D8).</summary>
+        private static GuildTuning Raises(IWorkshopHost host) => host?.Economy?.Guild ?? GuildTuning.Default;
+
+        /// <summary>What <paramref name="crawler"/> asks a visit at a station now (Epic 11, S2.2, D8): its reservation wage raised for its best band.</summary>
+        public static ushort AskingWage(IWorkshopHost host, AgentState crawler) => WorkshopRules.AskingWage(crawler, Tuning(host), Raises(host));
+
         /// <summary>The rule's verdict on hiring <paramref name="crawlerId"/> at the station at <paramref name="index"/> for <paramref name="wage"/> now, without acting.</summary>
         public WorkshopRules.Check CanHire(IWorkshopHost host, EntityId crawlerId, int index, ushort wage, uint tick)
         {
             host.TryGetCrawler(crawlerId, out var crawler);
-            return WorkshopRules.CheckHire(this, host.Guild, crawler, index, wage, tick, Tuning(host));
+            return WorkshopRules.CheckHire(this, host.Guild, crawler, index, wage, tick, Tuning(host), Raises(host));
         }
 
         /// <summary>
@@ -231,8 +237,8 @@ namespace Simpiens.Simulation.Workshops
 
         /// <summary>
         /// The caravan's visit pays every artisan's wage from <paramref name="stall"/>, after the guild's members, in hire
-        /// order, each in full or not at all (D9), as a member's is: a paid artisan's trust, warmth and allegiance rise; an
-        /// unpaid one's fall, and its unpaid visits count up. Then an artisan quits below the trust floor or after too
+        /// order, each in full or not at all (D9), as a member's is: a paid artisan's trust, warmth and allegiance rise (paid below
+        /// its asking wage, an unpaid wage's trust and warmth instead, Epic 11, D8); an unpaid one's fall, and its unpaid visits count up. Then an artisan quits below the trust floor or after too
         /// many unpaid visits in a row, leaving its crew only. Wages are conserved transfers. Returns the stall as it is after.
         /// </summary>
         public TradeStallData PayWages(IWorkshopHost host, TradeStallData stall, uint tick)
@@ -256,8 +262,18 @@ namespace Simpiens.Simulation.Workshops
                         artisan.Inventory.AddGold(contract.Wage);
                     }
                     changed = true;
-                    artisan.Memory?.RecordInteraction(WorldRegistry.PlayerEntityId, tuning.Paid.Warmth, tuning.Paid.Trust, 0, tuning.Paid.Respect, tick);
-                    if (crew != 0) groups?.UpdateAllegiance(contract.CrawlerId, crew, tuning.PaidAllegiance);
+                    // Paid below what it asks (Epic 11, S2.2, Q9, D8): taken as an unpaid wage's trust and warmth, no unpaid visit counted
+                    ushort asking = WorkshopRules.AskingWage(artisan, tuning, Raises(host));
+                    if (contract.Wage < asking)
+                    {
+                        artisan.Memory?.RecordInteraction(WorldRegistry.PlayerEntityId, tuning.Unpaid.Warmth, tuning.Unpaid.Trust, 0, tuning.Unpaid.Respect, tick);
+                        SimLog.Economy.ZLogWarning($"{SimLog.Agent(contract.CrawlerId)} was paid {contract.Wage}g at the {_stations[contract.StationIndex].Kind}, below the {asking}g it asks");
+                    }
+                    else
+                    {
+                        artisan.Memory?.RecordInteraction(WorldRegistry.PlayerEntityId, tuning.Paid.Warmth, tuning.Paid.Trust, 0, tuning.Paid.Respect, tick);
+                        if (crew != 0) groups?.UpdateAllegiance(contract.CrawlerId, crew, tuning.PaidAllegiance);
+                    }
                     _artisans[i] = contract.WithUnpaidVisits(0);
                 }
                 else

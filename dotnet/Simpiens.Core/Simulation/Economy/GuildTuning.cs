@@ -53,11 +53,29 @@ namespace Simpiens.Simulation.Economy
         /// </summary>
         public readonly ushort LodgingFee;
 
+        /// <summary>
+        /// The asking wage's raises (Epic 11, S2.2, Q9, D8), in percent of the reservation wage, by the best band a crawler
+        /// stands at in any skill: a Journeyman asks this much, a Master this much; a Novice or an Apprentice asks its
+        /// reservation wage. The artisans read the same rows (<c>WorkshopRules.AskingWage</c>).
+        /// </summary>
+        public readonly ushort JourneymanRaisePercent;
+        public readonly ushort MasterRaisePercent;
+
+        /// <summary>The raise <paramref name="band"/> asks for, in percent: 100 to Apprentice.</summary>
+        public int RaisePercent(Simpiens.Simulation.Skills.SkillBand band) => band switch
+        {
+            Simpiens.Simulation.Skills.SkillBand.Master => MasterRaisePercent,
+            Simpiens.Simulation.Skills.SkillBand.Journeyman => JourneymanRaisePercent,
+            _ => 100
+        };
+
         public GuildTuning(byte maxMembers, sbyte recruitTrust, sbyte recruitWarmth, ushort signingFee, ushort reservationWage,
             ushort defaultWage, ushort maxWage, uint rejoinCooldownTicks, byte initialAllegiance, sbyte quitTrust, byte maxUnpaidVisits,
             TrustDelta paid, sbyte paidAllegiance, TrustDelta unpaid, sbyte unpaidAllegiance, sbyte dismissTrust, ExpeditionTuning? expedition = null,
-            ushort lodgingFee = 1)
+            ushort lodgingFee = 1, ushort journeymanRaisePercent = 125, ushort masterRaisePercent = 150)
         {
+            JourneymanRaisePercent = journeymanRaisePercent;
+            MasterRaisePercent = masterRaisePercent;
             Expedition = expedition ?? ExpeditionTuning.Default;
             LodgingFee = lodgingFee;
             MaxMembers = maxMembers;
