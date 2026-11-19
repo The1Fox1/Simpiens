@@ -183,7 +183,7 @@ Grades only change what equipment does today, so alchemy's choices are pace and 
 - [x] **S4.9 The client: techniques in the dossier, and the sponsor button** (done 2026-11-19: the sway's second button sponsors one of the patron's people; renders at S4.11) [Possibly Complex: Gum, renders]
   - **The dossier:** D18's lines, and the sponsor button with the price and the rule's reason.
   - **The checks:** `TechniquesOnScreenTests`. Renders recorded in the pinned image after a look, in their own commit.
-- [ ] **S4.10 DoD `ATechniqueDecidesAClear`** [Possibly Complex: a live scenario]
+- [x] **S4.10 DoD `ATechniqueDecidesAClear`** (done 2026-11-19: gate seed 3; 17 of 23) [Possibly Complex: a live scenario]
   - **The run:** the guild player builds the drill yard and its members drill; on a seed S4.7's measurement picks, a member reaches a band during the run and picks a technique on its own; then the player's clear.
   - **What emerges:** the member holds the technique it picked (told in the chronicle, not sponsored); the party's clear empties the lair; the member fought in it, its technique in every blow it landed or took (its fighter with the technique differs from its fighter without).
   - **The days hold.**
