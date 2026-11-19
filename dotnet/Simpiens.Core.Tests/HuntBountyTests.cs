@@ -156,7 +156,7 @@ namespace Simpiens.Core.Tests
             var bold = ArmTheBold(sim);
             var lair = sim.Simulation.Creatures.Lairs[warren].Definition;
             Assert.True(lair.HasBoss && sim.Simulation.Creatures.Lairs[warren].MemberIn(0) != default, "The Matriarch heads the warren.");
-            foreach (var b in bold) Assert.False(Vitality.BravesLair(lair, true, b.Skills, b.Inventory, b.Health, b.Personality.RiskTolerancePercent, b.IsDowned), "Nobody braves her warren alone.");
+            foreach (var b in bold) Assert.False(Vitality.BravesLair(lair, true, b.Skills, b.Inventory, b.Traits, b.Health, b.Personality.RiskTolerancePercent, b.IsDowned), "Nobody braves her warren alone.");
             Post(sim, warren, 60);
             bool joined = false;
             for (long t = 0; t < DayClock.TicksPerDay && sim.Simulation.Hunts.Count > 0; t++)

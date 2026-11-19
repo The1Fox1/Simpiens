@@ -166,10 +166,10 @@ namespace Simpiens.Testing.Combat
             var skills = default(Simpiens.Simulation.Skills.SkillSet);
             var armed = new Simpiens.Cognition.Inventory.AgentInventory();
             armed.TryEquip(Simpiens.Simulation.Items.Outfitting.NewPiece(Simpiens.Simulation.Economy.ItemType.IronBlade, Simpiens.Simulation.Items.Grades.Standard));
-            float without = Simpiens.Cognition.Vitality.HarmToClear(plain, true, skills, armed), with = Simpiens.Cognition.Vitality.HarmToClear(definition, true, skills, armed);
-            Assert(Simpiens.Cognition.Vitality.HarmToClear(definition, false, skills, armed) == without, "With her slain, clearing her lair costs what her brood does (D63).");
+            float without = Simpiens.Cognition.Vitality.HarmToClear(plain, true, skills, armed, default), with = Simpiens.Cognition.Vitality.HarmToClear(definition, true, skills, armed, default);
+            Assert(Simpiens.Cognition.Vitality.HarmToClear(definition, false, skills, armed, default) == without, "With her slain, clearing her lair costs what her brood does (D63).");
             Assert(with > without, $"Clearing her lair costs more than her brood alone ({with:0} against {without:0}).");
-            Assert(!Simpiens.Cognition.Vitality.BravesLair(definition, true, skills, armed, 100f, 100, downed: false), $"Nobody braves her lair alone with an iron blade ({with:0} expected harm).");
+            Assert(!Simpiens.Cognition.Vitality.BravesLair(definition, true, skills, armed, default, 100f, 100, downed: false), $"Nobody braves her lair alone with an iron blade ({with:0} expected harm).");
 
             // A save wants her in her place
             var save = service.Capture();
