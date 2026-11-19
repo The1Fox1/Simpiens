@@ -10,6 +10,11 @@ namespace Simpiens.Presentation.Cutscenes
         EntersZone = 0,
         /// <summary>A crawler starts an interaction with another (a chronicle event naming both): they are its two actors.</summary>
         Interaction = 1,
+        /// <summary>
+        /// A moment in one crawler's life (a chronicle event naming it first, Epic 11, S4.8, D17): it is the scene's one actor,
+        /// and the scene's lines are written from the event (a technique picked: its vow, the road not taken).
+        /// </summary>
+        Moment = 2,
     }
 
     /// <summary>
@@ -21,8 +26,8 @@ namespace Simpiens.Presentation.Cutscenes
     {
         private SceneTrigger(SceneTriggerKind kind, CutsceneScript script, bool once, long cooldownTicks)
         {
-            if (script == null) throw new ArgumentNullException(nameof(script));
-            if (script.Kind != CutsceneKind.Dynamic) throw new ArgumentException($"{script.Id} is a hard cutscene: a trigger starts dynamic ones.", nameof(script));
+            if (kind != SceneTriggerKind.Moment && script == null) throw new ArgumentNullException(nameof(script));
+            if (script != null && script.Kind != CutsceneKind.Dynamic) throw new ArgumentException($"{script.Id} is a hard cutscene: a trigger starts dynamic ones.", nameof(script));
             Kind = kind;
             Script = script;
             Once = once;
@@ -35,8 +40,29 @@ namespace Simpiens.Presentation.Cutscenes
         public static SceneTrigger OnInteraction(CutsceneScript script, bool once, long cooldownTicks, params ChronicleEventType[] types)
             => new SceneTrigger(SceneTriggerKind.Interaction, script, once, cooldownTicks) { Types = types ?? Array.Empty<ChronicleEventType>() };
 
+        /// <summary>
+        /// A moment (Epic 11, S4.8, D17): the scene, written from the chronicle event that starts it, for the crawler it names
+        /// first when <paramref name="whose"/> says it counts (the patron's people); a script with one actor, or null to let
+        /// the event pass.
+        /// </summary>
+        public static SceneTrigger OnMoment(Func<ChronicleEvent, CutsceneScript> scriptFor, Func<EntityView, bool> whose, bool once, long cooldownTicks, params ChronicleEventType[] types)
+            => new SceneTrigger(SceneTriggerKind.Moment, null, once, cooldownTicks)
+            {
+                ScriptFor = scriptFor ?? throw new ArgumentNullException(nameof(scriptFor)),
+                Whose = whose,
+                Types = types ?? Array.Empty<ChronicleEventType>()
+            };
+
         public SceneTriggerKind Kind { get; }
+
+        /// <summary>The scene it starts; null for a moment, whose scene is written from its event (<see cref="ScriptFor"/>).</summary>
         public CutsceneScript Script { get; }
+
+        /// <summary>A moment's scene, written from the event that starts it.</summary>
+        public Func<ChronicleEvent, CutsceneScript> ScriptFor { get; private set; }
+
+        /// <summary>A moment's filter: whether the crawler the event names counts; null counts everyone.</summary>
+        public Func<EntityView, bool> Whose { get; private set; }
         public bool Once { get; }
         public long CooldownTicks { get; }
         /// <summary>The zone entered (<see cref="SceneTriggerKind.EntersZone"/>).</summary>
@@ -61,15 +87,19 @@ namespace Simpiens.Presentation.Cutscenes
     {
         private readonly EntityId[] _actors;
 
-        internal DynamicScene(SceneTrigger trigger, EntityId[] actors, long tick)
+        internal DynamicScene(SceneTrigger trigger, CutsceneScript script, EntityId[] actors, long tick)
         {
             Trigger = trigger;
+            Script = script;
             _actors = actors;
             StartedTick = tick;
-            Player = new CutscenePlayer(trigger.Script);
+            Player = new CutscenePlayer(script);
         }
 
         public SceneTrigger Trigger { get; }
+
+        /// <summary>What it plays: its trigger's script, or for a moment the one written from its event.</summary>
+        public CutsceneScript Script { get; }
         public CutscenePlayer Player { get; }
         public long StartedTick { get; }
         public IReadOnlyList<EntityId> Actors => _actors;
@@ -77,7 +107,7 @@ namespace Simpiens.Presentation.Cutscenes
         /// <summary>The crawler playing <paramref name="role"/>, or default.</summary>
         public EntityId ActorOf(string role)
         {
-            var roles = Trigger.Script.Actors;
+            var roles = Script.Actors;
             for (int i = 0; i < roles.Count && i < _actors.Length; i++) if (roles[i] == role) return _actors[i];
             return default;
         }
@@ -134,11 +164,17 @@ namespace Simpiens.Presentation.Cutscenes
             {
                 var trigger = _triggers[t];
                 if (!trigger.Ready(now.Tick)) continue;
-                var actors = trigger.Kind == SceneTriggerKind.Interaction ? Interaction(trigger, now) : Entry(trigger, frames);
-                if (actors == null || actors.Length < trigger.Script.Actors.Count) continue;
+                var script = trigger.Script;
+                var actors = trigger.Kind switch
+                {
+                    SceneTriggerKind.Interaction => Interaction(trigger, now),
+                    SceneTriggerKind.Moment => Moment(trigger, now, out script),
+                    _ => Entry(trigger, frames)
+                };
+                if (actors == null || script == null || actors.Length < script.Actors.Count) continue;
                 trigger.Fired = true;
                 trigger.LastTick = now.Tick;
-                Current = new DynamicScene(trigger, actors, now.Tick);
+                Current = new DynamicScene(trigger, script, actors, now.Tick);
                 Started?.Invoke(Current);
                 return;
             }
@@ -156,6 +192,25 @@ namespace Simpiens.Presentation.Cutscenes
                 if (!now.TryGetIndex(e.ActorBId, out int b) || !now[b].IsCrawler) continue;
                 return new[] { e.ActorAId, e.ActorBId };
             }
+            return null;
+        }
+
+        /// <summary>The first event of a counted kind this tick naming a crawler in the world that counts, with the scene written from it.</summary>
+        private static EntityId[] Moment(SceneTrigger trigger, WorldViewFrame now, out CutsceneScript script)
+        {
+            script = null;
+            var events = now.Events;
+            for (int i = 0; i < events.Count; i++)
+            {
+                var e = events[i];
+                if (!trigger.Counts(e.EventType) || e.ActorAId == default) continue;
+                if (!now.TryGetIndex(e.ActorAId, out int a) || !now[a].IsCrawler) continue;
+                if (trigger.Whose != null && !trigger.Whose(now[a])) continue;
+                script = trigger.ScriptFor(e);
+                if (script == null || script.Kind != CutsceneKind.Dynamic) continue;
+                return new[] { e.ActorAId };
+            }
+            script = null;
             return null;
         }
 

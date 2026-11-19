@@ -177,7 +177,7 @@ Grades only change what equipment does today, so alchemy's choices are pace and 
   - **Again:** S0.3's measurement (a fourth time), with the techniques picked and their effects; which techniques are held at day 14, by band.
   - **Every scenario:** a DoD whose seed moves is re-picked from a measurement across the gate seeds, never one seed, in its own commit. The soak's 18 runs and the three player profiles.
   - **Findings** for anything that surprises.
-- [ ] **S4.8 The client: the choice scene** [Possibly Complex: a new kind of scene trigger, built from an event]
+- [x] **S4.8 The client: the choice scene** (done 2026-11-19: `SkillScenes`, a moment trigger; `SkillSceneTests`) [Possibly Complex: a new kind of scene trigger, built from an event]
   - **The trigger:** D17's moment, its script built from the chronicle event (the vow, the road not taken); the patron's people only, a game hour apart; armed by `ClientOptions.SkillScenes`.
   - **The checks:** a presentation test (the trigger fires for a member's pick, not a resident's; its lines name both techniques); a client test that it plays in the window.
 - [ ] **S4.9 The client: techniques in the dossier, and the sponsor button** [Possibly Complex: Gum, renders]
