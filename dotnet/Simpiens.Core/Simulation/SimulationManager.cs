@@ -746,6 +746,11 @@ namespace Simpiens.Simulation
                     Guild.FormParty(this, influence.FormParty, currentTick);
                     break;
 
+                // Techniques (Epic 11, S4.6, D16): the patron proposes, the crawler disposes
+                case InfluenceCommandType.SponsorTechnique:
+                    Simpiens.Simulation.Guild.SponsorRules.Sponsor(Guild, Workshops, this, influence.SponsorTechnique.CrawlerId, influence.SponsorTechnique.Technique, currentTick);
+                    break;
+
                 case InfluenceCommandType.GiveGear:
                     Guild.GiveGear(this, influence.GiveGear.CrawlerId, influence.GiveGear.Item, currentTick, influence.GiveGear.Against, influence.GiveGear.ForFighting);
                     break;

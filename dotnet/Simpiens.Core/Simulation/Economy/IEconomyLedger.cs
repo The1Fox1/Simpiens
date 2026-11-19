@@ -10,7 +10,9 @@ namespace Simpiens.Simulation.Economy
         /// <summary>A member's share of an expedition's haul (Epic 10 G5, D13).</summary>
         GuildShare = 2,
         /// <summary>A station's artisan's wage (Epic 10 Part 2, D9).</summary>
-        ArtisanWage = 3
+        ArtisanWage = 3,
+        /// <summary>The patron's gold for a technique it sponsors (Epic 11, S4.6, D16): a transfer, counted with the wages' tally, so the ledger's save holds no new tally.</summary>
+        Sponsorship = 4
     }
 
     /// <summary>

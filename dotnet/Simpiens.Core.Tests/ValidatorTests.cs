@@ -75,6 +75,9 @@ namespace Simpiens.Core.Tests
         public void TechniqueEffects() => new Simpiens.Testing.Skills.TechniqueEffectsValidator().RunAllValidationTests();
 
         [Fact]
+        public void Sponsorship() => new Simpiens.Testing.Skills.SponsorValidator().RunAllValidationTests();
+
+        [Fact]
         public void GivenNames() => new Simpiens.Testing.People.GivenNamesValidator().RunAllValidationTests();
 
         [Fact]

@@ -194,6 +194,9 @@ namespace Simpiens.Narrative
                     return other == null ? $"{actorA} took up {technique.DisplayName}." : $"{actorA} took up {technique.DisplayName} over {other.DisplayName}.";
                 }
 
+                case ChronicleEventType.TechniqueSponsored:
+                    return $"{actorA} took up {Simpiens.Simulation.Skills.TechniqueTable.Get((Simpiens.Simulation.Skills.Technique)(byte)evt.ExtraData)?.DisplayName ?? "a new way"}, for the patron's gold.";
+
                 case ChronicleEventType.GateBreached:
                     return $"{actorA} broke the Gatekeeper in {sector}: the descent gate stands open, its stairs going down into the dark.";
 

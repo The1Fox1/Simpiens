@@ -20,6 +20,7 @@ namespace Simpiens.Core.Tests
         {
             ["Simpiens.Core/Simulation/Skills/TechniqueTable.cs"] = "the table and its rules: a row's values and words, the pick filling empty slots",
             ["Simpiens.Core/Simulation/Skills/CrawlerTechniques.cs"] = "the door: a stat summed over the techniques held",
+            ["Simpiens.Core/Simulation/Guild/SponsorRules.cs"] = "sponsorship's rule: whether the crawler holds the technique already",
         };
 
         private static readonly string[] Projects = { "Simpiens.Core", "Simpiens.Presentation", "Simpiens.Client", "Simpiens.Hosting" };

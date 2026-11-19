@@ -150,25 +150,25 @@ Grades only change what equipment does today, so alchemy's choices are pace and 
   - **The checks:** `TechniqueValidator` (two rows at each band of the seven skills; ids unique; each row an upside and a downside; every stat within its bounds; the words name every effect); `TechniqueNamesTests` (production code names a technique only in the table).
   - **AGENTS.md:** "Adding a technique".
   - **Golden:** unchanged.
-- [ ] **S4.2 The pick by nature** [Possibly Complex: a draw on a new salt, saved; golden moves for the hash]
+- [x] **S4.2 The pick by nature** (done 2026-11-19; golden re-recorded for the hash alone) [Possibly Complex: a draw on a new salt, saved; golden moves for the hash]
   - **The pick:** D15, at spawn for the starting talents and at a band reached in practice's one entry; `TechniqueChosen` in the chronicle; `SimulationManager.Seed`.
   - **The checks:** `TechniquePickValidator`: over 10,000 crawlers the bold pick Reckless Fury more often and the cautious Shield Wall; the same crawler picks the same whenever it reaches the band; a band with no rows picks nothing; a filled slot is never picked over; no earlier draw moves (looks, names, skills, passions).
   - **Golden:** the records change, the effects not yet live: re-recorded in its own commit, named as the hash's.
-- [ ] **S4.3 The door, and the fight's numbers** [Possibly Complex: a behaviour change in combat, read by cognition too]
+- [x] **S4.3 The door, and the fight's numbers** (done 2026-11-19; golden unchanged; three fight DoDs moved) [Possibly Complex: a behaviour change in combat, read by cognition too]
   - **The door:** D14's `CrawlerTechniques.Get`.
   - **The fight:** `Combatant.ForCrawler` takes the traits (both overloads; cognition's `Vitality.HarmToClear` passes its copy): attack, defense (never below none), hit, pace on the swing's interval, range, last stand.
   - **The checks:** `TechniqueEffectsValidator`, a test per fight stat (Shield Wall's holder takes less from a blow and deals less; Reckless Fury the other way; a quick blade swings sooner; a long shot reaches farther; last stand only below half health; the bounds hold however techniques stack); `TechniqueReadsTests` (effects are read only through the door).
   - **Golden:** re-recorded in its own commit.
-- [ ] **S4.4 The work's numbers** [Possibly Complex: behaviour in the harvest, the stations, the rescue, practice and mentors]
+- [x] **S4.4 The work's numbers** (done 2026-11-19; golden re-recorded) [Possibly Complex: behaviour in the harvest, the stations, the rescue, practice and mentors]
   - **Pace:** the harvest's (`SkillSpeed`, which the salvage choice reads through cognition's copy), the make's, the carry's.
   - **The rest:** grade (levels toward the make's grade), heal (a medicine given), practice (in `PractiseOwn`, beside the passion), teach (a mentor's lesson share).
   - **The checks:** `TechniqueEffectsValidator`, a test per stat.
   - **Golden:** re-recorded in its own commit.
-- [ ] **S4.5 The rule flag: unyielding** [Possibly Complex: a rule cognition reads]
+- [x] **S4.5 The rule flag: unyielding** (done 2026-11-19; golden unchanged) [Possibly Complex: a rule cognition reads]
   - **The rule:** a crawler holding it fights back when struck, bold or not (`Vitality.FightsBack`), if armed.
   - **The check:** a validator: the cautious and armed flee a blow without it and stand with it.
   - **Golden:** unchanged (nobody reaches Master), or re-recorded in its own commit.
-- [ ] **S4.6 Sponsorship** [Possibly Complex: a new command with a rule and a transfer]
+- [x] **S4.6 Sponsorship** (done 2026-11-19: the rule is `SponsorRules`, beside `GuildRules`, since the guild owns the patron's people; golden unchanged) [Possibly Complex: a new command with a rule and a transfer]
   - **The command and rule:** D16's `SponsorTechniqueCommand`, `TechniqueRules.CheckSponsor` and `Describe` (each refusal's words), applied on the main thread in command order.
   - **The checks:** `SponsorValidator`: each refusal; a sponsorship paid from the stall into the purse, the ledger balanced; the slot changed and told; a band sponsored back costs again.
   - **The economy model:** §2 gains sponsorship, a transfer.

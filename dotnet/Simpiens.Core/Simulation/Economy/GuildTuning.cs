@@ -61,6 +61,24 @@ namespace Simpiens.Simulation.Economy
         public readonly ushort JourneymanRaisePercent;
         public readonly ushort MasterRaisePercent;
 
+        /// <summary>What the patron pays a crawler to take up a technique it sponsors (Epic 11, S4.6, D16), by the technique's band: 20g, 40g, 80g.</summary>
+        public readonly ushort SponsorApprenticePrice;
+        public readonly ushort SponsorJourneymanPrice;
+        public readonly ushort SponsorMasterPrice;
+
+        /// <summary>A crawler takes the patron's gold for a technique only at this trust and warmth toward the player, or more (D16).</summary>
+        public readonly sbyte SponsorTrust;
+        public readonly sbyte SponsorWarmth;
+
+        /// <summary>The price of sponsoring a technique of <paramref name="band"/>; nothing below Apprentice.</summary>
+        public ushort SponsorPrice(Simpiens.Simulation.Skills.SkillBand band) => band switch
+        {
+            Simpiens.Simulation.Skills.SkillBand.Master => SponsorMasterPrice,
+            Simpiens.Simulation.Skills.SkillBand.Journeyman => SponsorJourneymanPrice,
+            Simpiens.Simulation.Skills.SkillBand.Apprentice => SponsorApprenticePrice,
+            _ => 0
+        };
+
         /// <summary>The raise <paramref name="band"/> asks for, in percent: 100 to Apprentice.</summary>
         public int RaisePercent(Simpiens.Simulation.Skills.SkillBand band) => band switch
         {
@@ -72,8 +90,14 @@ namespace Simpiens.Simulation.Economy
         public GuildTuning(byte maxMembers, sbyte recruitTrust, sbyte recruitWarmth, ushort signingFee, ushort reservationWage,
             ushort defaultWage, ushort maxWage, uint rejoinCooldownTicks, byte initialAllegiance, sbyte quitTrust, byte maxUnpaidVisits,
             TrustDelta paid, sbyte paidAllegiance, TrustDelta unpaid, sbyte unpaidAllegiance, sbyte dismissTrust, ExpeditionTuning? expedition = null,
-            ushort lodgingFee = 1, ushort journeymanRaisePercent = 125, ushort masterRaisePercent = 150)
+            ushort lodgingFee = 1, ushort journeymanRaisePercent = 125, ushort masterRaisePercent = 150,
+            ushort sponsorApprenticePrice = 20, ushort sponsorJourneymanPrice = 40, ushort sponsorMasterPrice = 80, sbyte sponsorTrust = 50, sbyte sponsorWarmth = 0)
         {
+            SponsorApprenticePrice = sponsorApprenticePrice;
+            SponsorJourneymanPrice = sponsorJourneymanPrice;
+            SponsorMasterPrice = sponsorMasterPrice;
+            SponsorTrust = sponsorTrust;
+            SponsorWarmth = sponsorWarmth;
             JourneymanRaisePercent = journeymanRaisePercent;
             MasterRaisePercent = masterRaisePercent;
             Expedition = expedition ?? ExpeditionTuning.Default;

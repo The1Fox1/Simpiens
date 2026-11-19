@@ -65,6 +65,7 @@ A day is 4 caravan visits. Measured per day on the gate seeds (T4.2b): the carav
 | Faucet | `CaravanSalvageSales` (bosses' trophies, Epic 10 Part 3, K10.1a) | the Matriarch's pelt at 44g (the stall pays 36g), the Keeper's stone at 170g (140g) | a pelt a game week at most (her return); the stone once a session (the Gatekeeper never returns) |
 | Transfer | hunt bounties (Epic 10 Part 3, K6) | escrow posted by the player, paid out by damage dealt among up to three hunters | conserved; released in shares |
 | Transfer | raises (Epic 11, S2.2, D8) | a member's or artisan's asking wage is its reservation wage ×1.25 at Journeyman, ×1.5 at Master (`GuildTuning`'s raise rows, read by the artisans too); a raise paid is part of its wage | conserved, inside `Wages` and `ArtisanWages`; a cost, not a new sink. Paid below its asking wage, a hand takes the unpaid wage's trust and warmth, no unpaid visit counted |
+| Transfer | sponsorship (Epic 11, S4.6, D16) | the patron pays one of its people (a member or an artisan) to take up a band's other technique: 20g at Apprentice, 40g at Journeyman, 80g at Master (`GuildTuning`'s sponsor rows); refused under trust 50 or against the crawler's nature | conserved: from the stall's treasury into the crawler's purse, counted inside `Wages`; no new sink, and no scripted player sponsors |
 
 **What follows:** the stall's net a day ≈ the caravan's payment − upkeep − wholesale − what crawlers keep.
 - Crawlers spend what they earn, so their gold passes through; purses stay near 40–55g, under the 80g they earn toward.
