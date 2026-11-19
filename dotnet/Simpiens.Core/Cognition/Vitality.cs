@@ -242,12 +242,19 @@ namespace Simpiens.Cognition
         /// <summary>
         /// True when this crawler, struck by a creature, fights back instead of fleeing (Epic 10 Part 3, K3.3, Q6): bold (as
         /// one who would venture into danger), armed (what it wields strikes harder than a bare hand) and on its feet above
-        /// the retreat line.
+        /// the retreat line. Armed and unyielding (a technique's rule flag, Epic 11, S4.5, D14), it fights back bold or not.
         /// </summary>
         public static bool FightsBack(in AgentContext context) =>
             !context.IsDowned && context.Health >= FightLine(context.Expedition)
-            && ((context.Personality.RiskTolerancePercent >= VentureRiskTolerancePercent && IsArmed(context.Inventory))
+            && ((IsArmed(context.Inventory) && (context.Personality.RiskTolerancePercent >= VentureRiskTolerancePercent || Unyielding(context)))
                 || context.Expedition.IsFighting); // under a clear's orders every member fights, bold or not (Epic 10 Part 3, K7.2a)
+
+        /// <summary>True when a technique the crawler holds at the fight it would fight makes it stand when struck (Epic 11, S4.5: Unyielding), through the door.</summary>
+        public static bool Unyielding(in AgentContext context)
+        {
+            bool ranged = context.Inventory != null && Simpiens.Simulation.Items.CrawlerStats.Get(context.Inventory, Simpiens.Simulation.Items.StatKind.Range) > 0f;
+            return Simpiens.Simulation.Skills.CrawlerTechniques.Get(context.Traits, context.Skills, Simpiens.Simulation.Skills.SkillWork.Fight(ranged), Simpiens.Simulation.Skills.TechniqueStat.Unyielding) > 0;
+        }
 
         /// <summary>
         /// The health under which a crawler gives a fight up: its own <see cref="RetreatBelow"/>, or, under a clear's orders at

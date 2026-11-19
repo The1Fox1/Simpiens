@@ -18,7 +18,8 @@ namespace Simpiens.Testing.Skills
     /// range, a steady aim's hit, a last stand below half health; scoped to the fight its holder fights; stacked within their
     /// bounds; untouched with none held; and cognition judging a lair by the same fighter. The work's: the harvest's pace,
     /// read by the salvage choice too; a make's grade and pace; the carry's pace and a medicine's healing; practice beside the
-    /// passion; a mentor's lesson. Runs as a test (ValidatorTests).
+    /// passion; a mentor's lesson. The rule flag: unyielding, the cautious and armed standing when struck. Runs as a test
+    /// (ValidatorTests).
     /// </summary>
     public class TechniqueEffectsValidator
     {
@@ -34,7 +35,8 @@ namespace Simpiens.Testing.Skills
             ValidateTheMake();
             ValidateTheFallen();
             ValidatePracticeAndLessons();
-            TestLog.Log("<color=green>[TechniqueEffectsValidator] ALL 9 TESTS PASSED SUCCESSFULLY!</color>");
+            ValidateUnyielding();
+            TestLog.Log("<color=green>[TechniqueEffectsValidator] ALL 10 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private static readonly SkillSet Fighter = Skilled(Skill.Melee, 4, Skill.Ranged, 4);
@@ -218,6 +220,24 @@ namespace Simpiens.Testing.Skills
             Assert(learner.Skills.Experience(Skill.Mining) - before == 10 + 7, $"Its own 10, and a lesson of three quarters (7) from the Master ({learner.Skills.Experience(Skill.Mining) - before}).");
             TestLog.Log("[PASS] Test 9: practice counts a technique's share beside the passion; a Master's lessons teach three quarters of the act.");
         }
+
+        private static void ValidateUnyielding()
+        {
+            var cautious = new Simpiens.Cognition.Contracts.AgentPersonality(0f, -0.5f, 0f, 0f, 0f);
+            var blade = new AgentInventory();
+            blade.TryEquip(new ItemInstance(1, ItemType.IronBlade, 1, 12, durability: 100));
+            var unyielding = Holding(Skill.Melee, SkillBand.Master, Technique.Unyielding);
+            Assert(!Vitality.FightsBack(Context(cautious, blade, default)), "Struck, the cautious flee, armed or not.");
+            Assert(Vitality.FightsBack(Context(cautious, blade, unyielding)), "Unyielding and armed, the cautious stand and fight.");
+            Assert(!Vitality.FightsBack(Context(cautious, new AgentInventory(), unyielding)), "Unarmed, unyielding or not, they flee.");
+            Assert(!Vitality.FightsBack(Context(cautious, Sling(), unyielding)), "A melee technique doesn't hold a shooter.");
+            Assert(!Vitality.FightsBack(Context(cautious, blade, unyielding, health: 10f)), "Below the retreat line, even the unyielding go.");
+            TestLog.Log("[PASS] Test 10: unyielding: the cautious and armed stand when struck, and nobody else does.");
+        }
+
+        private static Simpiens.Cognition.Contracts.AgentContext Context(in Simpiens.Cognition.Contracts.AgentPersonality personality, IAgentInventory worn, in CrawlerTraits traits, float health = Vitality.MaxHealth) =>
+            new Simpiens.Cognition.Contracts.AgentContext(EntityId.Generate(), Vec2.Zero, new Simpiens.Cognition.Contracts.AgentNeeds(20f, 90f, 100f), 0f, null, null, 100,
+                inventory: worn, personality: personality, health: health, skills: Fighter, traits: traits);
 
         private static (NarrativeChronicleService, SimulationManager, WorldRegistry) Outpost()
         {
