@@ -18,6 +18,7 @@ namespace Simpiens.Core.Tests
         private static readonly Dictionary<string, string> Allowed = new Dictionary<string, string>
         {
             ["Simpiens.Core/Simulation/Skills/TechniqueTable.cs"] = "the table: the techniques' rows",
+            ["Simpiens.Core/Simulation/Skills/CallingTable.cs"] = "the callings' table: each row names the Apprentice technique that earns it (Epic 11, S5.2)",
         };
 
         private static readonly string[] Projects = { "Simpiens.Core", "Simpiens.Presentation", "Simpiens.Client", "Simpiens.Hosting" };

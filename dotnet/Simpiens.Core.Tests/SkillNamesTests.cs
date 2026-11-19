@@ -20,6 +20,7 @@ namespace Simpiens.Core.Tests
         {
             ["Simpiens.Core/Simulation/Skills/SkillTable.cs"] = "the table: the skills' rows",
             ["Simpiens.Core/Simulation/Skills/TechniqueTable.cs"] = "the techniques' table: each row names the skill whose band offers it (Epic 11, S4.1)",
+            ["Simpiens.Core/Simulation/Skills/CallingTable.cs"] = "the callings' table: each row names the skill it is a calling of (Epic 11, S5.2)",
         };
 
         private static readonly string[] Projects = { "Simpiens.Core", "Simpiens.Presentation", "Simpiens.Client", "Simpiens.Hosting" };
