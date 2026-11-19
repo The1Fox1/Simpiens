@@ -56,7 +56,8 @@ namespace Simpiens.Narrative
         SkillBandReached = 46, // K9.2: ActorA's practice reached a band; the extra is the skill x 256 + the band
         GateBreached = 47, // K10.4: ActorA slew the gate's keeper ActorB and the descent gate is breached; the extra is the keeper's kind
         RaiseAsked = 48, // Epic 11, S2.2 (D8): ActorA, a member or artisan, reached a band and asks the player (ActorB) for a raise; the extra is the wage it asks
-        FirstLesson = 49 // Epic 11, S3.1 (D9): ActorA was first taught a skill by ActorB, its mentor; the extra is the skill
+        FirstLesson = 49, // Epic 11, S3.1 (D9): ActorA was first taught a skill by ActorB, its mentor; the extra is the skill
+        TechniqueChosen = 50 // Epic 11, S4.2 (D15): ActorA reached a band and took up a technique by its nature; the extra is the technique
     }
 
     /// <summary>

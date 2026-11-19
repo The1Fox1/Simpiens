@@ -114,9 +114,16 @@ namespace Simpiens.Simulation
         /// <summary>The loaded map (immutable); null before one is loaded.</summary>
         public Simpiens.Simulation.World.MapDefinition Map => _sectors?.Map;
 
+        /// <summary>
+        /// The session's seed (Epic 11, S4.2, D15): what a crawler's pick of a technique at a band reached is drawn on. Set
+        /// where the lairs are filled and on a load; 0 in a simulation built by hand until a test sets it.
+        /// </summary>
+        public ulong Seed { get; set; }
+
         /// <summary>Fills the map's lairs on <paramref name="seed"/> (a session's start, K2.1). Main thread.</summary>
         public void PopulateLairs(ulong seed)
         {
+            Seed = seed;
             Creatures.Populate(this, seed);
             Piles.Begin(this, seed); // no piles at a session's start (K4.1)
         }
@@ -235,7 +242,23 @@ namespace Simpiens.Simulation
             uint tick = (uint)(_clock?.CurrentTick ?? 0);
             ChronicleService?.RecordEvent(new ChronicleEvent(ChronicleEventType.SkillBandReached, agent.AgentId, default,
                 GetSectorForPosition(agent.Position), tick, ChronicleIntensity.Notable, (byte)skill * 256 + (byte)band));
+            PickTechnique(agent, skill, tick);
             TellTheAsk(agent, tick);
+        }
+
+        /// <summary>
+        /// A band reached is a moment (Epic 11, S4.2, Q3, D15): the crawler picks one of the band's techniques by its nature,
+        /// if its slot is empty, and the chronicle tells it.
+        /// </summary>
+        private void PickTechnique(AgentState agent, Simpiens.Simulation.Skills.Skill skill, uint tick)
+        {
+            var traits = agent.Traits;
+            var picked = Simpiens.Simulation.Skills.TechniqueRules.FillReached(Seed, agent.AgentId, agent.Personality, agent.Skills, skill, ref traits);
+            if (picked == Simpiens.Simulation.Skills.Technique.None) return;
+            agent.Traits = traits;
+            SimLog.Simulation.ZLogInformation($"{SimLog.Agent(agent.AgentId)} took up {Simpiens.Simulation.Skills.TechniqueTable.NameOf(picked)}");
+            ChronicleService?.RecordEvent(new ChronicleEvent(ChronicleEventType.TechniqueChosen, agent.AgentId, default,
+                GetSectorForPosition(agent.Position), tick, ChronicleIntensity.Notable, (byte)picked));
         }
 
         /// <summary>

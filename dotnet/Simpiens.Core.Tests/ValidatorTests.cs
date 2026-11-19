@@ -69,6 +69,9 @@ namespace Simpiens.Core.Tests
         public void Techniques() => new Simpiens.Testing.Skills.TechniqueValidator().RunAllValidationTests();
 
         [Fact]
+        public void TechniquePicks() => new Simpiens.Testing.Skills.TechniquePickValidator().RunAllValidationTests();
+
+        [Fact]
         public void GivenNames() => new Simpiens.Testing.People.GivenNamesValidator().RunAllValidationTests();
 
         [Fact]

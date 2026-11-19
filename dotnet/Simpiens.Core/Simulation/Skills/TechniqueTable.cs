@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Simpiens.Cognition.Contracts;
 using static System.FormattableString;
 
 namespace Simpiens.Simulation.Skills
@@ -317,6 +318,66 @@ namespace Simpiens.Simulation.Skills
             TechniqueStat.Teach => (0, 50),
             _ => (0, 0)
         };
+
+        // --- The pick by nature (Epic 11, S4.2, Q3, D15) ---
+
+        /// <summary>
+        /// The technique <paramref name="entityId"/> picks at <paramref name="band"/> of <paramref name="skill"/>, by its
+        /// nature (D15): one of the band's rows, each weighted 1 + 2 × the row's lean in <paramref name="personality"/> (as a
+        /// talent's), on its own salt (<see cref="SimRandomSalt.Techniques"/>) keyed by the skill and the band, so the same
+        /// crawler picks the same whenever it gets there. None where the band offers nothing.
+        /// </summary>
+        public static Technique Pick(ulong seed, EntityId entityId, in AgentPersonality personality, Skill skill, SkillBand band)
+        {
+            var options = TechniqueTable.Options(skill, band);
+            if (options.Count == 0) return Technique.None;
+            float total = 0f;
+            System.Span<float> weights = stackalloc float[options.Count];
+            for (int i = 0; i < options.Count; i++)
+            {
+                weights[i] = (float)(1f + (float)(SkillRules.LeanWeight * System.Math.Max(0f, SkillSet.Lean(options[i].Lean, personality))));
+                total += weights[i];
+            }
+            var rng = SimRandom.For(seed, entityId, (byte)skill * 4 + (byte)band, SimRandomSalt.Techniques);
+            float pick = (float)(rng.NextFloat() * total);
+            for (int i = 0; i < options.Count; i++)
+            {
+                if (pick < weights[i]) return options[i].Id;
+                pick -= weights[i];
+            }
+            return options[options.Count - 1].Id;
+        }
+
+        /// <summary>
+        /// Fills every band <paramref name="skill"/> has reached in <paramref name="skills"/> whose slot is empty, by
+        /// <see cref="Pick"/>; a slot already held (picked, or sponsored) is never picked over. Returns the last technique
+        /// picked, the highest band's; none when nothing was empty.
+        /// </summary>
+        public static Technique FillReached(ulong seed, EntityId entityId, in AgentPersonality personality, in SkillSet skills, Skill skill, ref CrawlerTraits traits)
+        {
+            var reached = skills.Band(skill);
+            var picked = Technique.None;
+            for (var band = SkillBand.Apprentice; band <= reached && band <= SkillBand.Master; band++)
+            {
+                if (traits.TechniqueIn(skill, band) != Technique.None) continue;
+                var technique = Pick(seed, entityId, personality, skill, band);
+                if (technique == Technique.None) continue;
+                traits.SetTechnique(skill, band, technique);
+                picked = technique;
+            }
+            return picked;
+        }
+
+        /// <summary>
+        /// The techniques a crawler holds at spawn (D15): every band its starting skills have reached, its talents an
+        /// Apprentice's, picked by its nature. After the passions' draw, on its own salt, so no earlier draw moves.
+        /// </summary>
+        public static CrawlerTraits PickAtSpawn(ulong seed, EntityId entityId, in AgentPersonality personality, in SkillSet skills, CrawlerTraits traits)
+        {
+            var all = SkillTable.All;
+            for (int i = 0; i < all.Count; i++) FillReached(seed, entityId, personality, skills, all[i].Id, ref traits);
+            return traits;
+        }
 
         /// <summary><paramref name="value"/> held within <paramref name="stat"/>'s bounds.</summary>
         public static int Clamp(TechniqueStat stat, int value)

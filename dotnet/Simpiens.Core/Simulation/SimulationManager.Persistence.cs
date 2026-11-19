@@ -77,6 +77,7 @@ namespace Simpiens.Simulation
                 for (int i = 0; i < world.Harvested.Length; i++) _harvested[world.Harvested[i].Item] = world.Harvested[i].Count;
             }
 
+            Seed = save.Header != null ? save.Header.Seed : SimulationSettings.DefaultSeed; // the techniques' picks (Epic 11, S4.2)
             // The lairs and their creatures (Epic 10 Part 3, K2.4); a save from before fills them afresh
             Creatures.Restore(this, world?.Creatures, save.Header != null ? save.Header.Seed : SimulationSettings.DefaultSeed);
             Piles.Restore(this, world?.Piles, save.Header != null ? save.Header.Seed : SimulationSettings.DefaultSeed); // K4.1

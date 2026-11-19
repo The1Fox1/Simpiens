@@ -186,6 +186,14 @@ namespace Simpiens.Narrative
                 case ChronicleEventType.RaiseAsked:
                     return $"{actorA} asks for a raise, to {(int)evt.ExtraData}g a visit.";
 
+                case ChronicleEventType.TechniqueChosen:
+                {
+                    var technique = Simpiens.Simulation.Skills.TechniqueTable.Get((Simpiens.Simulation.Skills.Technique)(byte)evt.ExtraData);
+                    var other = Simpiens.Simulation.Skills.TechniqueTable.Get(Simpiens.Simulation.Skills.TechniqueTable.OtherThan(technique?.Id ?? default));
+                    if (technique == null) return $"{actorA} found a way of their own.";
+                    return other == null ? $"{actorA} took up {technique.DisplayName}." : $"{actorA} took up {technique.DisplayName} over {other.DisplayName}.";
+                }
+
                 case ChronicleEventType.GateBreached:
                     return $"{actorA} broke the Gatekeeper in {sector}: the descent gate stands open, its stairs going down into the dark.";
 
