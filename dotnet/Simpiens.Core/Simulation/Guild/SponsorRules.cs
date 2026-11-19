@@ -148,7 +148,7 @@ namespace Simpiens.Simulation.Guild
                     string low = trust < tuning.SponsorTrust ? Invariant($"trust {trust} of {tuning.SponsorTrust}") : string.Empty;
                     if (warmth < tuning.SponsorWarmth) low += (low.Length > 0 ? ", " : string.Empty) + Invariant($"warmth {warmth} of {tuning.SponsorWarmth}");
                     return $"Not yet: {low}.";
-                case Check.AgainstItsNature: return Invariant($"{name} won't: {row?.DisplayName} goes against their nature.");
+                case Check.AgainstItsNature: return Invariant($"Against {name}'s nature."); // short: the dossier's line names the technique before it
                 default: return check.ToString();
             }
         }

@@ -56,7 +56,7 @@ namespace Simpiens.Testing.Skills
             var cautious = Recruit(Skill.Melee, 4, Technique.ShieldWall);
             cautious.Personality = new AgentPersonality(0f, -0.8f, 0f, 0f, 0f);
             Assert(Check(cautious.AgentId, Technique.RecklessFury, out _) == SponsorRules.Check.AgainstItsNature, "The cautious (-0.8) won't take up Reckless Fury.");
-            Assert(Describe(SponsorRules.Check.AgainstItsNature, cautious, Technique.RecklessFury).Contains("against their nature"), "Its words say why.");
+            Assert(Describe(SponsorRules.Check.AgainstItsNature, cautious, Technique.RecklessFury) == $"Against {cautious.GivenName ?? "It"}'s nature.", "Its words say why.");
 
             var wary = Recruit(Skill.Melee, 4, Technique.ShieldWall);
             wary.Memory.SetAffinity(WorldRegistry.PlayerEntityId, new AffinityRecord(10, 40, 0, 0, 1, 0));
