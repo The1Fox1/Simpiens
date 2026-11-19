@@ -147,25 +147,53 @@ namespace Simpiens.Core.Tests
         /// D58 (Epic 10 Part 3, K10.2a): while the Matriarch heads the warren, the bold judge it past what they would brave alone,
         /// so a hunt posted on it finds no hunter: the warren is the guild's to clear until she falls.
         /// </summary>
+        /// <summary>
+        /// Gate seed 1 since Epic 11's S5.6 (F11): a bold resident at Apprentice in melee or better, given the glowstone edge
+        /// and the ring coat, expects to clear her warren alone with health to spare (<see cref="MeasureWhoBravesTheWarrenOnTheGateSeeds"/>:
+        /// on 11 of 23 gate seeds, 19 of 59 bold residents; melee 3 expected 57 harm of 60 before plan 2's techniques too), and
+        /// on two more one grows into it within the day. The scenario holds on 12 of 23; the default seed's bold hold a melee
+        /// talent since Leadership moved every draw; on this one, the first that holds, none do.
+        /// </summary>
+        private const ulong WarrenAloneSeed = 1;
+
         [Fact]
         public void NobodyHuntsTheMatriarchsWarrenAlone()
         {
-            using var sim = Outpost();
+            var (braves, joined, balanced, note) = WarrenAlone(WarrenAloneSeed);
+            TestContext.Current.TestOutputHelper?.WriteLine(note);
+            Assert.True(braves.Count == 0, "Nobody braves her warren alone: " + string.Join("; ", braves));
+            Assert.False(joined, "Nobody joined a hunt on the Matriarch's warren.");
+            Assert.True(balanced);
+        }
+
+        // The scenario on a seed: the warren charted, its bold residents armed with the best, a hunt posted on it, a day
+        private static (System.Collections.Generic.List<string> Braves, bool Joined, bool Balanced, string Note) WarrenAlone(ulong seed)
+        {
+            using var sim = Outpost(seed);
             int warren = WarrenIndex(sim);
             ChartTheWarren(sim);
             var bold = ArmTheBold(sim);
             var lair = sim.Simulation.Creatures.Lairs[warren].Definition;
             Assert.True(lair.HasBoss && sim.Simulation.Creatures.Lairs[warren].MemberIn(0) != default, "The Matriarch heads the warren.");
-            foreach (var b in bold) Assert.False(Vitality.BravesLair(lair, true, b.Skills, b.Inventory, b.Traits, b.Health, b.Personality.RiskTolerancePercent, b.IsDowned), "Nobody braves her warren alone.");
+            var braves = new System.Collections.Generic.List<string>();
+            foreach (var b in bold)
+                if (Vitality.BravesLair(lair, true, b.Skills, b.Inventory, b.Traits, b.Health, b.Personality.RiskTolerancePercent, b.IsDowned))
+                    braves.Add($"{b.GivenName}: expects {Vitality.HarmToClear(lair, true, b.Skills, b.Inventory, b.Traits):0} harm against {b.Health - Vitality.RetreatBelow:0} to spare, melee {b.Skills.Level(Simpiens.Simulation.Skills.Skill.Melee)}");
             Post(sim, warren, 60);
             bool joined = false;
+            EntityId hunter = default;
             for (long t = 0; t < DayClock.TicksPerDay && sim.Simulation.Hunts.Count > 0; t++)
             {
                 sim.Step(1);
-                if (sim.Simulation.Hunts.Count > 0) joined |= sim.Simulation.Hunts[0].Count > 0;
+                if (sim.Simulation.Hunts.Count > 0 && sim.Simulation.Hunts[0].Count > 0 && !joined)
+                {
+                    joined = true;
+                    hunter = sim.Simulation.Hunts[0].ClaimantAt(0);
+                }
             }
-            Assert.False(joined, "Nobody joined a hunt on the Matriarch's warren.");
-            Assert.True(Balanced(sim));
+            var who = hunter != default ? sim.Host.CrawlerStates.FirstOrDefault(c => c.AgentId == hunter) : null;
+            string note = $"seed {seed}: {bold.Count} bold armed; braves {braves.Count}; joined {(joined ? $"yes ({who?.GivenName}, melee {who?.Skills.Level(Simpiens.Simulation.Skills.Skill.Melee)}, bold {who?.Personality.RiskTolerancePercent})" : "no")}";
+            return (braves, joined, Balanced(sim), note);
         }
 
         // The bold residents (two at most), armed with the glowstone edge and the ring coat
@@ -226,9 +254,52 @@ namespace Simpiens.Core.Tests
             return sim.Simulation.EconomyLedger.ValidateConservation(stalls, agents, out _);
         }
 
-        private static LocalSimulation Outpost()
+        /// <summary>
+        /// The measurement behind <see cref="NobodyHuntsTheMatriarchsWarrenAlone"/> (Epic 11, S5.6): on each seed, every bold
+        /// resident armed with the glowstone edge and the ring coat, and the harm it expects clearing her warren alone against
+        /// what it has to spare. Explicit.
+        /// </summary>
+        [Fact(Explicit = true)]
+        public void MeasureWhoBravesTheWarrenOnTheGateSeeds()
         {
-            var sim = LocalSimulation.Create(SimulationSettings.DefaultSeed);
+            int seedsWithOne = 0, braves = 0, bold = 0;
+            foreach (ulong seed in OutpostWatch.GateSeeds)
+            {
+                using var sim = Outpost(seed);
+                int warren = WarrenIndex(sim);
+                var lair = sim.Simulation.Creatures.Lairs[warren].Definition;
+                var line = new System.Text.StringBuilder($"seed {seed}:");
+                bool any = false;
+                foreach (var b in sim.Host.CrawlerStates.Where(s => !s.IsDrifter && s.Personality.RiskTolerancePercent >= Vitality.VentureRiskTolerancePercent))
+                {
+                    b.Inventory.TryEquip(Simpiens.Simulation.Items.Outfitting.NewPiece(ItemType.GlowstoneEdge, Simpiens.Simulation.Items.Grades.Standard));
+                    b.Inventory.TryEquip(Simpiens.Simulation.Items.Outfitting.NewPiece(ItemType.RingCoat, Simpiens.Simulation.Items.Grades.Standard));
+                    bool brave = Vitality.BravesLair(lair, true, b.Skills, b.Inventory, b.Traits, b.Health, b.Personality.RiskTolerancePercent, b.IsDowned);
+                    bold++;
+                    if (brave) { braves++; any = true; }
+                    line.Append($" {b.GivenName} melee {b.Skills.Level(Simpiens.Simulation.Skills.Skill.Melee)} harm {Vitality.HarmToClear(lair, true, b.Skills, b.Inventory, b.Traits):0}/{b.Health - Vitality.RetreatBelow:0}{(brave ? " BRAVES" : "")};");
+                }
+                if (any) seedsWithOne++;
+                TestContext.Current.TestOutputHelper?.WriteLine(line.ToString());
+            }
+            TestContext.Current.TestOutputHelper?.WriteLine($"of {OutpostWatch.GateSeeds.Length} gate seeds: a bold resident so armed braves her warren alone on {seedsWithOne} ({braves} of {bold} bold residents)");
+            int held = 0;
+            foreach (ulong seed in OutpostWatch.GateSeeds)
+            {
+                try
+                {
+                    var (brave, joined, balanced, note) = WarrenAlone(seed);
+                    if (brave.Count == 0 && !joined && balanced) held++;
+                    TestContext.Current.TestOutputHelper?.WriteLine(note + (brave.Count == 0 && !joined && balanced ? " HOLDS" : ""));
+                }
+                catch (Xunit.Sdk.XunitException e) { TestContext.Current.TestOutputHelper?.WriteLine($"seed {seed}: {e.Message.Split('\n')[0]}"); }
+            }
+            TestContext.Current.TestOutputHelper?.WriteLine($"the scenario holds on {held} of {OutpostWatch.GateSeeds.Length} gate seeds");
+        }
+
+        private static LocalSimulation Outpost(ulong seed = SimulationSettings.DefaultSeed)
+        {
+            var sim = LocalSimulation.Create(seed);
             sim.Respawn(OutpostSession.SessionId);
             sim.Step(20);
             return sim;

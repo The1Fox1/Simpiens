@@ -121,8 +121,10 @@ namespace Simpiens.Core.Tests
         /// Fury on 9, Shield Wall on 9; the picks come from drill at the yard and from the clears' own blows). On this one, the
         /// earliest of the 17: Priya takes up Reckless Fury at t34587 and lands 16 blows with it at the clear that empties its
         /// lair at t38395 (attack 10.6 to 13.25).
+        /// Gate seed 18 since S5.6 (Leadership moved every draw, and the roles every clear): held on 14 of 23; on this one, the
+        /// earliest, Kiri takes up Reckless Fury at t19419 and lands 25 blows with it at the clear that empties its lair.
         /// </summary>
-        private const ulong Seed = 3;
+        private const ulong Seed = 18;
 
         [Fact]
         public void ATechniqueDecidesAClear()
