@@ -97,6 +97,7 @@ namespace Simpiens.Client
             Help = new KeyHelpOverlay(_game.Ui);
             // Tooltips (Epic UI-Beta B5): over everything, on the header's and the inspector's buttons
             Tooltips = new Tooltips(_game.Ui);
+            Dashboard.Panels.Tips = Tooltips; // the dossier's techniques line (Epic 11, S4.9)
             var header = Dashboard.Header;
             Tooltips.Register(header.GoldCounter, "Gold in the stall's treasury");
             Tooltips.Register(header.BountiesCounter, "Bounties on the board");

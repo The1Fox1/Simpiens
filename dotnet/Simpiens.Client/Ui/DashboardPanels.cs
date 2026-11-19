@@ -34,6 +34,9 @@ namespace Simpiens.Client.Ui
         private readonly TextRuntime _sectorTitle, _sectorDescription, _residentsEmpty, _eventsEmpty, _dossierEmpty, _dossierName, _dossierBadge, _goal, _action, _affinitiesEmpty;
         private readonly TextRuntime _groups, _recruitText; // Epic 10 G4
         private readonly TextRuntime _held, _asks; // Epic 11, S2.5: a skill the budget holds; an asking wage above the wage
+        private readonly TextRuntime _techniques; // Epic 11, S4.9: the techniques it holds, their words in the line's tip
+        private readonly ContainerRuntime _techniquesLine;
+        private string _techniquesTip;
         private readonly GraphicalUiElement _affinitiesViewer;
         private const float AffinitiesHeight = 70f, HeldLineHeight = 14f; // the held line takes its 11-point line from the feelings
         private readonly SkillLine _skills; // Epic 10 Part 3, K9.5; with passions' flames since Epic 11, S1.6
@@ -162,6 +165,12 @@ namespace Simpiens.Client.Ui
             // Who taught it (Epic 11, S3.5: "Mining taught by Bram"), then a skill the mastery budget holds (S2.5, D7: "Foraging
             // held at 5: two crafts past Apprentice"). Shown only when there is either, taking its line from the feelings' list,
             // so the dossier keeps its height at 720 rows
+            // The techniques it holds (Epic 11, S4.9, D18): "Shield Wall · Seam Student", what each does in the line's tip. Shown
+            // only when it holds any, taking its line from the feelings' list as the held line does
+            _techniquesLine = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, HeightUnits = DimensionUnitType.RelativeToChildren, Height = 0f, HasEvents = true, Visible = false };
+            _techniques = UiParts.Text(string.Empty, UiStyle.TextSecondary, UiText.Small);
+            _techniquesLine.Children.Add(_techniques);
+            _dossierDetails.Children.Add(_techniquesLine);
             _held = UiParts.Text(string.Empty, UiStyle.TextMuted, UiText.Small);
             _held.Visible = false;
             _dossierDetails.Children.Add(_held);
@@ -206,7 +215,12 @@ namespace Simpiens.Client.Ui
             CalmButton = UiParts.Button("Calm Frustration", 0f, 32f, UiText.BodyBold);
             CalmButton.Click += (_, _) => { _model.Dossier.Calm(); };
             RecruitButton = UiParts.Button("Recruit", 0f, 32f, UiText.BodyBold);
-            RecruitButton.Click += (_, _) => { _model.Dossier.Recruit(); };
+            // One of the patron's people is sponsored, not recruited (Epic 11, S4.9, D18): the same button, by who is shown
+            RecruitButton.Click += (_, _) =>
+            {
+                if (_model.Dossier.IsOurs) _model.Dossier.Sponsor();
+                else _model.Dossier.Recruit();
+            };
             actions.Children.Add(CalmButton.Visual);
             actions.Children.Add(RecruitButton.Visual);
             _dossierDetails.Children.Add(actions);
@@ -259,6 +273,18 @@ namespace Simpiens.Client.Ui
 
         /// <summary>A skill the budget holds, and the asking wage above the wage, as shown (Epic 11, S2.5); empty when hidden.</summary>
         public string SkillNotesShown => _held.Visible ? _held.Text : string.Empty;
+
+        /// <summary>The techniques line as shown (Epic 11, S4.9); empty when hidden.</summary>
+        public string TechniquesShown => _techniquesLine.Visible ? _techniques.Text : string.Empty;
+
+        /// <summary>The element whose tip says what each technique does.</summary>
+        public GraphicalUiElement TechniquesLine => _techniquesLine;
+
+        /// <summary>The sway's second button as shown (its words are <see cref="RecruitShown"/>): "Recruit" for a resident, "Sponsor" for one of the patron's people.</summary>
+        public string SwayButtonShown => RecruitButton.Text;
+
+        /// <summary>The play screen's tooltips (Epic UI-Beta B5), for the techniques line's tip; null in a dashboard built alone.</summary>
+        public Tooltips Tips { get; set; }
         public string AsksShown => _asks.Visible ? _asks.Text : string.Empty;
         public string SkillsShown => _skills.Text;
         public string RecruitShown => _recruitText.Text;
@@ -434,18 +460,28 @@ namespace Simpiens.Client.Ui
             UiParts.SetText(_groups, dossier.Groups);
             _skills.Show(dossier.SkillsShown);
             string notes = dossier.SkillNotes;
-            bool held = notes.Length > 0;
-            if (_held.Visible != held)
+            bool held = notes.Length > 0, techniques = dossier.Techniques.Length > 0;
+            if (_held.Visible != held || _techniquesLine.Visible != techniques)
             {
                 _held.Visible = held;
-                _affinitiesViewer.Height = held ? AffinitiesHeight - HeldLineHeight : AffinitiesHeight;
+                _techniquesLine.Visible = techniques;
+                _affinitiesViewer.Height = AffinitiesHeight - (held ? HeldLineHeight : 0f) - (techniques ? HeldLineHeight : 0f);
             }
             if (held) UiParts.SetText(_held, notes);
+            if (techniques) UiParts.SetText(_techniques, dossier.Techniques);
+            if (!string.Equals(_techniquesTip, dossier.TechniquesTip, System.StringComparison.Ordinal))
+            {
+                _techniquesTip = dossier.TechniquesTip;
+                Tips?.Register(_techniquesLine, _techniquesTip.Length > 0 ? _techniquesTip : null);
+            }
             bool asks = dossier.Asks.Length > 0;
             if (_asks.Visible != asks) _asks.Visible = asks;
             if (asks) UiParts.SetText(_asks, dossier.Asks);
-            UiParts.SetText(_recruitText, dossier.RecruitText);
-            RecruitButton.IsEnabled = dossier.CanRecruit;
+            bool ours = dossier.IsOurs;
+            UiParts.SetText(_recruitText, ours ? dossier.SponsorText : dossier.RecruitText);
+            string sway = ours ? "Sponsor" : "Recruit";
+            if (!string.Equals(RecruitButton.Text, sway, System.StringComparison.Ordinal)) RecruitButton.Text = sway;
+            RecruitButton.IsEnabled = ours ? dossier.CanSponsor : dossier.CanRecruit;
         }
 
         private static ContainerRuntime Panel(float x, float width, string header, out ContainerRuntime body)

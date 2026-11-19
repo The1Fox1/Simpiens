@@ -102,6 +102,31 @@ namespace Simpiens.Simulation.Guild
             return Check.Ok;
         }
 
+        /// <summary>
+        /// What the dossier offers to sponsor (D18): the other technique at the highest band of the crawler's best skill that
+        /// holds one (the highest level, then the table's display order), with the one it would replace; none when it holds none.
+        /// </summary>
+        public static Technique Offer(in SkillSet skills, in CrawlerTraits traits, out Technique replacing)
+        {
+            replacing = Technique.None;
+            int bestLevel = -1;
+            var shown = SkillTable.InDisplayOrder;
+            for (int i = 0; i < shown.Count; i++)
+            {
+                int level = skills.Level(shown[i].Id);
+                if (level <= bestLevel) continue;
+                for (var band = SkillBand.Master; band >= SkillBand.Apprentice; band--)
+                {
+                    var held = traits.TechniqueIn(shown[i].Id, band);
+                    if (held == Technique.None) continue;
+                    replacing = held;
+                    bestLevel = level;
+                    break;
+                }
+            }
+            return TechniqueTable.OtherThan(replacing);
+        }
+
         /// <summary>A refusal in the player's words, for the dossier's button; empty for <see cref="Check.Ok"/>.</summary>
         public static string Describe(Check check, AgentState crawler, Technique technique, ushort price, in GuildTuning tuning, uint tick)
         {
@@ -118,8 +143,11 @@ namespace Simpiens.Simulation.Guild
                 case Check.NoStall: return "There's no stall to pay from.";
                 case Check.CannotPay: return Invariant($"The stall can't pay the {price}g.");
                 case Check.NotYetTrusted:
+                    // Only what stands under its line
                     var (trust, warmth) = crawler != null ? GuildRules.Standing(crawler, tick) : (0, 0);
-                    return Invariant($"Not yet: trust {trust} of {tuning.SponsorTrust}, warmth {warmth} of {tuning.SponsorWarmth}.");
+                    string low = trust < tuning.SponsorTrust ? Invariant($"trust {trust} of {tuning.SponsorTrust}") : string.Empty;
+                    if (warmth < tuning.SponsorWarmth) low += (low.Length > 0 ? ", " : string.Empty) + Invariant($"warmth {warmth} of {tuning.SponsorWarmth}");
+                    return $"Not yet: {low}.";
                 case Check.AgainstItsNature: return Invariant($"{name} won't: {row?.DisplayName} goes against their nature.");
                 default: return check.ToString();
             }

@@ -54,8 +54,9 @@ namespace Simpiens.Client.Tests
             Assert.True(guild.IsMember(recruit), "The Recruit button's command signed the crawler on.");
             Assert.Equal("Guild 1/8", dashboard.Header.GuildButton.Text);
             Assert.Contains("Guild: member, 5g a visit", dashboard.Panels.GroupsShown);
-            Assert.Equal(string.Empty, dashboard.Panels.RecruitShown);
-            Assert.False(dashboard.Panels.RecruitButton.IsEnabled, "A member can't be recruited again.");
+            // A member is sponsored, not recruited again (Epic 11, S4.9): the sway's button and words are the sponsor's
+            Assert.Equal("Sponsor", dashboard.Panels.SwayButtonShown);
+            Assert.StartsWith("Sponsor ", dashboard.Panels.RecruitShown);
 
             ui.Click(Centre(dashboard.Header.GuildButton));
             var roster = dashboard.Guild;

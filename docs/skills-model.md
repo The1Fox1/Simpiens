@@ -245,3 +245,26 @@ Practice a seed with the hunting players: mining about 6,740 experience, foragin
   - *At Journeyman:* about one resident a seed in two weeks with the players, mostly an artisan, and almost never a fighter; a fifth of one with no player.
   - *At Master:* never in two weeks.
   - Plan 2 tunes on these numbers, or measures over a longer horizon.
+
+### 5.6 With techniques (S4.7, 2026-11-19)
+S0.3's measurement a fourth time, on plan 2's S4 build: a technique picked at each band reached (and at spawn for the talents), its effects on the fight and the work (§6). Melee and ranged are scored the same way as before; the counts of techniques come from the traits records at day 14 against day 0.
+
+| | No player | Hunting players |
+| :--- | :--- | :--- |
+| Seeds where someone reaches Journeyman | 3 of 23 (from day 8.0) | 20 of 23 (from day 4.4) |
+| Residents holding a Journeyman's skill at day 14 | 0.13 a seed (most 1) | 1.22 a seed (most 3) |
+| Seeds where someone reaches Master | 0 | 0 |
+| Residents with two skills past Apprentice | 0 | 0 |
+| Highest level reached | 6 (mining) | 8 (alchemy) |
+| Deaths | 0 | 0 |
+| Techniques picked in the run, a seed | 12.8 (292 at Apprentice, 3 at Journeyman) | 12.1 (250 at Apprentice, 28 at Journeyman) |
+
+With the hunting players, levels gained a seed: melee 4.7 (2 reached Journeyman, the first melee Journeymen in any measurement), ranged 2.7, mining 14.6 (2), foraging 10.4, smithing 5.1 (8), alchemy 6.3 (16), medicine 2.0. The first Journeyman of a seed is the still's alchemist on 13 of the 20 where one is made, a smith on 4, a fighter on 2 and a miner on 1.
+
+**Which techniques are held** (hunting players, at day 14, with how many were picked during the run): each Apprentice pair splits by nature, close to even across the outpost: Shield Wall 41 (11) and Reckless Fury 49 (18); Steady Aim 57 (18) and Quick Draw 49 (9); Seam Student 70 (36) and Hard Driver 65 (38); Gentle Hands 41 (20) and Quick Hands 37 (18); Fine Temper 55 (18) and Fast Forge 42 (13); Careful Measure 41 (18) and Quick Brew 41 (15); Steady Hands 41 (12) and Strong Back 36 (6). At Journeyman, 28 picks in all, mostly the artisans': Patient Still 9, Big Batches 7, Hot Iron 5, Studied Hammer 3, Heavy Blows 2. No Master technique.
+
+**What it means:**
+- **Techniques change who grows, not how far.** The students' +25–30% practice and the drivers' −20–30% roughly cancel across the outpost. The top moves a step (a Journeyman on 20 seeds against 19; the highest level 8 against 7), and still nobody reaches Master or a second skill past Apprentice (F1, F8).
+- **Apprentice techniques are everyone's,** from spawn: every talent holds one, and 11–13 more are picked a seed in two weeks. They are what the player sees and sponsors.
+- **Journeyman techniques are the artisans'.** Master techniques and Unyielding are proven by validators only.
+

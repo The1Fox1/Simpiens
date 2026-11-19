@@ -173,14 +173,14 @@ Grades only change what equipment does today, so alchemy's choices are pace and 
   - **The checks:** `SponsorValidator`: each refusal; a sponsorship paid from the stall into the purse, the ledger balanced; the slot changed and told; a band sponsored back costs again.
   - **The economy model:** §2 gains sponsorship, a transfer.
   - **Golden:** unchanged (no player sponsors).
-- [ ] **S4.7 Re-measured** [Possibly Complex: measuring, moved DoDs]
+- [x] **S4.7 Re-measured** (done 2026-11-19: `docs/skills-model.md` §5.6; two DoDs re-picked, F9, F10; core 312/312; soak 18/18 and 20/20 x3) [Possibly Complex: measuring, moved DoDs]
   - **Again:** S0.3's measurement (a fourth time), with the techniques picked and their effects; which techniques are held at day 14, by band.
   - **Every scenario:** a DoD whose seed moves is re-picked from a measurement across the gate seeds, never one seed, in its own commit. The soak's 18 runs and the three player profiles.
   - **Findings** for anything that surprises.
 - [x] **S4.8 The client: the choice scene** (done 2026-11-19: `SkillScenes`, a moment trigger; `SkillSceneTests`) [Possibly Complex: a new kind of scene trigger, built from an event]
   - **The trigger:** D17's moment, its script built from the chronicle event (the vow, the road not taken); the patron's people only, a game hour apart; armed by `ClientOptions.SkillScenes`.
   - **The checks:** a presentation test (the trigger fires for a member's pick, not a resident's; its lines name both techniques); a client test that it plays in the window.
-- [ ] **S4.9 The client: techniques in the dossier, and the sponsor button** [Possibly Complex: Gum, renders]
+- [x] **S4.9 The client: techniques in the dossier, and the sponsor button** (done 2026-11-19: the sway's second button sponsors one of the patron's people; renders at S4.11) [Possibly Complex: Gum, renders]
   - **The dossier:** D18's lines, and the sponsor button with the price and the rule's reason.
   - **The checks:** `TechniquesOnScreenTests`. Renders recorded in the pinned image after a look, in their own commit.
 - [ ] **S4.10 DoD `ATechniqueDecidesAClear`** [Possibly Complex: a live scenario]

@@ -41,6 +41,23 @@ namespace Simpiens.Simulation.Skills
             return TechniqueRules.Clamp(stat, sum);
         }
 
+        /// <summary>
+        /// The techniques <paramref name="traits"/> holds, into <paramref name="into"/>, in the skills' display order and by
+        /// band within a skill (the dossier's list); returns how many, as many as the span holds.
+        /// </summary>
+        public static int Held(in CrawlerTraits traits, System.Span<Technique> into)
+        {
+            int count = 0;
+            var shown = SkillTable.InDisplayOrder;
+            for (int i = 0; i < shown.Count && count < into.Length; i++)
+                for (var band = SkillBand.Apprentice; band <= SkillBand.Master && count < into.Length; band++)
+                {
+                    var held = traits.TechniqueIn(shown[i].Id, band);
+                    if (held != Technique.None) into[count++] = held;
+                }
+            return count;
+        }
+
         /// <summary>A percentage stat as a factor: 1 + <paramref name="percent"/> / 100, exactly 1 for none.</summary>
         public static float Factor(int percent) => percent == 0 ? 1f : (float)(1f + (float)(percent / 100f));
     }
