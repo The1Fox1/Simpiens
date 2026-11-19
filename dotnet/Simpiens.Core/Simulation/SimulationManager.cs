@@ -247,7 +247,20 @@ namespace Simpiens.Simulation
             ChronicleService?.RecordEvent(new ChronicleEvent(ChronicleEventType.SkillBandReached, agent.AgentId, default,
                 GetSectorForPosition(agent.Position), tick, ChronicleIntensity.Notable, (byte)skill * 256 + (byte)band));
             PickTechnique(agent, skill, tick);
+            JudgeCalling(agent, tick);
             TellTheAsk(agent, tick);
+        }
+
+        /// <summary>A band reached may earn another calling (Epic 11, S5.3, D21): judged again, and a change told in the chronicle.</summary>
+        private void JudgeCalling(AgentState agent, uint tick)
+        {
+            var traits = agent.Traits;
+            if (!Simpiens.Simulation.Skills.CallingRules.Rejudge(agent.Skills, ref traits, out _)) return;
+            agent.Traits = traits;
+            SimLog.Simulation.ZLogInformation($"{SimLog.Agent(agent.AgentId)} is now a {Simpiens.Simulation.Skills.CallingTable.NameOf(traits.Calling)}");
+            if (traits.Calling == Simpiens.Simulation.Skills.Calling.None) return;
+            ChronicleService?.RecordEvent(new ChronicleEvent(ChronicleEventType.CallingEarned, agent.AgentId, default,
+                GetSectorForPosition(agent.Position), tick, ChronicleIntensity.Notable, (byte)traits.Calling));
         }
 
         /// <summary>

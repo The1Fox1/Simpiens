@@ -136,6 +136,13 @@ namespace Simpiens.Simulation.Skills
             return (byte)skill * 3 + (byte)band - 1;
         }
 
+        // --- The calling (Epic 11, S5.3, D21) ---
+
+        /// <summary>The calling the crawler has earned (<see cref="CallingRules.Earned"/>); none before it stands at Apprentice in anything.</summary>
+        public readonly Calling Calling => (Calling)_calling;
+
+        public void SetCalling(Calling calling) => _calling = (byte)calling;
+
         // --- Teachers (S3) ---
 
         /// <summary>Who first taught <paramref name="skill"/>, or no one.</summary>

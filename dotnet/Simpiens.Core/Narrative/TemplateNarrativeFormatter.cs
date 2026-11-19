@@ -194,6 +194,12 @@ namespace Simpiens.Narrative
                     return other == null ? $"{actorA} took up {technique.DisplayName}." : $"{actorA} took up {technique.DisplayName} over {other.DisplayName}.";
                 }
 
+                case ChronicleEventType.CallingEarned:
+                {
+                    string word = Simpiens.Simulation.Skills.CallingTable.Get((Simpiens.Simulation.Skills.Calling)(byte)evt.ExtraData)?.DisplayName ?? "someone new";
+                    return $"{actorA} is now {("AEIOU".IndexOf(word[0]) >= 0 ? "an" : "a")} {word}.";
+                }
+
                 case ChronicleEventType.TechniqueSponsored:
                     return $"{actorA} took up {Simpiens.Simulation.Skills.TechniqueTable.Get((Simpiens.Simulation.Skills.Technique)(byte)evt.ExtraData)?.DisplayName ?? "a new way"}, for the patron's gold.";
 

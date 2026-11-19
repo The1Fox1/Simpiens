@@ -95,7 +95,12 @@ namespace Simpiens.Simulation.Guild
             var row = TechniqueTable.Get(technique);
             var traits = crawler.Traits;
             traits.SetTechnique(row.Skill, row.Band, technique);
+            // The technique that earned its calling may have changed it (Epic 11, S5.3, D21)
+            bool called = CallingRules.Rejudge(crawler.Skills, ref traits, out _);
             crawler.Traits = traits;
+            if (called && traits.Calling != Calling.None)
+                host.ChronicleService?.RecordEvent(new ChronicleEvent(ChronicleEventType.CallingEarned, crawlerId, default,
+                    host.GetSectorForPosition(crawler.Position), tick, ChronicleIntensity.Notable, (byte)traits.Calling));
             SimLog.Economy.ZLogInformation($"{SimLog.Agent(crawlerId)} took up {row.Name} for the patron's {price}g");
             host.ChronicleService?.RecordEvent(new ChronicleEvent(ChronicleEventType.TechniqueSponsored, crawlerId, WorldRegistry.PlayerEntityId,
                 host.GetSectorForPosition(crawler.Position), tick, ChronicleIntensity.Notable, (byte)technique));
