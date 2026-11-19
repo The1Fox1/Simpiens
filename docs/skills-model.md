@@ -335,3 +335,21 @@ With the hunting players, levels gained a seed: melee 4.7 (2 reached Journeyman,
 - **Apprentice techniques are everyone's,** from spawn: every talent holds one, and 11–13 more are picked a seed in two weeks. They are what the player sees and sponsors.
 - **Journeyman techniques are the artisans'.** Master techniques and Unyielding are proven by validators only.
 
+### 5.7 With Leadership and callings (S5.6, 2026-11-19)
+The same measurement on S5's build: Leadership an eighth skill (in every draw, practised by a party's captain), callings earned, party roles in the guild's orders.
+
+| | No player | Hunting players |
+| :--- | :--- | :--- |
+| Seeds where someone reaches Journeyman | 4 of 23 (from day 12.3) | 18 of 23 (from day 4.0) |
+| Residents holding a Journeyman's skill at day 14 | 0.17 a seed (most 1) | 1.43 a seed (most 3) |
+| Seeds where someone reaches Master | 0 | 0 |
+| Residents with two skills past Apprentice | 0 | 0 |
+| Highest level reached | 6 (mining) | 8 (alchemy) |
+| Techniques picked in the run, a seed | 11.7 | 12.1 (32 at Journeyman in all) |
+| Callings changed in the run | 1 | 24 |
+
+- **Leadership** grows only where parties go out: with the hunting players 0.7 levels a seed, 6 captains to Apprentice and one to Journeyman (Leadership 6) across the 23 seeds, 416 experience a seed; none with no player.
+- **Every resident holds a calling** from spawn (none without one), spread across all fifteen (hunting players, at day 14): Smith 29, Marksman 25, Apothecary 24, Rockbreaker 23, Captain 23, Skirmisher 20, Warden 16, Berserker 16, Forgehand 16, Field Surgeon 16, Brewer 16, Bearer 15, Prospector 14, Herbalist 14, Gleaner 9.
+- **Callings change with the work:** 24 residents' changed in two weeks with the players, one with none. A Warden earned during a run is rare (finding F12): over ten days of the DoD's scenario a guild member became one on 2 of 23 gate seeds, since a member's melee, from the yard to 5, seldom passes the talent it started with.
+- **The front holds where it stands:** on both seeds the Warden took the most of the creatures' blows at the next clear (26 against a mate's 4 at the most; 7 against 2).
+

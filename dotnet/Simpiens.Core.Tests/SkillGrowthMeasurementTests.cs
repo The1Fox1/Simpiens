@@ -33,6 +33,9 @@ namespace Simpiens.Core.Tests
             public readonly int[] HeldAtEnd = new int[256];
             public readonly int[] PickedInRun = new int[256];
             public readonly int[] PickedByBand = new int[4];
+            // Callings (Epic 11, S5.6): held at the end, and how many residents' changed during the run
+            public readonly int[] CallingAtEnd = new int[256];
+            public int CallingsChanged;
         }
 
         private static Growth Play(ulong seed, string profile, long horizon)
@@ -111,6 +114,8 @@ namespace Simpiens.Core.Tests
                             growth.PickedByBand[(byte)band]++;
                         }
                     }
+                growth.CallingAtEnd[(byte)traitsNow.Calling]++;
+                if (traitsNow.Calling != traitsThen.Calling) growth.CallingsChanged++;
                 if (journeyman) growth.Journeymen++;
                 if (master) growth.Masters++;
                 if (past >= 2) growth.TwoPastApprentice++;
@@ -149,6 +154,13 @@ namespace Simpiens.Core.Tests
                     sum.Append($"  {row.DisplayName,-9} levels gained {runs.Average(r => r.LevelsGained[s]):F1}/seed; reached Apprentice {runs.Sum(r => r.ReachedApprentice[s])}, Journeyman {runs.Sum(r => r.ReachedJourneyman[s])}, Master {runs.Sum(r => r.ReachedMaster[s])}; practice {runs.Average(r => r.Practice[s]):F0} xp/seed; highest level {runs.Max(r => r.Peak[s])}\n");
                 }
                 sum.Append($"techniques picked in the run: {runs.Average(r => r.PickedByBand.Sum()):F1} a seed (Apprentice {runs.Sum(r => r.PickedByBand[1])}, Journeyman {runs.Sum(r => r.PickedByBand[2])}, Master {runs.Sum(r => r.PickedByBand[3])} in all)\n");
+                sum.Append($"callings at the end ({runs.Sum(r => r.CallingsChanged)} changed in the run):");
+                foreach (var row in CallingTable.All)
+                {
+                    int held = runs.Sum(r => r.CallingAtEnd[(byte)row.Id]);
+                    if (held > 0) sum.Append($" {row.DisplayName} {held};");
+                }
+                sum.Append($" none {runs.Sum(r => r.CallingAtEnd[0])}\n");
                 sum.Append("held at the end (picked in the run):");
                 foreach (var row in TechniqueTable.All)
                 {

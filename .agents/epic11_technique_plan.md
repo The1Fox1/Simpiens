@@ -214,7 +214,7 @@ Grades only change what equipment does today, so alchemy's choices are pace and 
 - [x] **S5.5 Capstones and the Master title** (done 2026-11-19; golden unchanged) [Possibly Complex: rows read through the door]
   - **The rule:** D23, a calling's capstone through `CrawlerTechniques.Get` at Master in its skill.
   - **The check:** a validator (a Master Warden's defense; the title; nothing below Master).
-- [ ] **S5.6 Re-measured** [Possibly Complex: measuring, moved DoDs]
+- [x] **S5.6 Re-measured** (done 2026-11-19: `docs/skills-model.md` §5.7; five DoDs re-picked, F11; two fixtures read the rule's own numbers) [Possibly Complex: measuring, moved DoDs]
   - **The measurement:** who holds which calling at day 14 on the gate seeds; roles in clears (how often a Front member takes the blows); Leadership's growth.
   - **Every scenario:** moved DoDs re-picked across the gate seeds, each in its own commit, S4's DoD among them.
 - [ ] **S5.7 The client: titles and roles** [Possibly Complex: Gum, renders]
