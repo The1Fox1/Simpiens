@@ -193,25 +193,25 @@ Grades only change what equipment does today, so alchemy's choices are pace and 
 
 ### S5. Callings (3–4 days)
 **Complexity:** Very Complex as the epic stamps it (bundling: a skill, a table and orders). Split here so the skill, the table, the rule, the roles and the capstones each land alone; each step is Possibly Complex.
-- [ ] **S5.1 Leadership, an eighth skill** [Possibly Complex: a skill row by AGENTS.md's recipe, but a new kind of work, its practice in the guild's expeditions and every seed's draw]
+- [x] **S5.1 Leadership, an eighth skill** (done 2026-11-19: no primer for it either; golden re-recorded) [Possibly Complex: a skill row by AGENTS.md's recipe, but a new kind of work, its practice in the guild's expeditions and every seed's draw]
   - **The row and the work:** D19's `Skill.Leadership`, `SkillUse.Lead`, `SkillWork.Lead()`.
   - **The captain** of a party out; practice at a trip's delivery; the retreat rules' line falling by its level.
   - **The checks:** `SkillsValidator` (the row); `LeadershipValidator` (the captain chosen; practice at delivery by the trip's challenge; the line steadied by level); `SkillProofTests` still adds Mycology as a row.
   - **Golden:** re-recorded in its own commit (every seed's draw moves). The DoDs it moves are re-picked at S5.6, with S5.4's.
-- [ ] **S5.2 The calling table** [Possibly Complex: a new table whose ids are saved]
+- [x] **S5.2 The calling table** (done 2026-11-19: "Delver" is Rockbreaker, Delver being a look lineage) [Possibly Complex: a new table whose ids are saved]
   - **The table:** D20's `Calling`, `CallingTable` (15 rows), `PartyRole`.
   - **The checks:** `CallingValidator` (every Apprentice technique earns one calling, every row's skill and technique agree, Captain needs none); `CallingNamesTests`.
   - **AGENTS.md:** "Adding a calling".
-- [ ] **S5.3 A calling earned** [Possibly Complex: a rule over bands and techniques, saved]
+- [x] **S5.3 A calling earned** (done 2026-11-19: a calling keeps its skill while that skill ties the top; golden re-recorded for the hash) [Possibly Complex: a rule over bands and techniques, saved]
   - **The rule:** D21's `CallingRules.Earned`, judged at spawn, at a band reached, at a pick and at a sponsorship; saved in the record; `CallingEarned` in the chronicle.
   - **The checks:** a validator: the best skill decides; ties by experience, then display order; an Apprentice technique sponsored away changes the calling; a skill below Apprentice earns none.
   - **Golden:** the hash moves: re-recorded in its own commit.
-- [ ] **S5.4 Party roles the guild's orders read** [Possibly Complex: the guild's orders and the creatures' rule]
+- [x] **S5.4 Party roles the guild's orders read** (done 2026-11-19; golden unchanged) [Possibly Complex: the guild's orders and the creatures' rule]
   - **The orders:** D22's role in the order copy; `PlanArms` by role; `ChooseCarrier` by role; the captain (a Captain first) for the focus.
   - **The front:** the creatures' rule, as D22.
   - **The checks:** `PartyRoleValidator`: a Front member draws a creature's notice and turns a creature off its mate; a Back member is armed to shoot; a Carrier is sent first; nothing changes outside a clear's fight.
   - **Golden:** re-recorded in its own commit if it moves.
-- [ ] **S5.5 Capstones and the Master title** [Possibly Complex: rows read through the door]
+- [x] **S5.5 Capstones and the Master title** (done 2026-11-19; golden unchanged) [Possibly Complex: rows read through the door]
   - **The rule:** D23, a calling's capstone through `CrawlerTechniques.Get` at Master in its skill.
   - **The check:** a validator (a Master Warden's defense; the title; nothing below Master).
 - [ ] **S5.6 Re-measured** [Possibly Complex: measuring, moved DoDs]

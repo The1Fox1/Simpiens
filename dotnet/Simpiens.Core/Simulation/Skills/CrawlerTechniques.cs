@@ -38,6 +38,9 @@ namespace Simpiens.Simulation.Skills
                 var row = TechniqueTable.Get(held);
                 if (row != null && row.Skill == skill) sum += row.ValueOf(stat);
             }
+            // Its calling's capstone at Master in the calling's skill (Epic 11, S5.5, D23)
+            var calling = CallingTable.Get(traits.Calling);
+            if (calling != null && calling.Skill == skill && calling.Capstone.Stat == stat && skills.Band(skill) >= SkillBand.Master) sum += calling.Capstone.Value;
             return TechniqueRules.Clamp(stat, sum);
         }
 

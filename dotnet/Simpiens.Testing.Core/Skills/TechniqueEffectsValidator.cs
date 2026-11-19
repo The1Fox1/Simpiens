@@ -18,8 +18,8 @@ namespace Simpiens.Testing.Skills
     /// range, a steady aim's hit, a last stand below half health; scoped to the fight its holder fights; stacked within their
     /// bounds; untouched with none held; and cognition judging a lair by the same fighter. The work's: the harvest's pace,
     /// read by the salvage choice too; a make's grade and pace; the carry's pace and a medicine's healing; practice beside the
-    /// passion; a mentor's lesson. The rule flag: unyielding, the cautious and armed standing when struck. Runs as a test
-    /// (ValidatorTests).
+    /// passion; a mentor's lesson. The rule flag: unyielding, the cautious and armed standing when struck. A calling's capstone
+    /// at Master (S5.5, D23). Runs as a test (ValidatorTests).
     /// </summary>
     public class TechniqueEffectsValidator
     {
@@ -36,7 +36,8 @@ namespace Simpiens.Testing.Skills
             ValidateTheFallen();
             ValidatePracticeAndLessons();
             ValidateUnyielding();
-            TestLog.Log("<color=green>[TechniqueEffectsValidator] ALL 10 TESTS PASSED SUCCESSFULLY!</color>");
+            ValidateCapstones();
+            TestLog.Log("<color=green>[TechniqueEffectsValidator] ALL 11 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private static readonly SkillSet Fighter = Skilled(Skill.Melee, 4, Skill.Ranged, 4);
@@ -233,6 +234,31 @@ namespace Simpiens.Testing.Skills
             Assert(!Vitality.FightsBack(Context(cautious, Sling(), unyielding)), "A melee technique doesn't hold a shooter.");
             Assert(!Vitality.FightsBack(Context(cautious, blade, unyielding, health: 10f)), "Below the retreat line, even the unyielding go.");
             TestLog.Log("[PASS] Test 10: unyielding: the cautious and armed stand when struck, and nobody else does.");
+        }
+
+        private static void ValidateCapstones()
+        {
+            var traits = Holding(Skill.Melee, SkillBand.Apprentice, Technique.ShieldWall);
+            traits.SetCalling(Calling.Warden);
+            var fight = SkillWork.Fight(ranged: false);
+            var journeyman = default(SkillSet);
+            journeyman.Set(Skill.Melee, 8);
+            var master = default(SkillSet);
+            master.Set(Skill.Melee, 9);
+            Assert(CrawlerTechniques.Get(traits, journeyman, fight, TechniqueStat.Defense) == 3, "A Journeyman Warden: Shield Wall's +3 defense alone.");
+            Assert(CrawlerTechniques.Get(traits, master, fight, TechniqueStat.Defense) == 6, "A Master Warden: +3 more from its capstone.");
+            Assert(CrawlerTechniques.Get(traits, master, SkillWork.Fight(ranged: true), TechniqueStat.Defense) == 0, "Not while it shoots: the capstone is melee's.");
+            var surgeon = default(CrawlerTraits);
+            surgeon.SetCalling(Calling.FieldSurgeon);
+            var medic = default(SkillSet);
+            medic.Set(Skill.Medicine, 10);
+            Assert(CrawlerTechniques.Get(surgeon, medic, SkillWork.Tend(), TechniqueStat.Heal) == 20, "A Master Surgeon's medicine heals 20% more.");
+            var captain = default(CrawlerTraits);
+            captain.SetCalling(Calling.Captain);
+            var leader = default(SkillSet);
+            leader.Set(Skill.Leadership, 10);
+            Assert(CrawlerTechniques.Get(captain, leader, SkillWork.Lead(), TechniqueStat.Pace) == 0, "A Commander has no capstone stat yet.");
+            TestLog.Log("[PASS] Test 11: a calling's capstone counts at Master in its skill: a Master Warden's +3 defense, a Master Surgeon's +20% healing.");
         }
 
         private static Simpiens.Cognition.Contracts.AgentContext Context(in Simpiens.Cognition.Contracts.AgentPersonality personality, IAgentInventory worn, in CrawlerTraits traits, float health = Vitality.MaxHealth) =>
