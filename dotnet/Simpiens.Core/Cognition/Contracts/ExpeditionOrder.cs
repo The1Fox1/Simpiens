@@ -21,9 +21,14 @@ namespace Simpiens.Cognition.Contracts
         /// <summary>Rescue under orders (K7.2c, D42): the fallen mate this member is sent to carry out; default for the rest, who hold.</summary>
         public readonly EntityId Carry;
 
+        /// <summary>Its calling's part in the party (Epic 11, S5.4, D22): front, back, carrier or leader; none for the rest.</summary>
+        public readonly Simpiens.Simulation.Skills.PartyRole Role;
+
         public ExpeditionOrder(ExpeditionStage stage, byte targetSectorId, EntityId nodeId, Vec2 nodePosition,
-            ExpeditionKind kind = ExpeditionKind.Gather, byte lairIndex = 0, EntityId focus = default, EntityId carry = default)
+            ExpeditionKind kind = ExpeditionKind.Gather, byte lairIndex = 0, EntityId focus = default, EntityId carry = default,
+            Simpiens.Simulation.Skills.PartyRole role = Simpiens.Simulation.Skills.PartyRole.None)
         {
+            Role = role;
             Stage = stage;
             TargetSectorId = targetSectorId;
             NodeId = nodeId;
@@ -38,6 +43,9 @@ namespace Simpiens.Cognition.Contracts
 
         /// <summary>At a clear's fight (K7.1): it fights the lair's creatures under orders.</summary>
         public bool IsFighting => Stage == ExpeditionStage.Fight && Kind == ExpeditionKind.Clear;
+
+        /// <summary>At a clear's fight holding the front (Epic 11, S5.4, D22): the creatures are drawn onto it.</summary>
+        public bool HoldsTheFront => IsFighting && Role == Simpiens.Simulation.Skills.PartyRole.Front;
 
         /// <summary>At work, with a node to work.</summary>
         public bool IsWorking => Stage == ExpeditionStage.Work && NodeId != default;

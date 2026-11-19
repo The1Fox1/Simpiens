@@ -96,14 +96,14 @@ namespace Simpiens.Simulation.Guild
         /// <paramref name="crawlerId"/>'s part in an expedition, for cognition (Epic 10 G5.4): the stage, the sector and, at
         /// work, its node. Default when it isn't with a party out.
         /// </summary>
-        public Simpiens.Cognition.Contracts.ExpeditionOrder OrderFor(EntityId crawlerId)
+        public Simpiens.Cognition.Contracts.ExpeditionOrder OrderFor(EntityId crawlerId, Simpiens.Simulation.Skills.PartyRole role = Simpiens.Simulation.Skills.PartyRole.None)
         {
             var party = PartyOf(crawlerId);
             if (party == null || !party.IsOut) return default;
             var member = party.Roster[party.IndexOf(crawlerId)];
             if (!member.IsWithParty) return default;
             return new Simpiens.Cognition.Contracts.ExpeditionOrder(party.Record.Stage, party.Record.TargetSectorId, member.NodeId, member.NodePosition,
-                party.Record.Kind, party.Record.LairIndex, party.Focus, party.Carrier == crawlerId ? party.Fallen : default);
+                party.Record.Kind, party.Record.LairIndex, party.Focus, party.Carrier == crawlerId ? party.Fallen : default, role);
         }
 
         /// <summary>
@@ -750,14 +750,16 @@ namespace Simpiens.Simulation.Guild
 
         /// <summary>
         /// Focus fire (K7.2a, Q8): the party fights one creature at a time, the leader's choice: the lair's living creature
-        /// nearest the first member with the party, then the weakest, then the lowest id. Kept while it lives.
+        /// nearest its captain (Epic 11, S5.4, D22; the first member with the party until then), then the weakest, then the
+        /// lowest id. Kept while it lives.
         /// </summary>
-        private static void ChooseFocus(IGuildHost host, GuildParty party)
+        private void ChooseFocus(IGuildHost host, GuildParty party)
         {
             if (party.Focus != default && host.TryGetCreature(party.Focus, out var held) && held.IsAlive) return;
             party.Focus = default;
             var lairs = host.Lairs;
-            if (lairs == null || party.Record.LairIndex >= lairs.Count || !host.TryGetCrawler(party.FirstWithParty(), out var leader)) return;
+            var leader = CaptainOf(host, party);
+            if (lairs == null || party.Record.LairIndex >= lairs.Count || leader == null) return;
             var lair = lairs[party.Record.LairIndex];
             float bestDistance = float.MaxValue, bestHealth = float.MaxValue;
             for (int slot = 0; slot < lair.Pack; slot++)
@@ -775,8 +777,8 @@ namespace Simpiens.Simulation.Guild
 
         /// <summary>
         /// Rescue under orders (K7.2c, D42): one fallen member at a time (the first in the roster collapsed in danger), carried
-        /// out by the mate the guild sends: with the party, on its feet and carrying nobody, the most health first, then the
-        /// nearest, then the lowest id. The rest hold the line. Kept until the fallen is out of danger, up or gone, or its
+        /// out by the mate the guild sends: with the party, on its feet and carrying nobody, a Carrier by calling first (Epic 11,
+        /// S5.4, D22), then the most health, then the nearest, then the lowest id. The rest hold the line. Kept until the fallen is out of danger, up or gone, or its
         /// carrier falls or leaves; then the next.
         /// </summary>
         private static void ChooseCarrier(IGuildHost host, GuildParty party)
@@ -801,8 +803,7 @@ namespace Simpiens.Simulation.Guild
             {
                 if (!roster[i].IsWithParty || !host.TryGetCrawler(roster[i].CrawlerId, out var c) || c.HasLeft || c.IsDowned || c.Carrying != default) continue;
                 float d = (c.Position - fallen.Position).SqrMagnitude;
-                bool better = best == null || c.Health > best.Health
-                    || (c.Health == best.Health && (d < bestDistance || (d == bestDistance && c.AgentId.CompareTo(best.AgentId) < 0)));
+                bool better = GuildRules.CarriesBefore(c, d, best, bestDistance);
                 if (!better) continue;
                 best = c;
                 bestDistance = d;

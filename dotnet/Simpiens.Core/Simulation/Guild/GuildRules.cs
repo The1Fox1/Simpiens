@@ -392,19 +392,25 @@ namespace Simpiens.Simulation.Guild
         /// <summary>
         /// The gifts that arm <paramref name="members"/> for a clear from the stall's stock (Epic 10 Part 3, K7.1, D38), the
         /// party builder's and the scripted player's alike: each member in the order given, every slot in the table's order,
-        /// the piece that adds the most for a fight over what it wears, as stock allows. The last <paramref name="shooters"/>
-        /// members, the back of the party, are armed to shoot (K8.2c, D47: <see cref="OutfitNeed.ForShooting"/>), the rest to
-        /// fight in reach.
+        /// the piece that adds the most for a fight over what it wears, as stock allows. <paramref name="shooters"/> members are
+        /// armed to shoot (K8.2c, D47: <see cref="OutfitNeed.ForShooting"/>), the Back by calling first and then the back of the
+        /// party (<see cref="Shooters"/>, Epic 11, S5.4), the rest to fight in reach.
         /// </summary>
         public static void PlanArms(GuildService guild, IGuildHost host, System.Collections.Generic.IReadOnlyList<EntityId> members,
             ref TradeStallData stock, System.Span<GearGift> gifts, ref int count, int shooters = 0)
         {
             if (guild == null || host == null || members == null) return;
             var slots = EquipmentSlots.All;
+            // Who shoots (Epic 11, S5.4, D22): the Back by calling first, then the back of the list, as many as asked
+            System.Span<Simpiens.Simulation.Skills.PartyRole> roles = stackalloc Simpiens.Simulation.Skills.PartyRole[members.Count];
+            System.Span<bool> shoots = stackalloc bool[members.Count];
+            for (int i = 0; i < members.Count; i++)
+                roles[i] = host.TryGetCrawler(members[i], out var who) ? Simpiens.Simulation.Skills.CallingTable.RoleOf(who.Traits.Calling) : Simpiens.Simulation.Skills.PartyRole.None;
+            Shooters(roles, shooters, shoots);
             for (int i = 0; i < members.Count; i++)
             {
                 if (!host.TryGetCrawler(members[i], out var crawler) || crawler.Inventory == null) continue;
-                var need = i >= members.Count - shooters ? OutfitNeed.ForShooting : OutfitNeed.ForFighting;
+                var need = shoots[i] ? OutfitNeed.ForShooting : OutfitNeed.ForFighting;
                 for (int s = 0; s < slots.Count && count < gifts.Length; s++)
                 {
                     var item = Outfitting.BestInStock(stock, crawler.Inventory, need, slots[s].Id, overBare: false, out float gain);
@@ -413,6 +419,44 @@ namespace Simpiens.Simulation.Guild
                     stock = stock.TakeBest(item, out _);
                 }
             }
+        }
+
+        /// <summary>
+        /// Which of a party's members are armed to shoot (Epic 11, S5.4, D22), into <paramref name="shoots"/>: those whose role
+        /// is <see cref="Simpiens.Simulation.Skills.PartyRole.Back"/> first, in order, then the last in the list (the back of the
+        /// party, K8.2c), <paramref name="shooters"/> in all at most. With no Back, the last <paramref name="shooters"/>, as before.
+        /// </summary>
+        public static void Shooters(System.ReadOnlySpan<Simpiens.Simulation.Skills.PartyRole> roles, int shooters, System.Span<bool> shoots)
+        {
+            int left = shooters < roles.Length ? shooters : roles.Length;
+            for (int i = 0; i < roles.Length && i < shoots.Length; i++) shoots[i] = false;
+            for (int i = 0; i < roles.Length && left > 0; i++)
+            {
+                if (roles[i] != Simpiens.Simulation.Skills.PartyRole.Back) continue;
+                shoots[i] = true;
+                left--;
+            }
+            for (int i = roles.Length - 1; i >= 0 && left > 0; i--)
+            {
+                if (shoots[i]) continue;
+                shoots[i] = true;
+                left--;
+            }
+        }
+
+        /// <summary>
+        /// Whether <paramref name="candidate"/>, at the squared distance <paramref name="distance"/> from the fallen, is sent to
+        /// carry it before <paramref name="best"/> (K7.2c, D42): a Carrier by calling first (Epic 11, S5.4, D22), then the most
+        /// health, then the nearest, then the lowest id; true against none.
+        /// </summary>
+        public static bool CarriesBefore(AgentState candidate, float distance, AgentState best, float bestDistance)
+        {
+            if (best == null) return true;
+            bool carrier = Simpiens.Simulation.Skills.CallingTable.RoleOf(candidate.Traits.Calling) == Simpiens.Simulation.Skills.PartyRole.Carrier;
+            bool bestCarrier = Simpiens.Simulation.Skills.CallingTable.RoleOf(best.Traits.Calling) == Simpiens.Simulation.Skills.PartyRole.Carrier;
+            if (carrier != bestCarrier) return carrier;
+            return candidate.Health > best.Health
+                || (candidate.Health == best.Health && (distance < bestDistance || (distance == bestDistance && candidate.AgentId.CompareTo(best.AgentId) < 0)));
         }
 
         private static bool Planned(System.Span<GearGift> gifts, int count, EntityId crawler, EquipmentSlot slot)

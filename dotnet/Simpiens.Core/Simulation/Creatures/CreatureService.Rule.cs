@@ -270,6 +270,13 @@ namespace Simpiens.Simulation.Creatures
                         if (WalkTo(c, kind, c.Home, snapshot, tick) != Walk.Walking) Rest(c, tick);
                         break;
                     }
+                    var front = FrontFor(c, quarry, kind, heart, entities); // the Warden steps in (Epic 11, S5.4, D22)
+                    if (front != quarry)
+                    {
+                        quarry = front;
+                        c.Target = front.Id;
+                        c.ForgetPath();
+                    }
                     if (kind.CallsBrood(c.Health)) CallBrood(c, quarry); // a boss calls her brood to her quarry (K10.2b, Q13)
                     var me = Combatant.ForCreature(kind, c.Id, c.Position, c.Health);
                     var them = Combatant.ForCrawler(quarry.Agent, quarry.Radius);
@@ -321,10 +328,11 @@ namespace Simpiens.Simulation.Creatures
             {
                 var e = entities[i];
                 if (!IsQuarry(e, kind, heart)) continue;
-                float d = Vec2.Distance(c.Position, e.Position);
-                if (d > kind.Sight) continue;
+                float seen = Vec2.Distance(c.Position, e.Position);
+                if (seen > kind.Sight) continue;
                 if (snapshot != null && !snapshot.HasLineOfSight(c.Position, e.Position)) continue;
-                if (d < bestDistance || (d == bestDistance && e.Id.CompareTo(best.Id) < 0))
+                float d = DrawnDistance(e.Agent.Expedition, seen); // the front draws the eye (Epic 11, S5.4, D22)
+                if (best == null || d < bestDistance || (d == bestDistance && e.Id.CompareTo(best.Id) < 0))
                 {
                     best = e;
                     bestDistance = d;
@@ -335,6 +343,45 @@ namespace Simpiens.Simulation.Creatures
             c.Target = best.Id;
             c.ForgetPath();
             return true;
+        }
+
+        /// <summary>How far a party's front draws a creature (Epic 11, S5.4, D22), in world units.</summary>
+        public const float FrontDraw = 3f;
+
+        /// <summary>
+        /// How near a crawler seems to a creature choosing its quarry (Epic 11, S5.4, D22): a member holding a clear's front by
+        /// <see cref="FrontDraw"/> nearer than it is; anyone else as near as it is.
+        /// </summary>
+        public static float DrawnDistance(in Simpiens.Cognition.Contracts.ExpeditionOrder order, float distance) =>
+            order.HoldsTheFront ? (float)(distance - FrontDraw) : distance;
+
+        /// <summary>
+        /// Whether a member holding the front, its order <paramref name="front"/>, steps in for <paramref name="quarry"/>'s
+        /// (Epic 11, S5.4, D22): both at the same clear's fight, the quarry not at the front itself, and the front within
+        /// <see cref="FrontDraw"/> of the creature (<paramref name="sqrDistance"/>, squared).
+        /// </summary>
+        public static bool StepsIn(in Simpiens.Cognition.Contracts.ExpeditionOrder quarry, in Simpiens.Cognition.Contracts.ExpeditionOrder front, float sqrDistance) =>
+            quarry.IsFighting && !quarry.HoldsTheFront && front.HoldsTheFront && front.LairIndex == quarry.LairIndex && sqrDistance <= FrontDraw * FrontDraw;
+
+        // A creature after a party's fighter turns on a member of its party holding the front within its draw (the nearest, the
+        // lower id on a tie), if that member is quarry it may chase; else it keeps its quarry. Allocates nothing
+        private WorldEntity FrontFor(CreatureState c, WorldEntity quarry, CreatureDefinition kind, Vec2 heart, IReadOnlyList<WorldEntity> entities)
+        {
+            var order = quarry?.Agent != null ? quarry.Agent.Expedition : default;
+            if (!order.IsFighting || order.HoldsTheFront || entities == null) return quarry;
+            WorldEntity best = null;
+            float bestDistance = float.MaxValue;
+            for (int i = 0; i < entities.Count; i++)
+            {
+                var e = entities[i];
+                if (e == quarry || e.Agent == null) continue;
+                float d = (e.Position - c.Position).SqrMagnitude;
+                if (!StepsIn(order, e.Agent.Expedition, d) || !IsQuarry(e, kind, heart)) continue;
+                if (best != null && (d > bestDistance || (d == bestDistance && e.Id.CompareTo(best.Id) > 0))) continue;
+                best = e;
+                bestDistance = d;
+            }
+            return best ?? quarry;
         }
 
         // The call (Epic 10 Part 3, K10.2b, Q13: the Matriarch "calls her brood to her at half health"): while a boss chases under
