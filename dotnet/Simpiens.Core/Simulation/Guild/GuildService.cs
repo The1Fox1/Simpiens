@@ -11,8 +11,11 @@ using ZLogger;
 
 namespace Simpiens.Simulation.Guild
 {
-    /// <summary>What the guild needs from the simulation (SimulationManager implements it), as the supply service has <see cref="ISupplyHost"/>.</summary>
-    public interface IGuildHost
+    /// <summary>
+    /// What the guild needs from the simulation (SimulationManager implements it), as the supply service has <see cref="ISupplyHost"/>.
+    /// Practice too (Epic 11, S5.1): a party's captain practises Leadership at a trip's delivery.
+    /// </summary>
+    public interface IGuildHost : Simpiens.Simulation.Skills.ISkillPractice
     {
         bool TryGetCrawler(EntityId crawlerId, out AgentState crawler);
 

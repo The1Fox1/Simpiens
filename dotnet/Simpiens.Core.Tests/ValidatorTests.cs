@@ -78,6 +78,9 @@ namespace Simpiens.Core.Tests
         public void Sponsorship() => new Simpiens.Testing.Skills.SponsorValidator().RunAllValidationTests();
 
         [Fact]
+        public void Leadership() => new Simpiens.Testing.Skills.LeadershipValidator().RunAllValidationTests();
+
+        [Fact]
         public void GivenNames() => new Simpiens.Testing.People.GivenNamesValidator().RunAllValidationTests();
 
         [Fact]

@@ -35,7 +35,7 @@ namespace Simpiens.Testing.Skills
         private void ValidateTheTable()
         {
             var all = SkillTable.All;
-            Assert(all.Count == 7, $"Seven skills (Q17), {all.Count} in the table.");
+            Assert(all.Count == 8, $"Eight skills (Q17, and Leadership since Epic 11, S5.1), {all.Count} in the table.");
             var names = new HashSet<string>();
             byte last = 0;
             foreach (var skill in all)
@@ -55,8 +55,9 @@ namespace Simpiens.Testing.Skills
             Assert(SkillTable.SkillFor(SkillWork.Harvest(ItemType.Ration)) == Skill.None && SkillTable.SkillFor(SkillWork.Harvest(ItemType.None)) == Skill.None, "Food at a plot takes no skill.");
             Assert(SkillTable.SkillFor(SkillWork.Make(StationKind.Forge)) == Skill.Smithing && SkillTable.SkillFor(SkillWork.Make(StationKind.Still)) == Skill.Alchemy && SkillTable.SkillFor(SkillWork.Make(StationKind.None)) == Skill.None, "Each station's skill.");
             Assert(SkillTable.SkillFor(SkillWork.Tend()) == Skill.Medicine && SkillTable.SkillFor(default(SkillWork)) == Skill.None, "Tending the fallen is medicine; no work, no skill.");
+            Assert(SkillTable.SkillFor(SkillWork.Lead()) == Skill.Leadership, "Leading a party is leadership (Epic 11, S5.1).");
             Assert(SkillTable.InDisplayOrder.Count == all.Count, "Every skill is listed.");
-            TestLog.Log("[PASS] Test 1: seven skills, each with an id, a name and a kind of work, and each kind of work finds its skill.");
+            TestLog.Log("[PASS] Test 1: eight skills, each with an id, a name and a kind of work, and each kind of work finds its skill.");
         }
 
         private void ValidateLevelsAndBands()

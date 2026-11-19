@@ -49,6 +49,29 @@ namespace Simpiens.Simulation.Guild
             }
         }
 
+        private readonly List<AgentState> _withParty = new List<AgentState>(DispatchExpeditionCommand.MaxMembers);
+
+        /// <summary>
+        /// The captain of <paramref name="party"/> (Epic 11, S5.1, D19): among its members with the party, on its feet, the best
+        /// effective Leadership, the lowest id on a tie (<see cref="GuildRules.Captain"/>); null when none is. Main thread.
+        /// </summary>
+        public AgentState CaptainOf(IGuildHost host, GuildParty party)
+        {
+            _withParty.Clear();
+            var roster = party?.Roster;
+            for (int i = 0; roster != null && i < roster.Count; i++)
+                if (roster[i].IsWithParty && host.TryGetCrawler(roster[i].CrawlerId, out var crawler)) _withParty.Add(crawler);
+            return GuildRules.Captain(_withParty);
+        }
+
+        /// <summary>The retreat rule's health line for <paramref name="party"/>, steadied by its captain's Leadership (D19).</summary>
+        public float RetreatLine(IGuildHost host, GuildParty party, in ExpeditionTuning tuning)
+        {
+            var captain = CaptainOf(host, party);
+            int level = captain != null ? Simpiens.Simulation.Skills.CrawlerSkills.Level(captain, Simpiens.Simulation.Skills.SkillWork.Lead()) : 0;
+            return GuildRules.Steadied(tuning.RetreatHealth(party.Record.Rule), level);
+        }
+
         /// <summary>The party <paramref name="crawlerId"/> is on the roster of, or null.</summary>
         public GuildParty PartyOf(EntityId crawlerId)
         {
@@ -456,10 +479,24 @@ namespace Simpiens.Simulation.Guild
                 if (party.Record.Cleared) crawler.AddDeed(Simpiens.Simulation.Skills.Deed.ClearWon); // home from a won clear: a deed (Epic 11, S0.5)
             }
 
+            // The captain led them home (Epic 11, S5.1, D19): Leadership for each mate brought home, at the trip's challenge
+            var captain = CaptainOf(host, party);
+            int lesson = GuildRules.LeadLesson(party.CountWithParty());
+            if (captain != null && lesson > 0)
+                host.Practise(captain, Simpiens.Simulation.Skills.SkillWork.Lead(), lesson, Simpiens.Simulation.Skills.PracticeSource.WorkAt(TripChallenge(host, party)));
+
             SimLog.Economy.ZLogInformation($"Party {party.Slot} came back with {haul} {item}{(party.Record.TurnedBack ? " (turned back)" : "")}");
             host.ChronicleService?.RecordEvent(new ChronicleEvent(party.Record.TurnedBack && haul == 0 ? ChronicleEventType.ExpeditionTurnedBack : ChronicleEventType.ExpeditionReturned,
                 party.FirstWithParty(), WorldRegistry.PlayerEntityId, party.Record.TargetSectorId, tick, ChronicleIntensity.Dramatic, haul));
             EndExpedition(host, party, tick);
+        }
+
+        /// <summary>A trip's challenge to its captain (D19): a clear's, its lair's kind's; a gathering's, <see cref="Simpiens.Simulation.Skills.SkillRules.GatherChallenge"/>.</summary>
+        public static int TripChallenge(IGuildHost host, GuildParty party)
+        {
+            if (party.Record.Kind == ExpeditionKind.Clear && host.Lairs != null && party.Record.LairIndex < host.Lairs.Count)
+                return Simpiens.Simulation.Creatures.CreatureCatalog.Get(host.Lairs[party.Record.LairIndex].Definition.Kind)?.Challenge ?? Simpiens.Simulation.Skills.SkillRules.GatherChallenge;
+            return Simpiens.Simulation.Skills.SkillRules.GatherChallenge;
         }
 
         /// <summary>
@@ -661,9 +698,9 @@ namespace Simpiens.Simulation.Guild
         /// Epic 10 Part 2, W2, D43) doesn't count: it drinks at the treat line instead of turning the party back, so what the
         /// party carries is how long it keeps working.
         /// </summary>
-        private static bool ShouldTurnBack(IGuildHost host, GuildParty party, in ExpeditionTuning tuning)
+        private bool ShouldTurnBack(IGuildHost host, GuildParty party, in ExpeditionTuning tuning)
         {
-            float floor = tuning.RetreatHealth(party.Record.Rule);
+            float floor = RetreatLine(host, party, tuning); // steadied by its captain (Epic 11, S5.1, D19)
             var roster = party.Roster;
             for (int i = 0; i < roster.Count; i++)
             {
@@ -782,9 +819,9 @@ namespace Simpiens.Simulation.Guild
         /// as a gathering's D43): it drinks in the fight below the treat line instead, so what the party carries is how long it
         /// fights.
         /// </summary>
-        private static bool ShouldTurnBackFromFight(IGuildHost host, GuildParty party, in ExpeditionTuning tuning)
+        private bool ShouldTurnBackFromFight(IGuildHost host, GuildParty party, in ExpeditionTuning tuning)
         {
-            float floor = tuning.RetreatHealth(party.Record.Rule);
+            float floor = RetreatLine(host, party, tuning); // steadied by its captain (Epic 11, S5.1, D19)
             var roster = party.Roster;
             int with = 0, down = 0, judged = 0;
             float health = 0f;

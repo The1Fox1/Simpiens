@@ -54,7 +54,7 @@ namespace Simpiens.Testing.Economy
             return new Both(items, skills);
         }
 
-        public const Simpiens.Simulation.Skills.Skill Mycology = (Simpiens.Simulation.Skills.Skill)8;
+        public const Simpiens.Simulation.Skills.Skill Mycology = (Simpiens.Simulation.Skills.Skill)9; // after Leadership (8, Epic 11, S5.1)
         public const ItemCategory Fungi = (ItemCategory)(1u << 20);
         public const ItemType Glowcap = (ItemType)219;
 

@@ -63,6 +63,11 @@ namespace Simpiens.Testing.Skills
                     {
                         var pick = TechniqueRules.Pick(7, id, personality, skill.Id, band);
                         Assert(pick == TechniqueRules.Pick(7, id, personality, skill.Id, band), "The same crawler picks the same at the same band, whenever it gets there.");
+                        if (TechniqueTable.Options(skill.Id, band).Count == 0)
+                        {
+                            Assert(pick == Technique.None, $"{skill.Name} offers nothing at {band}: it picks nothing.");
+                            continue;
+                        }
                         Assert(pick != Technique.None && TechniqueTable.Get(pick).Skill == skill.Id && TechniqueTable.Get(pick).Band == band, $"{skill.Name} at {band}: one of the band's own.");
                         if (pick != TechniqueRules.Pick(8, id, personality, skill.Id, band)) differs++;
                     }
@@ -102,7 +107,7 @@ namespace Simpiens.Testing.Skills
                 {
                     Assert(traits.PassionFor(row.Id) == passions.PassionFor(row.Id), "Picking techniques moves no passion.");
                     var held = traits.TechniqueIn(row.Id, SkillBand.Apprentice);
-                    bool talent = skills.Band(row.Id) >= SkillBand.Apprentice;
+                    bool talent = skills.Band(row.Id) >= SkillBand.Apprentice && TechniqueTable.Options(row.Id, SkillBand.Apprentice).Count > 0; // a skill offering none (Leadership) picks none
                     Assert(talent == (held != Technique.None), $"{row.Name}: a talent holds its Apprentice technique, and nothing else does ({skills.Level(row.Id)}, {held}).");
                     Assert(traits.TechniqueIn(row.Id, SkillBand.Journeyman) == Technique.None, "No talent starts past Apprentice.");
                     if (talent) talents++;

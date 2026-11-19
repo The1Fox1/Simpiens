@@ -92,6 +92,36 @@ namespace Simpiens.Simulation.Guild
             return (ushort)SimMath.Clamp(raised, wage < most ? wage : most, most);
         }
 
+        // --- Leadership (Epic 11, S5.1, Q11, D19) ---
+
+        /// <summary>
+        /// A party's captain among <paramref name="withParty"/> (D19): the one on its feet with the best effective Leadership,
+        /// the lowest id on a tie; null for none. Derived each time it is asked, so nothing new is saved.
+        /// </summary>
+        public static AgentState Captain(System.Collections.Generic.IReadOnlyList<AgentState> withParty)
+        {
+            AgentState best = null;
+            int bestLevel = -1;
+            var lead = Simpiens.Simulation.Skills.SkillWork.Lead();
+            for (int i = 0; withParty != null && i < withParty.Count; i++)
+            {
+                var c = withParty[i];
+                if (c == null || c.HasLeft || c.IsDowned) continue;
+                int level = Simpiens.Simulation.Skills.CrawlerSkills.Level(c, lead);
+                if (best != null && (level < bestLevel || (level == bestLevel && c.AgentId.CompareTo(best.AgentId) > 0))) continue;
+                best = c;
+                bestLevel = level;
+            }
+            return best;
+        }
+
+        /// <summary>A captain's lesson at a trip's delivery (D19): <see cref="Simpiens.Simulation.Skills.SkillRules.LeadExperience"/> for each mate brought home besides itself.</summary>
+        public static int LeadLesson(int broughtHome) => broughtHome > 1 ? Simpiens.Simulation.Skills.SkillRules.LeadExperience * (broughtHome - 1) : 0;
+
+        /// <summary>A retreat rule's health line, steadied by its party's captain at <paramref name="captainLevel"/> (D19): 3% lower a level.</summary>
+        public static float Steadied(float line, int captainLevel) =>
+            captainLevel <= 0 ? line : (float)(line * Simpiens.Simulation.Skills.SkillRules.SteadyFactor(captainLevel));
+
         /// <summary>The crawler's trust and warmth toward the player now.</summary>
         public static (int Trust, int Warmth) Standing(AgentState crawler, uint tick)
         {
