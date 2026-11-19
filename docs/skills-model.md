@@ -108,8 +108,75 @@ Every source goes through practice's one entry, so a passion multiplies it and t
 - **Lineage:** the first lesson in a skill records the mentor in the learner's traits record (four slots) and counts the mentor's "taught" deed; the chronicle tells it ("learned foraging at Vesna's side"), and the dossier says "Foraging taught by Vesna".
 - **Mentors aren't saved:** each crawler's last practice is work in progress, so after a load nobody teaches until it works again.
 
+### 3.6 Techniques (Epic 11, S4)
+- **A choice at each band** (`TechniqueTable`, D13): two techniques at each band above Novice of each of the seven skills, 42 in all, each with an upside and a cost. A crawler holds one per band of each skill, in its traits record.
+- **The pick** (D15): at a band reached, and at spawn for the talents, the crawler picks one of the band's two by its nature: each weighted 1 + 2 × its lean in the crawler's personality, on its own salt, the same whenever it gets there. With a lean of 0.8 toward one and none toward the other, about 72% pick the first. A slot held is never picked over.
+- **Sponsorship** (D16): the patron may pay one of its people to take up the band's other: 20g, 40g, 80g by band, into the crawler's purse. It refuses under trust 50 or warmth 0, or a technique whose lean in its personality is −0.5 or less.
+- **The effects** (D14) are numbers in the technique's own skill's work, read through one door (`CrawlerTechniques.Get`), summed over the techniques held and held within bounds:
+
+| Stat | In | Bounds |
+| :--- | :--- | :-: |
+| Attack (%) | a fight | −50 to +100 |
+| Defense (flat, never below none) | a fight | −5 to +10 |
+| Hit (hundredths) | a fight | −20 to +20 |
+| Pace (%): a swing's interval, a harvest, a make, a carry | any work | −50 to +100 |
+| Range (%) | a fight from range | −50 to +50 |
+| Last stand (% attack below half health) | a fight | 0 to +100 |
+| Unyielding (a flag: struck, it fights back if armed, bold or not) | a fight in reach | 0 or 1 |
+| Practice (%), beside the passion | any work | −50 to +100 |
+| Grade (levels toward a make's grade, within 0 and 10) | making | −3 to +3 |
+| Heal (% of a medicine given) | tending | −50 to +100 |
+| Teach (points on a mentor's 50%) | any work | 0 to +50 |
+
+The techniques (first guesses, to tune):
+
+| # | Skill | Band | Technique | Lean | Effects |
+| :-: | :--- | :--- | :--- | :--- | :--- |
+| 1 | Melee | Apprentice | Shield Wall | cautious | defense +3; attack −15% |
+| 2 | Melee | Apprentice | Reckless Fury | bold | attack +25%; defense −2 |
+| 3 | Melee | Journeyman | Quick Blade | diligent | pace +20%; attack −10% |
+| 4 | Melee | Journeyman | Heavy Blows | bold | attack +20%; pace −15% |
+| 5 | Melee | Master | Unyielding | loyal | never flees a blow; defense +2; pace −10% |
+| 6 | Melee | Master | Last Stand | bold | attack +40% below half health; defense −2 |
+| 7 | Ranged | Apprentice | Steady Aim | cautious | hit +8; pace −15% |
+| 8 | Ranged | Apprentice | Quick Draw | bold | pace +20%; hit −5 |
+| 9 | Ranged | Journeyman | Long Shot | diligent | range +25%; attack −10% |
+| 10 | Ranged | Journeyman | Point Blank | bold | attack +20%; range −20% |
+| 11 | Ranged | Master | Deadeye | cautious | hit +10; attack +10%; pace −20% |
+| 12 | Ranged | Master | Rapid Fire | bold | pace +30%; hit −8 |
+| 13 | Mining | Apprentice | Seam Student | diligent | practice +25%; pace −10% |
+| 14 | Mining | Apprentice | Hard Driver | greedy | pace +15%; practice −20% |
+| 15 | Mining | Journeyman | Patient Pick | cautious | practice +30%; pace −5% |
+| 16 | Mining | Journeyman | Rich Veins | greedy | pace +20%; practice −30% |
+| 17 | Mining | Master | Old Hand's Lessons | sociable | teach +25; pace −10% |
+| 18 | Mining | Master | Mother Lode | greedy | pace +30%; practice −40% |
+| 19 | Foraging | Apprentice | Gentle Hands | cautious | practice +25%; pace −10% |
+| 20 | Foraging | Apprentice | Quick Hands | bold | pace +15%; practice −20% |
+| 21 | Foraging | Journeyman | Herb Lore | diligent | practice +30%; pace −5% |
+| 22 | Foraging | Journeyman | Wide Ranger | greedy | pace +20%; practice −30% |
+| 23 | Foraging | Master | Green Teacher | sociable | teach +25; pace −10% |
+| 24 | Foraging | Master | Bountiful Harvest | greedy | pace +30%; practice −40% |
+| 25 | Smithing | Apprentice | Fine Temper | diligent | grade +2; pace −20% |
+| 26 | Smithing | Apprentice | Fast Forge | greedy | pace +20%; grade −2 |
+| 27 | Smithing | Journeyman | Studied Hammer | cautious | practice +30%; pace −10% |
+| 28 | Smithing | Journeyman | Hot Iron | bold | pace +25%; practice −30% |
+| 29 | Smithing | Master | Forge Lessons | sociable | teach +25; pace −10% |
+| 30 | Smithing | Master | Masterstroke | diligent | grade +3; pace −25% |
+| 31 | Alchemy | Apprentice | Careful Measure | cautious | practice +25%; pace −10% |
+| 32 | Alchemy | Apprentice | Quick Brew | bold | pace +15%; practice −20% |
+| 33 | Alchemy | Journeyman | Patient Still | diligent | practice +30%; pace −5% |
+| 34 | Alchemy | Journeyman | Big Batches | greedy | pace +25%; practice −30% |
+| 35 | Alchemy | Master | Still Lessons | sociable | teach +25; pace −10% |
+| 36 | Alchemy | Master | Alchemist's Haste | bold | pace +30%; practice −40% |
+| 37 | Medicine | Apprentice | Steady Hands | sociable | heal +40%; pace −15% |
+| 38 | Medicine | Apprentice | Strong Back | bold | pace +25%; heal −25% |
+| 39 | Medicine | Journeyman | Bedside Study | diligent | practice +40%; heal −10% |
+| 40 | Medicine | Journeyman | Triage | cautious | heal +30%; practice −30% |
+| 41 | Medicine | Master | Surgeon's Lessons | sociable | teach +25; pace −10% |
+| 42 | Medicine | Master | Miracle Worker | loyal | heal +60%; pace −20% |
+
 ## 4. What a level does
-How good a crawler is at a work is its **effective level**, `CrawlerSkills.Level(skills, worn, work)`, the one number every effect and choice reads. Today it equals the learned level. Gear, techniques or callings that change how good a crawler is enter there (`SkillReadsTests` guards it).
+How good a crawler is at a work is its **effective level**, `CrawlerSkills.Level(skills, worn, work)`, the one number every effect and choice reads. Today it equals the learned level. Gear, techniques or callings that change how good a crawler is enter there (`SkillReadsTests` guards it). A technique doesn't raise a level: it changes the work's numbers below through its own door (§3.6).
 
 | Work | Per level | At 0 | At 10 |
 | :--- | :--- | :--- | :--- |

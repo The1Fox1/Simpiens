@@ -119,6 +119,25 @@ Proposed in plan 1 as defaults; each lands here with its step. The producer answ
   - **Two planner facts,** `HasManual` (the book in the pack) and `Drilled` (a spell at the yard done, never true in a built state): 48 of 64.
 - **D12, practice is observed** (S0.2): `ISimulationManager.Practised` (the crawler, the skill, the experience granted after every ceiling, the source's kind) is raised from practice's one entry for observers (measurements, live scenarios, `OutpostWatch`). No rule reads it.
 
+### Plan 2's decisions (Technique and Calling, from 2026-11-19)
+Proposed in plan 2 as defaults while the producer was away ("After drafting plan 2 you will begin immediate execution and will attempt to complete it"); each lands here with its step. The producer answers by exception, on return.
+- **D13, the technique table** (S4.1; A2, A4, Q4):
+  - **The table:** `TechniqueTable`, a row per `Technique` id (a byte, never reused): its skill and band, the personality that leans its pick, two or three effects and the crawler's vow for its scene. Two at each band above Novice of the seven skills: 42 rows, each an upside and a cost.
+  - **The pattern:** in a fight a stance (Shield Wall against Reckless Fury), a rhythm, then a last resort; at work, producing against learning (pace against practice) at Apprentice and Journeyman, teaching against producing at Master; smithing's grades; medicine's healing against carrying. Alchemy's are pace and practice, since grades change only equipment.
+  - **The numbers are first guesses,** to tune. The table is in `docs/skills-model.md` §3.6.
+- **D14, effects through one door** (S4.3–S4.5; A1, A4, A5):
+  - **The stats:** attack, defense, hit, pace, range, last stand, practice, grade, heal, teach, and one rule flag, unyielding. Each has its bounds (`TechniqueRules`), its words (Latin-1, as the fonts are) and the work it applies to.
+  - **The door:** `CrawlerTechniques.Get(traits, skills, work, stat)`, the sum over the techniques held in the work's skill, within bounds. A technique changes only its own skill's work. Cognition reads the same numbers through its copy (the lair judgement, the salvage choice). `TechniqueReadsTests` guards the door.
+  - **Where they're read:** the fight's fighter (`Combatant.ForCrawler`); the harvest's pace; a make's pace and grade; the carry's pace and a medicine's healing; practice beside the passion; a mentor's lesson share; unyielding in `Vitality.FightsBack`.
+  - **No acts of their own** (A4's third kind) in plan 2: deferred until a technique needs one.
+- **D15, the pick by nature** (S4.2; A6, Q3): at a band reached, in practice's one entry, and at spawn for the starting talents, the crawler fills an empty slot with one of the band's two, weighted 1 + 2 × the row's lean in its personality, on its own salt (`SimRandomSalt.Techniques`, 18) keyed by the skill and the band, so the same crawler picks the same whenever it gets there. A slot held is never picked over. The chronicle tells a pick (`TechniqueChosen`), not at spawn. The simulation keeps the session's seed (`SimulationManager.Seed`).
+- **D16, sponsorship** (S4.6; A6, Q3):
+  - **The command:** `SponsorTechniqueCommand` offers one of the patron's people (a guild member or an artisan) gold to take up a band's other technique.
+  - **The rule:** `SponsorRules` (beside `GuildRules`, since the guild owns the patron's people; the plan said `TechniqueRules`), with a reason for each refusal: not ours, the band not reached, held already, the stall short, trust under 50 or warmth under 0, or against its nature (a lean of −0.5 or less).
+  - **The price:** 20g, 40g, 80g by band (`GuildTuning`), from the stall's treasury into the crawler's purse, counted with the wages: a transfer, no new sink, and the ledger's save unchanged. A band may be sponsored again; each costs.
+- **D17, the choice scene** (S4.8): a moment, a dynamic scene with one actor written from the chronicle's event (a new trigger kind, `SceneTrigger.OnMoment`): the vow, then the road not taken. For the patron's people only, a game hour apart at the most often (`SkillScenes`), armed by `ClientOptions.SkillScenes`, which the desktop game turns on.
+- **D18, the dossier and the sponsor button** (S4.9): a line of the techniques held, what each does in its tooltip; for one of the patron's people, the sway's second button sponsors the other technique at its best skill's top band (`SponsorRules.Offer`), its words the price or the rule's reason. A resident's button still recruits.
+
 ## 1. Goal
 **The player promise:** watch a crawler become someone. The miner who burns for the deep seam. The Warden who holds the line. The smith whose blade carries a dead friend's name. The patron can't make a hero, but can pay for the training, sponsor the technique and post the hunt that makes one.
 
@@ -274,6 +293,23 @@ Done means crawlers grow into someone in the live outpost with nothing injected 
 - [x] **The close-out** (C.2): the roadmap, this file, the focus file, `architecture_history.md` and the skills and economy models reconciled; AGENTS.md checked, already current since S3.7; the plan's findings were already here (F1–F8); the plan deleted, the index (`.agents/epic11_plan.md`) kept for plans 2–4.
 - [x] **The merge,** on the producer's word: PR #25, merged 2026-11-19 ("You will merge in Plan 1 then draft up plan 2").
 
+### S4. Techniques (done 2026-11-19, `feat/epic11-technique`; the producer's look waits for their return)
+- [x] **The technique table** (D13): `TechniqueTable`, 42 rows; `TechniqueValidator` (4 tests), `TechniqueNamesTests`. Golden unchanged.
+- [x] **The pick by nature** (D15): at spawn and at a band reached; `TechniquePickValidator` (4 tests: the bold take up Reckless Fury 72% of the time, the cautious Shield Wall 72%). Golden re-recorded for the hash alone.
+- [x] **The door, and the fight's numbers** (D14): `CrawlerTechniques.Get`; `Combatant.ForCrawler` reads attack, defense, hit, pace, range and last stand; `TechniqueReadsTests`. Golden unchanged.
+- [x] **The work's numbers** (D14): the harvest's, a make's and the carry's pace, grade, healing, practice and a mentor's lessons. Golden re-recorded.
+- [x] **Unyielding** (D14): the one rule flag. `TechniqueEffectsValidator` holds a test for each kind of effect (10).
+- [x] **Sponsorship** (D16): the command, `SponsorRules` and a transfer; `SponsorValidator` (3 tests). Economy model §2.
+- [x] **Re-measured** (`docs/skills-model.md` §5.6): a Journeyman on 20 of 23 seeds with the hunting players, the first melee Journeymen, still no Master; about 12 techniques picked a seed in two weeks, the pairs split by nature. Two DoDs re-picked across the gate seeds: SpecialistsEmerge (7) and the forge's kills (20261010). Findings F9 (the crafting band) and F10 (the vermin's charting). The soak: 18 of 18, and 20 of 20 on each player profile.
+- [x] **The client:** the choice scene (`SkillScenes`, `SkillSceneTests`); the techniques line and the sponsor button in the dossier (`TechniquesOnScreenTests`).
+- [x] **DoD `ATechniqueDecidesAClear`** (gate seed 3): Priya takes up Reckless Fury at t34587 on her own and lands 16 blows with it at the clear that empties its lair; on 17 of 23 gate seeds over ten days.
+- [ ] **The producer's look,** on their return (the producer away for the whole plan: "After drafting plan 2 you will begin immediate execution and will attempt to complete it"). D13–D18 stand as delivered unless overturned. What to look at:
+  - **Start:** the desktop game (`dotnet run --project dotnet/Simpiens.Desktop -- --seed 20261009`), at 5× or 10×. Recruit a few residents (their dossier's Recruit) and build the drill yard from the stations' window.
+  - **The choice scene:** when one of your members or artisans reaches a band, a short scene: the crawler's vow ("Let them come. I'll stand."), then the road not taken. Drill at the yard brings members to Apprentice in melee within a day or two.
+  - **The dossier:** the line under the skills names the techniques held; hover it for what each does. For one of your people the sway's second button reads Sponsor, with the offer ("Sponsor Reckless Fury for Shield Wall: 20g.") or why not.
+  - **In a fight:** a Shield Wall member takes less from each blow and deals less; a Reckless Fury member the other way (not visible directly; the clears' outcomes over days show it).
+  - **Decided by exception:** the 42 techniques' numbers (first guesses), the pick's odds, sponsorship's prices and lines (trust 50, against nature at −0.5), the scene's cadence (members only, an hour apart), and the dossier's layout.
+
 ## 5. Deferred and out of scope
 
 | Left out | Owner |
@@ -287,6 +323,7 @@ Done means crawlers grow into someone in the live outpost with nothing injected 
 | Fights between crawlers (the design's "lethal rivalries") | Later, deeper floors |
 | The hall's wall of the dead and the retired | Later, with ambitions |
 | Tavern rumours written by a language model | Epic N, the agentic narrative engine |
+| Techniques' acts of their own (A4's third kind: a rallying shout, a field splint) | A later plan, when a technique needs one (D14) |
 
 ## 6. Risks
 
@@ -314,4 +351,5 @@ Done means crawlers grow into someone in the live outpost with nothing injected 
 - **F7 (2026-11-17, S3.6): the primers' wholesale at 8g strained the crafting loop.** At 8g the caravan's first visit took 56g, when the stall is at its poorest, and the crafting profile's stations made nothing by day 3 on 6 of 20 seeds (the band asks 16); without primers 19, with the mentors off still 14, at 2g 16. The armed clears agreed (21 of 23 cleared without primers and at 2g, 18 at 8g). Set at 2g. It is the same strain as F6 and Epic 10's F14: the stall can't take a new cost early. [Basic: fixed; the band sits at its edge, 16 of 16]
 - **F8 (2026-11-17, S3.6): teachers are Apprentices, so far.** Over two weeks every learner taught to Apprentice was taught by an Apprentice 3 to 5; nobody reaches Master (F1), so the epic's "a Master teaches an Apprentice" waits on growth past Journeyman. Mentors teach mostly at the seams (16 of 22 in mining). [Basic: watch; plan 2's measurements read it]
   - **At plan 1's close (C.1):** the same. The highest level in two weeks is 7, an artisan's (`docs/skills-model.md` §5.5). Plan 2 owns it: a technique at Master won't be seen in two weeks unless growth past Journeyman quickens.
-
+- **F9 (2026-11-19, S4.7): with techniques, the crafting loop loses members to pay on more seeds.** In the `crafting` profile a quit for want of pay comes on 12 of seeds 1–60 against 5 on `main` before plan 2, while the treasury at day 3 is the same on average (186g against 183g) and goods are made on 50 of 60 against 52. Within the band's quarter across the 60 (20%), but 6 of seeds 1–20 alone (30%). By the producer's standing word ("judge a drifting band across seeds; retune only when no seed choice saves a scenario"), no retune: `TheCraftingLoopHoldsOnMostSeeds` judges seeds 1–40 (7 of 40). The paces techniques change move which seeds' treasuries run dry at a visit; it is Epic 10's F14 and plan 1's F6 again. [Possibly Complex: the producer's economy decision, unscheduled]
+- **F10 (2026-11-19, S4.7): the vermin's hollow isn't charted on gate seed 3's day.** Its scout opens the Deep Seam at t659 as before, but nobody wanders near the beetle hollow all day (on `main` a crawler charted it at t3614). The hollow is charted on 22 of 23 gate seeds, and `VerminDriveTheLoneAway` asks 21; every other check holds on every seed. Charting was emergent, never a promise. [Basic: watch]

@@ -187,7 +187,7 @@ Grades only change what equipment does today, so alchemy's choices are pace and 
   - **The run:** the guild player builds the drill yard and its members drill; on a seed S4.7's measurement picks, a member reaches a band during the run and picks a technique on its own; then the player's clear.
   - **What emerges:** the member holds the technique it picked (told in the chronicle, not sponsored); the party's clear empties the lair; the member fought in it, its technique in every blow it landed or took (its fighter with the technique differs from its fighter without).
   - **The days hold.**
-- [ ] **S4.11 S4's gate and docs; the look's brief** [Basic]
+- [x] **S4.11 S4's gate and docs; the look's brief** (done 2026-11-19: core 313/313 (explicit not run), client 531/531 in the pinned image, golden 3/3, seeds 1–120 120/120 both ways, MonoGame and Android 0 warnings; the look's brief in the epic's §4) [Basic]
   - **The gate:** the index's gates.
   - **Docs:** the epic's §0 (D13–D18) and §4 (S4); `skills-model.md` (techniques); AGENTS.md ("Adding a technique"); the look's brief in the epic's §4, for the producer's review on return.
 
@@ -248,3 +248,4 @@ The producer is away for the whole plan. What they would have looked at or super
 
 ## Log
 - 2026-11-19: plan 1 merged (PR #25, `aceb183`) on the producer's word; this plan drafted on `feat/epic11-technique` and started at once ("After drafting plan 2 you will begin immediate execution and will attempt to complete it").
+- 2026-11-19: S4 done; its look waits for the producer's return (the brief in the epic's §4). S5 begins.
