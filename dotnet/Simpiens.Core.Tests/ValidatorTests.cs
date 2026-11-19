@@ -66,6 +66,9 @@ namespace Simpiens.Core.Tests
         public void DrillYard() => new Simpiens.Testing.Skills.DrillValidator().RunAllValidationTests();
 
         [Fact]
+        public void Techniques() => new Simpiens.Testing.Skills.TechniqueValidator().RunAllValidationTests();
+
+        [Fact]
         public void GivenNames() => new Simpiens.Testing.People.GivenNamesValidator().RunAllValidationTests();
 
         [Fact]

@@ -11,13 +11,15 @@ namespace Simpiens.Core.Tests
     /// Code asks the skill table, not a skill (Epic 10 Part 3, K9.6): production code names a skill (Skill.X, other than
     /// None) only in the files below, each with its reason, so a new skill is a row with no code of its own (AGENTS.md,
     /// "Adding a skill"): code names the work it does (SkillWork) and the table finds its skill (SkillFor). The list
-    /// only shrinks: a file that starts naming skills fails, and so does an entry whose file no longer names any.
+    /// grows only by tables whose rows belong to a skill (Epic 11's techniques); a file that starts naming skills
+    /// otherwise fails, and so does an entry whose file no longer names any.
     /// </summary>
     public class SkillNamesTests
     {
         private static readonly Dictionary<string, string> Allowed = new Dictionary<string, string>
         {
             ["Simpiens.Core/Simulation/Skills/SkillTable.cs"] = "the table: the skills' rows",
+            ["Simpiens.Core/Simulation/Skills/TechniqueTable.cs"] = "the techniques' table: each row names the skill whose band offers it (Epic 11, S4.1)",
         };
 
         private static readonly string[] Projects = { "Simpiens.Core", "Simpiens.Presentation", "Simpiens.Client", "Simpiens.Hosting" };

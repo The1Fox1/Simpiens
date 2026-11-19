@@ -217,6 +217,14 @@ CI (`.github/workflows/dotnet.yml`) runs the tests (the client's in the pinned i
 - **Adding a manual** is an item by "Adding or removing an item", with a `ManualBlock` (the work it teaches, its experience, its ceiling) and `ItemCategory.Manual`; its terms (the stall sells it, the caravan supplies it into `ManualWholesale`). Nothing else: who buys it (`ResourceTargeting.TryChooseManual`: passions only, below the ceiling) and the reading follow. A treatise is a primer's block with another ceiling.
 - **The drill yard** is a station kind (`StationKind.DrillYard`) with no recipes and no artisan, built for `WorkshopTuning.DrillYardCost`; the snapshot carries which stations stand (`IsStationBuilt`), and cognition finds it through `Drill`.
 
+### Adding a technique
+- **A technique is a row** (Epic 11, S4, A2, D13):
+  1. A `Technique` value (a byte). Never reuse one: the id is what a crawler's traits record holds in its band's slot, and its save.
+  2. Its row in `TechniqueTable`: the player's words, its skill and band (Apprentice, Journeyman or Master), the personality that leans its pick, its vow (the crawler's line when it picks it) and two or three effects, each a `TechniqueStat` and a value, at least one an upside and one a cost.
+  3. Two at each band: a band's other row is what a sponsor offers in its place (`TechniqueTable.OtherThan`).
+  - A new kind of effect is a `TechniqueStat` value with its bounds, the work it applies to and its words in `TechniqueRules` (Latin-1 only: the client's fonts hold no more).
+- **The checks:** `TechniqueValidator` (the table, the bounds, the traits record's slots); `TechniqueNamesTests` (production code names a technique only in the table).
+
 ### Adding a deed
 - **A deed is a row** (Epic 11, A7, D2):
   1. A `Deed` value under `DeedTable.Capacity` (16). Never reuse one: the id is the deed's counter in a crawler's traits record and in its save.

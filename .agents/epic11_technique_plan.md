@@ -142,9 +142,9 @@ Grades only change what equipment does today, so alchemy's choices are pace and 
 
 ### S4. Techniques (4–6 days), then the producer's look (folded into their review)
 **Complexity:** Very Complex as the epic stamps it (a new system; the effects step supervised). Split here so the table, the pick, each kind of effect, the command and the client land and are checked alone; each step is Possibly Complex.
-- [ ] **S4.0 The hand-over checked** [Basic: §0 against the code]
+- [x] **S4.0 The hand-over checked** (done 2026-11-19: §0 matches the code; no finding) [Basic: §0 against the code]
   - Check §0 against the code; a difference becomes a finding (F9 onward).
-- [ ] **S4.1 The technique table** [Possibly Complex: a new table whose ids are saved; no behaviour change]
+- [x] **S4.1 The technique table** (done 2026-11-19; golden unchanged) [Possibly Complex: a new table whose ids are saved; no behaviour change]
   - **The table:** D13's `Technique`, `TechniqueTable` (42 rows), `TechniqueStat` and `TechniqueRules` (each stat's bounds).
   - **The record:** the traits record's technique slots read and written by skill and band (`TechniqueIn`, `SetTechnique`).
   - **The checks:** `TechniqueValidator` (two rows at each band of the seven skills; ids unique; each row an upside and a downside; every stat within its bounds; the words name every effect); `TechniqueNamesTests` (production code names a technique only in the table).

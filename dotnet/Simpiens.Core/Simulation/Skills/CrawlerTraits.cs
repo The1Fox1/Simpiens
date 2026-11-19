@@ -113,6 +113,29 @@ namespace Simpiens.Simulation.Skills
             _passions[(byte)skill] = (byte)passion;
         }
 
+        // --- Techniques (Epic 11, S4, D13) ---
+
+        /// <summary>The technique the crawler holds at <paramref name="band"/> of <paramref name="skill"/>; none for a slot not yet picked, Novice or no skill.</summary>
+        public readonly Technique TechniqueIn(Skill skill, SkillBand band)
+        {
+            int slot = TechniqueSlot(skill, band);
+            return slot < 0 ? Technique.None : (Technique)_techniques[slot];
+        }
+
+        /// <summary>Holds <paramref name="technique"/> at <paramref name="band"/> of <paramref name="skill"/> (none clears it); nothing for Novice or no skill.</summary>
+        public void SetTechnique(Skill skill, SkillBand band, Technique technique)
+        {
+            int slot = TechniqueSlot(skill, band);
+            if (slot >= 0) _techniques[slot] = (byte)technique;
+        }
+
+        // A band's slot: skill id × 3 + band − 1, for the three bands above Novice
+        private static int TechniqueSlot(Skill skill, SkillBand band)
+        {
+            if (skill == Skill.None || (byte)skill >= SkillTable.Capacity || band == SkillBand.Novice || band > SkillBand.Master) return -1;
+            return (byte)skill * 3 + (byte)band - 1;
+        }
+
         // --- Teachers (S3) ---
 
         /// <summary>Who first taught <paramref name="skill"/>, or no one.</summary>
