@@ -206,7 +206,8 @@ namespace Simpiens.Testing.Skills
             Assert(SkillRules.HeldByBudget(crawler.Skills, Skill.Foraging, out int ceiling, out var hold) && ceiling == 5 && hold == BudgetHold.PastApprentice, "It reads as held at 5 by two skills past Apprentice.");
             Assert(!SkillRules.HeldByBudget(crawler.Skills, Skill.Mining, out _, out _), "A skill holding a slot isn't held.");
             // The Master's slot: the first to reach 9 takes it, the other stops at 8
-            sim.Practise(crawler, SkillWork.Harvest(ItemType.IronOre), SkillRules.ExperienceFor(9) - crawler.Skills.Experience(Skill.Mining), PracticeSource.WorkAt(SkillRules.MaxLevel));
+            // To 9 exactly, whatever the techniques picked at the bands reached do to practice (Epic 11, S4.4)
+            sim.Practise(crawler, SkillWork.Harvest(ItemType.IronOre), SkillRules.MaxExperience, new PracticeSource(PracticeKind.Work, 9));
             sim.Practise(crawler, SkillWork.Make(StationKind.Forge), SkillRules.MaxExperience, PracticeSource.Work);
             Assert(crawler.Skills.Level(Skill.Mining) == 9 && crawler.Skills.Level(Skill.Smithing) == SkillRules.JourneymanTop, $"The second to reach Master stops at 8 ({crawler.Skills.Level(Skill.Smithing)}).");
             Assert(SkillRules.HeldByBudget(crawler.Skills, Skill.Smithing, out ceiling, out hold) && ceiling == 8 && hold == BudgetHold.Master, "It reads as held at 8 by a Master.");

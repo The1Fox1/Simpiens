@@ -228,7 +228,11 @@ namespace Simpiens.Simulation
             // below the crawler's level teaches it less (S1.3, Q8, D5)
             var passion = Simpiens.Simulation.Skills.PassionTable.Get(agent.Traits.PassionFor(skill));
             int challenge = Simpiens.Simulation.Skills.SkillRules.ChallengePercent(agent.Skills.Level(skill), source.Challenge);
-            experience = (int)(((long)experience * passion.PracticePercent * challenge + 5000) / 10000);
+            // Its techniques' practice beside the passion (Epic 11, S4.4, D14): a student learns faster, a hard driver slower
+            int practice = Simpiens.Simulation.Skills.CrawlerTechniques.Get(agent.Traits, agent.Skills, skill, Simpiens.Simulation.Skills.TechniqueStat.Practice);
+            experience = practice == 0
+                ? (int)(((long)experience * passion.PracticePercent * challenge + 5000) / 10000)
+                : (int)(((long)experience * passion.PracticePercent * challenge * (100 + practice) + 500000) / 1000000);
             if (passion.FrustrationEased > 0f) agent.RelieveFrustration(passion.FrustrationEased);
             // The mastery budget holds the skill beside the source's ceiling (Epic 11, S2.1, Q6, D7)
             int ceiling = Math.Min(source.Ceiling, Simpiens.Simulation.Skills.SkillRules.BudgetCeiling(agent.Skills, skill));
@@ -299,7 +303,9 @@ namespace Simpiens.Simulation
         /// </summary>
         private void Teach(AgentState mentor, AgentState learner, in Simpiens.Simulation.Skills.SkillWork work, Simpiens.Simulation.Skills.Skill skill, int experience, uint now)
         {
-            int lesson = experience * Simpiens.Simulation.Skills.SkillRules.MentorPercent / 100;
+            // A mentor's techniques may teach more of the act (Epic 11, S4.4, D14: a Master's lessons)
+            int share = Simpiens.Simulation.Skills.SkillRules.MentorPercent + Simpiens.Simulation.Skills.CrawlerTechniques.Get(mentor, work, Simpiens.Simulation.Skills.TechniqueStat.Teach);
+            int lesson = experience * share / 100;
             if (lesson <= 0) return;
             int ceiling = Simpiens.Simulation.Skills.CrawlerSkills.Level(mentor, work) - Simpiens.Simulation.Skills.SkillRules.MentorCeilingBelow;
             int had = learner.Skills.Experience(skill);

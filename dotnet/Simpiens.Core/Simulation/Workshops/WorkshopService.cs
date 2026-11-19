@@ -516,10 +516,26 @@ namespace Simpiens.Simulation.Workshops
         /// <summary>
         /// The grade of what <paramref name="artisan"/> makes at a station of <paramref name="kind"/> (W4's practice, now its
         /// skill: Epic 10 Part 3, K9.3c, Q20): its band in the station's skill. Standard for a Novice, Fine for an
-        /// Apprentice, Masterwork from Journeyman; Standard with no artisan.
+        /// Apprentice, Masterwork from Journeyman; Standard with no artisan. Its techniques' grade counts levels toward it,
+        /// within 0 and 10 (Epic 11, S4.4, D14: Fine Temper, Fast Forge).
         /// </summary>
-        public static byte GradeOf(AgentState artisan, StationKind kind) =>
-            artisan == null ? Grades.Standard : Simpiens.Simulation.Skills.SkillRules.GradeOf(LevelOf(artisan, kind));
+        public static byte GradeOf(AgentState artisan, StationKind kind)
+        {
+            if (artisan == null) return Grades.Standard;
+            int level = LevelOf(artisan, kind) + Simpiens.Simulation.Skills.CrawlerTechniques.Get(artisan, Simpiens.Simulation.Skills.SkillWork.Make(kind), Simpiens.Simulation.Skills.TechniqueStat.Grade);
+            return Simpiens.Simulation.Skills.SkillRules.GradeOf(level < 0 ? 0 : level > Simpiens.Simulation.Skills.SkillRules.MaxLevel ? Simpiens.Simulation.Skills.SkillRules.MaxLevel : level);
+        }
+
+        /// <summary>
+        /// How fast <paramref name="artisan"/> works a station of <paramref name="kind"/>'s makes: its level's pace (K9.3c), times
+        /// its techniques' pace at the station (Epic 11, S4.4, D14); the pace before skills with no artisan.
+        /// </summary>
+        public static float PaceOf(AgentState artisan, StationKind kind)
+        {
+            float factor = Simpiens.Simulation.Skills.SkillRules.MakeFactor(LevelOf(artisan, kind));
+            int pace = Simpiens.Simulation.Skills.CrawlerTechniques.Get(artisan, Simpiens.Simulation.Skills.SkillWork.Make(kind), Simpiens.Simulation.Skills.TechniqueStat.Pace);
+            return pace == 0 ? factor : (float)(factor * Simpiens.Simulation.Skills.CrawlerTechniques.Factor(pace));
+        }
 
         /// <summary>An artisan's effective level at a station of <paramref name="kind"/>'s makes (Epic 10 Part 3, K9.8a); 0 with no artisan or no such skill.</summary>
         public static int LevelOf(AgentState artisan, StationKind kind) =>
@@ -539,9 +555,8 @@ namespace Simpiens.Simulation.Workshops
             {
                 if (_artisans[i].StationIndex == index) host.TryGetCrawler(_artisans[i].CrawlerId, out hand);
             }
-            int level = LevelOf(hand, station.Kind);
             uint made = station.Made;
-            var step = Crafting.Work(ref station, ref stall, out bool stallChanged, GradeOf(hand, station.Kind), Simpiens.Simulation.Skills.SkillRules.MakeFactor(level));
+            var step = Crafting.Work(ref station, ref stall, out bool stallChanged, GradeOf(hand, station.Kind), PaceOf(hand, station.Kind));
             if (station.Made > made && hand != null)
             {
                 host.Practise(hand, Simpiens.Simulation.Skills.SkillWork.Make(station.Kind), Simpiens.Simulation.Skills.SkillRules.MakeExperience,

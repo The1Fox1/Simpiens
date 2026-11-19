@@ -128,7 +128,7 @@ namespace Simpiens.Cognition.Planning
                     // and a skilled hand harvests faster, so its own trade pays it better (Epic 10 Part 3, K9.4, Q21); and it
                     // weighs the work it loves more (Epic 11, S1.4, D6)
                     score = price * CrawlerStats.MiningSpeed(context.Inventory, record.ResourceKind)
-                        * Simpiens.Cognition.Planning.Handlers.HarvestResourceIntentHandler.SkillSpeed(context.Skills, context.Inventory, record.ResourceKind) / dist;
+                        * Simpiens.Cognition.Planning.Handlers.HarvestResourceIntentHandler.SkillSpeed(context.Skills, context.Inventory, context.Traits, record.ResourceKind) / dist;
                     score = (float)(score * Considerations.PassionWeight(context, Simpiens.Simulation.Skills.SkillWork.Harvest(record.ResourceKind)));
                 }
 

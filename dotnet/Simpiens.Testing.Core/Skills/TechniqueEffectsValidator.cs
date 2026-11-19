@@ -2,9 +2,13 @@ using System;
 using Simpiens.Cognition;
 using Simpiens.Cognition.Inventory;
 using Simpiens.Simulation;
+using Simpiens.Narrative;
 using Simpiens.Simulation.Combat;
 using Simpiens.Simulation.Economy;
+using Simpiens.Simulation.Items;
 using Simpiens.Simulation.Skills;
+using Simpiens.Simulation.Workshops;
+using Simpiens.Testing.Environment;
 
 namespace Simpiens.Testing.Skills
 {
@@ -12,7 +16,9 @@ namespace Simpiens.Testing.Skills
     /// What techniques do (Epic 11, S4.3–S4.5, A4, A5, D14), a test per kind of effect, each through the one door
     /// (<see cref="CrawlerTechniques"/>). The fight's: a stance's defense and harm, a quick blade's swing, a long shot's
     /// range, a steady aim's hit, a last stand below half health; scoped to the fight its holder fights; stacked within their
-    /// bounds; untouched with none held; and cognition judging a lair by the same fighter. Runs as a test (ValidatorTests).
+    /// bounds; untouched with none held; and cognition judging a lair by the same fighter. The work's: the harvest's pace,
+    /// read by the salvage choice too; a make's grade and pace; the carry's pace and a medicine's healing; practice beside the
+    /// passion; a mentor's lesson. Runs as a test (ValidatorTests).
     /// </summary>
     public class TechniqueEffectsValidator
     {
@@ -24,7 +30,11 @@ namespace Simpiens.Testing.Skills
             ValidateTheShot();
             ValidateALastStand();
             ValidateTheScopeAndTheStack();
-            TestLog.Log("<color=green>[TechniqueEffectsValidator] ALL 5 TESTS PASSED SUCCESSFULLY!</color>");
+            ValidateTheHarvest();
+            ValidateTheMake();
+            ValidateTheFallen();
+            ValidatePracticeAndLessons();
+            TestLog.Log("<color=green>[TechniqueEffectsValidator] ALL 9 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private static readonly SkillSet Fighter = Skilled(Skill.Melee, 4, Skill.Ranged, 4);
@@ -123,6 +133,112 @@ namespace Simpiens.Testing.Skills
             float plainHarm = Vitality.HarmToClear(nest, true, Fighter, blade, default);
             Assert(furyHarm < plainHarm, $"A fighter in Reckless Fury expects to clear a lair for less harm, killing faster ({plainHarm:0} -> {furyHarm:0}).");
             TestLog.Log("[PASS] Test 5: a technique counts in its own skill's fight only; stacked within bounds; untouched with none held; cognition judges a lair by the same fighter.");
+        }
+
+        private static void ValidateTheHarvest()
+        {
+            var bare = new AgentInventory();
+            var miner = Skilled(Skill.Mining, 4, Skill.Foraging, 4);
+            float plain = Simpiens.Cognition.Planning.Handlers.HarvestResourceIntentHandler.SkillSpeed(miner, bare, default, ItemType.IronOre);
+            float driver = Simpiens.Cognition.Planning.Handlers.HarvestResourceIntentHandler.SkillSpeed(miner, bare, Holding(Skill.Mining, SkillBand.Apprentice, Technique.HardDriver), ItemType.IronOre);
+            float student = Simpiens.Cognition.Planning.Handlers.HarvestResourceIntentHandler.SkillSpeed(miner, bare, Holding(Skill.Mining, SkillBand.Apprentice, Technique.SeamStudent), ItemType.IronOre);
+            Assert(plain == SkillRules.HarvestFactor(4), "With none held, the harvest's pace is its level's.");
+            Assert(Near(driver, plain * 1.15f) && Near(student, plain * 0.9f), $"Hard Driver mines 15% faster, Seam Student 10% slower ({plain:0.###}: {driver:0.###}, {student:0.###}).");
+            float herbs = Simpiens.Cognition.Planning.Handlers.HarvestResourceIntentHandler.SkillSpeed(miner, bare, Holding(Skill.Mining, SkillBand.Apprentice, Technique.HardDriver), ItemType.MedicinalHerb);
+            Assert(herbs == SkillRules.HarvestFactor(4), "A miner's technique does nothing at the herbs.");
+            TestLog.Log("[PASS] Test 6: the harvest's pace: Hard Driver mines faster, Seam Student slower, and neither forages differently.");
+        }
+
+        private static void ValidateTheMake()
+        {
+            var (_, sim, world) = Outpost();
+            var smith = Crawler(world, sim, Vec2.Zero, Skill.Smithing, 4);
+            Assert(WorkshopService.GradeOf(smith, StationKind.Forge) == Grades.Fine && WorkshopService.PaceOf(smith, StationKind.Forge) == SkillRules.MakeFactor(4), "An Apprentice 4 makes Fine at its level's pace.");
+            smith.Traits = Holding(Skill.Smithing, SkillBand.Apprentice, Technique.FineTemper);
+            Assert(WorkshopService.GradeOf(smith, StationKind.Forge) == Grades.Masterwork, "Fine Temper: an Apprentice 4 makes as a 6, a Masterwork.");
+            Assert(Near(WorkshopService.PaceOf(smith, StationKind.Forge), SkillRules.MakeFactor(4) * 0.8f), "Fine Temper works 20% slower.");
+            Assert(WorkshopService.GradeOf(smith, StationKind.Still) == Grades.Standard && WorkshopService.PaceOf(smith, StationKind.Still) == SkillRules.MakeFactor(0), "None of it at the still.");
+            var hasty = Crawler(world, sim, Vec2.Zero, Skill.Smithing, 3);
+            hasty.Traits = Holding(Skill.Smithing, SkillBand.Apprentice, Technique.FastForge);
+            Assert(WorkshopService.GradeOf(hasty, StationKind.Forge) == Grades.Standard && Near(WorkshopService.PaceOf(hasty, StationKind.Forge), SkillRules.MakeFactor(3) * 1.2f),
+                "Fast Forge: an Apprentice 3 makes as a 1, Standard, 20% faster.");
+            var master = Crawler(world, sim, Vec2.Zero, Skill.Smithing, 10);
+            master.Traits = Holding(Skill.Smithing, SkillBand.Apprentice, Technique.FineTemper);
+            Assert(WorkshopService.GradeOf(master, StationKind.Forge) == Grades.Masterwork, "The grade's levels stop at 10.");
+            TestLog.Log("[PASS] Test 7: a make's grade counts a technique's levels (Fine Temper to Masterwork, Fast Forge to Standard), its pace their cost.");
+        }
+
+        private static void ValidateTheFallen()
+        {
+            var (_, sim, world) = Outpost();
+            var medic = Crawler(world, sim, Vec2.Zero, Skill.Medicine, 3);
+            float carry = Vitality.CarrySpeed(medic), heal = Vitality.MedicineFactor(medic);
+            Assert(carry == (float)(Vitality.CarrySpeedFactor + SkillRules.CarryBonus(3)) && heal == SkillRules.HealFactor(3), "With none held, the carry and the medicine are its level's.");
+            medic.Traits = Holding(Skill.Medicine, SkillBand.Apprentice, Technique.StrongBack);
+            Assert(Near(Vitality.CarrySpeed(medic), carry * 1.25f) && Near(Vitality.MedicineFactor(medic), heal * 0.75f), "Strong Back carries 25% faster, its medicine heals 25% less.");
+            medic.Traits = Holding(Skill.Medicine, SkillBand.Apprentice, Technique.SteadyHands);
+            Assert(Near(Vitality.CarrySpeed(medic), carry * 0.85f) && Near(Vitality.MedicineFactor(medic), heal * 1.4f), "Steady Hands heals 40% more, carries 15% slower.");
+            Assert(Vitality.CarrySpeed(null) == Vitality.CarrySpeedFactor && Vitality.MedicineFactor(null) == 1f, "Nobody: the numbers before skills.");
+            TestLog.Log("[PASS] Test 8: tending the fallen: Strong Back carries faster, Steady Hands heals more, each for the other's cost.");
+        }
+
+        private static void ValidatePracticeAndLessons()
+        {
+            var (_, sim, world) = Outpost();
+            var ore = SkillWork.Harvest(ItemType.IronOre);
+            var source = PracticeSource.WorkAt(SkillRules.MaxLevel);
+            var plain = Crawler(world, sim, new Vec2(0f, 40f), Skill.Mining, 3);
+            var student = Crawler(world, sim, new Vec2(20f, 40f), Skill.Mining, 3);
+            student.Traits = Holding(Skill.Mining, SkillBand.Apprentice, Technique.SeamStudent);
+            var keen = Crawler(world, sim, new Vec2(40f, 40f), Skill.Mining, 3);
+            var keenTraits = Holding(Skill.Mining, SkillBand.Apprentice, Technique.SeamStudent);
+            keenTraits.SetPassion(Skill.Mining, Passion.Keen);
+            keen.Traits = keenTraits;
+            var driver = Crawler(world, sim, new Vec2(60f, 40f), Skill.Mining, 3);
+            driver.Traits = Holding(Skill.Mining, SkillBand.Apprentice, Technique.HardDriver);
+            int Gain(AgentState who)
+            {
+                int had = who.Skills.Experience(Skill.Mining);
+                sim.Practise(who, ore, SkillRules.UnitExperience, source);
+                return who.Skills.Experience(Skill.Mining) - had;
+            }
+            Assert(Gain(plain) == 10 && Gain(student) == 13 && Gain(keen) == 19 && Gain(driver) == 8,
+                "A unit's 10: a seam student learns 25% more (13), with a keen passion too 19, a hard driver 20% less (8).");
+
+            // A mentor's lessons: half the act, three quarters from a Master holding Old Hand's Lessons
+            var (_, sim2, world2) = Outpost();
+            var master = Crawler(world2, sim2, new Vec2(0f, 0f), Skill.Mining, 9);
+            var teacher = master.Traits;
+            teacher.SetTechnique(Skill.Mining, SkillBand.Master, Technique.OldHandsLessons);
+            master.Traits = teacher;
+            var learner = Crawler(world2, sim2, new Vec2(2f, 0f), Skill.Mining, 2);
+            sim2.Practise(master, ore, SkillRules.UnitExperience, source);
+            int before = learner.Skills.Experience(Skill.Mining);
+            sim2.Practise(learner, ore, SkillRules.UnitExperience, source);
+            Assert(learner.Skills.Experience(Skill.Mining) - before == 10 + 7, $"Its own 10, and a lesson of three quarters (7) from the Master ({learner.Skills.Experience(Skill.Mining) - before}).");
+            TestLog.Log("[PASS] Test 9: practice counts a technique's share beside the passion; a Master's lessons teach three quarters of the act.");
+        }
+
+        private static (NarrativeChronicleService, SimulationManager, WorldRegistry) Outpost()
+        {
+            var world = new WorldRegistry();
+            var clock = new SimulationClock();
+            var chronicle = new NarrativeChronicleService();
+            var sim = new SimulationManager(world, null, clock: clock, chronicleService: chronicle) { Seed = 7 };
+            sim.SetEconomy(EconomyTuning.Default);
+            clock.AdvanceTicks(100);
+            return (chronicle, sim, world);
+        }
+
+        private static AgentState Crawler(WorldRegistry world, SimulationManager sim, Vec2 at, Skill skill, int level)
+        {
+            var crawler = HeadlessEntities.Crawler(world, sim, null, at, id: EntityId.Generate()).Agent;
+            crawler.Position = at;
+            crawler.Traits = default;
+            var skills = default(SkillSet);
+            skills.Set(skill, level);
+            crawler.Skills = skills;
+            return crawler;
         }
 
         private static Combatant Fight(IAgentInventory worn, in CrawlerTraits traits, float health = Vitality.MaxHealth) =>

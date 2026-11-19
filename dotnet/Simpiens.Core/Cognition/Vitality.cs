@@ -30,9 +30,31 @@ namespace Simpiens.Cognition
         /// <summary>A rescuer carries the fallen at half its pace (Epic 10 Part 3, K5.2).</summary>
         public const float CarrySpeedFactor = 0.5f;
 
-        /// <summary>The share of its pace <paramref name="rescuer"/> carries at (Epic 10 Part 3, K9.3d): half, and more by its skill at tending the fallen, four fifths at the most.</summary>
-        public static float CarrySpeed(AgentState rescuer) => rescuer == null ? CarrySpeedFactor
-            : (float)(CarrySpeedFactor + Simpiens.Simulation.Skills.SkillRules.CarryBonus(Simpiens.Simulation.Skills.CrawlerSkills.Level(rescuer, Simpiens.Simulation.Skills.SkillWork.Tend())));
+        /// <summary>
+        /// The share of its pace <paramref name="rescuer"/> carries at (Epic 10 Part 3, K9.3d): half, and more by its skill at
+        /// tending the fallen, four fifths at the most; times its techniques' pace at tending (Epic 11, S4.4, D14: Strong Back).
+        /// </summary>
+        public static float CarrySpeed(AgentState rescuer)
+        {
+            if (rescuer == null) return CarrySpeedFactor;
+            var tend = Simpiens.Simulation.Skills.SkillWork.Tend();
+            float share = (float)(CarrySpeedFactor + Simpiens.Simulation.Skills.SkillRules.CarryBonus(Simpiens.Simulation.Skills.CrawlerSkills.Level(rescuer, tend)));
+            int pace = Simpiens.Simulation.Skills.CrawlerTechniques.Get(rescuer, tend, Simpiens.Simulation.Skills.TechniqueStat.Pace);
+            return pace == 0 ? share : (float)(share * Simpiens.Simulation.Skills.CrawlerTechniques.Factor(pace));
+        }
+
+        /// <summary>
+        /// How much more a medicine <paramref name="giver"/> gives heals (Epic 10 Part 3, K9.3d): by its skill at tending the
+        /// fallen, times its techniques' healing (Epic 11, S4.4, D14: Steady Hands); the medicine's own with nobody.
+        /// </summary>
+        public static float MedicineFactor(AgentState giver)
+        {
+            if (giver == null) return 1f;
+            var tend = Simpiens.Simulation.Skills.SkillWork.Tend();
+            float factor = Simpiens.Simulation.Skills.SkillRules.HealFactor(Simpiens.Simulation.Skills.CrawlerSkills.Level(giver, tend));
+            int heal = Simpiens.Simulation.Skills.CrawlerTechniques.Get(giver, tend, Simpiens.Simulation.Skills.TechniqueStat.Heal);
+            return heal == 0 ? factor : (float)(factor * Simpiens.Simulation.Skills.CrawlerTechniques.Factor(heal));
+        }
 
         /// <summary>Only a crawler at least this bold (personality) and this healthy goes into a hazard sector for its salvage.</summary>
         public const float VentureRiskTolerance = 0.3f;
