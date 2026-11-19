@@ -138,7 +138,8 @@ namespace Simpiens.Presentation.Dashboard
                 row.Asks = SkillTexts.Asks(contract.Wage, GuildRules.AskingWage(agent, tuning));
                 row.HasPortrait = agent.Look.IsComplete;
                 row.Portrait = row.HasPortrait ? Simpiens.Presentation.Art.People.PortraitKey.Of(node.Id, agent, _moods, _context.Clock?.CurrentTick ?? 0) : default;
-                row.Doing = PlanText.Action(agent.HasActivePlan ? agent.ActivePlan.CurrentAction : null);
+                // Its calling and its part in a party before what it does (Epic 11, S5.7, D24): "Warden (front) · Going to bed"
+                row.Doing = CallingTexts.Before(CallingTexts.TitleWithRole(agent.Skills, agent.Traits), PlanText.Action(agent.HasActivePlan ? agent.ActivePlan.CurrentAction : null));
                 row.Health = agent.Health;
                 row.Downed = agent.IsDowned;
                 row.Equipment.Refresh(agent.Inventory);

@@ -217,7 +217,7 @@ Grades only change what equipment does today, so alchemy's choices are pace and 
 - [x] **S5.6 Re-measured** (done 2026-11-19: `docs/skills-model.md` §5.7; five DoDs re-picked, F11; two fixtures read the rule's own numbers) [Possibly Complex: measuring, moved DoDs]
   - **The measurement:** who holds which calling at day 14 on the gate seeds; roles in clears (how often a Front member takes the blows); Leadership's growth.
   - **Every scenario:** moved DoDs re-picked across the gate seeds, each in its own commit, S4's DoD among them.
-- [ ] **S5.7 The client: titles and roles** [Possibly Complex: Gum, renders]
+- [x] **S5.7 The client: titles and roles** (done 2026-11-19: the title replaces the identity's placeholder title in the dossier; renders at S5.10) [Possibly Complex: Gum, renders]
   - **Where:** the calling's title on the guild's cards, in the dossier's header and on the roster; the role in the party builder.
   - **The checks:** `CallingsOnScreenTests`; renders after a look.
 - [ ] **S5.8 The client: the badge** [Possibly Complex: UI kit pieces, art pins, a draw item, renders]

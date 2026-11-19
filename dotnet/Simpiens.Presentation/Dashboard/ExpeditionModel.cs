@@ -409,6 +409,10 @@ namespace Simpiens.Presentation.Dashboard
                 var member = roster[i];
                 var row = rows[i];
                 row.Name = _context.FriendlyName(member.CrawlerId, DossierModel.UnknownName);
+                // Its part in the party (Epic 11, S5.7, D24): "Bram · front"
+                var who = _context.Registry?.GetEntity(member.CrawlerId)?.Agent;
+                string role = who != null ? CallingTexts.RoleWord(Simpiens.Simulation.Skills.CallingTable.RoleOf(who.Traits.Calling)) : string.Empty;
+                if (role.Length > 0) row.Name += " · " + role;
                 row.WithParty = member.IsWithParty;
                 row.Downed = member.Status == ExpeditionMemberStatus.Downed;
                 row.Status = member.Status switch
