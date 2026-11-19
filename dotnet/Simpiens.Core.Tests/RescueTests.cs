@@ -66,6 +66,7 @@ namespace Simpiens.Core.Tests
         {
             using var sim = Outpost();
             var (fallen, friend) = FallenWithAFriendBeside(sim, draught: true);
+            friend.Traits = default; // by hand: no passion or technique for medicine, so a rescue is K9.2's 100 (Epic 11's are their validators')
             int medicine = friend.Skills.Experience(Simpiens.Simulation.Skills.Skill.Medicine);
             bool given = false;
             for (long t = 0; t < DayClock.Hours(1) && fallen.IsDowned; t++)
