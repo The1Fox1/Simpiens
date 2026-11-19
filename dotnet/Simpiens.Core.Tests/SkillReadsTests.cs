@@ -23,6 +23,7 @@ namespace Simpiens.Core.Tests
             ["Simpiens.Presentation/Dashboard/SkillTexts.cs"] = "the dossier's and the roster's list of what a crawler has learned",
             ["Simpiens.Core/Simulation/Skills/SkillRules.cs"] = "the mastery budget (Epic 11, D7): practice's own rule, over the levels practice has raised",
             ["Simpiens.Core/Simulation/Skills/PassionTable.cs"] = "the passions' draw at spawn: a starting talent is loved more often (Epic 11, D3); a draw, not an effect",
+            ["Simpiens.Core/Simulation/Skills/TechniqueTable.cs"] = "the techniques' pick (Epic 11, D15): a band reached in practice offers its techniques; a draw, not an effect",
         };
 
         private static readonly string[] Projects = { "Simpiens.Core", "Simpiens.Presentation", "Simpiens.Client", "Simpiens.Hosting" };
