@@ -74,8 +74,10 @@ namespace Simpiens.Core.Tests
         /// Gate seed 15: K4.4 measured armour from a kill worn on 5 of the 23 gate seeds in ten days; with skills (K9) on 2, this
         /// one first at t74143 (a chitin plate) and 424242. Noise, not skills: on seeds 21 to 80 it was worn on 18 with skills
         /// and 19 without.
+        /// Gate seed 424242 since passions and practice by challenge (Epic 11, S1.5): worn on 7 of 23 (424242, 20261010, 1, 2,
+        /// 3, 10, 18), seed 15 no longer; this one first, at t33880 (a chitin plate).
         /// </summary>
-        private const ulong Seed = 15;
+        private const ulong Seed = 424242;
 
         [Fact]
         public void AKillsMaterialsBecomeArmourAResidentWears()

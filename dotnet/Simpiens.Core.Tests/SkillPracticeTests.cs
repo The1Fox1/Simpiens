@@ -30,8 +30,11 @@ namespace Simpiens.Core.Tests
             var archer = residents[1];
             Assert.True(brawler.Inventory.TryEquip(Outfitting.NewPiece(ItemType.IronBlade, Grades.Standard)));
             Assert.True(archer.Inventory.TryEquip(Outfitting.NewPiece(ItemType.Crossbow, Grades.Standard)));
-            int melee = brawler.Skills.Experience(Skill.Melee), ranged = archer.Skills.Experience(Skill.Ranged);
             int brawlersRanged = brawler.Skills.Experience(Skill.Ranged), archersMelee = archer.Skills.Experience(Skill.Melee);
+            // Each act of practice at the work itself, as practice's one entry tells it (Epic 11, S0.2): its amount moves with
+            // passions and challenge; a mentor's lesson beside it is an act of its own (S3.1), not counted here
+            var acts = new List<(Simpiens.Cognition.AgentState Who, Skill Skill, int Experience)>();
+            sim.Simulation.Practised += (who, skill, experience, source) => { if (source.Kind == PracticeKind.Work) acts.Add((who, skill, experience)); };
             var service = sim.Simulation.Creatures;
             var beetle = service.Creatures.First(c => c.Kind == CreatureKind.StoneBeetle);
             var brawlerNode = sim.Registry.GetEntity(brawler.AgentId);
@@ -50,10 +53,11 @@ namespace Simpiens.Core.Tests
                 sim.Step(1);
                 shots += service.ShotsThisTick.Count(s => s.Shooter == archer.AgentId);
             }
-            hits = (brawler.Skills.Experience(Skill.Melee) - melee) / SkillRules.HitExperience;
+            hits = acts.Count(a => a.Who == brawler && a.Skill == Skill.Melee);
             Assert.True(shots > 0 && hits > 0, $"Both struck ({hits} blows landed, {shots} shots).");
-            Assert.Equal(melee + hits * SkillRules.HitExperience, brawler.Skills.Experience(Skill.Melee)); // whole blows
-            Assert.Equal(ranged + shots * SkillRules.ShotExperience, archer.Skills.Experience(Skill.Ranged)); // every shot, hit or miss
+            Assert.Equal(shots, acts.Count(a => a.Who == archer && a.Skill == Skill.Ranged)); // every shot, hit or miss
+            Assert.True(acts.Where(a => a.Who == brawler && a.Skill == Skill.Melee).All(a => a.Experience > 0 && a.Experience <= 2 * SkillRules.HitExperience), "A blow's practice, at most a burning passion's double.");
+            Assert.True(acts.Where(a => a.Who == archer && a.Skill == Skill.Ranged).All(a => a.Experience > 0 && a.Experience <= 2 * SkillRules.ShotExperience), "A shot's practice, at most a burning passion's double.");
             Assert.Equal(brawlersRanged, brawler.Skills.Experience(Skill.Ranged));
             Assert.Equal(archersMelee, archer.Skills.Experience(Skill.Melee));
         }
@@ -63,16 +67,20 @@ namespace Simpiens.Core.Tests
         {
             using var sim = Outpost();
             var residents = sim.Host.CrawlerStates.Where(s => !s.IsDrifter).ToList();
-            var start = residents.ToDictionary(r => r.AgentId, r => r.Skills.Experience(Skill.Mining) + r.Skills.Experience(Skill.Foraging));
             var harvestsAtStart = residents.ToDictionary(r => r.AgentId, r => r.Activity.SalvageHarvests);
+            // Each act of practice at the work itself, as practice's one entry tells it (Epic 11, S0.2): its amount moves with
+            // passions and challenge; a mentor's lesson beside it is an act of its own (S3.1), not counted here
+            var acts = new List<(Simpiens.Cognition.AgentState Who, Skill Skill, int Experience)>();
+            sim.Simulation.Practised += (who, skill, experience, source) => { if (source.Kind == PracticeKind.Work) acts.Add((who, skill, experience)); };
             sim.Step(3000); // their own morning: nothing by hand
             int units = 0;
             foreach (var r in residents)
             {
                 int harvested = r.Activity.SalvageHarvests - harvestsAtStart[r.AgentId];
-                int gained = r.Skills.Experience(Skill.Mining) + r.Skills.Experience(Skill.Foraging) - start[r.AgentId];
+                var mine = acts.Where(a => a.Who == r && (a.Skill == Skill.Mining || a.Skill == Skill.Foraging)).ToList();
                 units += harvested;
-                Assert.Equal(harvested * SkillRules.UnitExperience, gained);
+                Assert.Equal(harvested, mine.Count); // one act of practice a unit (a skill at its ceiling would tell none: nobody is at 10)
+                Assert.True(mine.All(a => a.Experience > 0 && a.Experience <= 2 * SkillRules.UnitExperience), "A unit's practice, at most a burning passion's double.");
             }
             Assert.True(units > 10, $"The residents harvested in their morning ({units} units).");
         }

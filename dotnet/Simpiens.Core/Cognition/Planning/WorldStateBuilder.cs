@@ -38,6 +38,7 @@ namespace Simpiens.Cognition.Planning
             state = state.With(StateFact.HasSalvageInInventory, hasSalvage);
             state = state.With(StateFact.HasHazardGear, hasHazardGear);
             state = state.With(StateFact.HasMedicine, inv.HasAny(ItemCategory.Medicine));
+            state = state.With(StateFact.HasManual, inv.HasAny(ItemCategory.Manual)); // Epic 11, S3.3
             return state;
         }
 
@@ -71,6 +72,7 @@ namespace Simpiens.Cognition.Planning
                 state = state.With(StateFact.HasSalvageInInventory, hasSalvage);
                 state = state.With(StateFact.HasHazardGear, hasHazardGear);
                 state = state.With(StateFact.HasMedicine, context.Inventory.HasAny(ItemCategory.Medicine));
+                state = state.With(StateFact.HasManual, context.Inventory.HasAny(ItemCategory.Manual)); // Epic 11, S3.3
                 // Armed with the best it would buy (Epic 10 Part 3, K3.3): a better weapon in stock it can afford is a weapon to buy,
                 // and armour for a bare slot once armed (K4.4, D26)
                 state = state.With(StateFact.HasWeapon, Vitality.IsArmed(context.Inventory) && !ResourceTargeting.TryChooseArms(context, out _));

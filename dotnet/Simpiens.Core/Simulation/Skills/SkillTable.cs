@@ -58,6 +58,17 @@ namespace Simpiens.Simulation.Skills
         Master = 3
     }
 
+    /// <summary>Why the mastery budget holds a skill (Epic 11, S2.1, D7; <see cref="SkillRules.BudgetCeiling(in SkillSet, Skill, out BudgetHold)"/>).</summary>
+    public enum BudgetHold : byte
+    {
+        /// <summary>Not held: the skill may climb to the last level.</summary>
+        None = 0,
+        /// <summary>Two other skills stand past Apprentice: held at the top of Apprentice.</summary>
+        PastApprentice = 1,
+        /// <summary>Another skill stands at Master: held at the top of Journeyman.</summary>
+        Master = 2
+    }
+
     /// <summary>One skill: a row of <see cref="SkillTable"/>.</summary>
     public sealed class SkillDefinition
     {

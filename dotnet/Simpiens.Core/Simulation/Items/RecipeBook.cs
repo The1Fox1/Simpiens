@@ -49,22 +49,22 @@ namespace Simpiens.Simulation.Items
         {
             // D2: two game hours of work at the forge (T3.1; it was a minute, 600 ticks) for three ore, which the stall holds
             // plenty of (F8)
-            new Recipe(ItemType.ToolPickaxe, StationKind.Forge, workTicks: (ushort)DayClock.Hours(2), new RecipeInput(ItemType.IronOre, 3)),
+            new Recipe(ItemType.ToolPickaxe, StationKind.Forge, workTicks: (ushort)DayClock.Hours(2), new RecipeInput(ItemType.IronOre, 3)) { Challenge = 3 },
             // D42: an hour's work at the still for two herbs
-            new Recipe(ItemType.HealingDraught, StationKind.Still, workTicks: (ushort)DayClock.Hours(1), new RecipeInput(ItemType.MedicinalHerb, 2)),
+            new Recipe(ItemType.HealingDraught, StationKind.Still, workTicks: (ushort)DayClock.Hours(1), new RecipeInput(ItemType.MedicinalHerb, 2)) { Challenge = 5 },
             // D48: protection by kind, two hours at the forge from a glowstone, with herbs for the filters or ore for the shell
-            new Recipe(ItemType.Respirator, StationKind.Forge, workTicks: (ushort)DayClock.Hours(2), new RecipeInput(ItemType.Glowstone, 1), new RecipeInput(ItemType.MedicinalHerb, 2)),
-            new Recipe(ItemType.HardHat, StationKind.Forge, workTicks: (ushort)DayClock.Hours(2), new RecipeInput(ItemType.Glowstone, 1), new RecipeInput(ItemType.IronOre, 2)),
+            new Recipe(ItemType.Respirator, StationKind.Forge, workTicks: (ushort)DayClock.Hours(2), new RecipeInput(ItemType.Glowstone, 1), new RecipeInput(ItemType.MedicinalHerb, 2)) { Challenge = 6 },
+            new Recipe(ItemType.HardHat, StationKind.Forge, workTicks: (ushort)DayClock.Hours(2), new RecipeInput(ItemType.Glowstone, 1), new RecipeInput(ItemType.IronOre, 2)) { Challenge = 5 },
             // Melee arms and armour (Epic 10 Part 3, K3.1, K3.2): blades and armour from ore, the edge with glowstone
-            new Recipe(ItemType.IronBlade, StationKind.Forge, workTicks: (ushort)DayClock.Hours(2), new RecipeInput(ItemType.IronOre, 3)),
-            new Recipe(ItemType.GlowstoneEdge, StationKind.Forge, workTicks: (ushort)DayClock.Hours(3), new RecipeInput(ItemType.IronOre, 2), new RecipeInput(ItemType.Glowstone, 1)),
-            new Recipe(ItemType.IronHelm, StationKind.Forge, workTicks: (ushort)DayClock.Hours(2), new RecipeInput(ItemType.IronOre, 2)),
-            new Recipe(ItemType.RingCoat, StationKind.Forge, workTicks: (ushort)DayClock.Hours(3), new RecipeInput(ItemType.IronOre, 4)),
+            new Recipe(ItemType.IronBlade, StationKind.Forge, workTicks: (ushort)DayClock.Hours(2), new RecipeInput(ItemType.IronOre, 3)) { Challenge = 5 },
+            new Recipe(ItemType.GlowstoneEdge, StationKind.Forge, workTicks: (ushort)DayClock.Hours(3), new RecipeInput(ItemType.IronOre, 2), new RecipeInput(ItemType.Glowstone, 1)) { Challenge = 7 },
+            new Recipe(ItemType.IronHelm, StationKind.Forge, workTicks: (ushort)DayClock.Hours(2), new RecipeInput(ItemType.IronOre, 2)) { Challenge = 4 },
+            new Recipe(ItemType.RingCoat, StationKind.Forge, workTicks: (ushort)DayClock.Hours(3), new RecipeInput(ItemType.IronOre, 4)) { Challenge = 6 },
             // Ranged arms (Epic 10 Part 3, K8.1, Q15): the crossbow's prod from ore, its string from a hide
-            new Recipe(ItemType.Crossbow, StationKind.Forge, workTicks: (ushort)DayClock.Hours(2), new RecipeInput(ItemType.IronOre, 2), new RecipeInput(ItemType.Hide, 1)),
+            new Recipe(ItemType.Crossbow, StationKind.Forge, workTicks: (ushort)DayClock.Hours(2), new RecipeInput(ItemType.IronOre, 2), new RecipeInput(ItemType.Hide, 1)) { Challenge = 6 },
             // Armour from creatures' materials (Epic 10 Part 3, K4.4)
-            new Recipe(ItemType.LeatherJerkin, StationKind.Forge, workTicks: (ushort)DayClock.Hours(2), new RecipeInput(ItemType.Hide, 2)),
-            new Recipe(ItemType.ChitinPlate, StationKind.Forge, workTicks: (ushort)DayClock.Hours(3), new RecipeInput(ItemType.Chitin, 2), new RecipeInput(ItemType.IronOre, 1))
+            new Recipe(ItemType.LeatherJerkin, StationKind.Forge, workTicks: (ushort)DayClock.Hours(2), new RecipeInput(ItemType.Hide, 2)) { Challenge = 4 },
+            new Recipe(ItemType.ChitinPlate, StationKind.Forge, workTicks: (ushort)DayClock.Hours(3), new RecipeInput(ItemType.Chitin, 2), new RecipeInput(ItemType.IronOre, 1)) { Challenge = 7 }
         };
 
         /// <summary>

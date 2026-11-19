@@ -139,6 +139,30 @@ namespace Simpiens.Cognition
             return gained;
         }
 
+        /// <summary>
+        /// What it last practised at its own work and when (Epic 11, S3.1, D9): a learner nearby at the same work may be taught
+        /// by it within the hour. Work in progress, not saved: after a load nobody mentors until they practise again.
+        /// </summary>
+        public Simpiens.Simulation.Skills.SkillWork LastPracticed { get; internal set; }
+        public uint LastPracticedAt { get; internal set; }
+
+        /// <summary>When it last drilled at a yard (Epic 11, S3.4, D10), for the station window's "drilled today". Not saved.</summary>
+        public uint LastDrilledAt { get; internal set; }
+
+        /// <summary>
+        /// Who it has become (Epic 11, A3, D1): its passions, teachers, deeds and, later, its techniques, calling, epithet,
+        /// earned traits and scars. Written on the main thread, saved in its record; cognition reads a copy.
+        /// </summary>
+        public Simpiens.Simulation.Skills.CrawlerTraits Traits { get; set; }
+
+        /// <summary>Counts one <paramref name="deed"/> in its traits record (Epic 11, S0.5, A7): where the deed happens, on the main thread.</summary>
+        internal void AddDeed(Simpiens.Simulation.Skills.Deed deed)
+        {
+            var traits = Traits;
+            traits.Add(deed);
+            Traits = traits;
+        }
+
         /// <summary>The crawler's given name (Epic UI-Beta B1): drawn at spawn to fit its body frame, never shared, saved. Null for a crawler built by hand.</summary>
         public string GivenName { get; set; }
 
@@ -510,7 +534,8 @@ namespace Simpiens.Cognition
                 BleedsOutAt = BleedsOutAt,
                 DownedBy = DownedBy,
                 DownedDetail = DownedDetail,
-                Skills = Skills
+                Skills = Skills,
+                Traits = Traits
             };
         }
 
@@ -554,6 +579,7 @@ namespace Simpiens.Cognition
             DownedBy = record.DownedBy;
             DownedDetail = record.DownedDetail;
             Skills = record.Skills;
+            Traits = record.Traits;
 
             ActivePlan.Clear();
             ScratchPlan.Clear();
@@ -593,7 +619,9 @@ namespace Simpiens.Cognition
                 StruckBy,
                 BleedsOutAt,
                 Memberships.TryGet(Simpiens.Cognition.Groups.GroupType.TemporaryParty, out var party) ? party.GroupId : (byte)0,
-                Skills);
+                Skills,
+                Traits,
+                Memberships.TryGet(Simpiens.Cognition.Groups.GroupType.FactionGuild, out var guild) ? guild.GroupId : (byte)0);
         }
     }
 }

@@ -30,7 +30,7 @@ namespace Simpiens.Client.Tests
             ui.Frame();
 
             Assert.Equal("Mycology 6 · Melee 2 · Smithing 2", game.Session.DashboardModel.Dossier.Skills); // the best first, ties in display order
-            Assert.Equal("Skills: Mycology 6 · Melee 2 · Smithing 2", game.Play.Dashboard.Panels.SkillsShown);
+            Assert.Equal("Skills: Mycology 6 · Melee 2 (keen) · Smithing 2", game.Play.Dashboard.Panels.SkillsShown); // a keen passion for melee, drawn at spawn (Epic 11, S1.1), shows its flame (S1.6)
         }
     }
 }

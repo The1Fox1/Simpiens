@@ -23,10 +23,13 @@ namespace Simpiens.Testing.Skills
             ValidateLevelsAndBands();
             ValidateTheSkillSet();
             ValidateTheSeam();
+            ValidatePracticeIsObserved();
+            ValidatePracticeByChallenge();
+            ValidateTheMasteryBudget();
             ValidateLevelZeroChangesNothing();
             ValidateTheDraw();
             ValidatePersonalityLeansTheDraw();
-            TestLog.Log("<color=green>[SkillsValidator] ALL 6 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[SkillsValidator] ALL 10 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateTheTable()
@@ -126,6 +129,102 @@ namespace Simpiens.Testing.Skills
             TestLog.Log("[PASS] Test 4: the seam reads how good a crawler is at each kind of work: today, its learned level in the work's skill.");
         }
 
+        private void ValidatePracticeIsObserved()
+        {
+            // Epic 11, S0.2 (D12): practice's one entry tells observers what it granted, after the source's ceiling
+            var sim = new SimulationManager(new WorldRegistry(), null);
+            var crawler = new Simpiens.Cognition.AgentState(EntityId.Generate());
+            var seen = new List<(Skill Skill, int Experience, PracticeKind Kind)>();
+            sim.Practised += (agent, skill, experience, source) =>
+            {
+                Assert(agent == crawler, "The event names the crawler that practised.");
+                seen.Add((skill, experience, source.Kind));
+            };
+            sim.Practise(crawler, SkillWork.Harvest(ItemType.IronOre), 40, PracticeSource.Work);
+            Assert(seen.Count == 1 && seen[0] == (Skill.Mining, 40, PracticeKind.Work), "A harvest's practice is told: mining, 40, from the work.");
+            sim.Practise(crawler, SkillWork.Fight(ranged: false), 5000, new PracticeSource(PracticeKind.Work, 2));
+            Assert(seen.Count == 2 && seen[1] == (Skill.Melee, SkillRules.ExperienceFor(2), PracticeKind.Work), "What is told is what was granted, held to the ceiling.");
+            sim.Practise(crawler, SkillWork.Fight(ranged: false), 50, new PracticeSource(PracticeKind.Work, 2));
+            sim.Practise(crawler, SkillWork.Harvest(ItemType.Ration), 50, PracticeSource.Work);
+            sim.Practise(null, SkillWork.Tend(), 50, PracticeSource.Work);
+            Assert(seen.Count == 2, "Nothing granted, no skill for the work, or nobody: nothing is told.");
+            TestLog.Log("[PASS] Test 5: practice's one entry tells observers the experience it granted, after the ceiling.");
+        }
+
+        private void ValidatePracticeByChallenge()
+        {
+            // Epic 11, S1.3 (Q8, D5): full practice at or below an act's challenge, less the further a crawler stands above it
+            Assert(SkillRules.ChallengePercent(0, 2) == 100 && SkillRules.ChallengePercent(2, 2) == 100 && SkillRules.ChallengePercent(6, 2) == 25
+                && SkillRules.ChallengePercent(6, 7) == 100 && SkillRules.ChallengePercent(3, 2) == 75 && SkillRules.ChallengePercent(10, 0) == 10,
+                "A rat (2) teaches a Novice fully and a Journeyman 6 a quarter; a beetle (7) teaches a Journeyman fully; a tenth at most far above.");
+            int last = 101;
+            for (int above = 0; above <= SkillRules.MaxLevel; above++)
+            {
+                int share = SkillRules.ChallengePercent(above, 0);
+                Assert(share <= last && share > 0, $"The share falls with each level above the challenge, never to nothing ({above} above: {share}).");
+                last = share;
+            }
+            var sim = new SimulationManager(new WorldRegistry(), null);
+            var veteran = new Simpiens.Cognition.AgentState(EntityId.Generate());
+            var skills = default(SkillSet);
+            skills.Set(Skill.Melee, 6);
+            veteran.Skills = skills;
+            int had = veteran.Skills.Experience(Skill.Melee);
+            sim.Practise(veteran, SkillWork.Fight(ranged: false), 100, PracticeSource.WorkAt(Simpiens.Simulation.Creatures.CreatureCatalog.Get(Simpiens.Simulation.Creatures.CreatureKind.BurrowRat).Challenge));
+            Assert(veteran.Skills.Experience(Skill.Melee) - had == 25, $"A Journeyman takes a quarter of a rat's practice ({veteran.Skills.Experience(Skill.Melee) - had} of 100).");
+            had = veteran.Skills.Experience(Skill.Melee);
+            sim.Practise(veteran, SkillWork.Fight(ranged: false), 100, PracticeSource.WorkAt(Simpiens.Simulation.Creatures.CreatureCatalog.Get(Simpiens.Simulation.Creatures.CreatureKind.StoneBeetle).Challenge));
+            Assert(veteran.Skills.Experience(Skill.Melee) - had == 100, "And all of a beetle's.");
+            Assert(PracticeSource.Work.Challenge == SkillRules.MaxLevel && PracticeSource.WorkAt(-3).Challenge == 0 && PracticeSource.WorkAt(40).Challenge == SkillRules.MaxLevel, "The work alone is the highest challenge; a challenge is held within the levels.");
+            // Every creature, salvage and recipe says what it demands
+            foreach (var kind in Simpiens.Simulation.Creatures.CreatureCatalog.All)
+                Assert(kind.Challenge > 0 && (!kind.IsBoss || kind.Challenge >= 9), $"{kind.Name} demands a level ({kind.Challenge}); a boss a Master's.");
+            Assert(ItemCatalog.Get(ItemType.MedicinalHerb).HarvestChallenge == 3 && ItemCatalog.Get(ItemType.IronOre).HarvestChallenge == 4 && ItemCatalog.Get(ItemType.Glowstone).HarvestChallenge == 7,
+                "Herbs 3, ore 4, glowstone 7.");
+            foreach (var recipe in RecipeBook.All)
+                Assert(recipe.Challenge > 0 && recipe.Challenge <= SkillRules.MaxLevel, $"The {recipe} demands a level ({recipe.Challenge}).");
+            TestLog.Log("[PASS] Test 6: practice by challenge: full at or below an act's demand, a quarter of a rat's for a Journeyman, all of a beetle's; every creature, salvage and recipe has one.");
+        }
+
+        private void ValidateTheMasteryBudget()
+        {
+            // Epic 11, S2.1 (Q6, D7): two skills past Apprentice and one Master at most, first come, first served
+            var sim = new SimulationManager(new WorldRegistry(), null);
+            var crawler = new Simpiens.Cognition.AgentState(EntityId.Generate());
+            var skills = default(SkillSet);
+            skills.Set(Skill.Mining, 5);
+            skills.Set(Skill.Smithing, 5);
+            skills.Set(Skill.Foraging, 5);
+            crawler.Skills = skills;
+            Assert(SkillRules.BudgetCeiling(crawler.Skills, Skill.Mining) == SkillRules.MaxLevel, "With nothing past Apprentice, every skill may climb to the last level.");
+            sim.Practise(crawler, SkillWork.Harvest(ItemType.IronOre), 600, PracticeSource.Work);
+            sim.Practise(crawler, SkillWork.Make(StationKind.Forge), 600, PracticeSource.Work);
+            Assert(crawler.Skills.Level(Skill.Mining) == 6 && crawler.Skills.Level(Skill.Smithing) == 6, "The first two skills past Apprentice take the slots.");
+            sim.Practise(crawler, SkillWork.Harvest(ItemType.MedicinalHerb), 600, PracticeSource.Work);
+            Assert(crawler.Skills.Level(Skill.Foraging) == SkillRules.ApprenticeTop && crawler.Skills.Experience(Skill.Foraging) == SkillRules.ExperienceFor(SkillRules.ApprenticeTop),
+                $"The third stops at the top of Apprentice ({crawler.Skills.Level(Skill.Foraging)}).");
+            Assert(SkillRules.HeldByBudget(crawler.Skills, Skill.Foraging, out int ceiling, out var hold) && ceiling == 5 && hold == BudgetHold.PastApprentice, "It reads as held at 5 by two skills past Apprentice.");
+            Assert(!SkillRules.HeldByBudget(crawler.Skills, Skill.Mining, out _, out _), "A skill holding a slot isn't held.");
+            // The Master's slot: the first to reach 9 takes it, the other stops at 8
+            sim.Practise(crawler, SkillWork.Harvest(ItemType.IronOre), SkillRules.ExperienceFor(9) - crawler.Skills.Experience(Skill.Mining), PracticeSource.WorkAt(SkillRules.MaxLevel));
+            sim.Practise(crawler, SkillWork.Make(StationKind.Forge), SkillRules.MaxExperience, PracticeSource.Work);
+            Assert(crawler.Skills.Level(Skill.Mining) == 9 && crawler.Skills.Level(Skill.Smithing) == SkillRules.JourneymanTop, $"The second to reach Master stops at 8 ({crawler.Skills.Level(Skill.Smithing)}).");
+            Assert(SkillRules.HeldByBudget(crawler.Skills, Skill.Smithing, out ceiling, out hold) && ceiling == 8 && hold == BudgetHold.Master, "It reads as held at 8 by a Master.");
+            Assert(SkillRules.KeepsTheBudget(crawler.Skills), "The crawler keeps the budget.");
+            // A skill already past its budget keeps what it has (nobody gives a skill up, Q6)
+            var over = default(SkillSet);
+            over.Set(Skill.Mining, 7);
+            over.Set(Skill.Smithing, 7);
+            over.Set(Skill.Foraging, 7);
+            var veteran = new Simpiens.Cognition.AgentState(EntityId.Generate()) { Skills = over };
+            sim.Practise(veteran, SkillWork.Harvest(ItemType.MedicinalHerb), 100, PracticeSource.Work);
+            Assert(veteran.Skills.Level(Skill.Foraging) == 7 && veteran.Skills.Experience(Skill.Foraging) == SkillRules.ExperienceFor(7), "A skill past its budget keeps what it has and gains nothing.");
+            Assert(!SkillRules.KeepsTheBudget(veteran.Skills), "Three past Apprentice break the budget, which a live scenario would catch.");
+            // A starting talent is at most an Apprentice's, so no draw breaks the budget
+            Assert(SkillRules.TalentLevel + SkillRules.TalentSpread - 1 <= SkillRules.ApprenticeTop, "A starting talent is at most 5.");
+            TestLog.Log("[PASS] Test 7: the mastery budget: the third skill past Apprentice stops at 5, the second Master at 8, first come, first served; a skill past it keeps what it has.");
+        }
+
         private void ValidateLevelZeroChangesNothing()
         {
             Assert(SkillRules.HitBonus(0) == 0f && SkillRules.DamageFactor(0) == 1f && SkillRules.MakeFactor(0) == 1f
@@ -135,7 +234,7 @@ namespace Simpiens.Testing.Skills
             Assert(Math.Abs(SkillRules.HitBonus(10) - 0.2f) < 1e-6f && Math.Abs(SkillRules.DamageFactor(10) - 1.2f) < 1e-6f
                 && Math.Abs(SkillRules.MakeFactor(10) - 1.5f) < 1e-6f && Math.Abs(SkillRules.CarryBonus(10) - 0.3f) < 1e-6f && Math.Abs(SkillRules.HealFactor(10) - 1.5f) < 1e-6f, "A Master 10's factors.");
             Assert(SkillRules.HarvestFactor(99) == SkillRules.HarvestFactor(10) && SkillRules.HarvestFactor(-3) == SkillRules.HarvestFactor(0), "Levels outside 0 to 10 count as the nearest.");
-            TestLog.Log("[PASS] Test 5: unskilled, a crawler fights, makes and tends by the numbers before skills; the harvest is centred on a Novice 2.");
+            TestLog.Log("[PASS] Test 8: unskilled, a crawler fights, makes and tends by the numbers before skills; the harvest is centred on a Novice 2.");
         }
 
         private void ValidateTheDraw()
@@ -176,7 +275,7 @@ namespace Simpiens.Testing.Skills
                 float share = talentOf[(byte)skill.Id] / (float)(talents1 + 2 * talents2);
                 Assert(share > 0.11f && share < 0.18f, $"With no lean each skill is a talent as often as the next ({skill.Name}: {share:P0}).");
             }
-            TestLog.Log($"[PASS] Test 6: the draw is seeded; one talent ({talents1}) or two ({talents2}) at an Apprentice's level, the rest a Novice's.");
+            TestLog.Log($"[PASS] Test 9: the draw is seeded; one talent ({talents1}) or two ({talents2}) at an Apprentice's level, the rest a Novice's.");
         }
 
         private void ValidatePersonalityLeansTheDraw()
@@ -199,7 +298,7 @@ namespace Simpiens.Testing.Skills
             Assert(boldMelee > timidMelee * 2, $"The bold lean toward melee ({boldMelee} against {timidMelee} of {Crawlers}).");
             Assert(timidRanged > boldRanged * 2, $"The cautious lean toward ranged ({timidRanged} against {boldRanged}).");
             Assert(SkillSet.Lean(SkillLean.None, bold) == 0f && SkillSet.Lean(SkillLean.Bold, bold) == 1f && SkillSet.Lean(SkillLean.Cautious, bold) == -1f, "A lean reads its trait.");
-            TestLog.Log($"[PASS] Test 7: personality leans the talents: the bold toward melee ({boldMelee} against {timidMelee}), the cautious toward ranged ({timidRanged} against {boldRanged}).");
+            TestLog.Log($"[PASS] Test 10: personality leans the talents: the bold toward melee ({boldMelee} against {timidMelee}), the cautious toward ranged ({timidRanged} against {boldRanged}).");
         }
 
         private static void Assert(bool condition, string message)

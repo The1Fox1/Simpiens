@@ -419,6 +419,8 @@ namespace Simpiens.Core.Session
             state.Look = CrawlerLook.Generate(seed, state.AgentId);
             // Its starting skills (Epic 10 Part 3, K9.1, Q19), on their own salt too, leaned by its personality
             state.Skills = Simpiens.Simulation.Skills.SkillSet.Generate(seed, state.AgentId, state.Personality);
+            // Its passions (Epic 11, S1.1, D3), on their own salt after the skills', so no earlier draw moves
+            state.Traits = Simpiens.Simulation.Skills.PassionTable.Draw(seed, state.AgentId, state.Personality, state.Skills, state.Traits);
 
             var living = new HashSet<string>(_crawlers.Count);
             for (int i = 0; i < _crawlers.Count; i++)

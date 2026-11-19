@@ -31,6 +31,9 @@ namespace Simpiens.Presentation.Dashboard
             [typeof(RescueGoal)] = "Save a fallen friend", // K5.3
             [typeof(HuntGoal)] = "Hunt a lair for the bounty", // K6.2
             [typeof(CarryMedicineGoal)] = "Carry a draught into danger",
+            [typeof(StudyGoal)] = "Buy a primer for a craft it loves", // Epic 11, S3.3
+            [typeof(ReadManualGoal)] = "Read its primer",
+            [typeof(DrillGoal)] = "Drill at the yard", // Epic 11, S3.4
             [typeof(RestGoal)] = "Rest",
             [typeof(SatiateHungerGoal)] = "Satisfy hunger",
             [typeof(SocializeGoal)] = "Socialize",
@@ -42,6 +45,9 @@ namespace Simpiens.Presentation.Dashboard
             [typeof(BuyToolAction)] = "Buying a pickaxe",
             [typeof(BuyWeaponAction)] = "Buying a weapon",
             [typeof(BuyDraughtAction)] = "Buying a draught",
+            [typeof(BuyManualAction)] = "Buying a primer", // Epic 11, S3.3
+            [typeof(ReadManualAction)] = "Reading by the hearth",
+            [typeof(DrillAction)] = "Drilling at the yard", // Epic 11, S3.4
             [typeof(ClaimBountyAction)] = "Claiming a bounty",
             [typeof(ClaimGatherBountyAction)] = "Claiming a gather bounty",
             [typeof(ClaimScoutBountyAction)] = "Claiming a scout bounty",

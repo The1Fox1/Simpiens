@@ -57,11 +57,14 @@ A day is 4 caravan visits. Measured per day on the gate seeds (T4.2b): the carav
 | Transfer | guild fees and wages (Epic 10 G4) | 20g a recruit; each member's wage a visit (5g by default) | conserved; `Fees` and `Wages` in the ledger's flows; a wage the treasury can't cover isn't paid |
 | Faucet | `CaravanSalvageSales` (the Gallery's glowstone, Epic 10 G5) | an expedition's haul, up to 4 glowstone, sold 2 a visit at 70g | one seam; only a party works it |
 | Transfer | expedition shares (Epic 10 G5) | 30% of the haul's caravan value, split among the party | conserved; `Shares` in the ledger's flows |
-| Sink | `Construction` (Epic 10 Part 2) | 300g per station, the forge and the still (`WorkshopTuning`) | once per station; refused when the treasury can't pay |
+| Sink | `Construction` (Epic 10 Part 2) | 300g per station, the forge and the still; 200g for the guildhall's drill yard (Epic 11, S3.4, `WorkshopTuning.CostOf`) | once per station; refused when the treasury can't pay |
+| Sink | `ManualWholesale` (Epic 11, S3.2) | 2g per primer, one of each of seven kept on the shelf, after the gear | as much as the stall can pay for; the first visit pays 14g for the set, later visits only for what sold. 8g at first: the first visit's 56g, when the stall is at its poorest, left the crafting profile's stations unbuilt on 6 of 20 seeds (S3.6) |
+| Transfer | primers (Epic 11, S3.3) | sold at 25g to a resident who loves the primer's skill, from a spare purse (the price, a ration's and 15g besides) | conserved, as a trade; the stall keeps 23g a primer over its wholesale |
 | Transfer | artisans' wages (Epic 10 Part 2) | each artisan's wage a visit (5g by default), after the guild's members | conserved; `ArtisanWages` in the ledger's flows; no signing fee |
 | Faucet | `CaravanSalvageSales` (creatures' materials, Epic 10 Part 3, K4.4) | hides and chitin past six of each kept for the forge, 6g and 10g (the stall pays 5g and 8g) | 8 of each a visit |
 | Faucet | `CaravanSalvageSales` (bosses' trophies, Epic 10 Part 3, K10.1a) | the Matriarch's pelt at 44g (the stall pays 36g), the Keeper's stone at 170g (140g) | a pelt a game week at most (her return); the stone once a session (the Gatekeeper never returns) |
 | Transfer | hunt bounties (Epic 10 Part 3, K6) | escrow posted by the player, paid out by damage dealt among up to three hunters | conserved; released in shares |
+| Transfer | raises (Epic 11, S2.2, D8) | a member's or artisan's asking wage is its reservation wage ×1.25 at Journeyman, ×1.5 at Master (`GuildTuning`'s raise rows, read by the artisans too); a raise paid is part of its wage | conserved, inside `Wages` and `ArtisanWages`; a cost, not a new sink. Paid below its asking wage, a hand takes the unpaid wage's trust and warmth, no unpaid visit counted |
 
 **What follows:** the stall's net a day ≈ the caravan's payment − upkeep − wholesale − what crawlers keep.
 - Crawlers spend what they earn, so their gold passes through; purses stay near 40–55g, under the 80g they earn toward.
@@ -125,12 +128,16 @@ The default prices (15 / 5 / 6) are fair to a neutral crawler. A remembered affi
 - **Drifters (F11):** the keen profile (rations 20, ore 4, herbs 5, gear 35: slightly greedy) ends richer with drifters than in a closed outpost on every soak seed. Measured over 16 seeds: 17,254g against 11,985g, ahead on all 16, though drifters take away more than they bring (about 460g against 330g over three days). `DriftersLeaveAKeenPlayersStallRicher` asserts it; on Part 1's day the comparison was within the noise (Epic 10 F4).
 - **Why greed is judged at its lowest trust:** greed costs trust early, through stingy sales. Once the stall is empty nobody trades, and trust drifts back to neutral. The generous band is judged at its peak for the same reason.
 - **Why generous starvation isn't asserted:** a bankrupt outpost can't pay for food. Partial restocks soften that, and the soak measured 0 anyway.
+- **The cost of mastery (Epic 11, S2.4, measured 2026-11-17):** the scripted players pay each raise when it is asked (S2.3). The `guild`, `crafting` and `hunting` profiles hold their bands with raises paid on 20 of 20 seeds each (seeds 1–20). No member or artisan reaches Journeyman by day 3, so no raise falls due and upkeep costs nothing at the soak's horizon. Over 14 days (seeds 1–10), one hand under contract stands past Apprentice at the end (a member on `crafting` seed 2, 1g of raise a visit). The bands stay as they are, by exception.
+- **The teachers (Epic 11, S3.6):** the primers' shelf is a new early cost. At 8g wholesale it left the crafting profile's stations unbuilt on 6 of seeds 1–20; at 2g the share holds at its edge (goods made on 16 of 20, the band 16; a quit for pay on 2, the band 5). Epic 11's F7.
+- **Plan 1's final build (Epic 11, C.1, 2026-11-17):** the soak agrees with S3.6. Every profile holds its band: the regular soak 18 of 18, and the `guild`, `crafting` and `hunting` profiles on seeds 1–20 20 of 20 each. Crafting makes goods on 16 of 20 and loses a member to pay on 2. No member or artisan stands past Apprentice by day 3, so no raise is owed. The bands stay as they are.
 - **The regular suite** asserts the fair case over one game day: the outpost's day (`OutpostScenarioTests`, on the 23 gate seeds) checks that trust rises for ⅔ of crawlers and nobody starves. Seeds 1–120 all pass (`simpiens sweep`, 2026-11-05).
 
 ## 8. Deferred
 - ~~**Drifters**, **gear**, **wages and recruitment**, **expeditions**:~~ delivered by Epic 10 G1–G5 (§1, §2).
 - ~~**Made goods** (the pickaxe, draughts, gear for each hazard):~~ delivered by Epic 10 Part 2, W1–W4. They are what the 80g purse is for.
 - **The whole loop's balance** (Epic 10 Part 2's F14, joined by Part 3's F14, F8 and F10). This is open and the producer's decision, and unscheduled: the next epic that re-tunes the economy re-sets the `crafting` and `hunting` bands (§7) with it.
+  - **The producer's word (2026-11-16):** "Economy flukes are tolerable until they completely ruin our testing scenarios." So the economy is left as it is until a scenario breaks on it. A test's band that drifts with the economy is judged across seeds, as F3's option A did, rather than tuned around.
   - **What happens:**
     - With both stations and a guild of eight, the stall ends day 3 at 1–390g, where the fair player ends at 771–1,277g.
     - On the default seed it affords the forge and a guild of eight, but never the still as well.
@@ -141,6 +148,7 @@ The default prices (15 / 5 / 6) are fair to a neutral crawler. A remembered affi
     - two artisans' wages, about 40g a day;
     - the stations, 600g once.
     - The guild's glowstone feeds the forge's respirators instead of the caravan's exports.
+  - **Upkeep beside it (Epic 11, S2.4):** the raises add nothing measurable yet. Over 14 days on seeds 1–10, the `crafting` profile's guild falls apart for want of pay on 8 seeds (0–5 members left, up to 10 quits) and the `hunting` profile's on 7 (up to 18 quits). Yet a hand under contract stands past Apprentice at the end on one seed only, for 1g a visit. The strain is the open loop's, not mastery's. The `guild` profile alone holds four members, pays every wage and quits for nothing on all 10. Measured by the soak's `Specialists`, `Upkeep` and `RaisesOwed`; the scripted players keep paying raises as they come.
   - **What holds it today:** the scripted players keep a reserve (150–200g, D67 and D71), as a careful player would. That is input, not a rule, and it holds every DoD's run.
   - **The levers:**
     - the stations' cost (300g each);

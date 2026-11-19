@@ -56,10 +56,10 @@ namespace Simpiens.Simulation.Items
                 ItemCategory.Consumable | ItemCategory.Food, ItemRarity.Common,
                 consume: new[] { new ConsumeEffect(StatKind.Hunger, -40f) }),
             new ItemDefinition(ItemType.IronOre, "IronOre", "Iron Ore",
-                ItemCategory.Resource | ItemCategory.Mineral, ItemRarity.Common),
+                ItemCategory.Resource | ItemCategory.Mineral, ItemRarity.Common) { HarvestChallenge = 4 }, // Epic 11, D5
             new ItemDefinition(ItemType.MedicinalHerb, "MedicinalHerb", "Medicinal Herb",
                 ItemCategory.Resource | ItemCategory.Botanical | ItemCategory.Consumable | ItemCategory.Medicine, ItemRarity.Common,
-                consume: new[] { new ConsumeEffect(StatKind.Health, 30f) }),
+                consume: new[] { new ConsumeEffect(StatKind.Health, 30f) }) { HarvestChallenge = 3 },
             new ItemDefinition(ItemType.ToolPickaxe, "Pickaxe", "Pickaxe",
                 ItemCategory.Equipment | ItemCategory.Tool | ItemCategory.Mineral, ItemRarity.Uncommon,
                 // Mines 1.5 times as fast and wears by the mineral unit (Epic 10 Part 2, D36, D37): 40 units, about a week of a
@@ -73,7 +73,7 @@ namespace Simpiens.Simulation.Items
                 equipment: new EquipmentBlock(SlotKind.Body, durability: 1500, WearRule.PerHazardTick,
                     new StatModifier(StatKind.HazardResistance, ModifierOp.Add, 0.5f))),
             new ItemDefinition(ItemType.Glowstone, "Glowstone", "Glowstone",
-                ItemCategory.Resource | ItemCategory.Mineral | ItemCategory.Hazardous, ItemRarity.Rare),
+                ItemCategory.Resource | ItemCategory.Mineral | ItemCategory.Hazardous, ItemRarity.Rare) { HarvestChallenge = 7 }, // a Journeyman's seam
             // Made at the still from two herbs; heals 80 at once (Epic 10 Part 2, W2, Q5, D42). Medicine, so the herb reflex
             // drinks it under the treat line; not salvage: the stall doesn't buy it back
             new ItemDefinition(ItemType.HealingDraught, "HealingDraught", "Healing Draught",
@@ -154,8 +154,19 @@ namespace Simpiens.Simulation.Items
                 equipment: new EquipmentBlock(SlotKind.Weapon, durability: 120, WearRule.PerShot,
                     new StatModifier(StatKind.Attack, ModifierOp.Add, 7f),
                     new StatModifier(StatKind.Range, ModifierOp.Add, 7f),
-                    new StatModifier(StatKind.AttackInterval, ModifierOp.Multiply, 1.6f)))
+                    new StatModifier(StatKind.AttackInterval, ModifierOp.Multiply, 1.6f))),
+            // Manuals (Epic 11, S3.2, Q10, D11): a primer a skill, each naming the work it teaches; read and used up
+            Primer(ItemType.MeleePrimer, "MeleePrimer", "Primer of the Blade", Simpiens.Simulation.Skills.SkillWork.Fight(ranged: false)),
+            Primer(ItemType.RangedPrimer, "RangedPrimer", "Primer of the Sling", Simpiens.Simulation.Skills.SkillWork.Fight(ranged: true)),
+            Primer(ItemType.MiningPrimer, "MiningPrimer", "Primer of the Seam", Simpiens.Simulation.Skills.SkillWork.Harvest(ItemType.IronOre)),
+            Primer(ItemType.ForagingPrimer, "ForagingPrimer", "Primer of the Grove", Simpiens.Simulation.Skills.SkillWork.Harvest(ItemType.MedicinalHerb)),
+            Primer(ItemType.SmithingPrimer, "SmithingPrimer", "Primer of the Forge", Simpiens.Simulation.Skills.SkillWork.Make(StationKind.Forge)),
+            Primer(ItemType.AlchemyPrimer, "AlchemyPrimer", "Primer of the Still", Simpiens.Simulation.Skills.SkillWork.Make(StationKind.Still)),
+            Primer(ItemType.MedicinePrimer, "MedicinePrimer", "Primer of Mending", Simpiens.Simulation.Skills.SkillWork.Tend())
         };
+
+        private static ItemDefinition Primer(ItemType id, string name, string displayName, Simpiens.Simulation.Skills.SkillWork work) =>
+            new ItemDefinition(id, name, displayName, ItemCategory.Manual, ItemRarity.Uncommon, maxStack: 4) { Manual = ManualBlock.Primer(work) };
 
         /// <summary>
         /// Tests only: the catalog with <paramref name="extra"/> added, until the returned scope is disposed (item system

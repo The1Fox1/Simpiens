@@ -225,6 +225,8 @@ Each step measured the new day before it was the default, so the names below are
 | A crawler's purse target | `EconomyTuning.ComfortablePurse` (was `EarnIncomeGoal.ComfortableGold`) | 40g | — | 80g, about two days' meals (D25) | T4.2 ✓ |
 | The pickaxe at the forge | `RecipeBook` (D2) | 600 ticks | D | 2 h (840); live now, since nothing crafts in a live run before W1.5a | T3.1 ✓ |
 | A spell at the hearth | `ActionTuning` (was `RelaxAtAnchorAction`) | 3 s | D | 30 min (210) | T2.4 ✓ |
+| Read a manual through (Epic 11, S3.3) | `ActionTuning.ReadSeconds` | — | D | 2 h (840); the practice and the book's use at the end | S3.3 ✓ |
+| A spell of drill at the yard (Epic 11, S3.4) | `DrillIntentHandler` (a game hour, as a station's work) | — | D | 1 h (420), practice in six lots | S3.4 ✓ |
 | Idle pauses | `AmbientWanderEvaluator`, `AgentCognitionService` | 1.5–2 s | P | kept: ambient motion | |
 | Panic's sprint; the downed crawler's wait | `PanicIntentHandler.MaxSeconds`; `MentalBreakEvaluator.DownedSleepSeconds` | 6 s; 5 s | P | kept | |
 | Poses: tantrum, gossip, yield, share, rally, defiance | `AgentState.Trigger…Visual` | 1.2–2.5 s | P | kept | |

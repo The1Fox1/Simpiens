@@ -156,11 +156,12 @@ namespace Simpiens.Core.Tests
             TestContext.Current.TestOutputHelper?.WriteLine($"{run}\n{run.Watch.CreatureSummary()}\n{run.Watch.Report()}");
 
         /// <summary>
-        /// Gate seed 3: measured (since K8, D46's start of the fight) an armed four clearing a lair on 22 of the 23 gate seeds
-        /// (all but seed 10, where no lair is charted in time), with nobody dead and a fallen member carried out alive on 17;
-        /// on this one a member falls and is carried out alive, and the party comes home at t18605 with five of the lair's material.
+        /// Gate seed 20261009 since Epic 11's teachers (S3.6, <see cref="MeasureClearsOnTheGateSeeds"/> on S3's final build): an
+        /// armed four clearing a lair on 21 of the 23 gate seeds, nobody dead, a fallen member carried out alive on 14; seed 3,
+        /// K8's, now comes home with nothing picked up. On this one, the earliest clear with a haul, a member falls and is carried
+        /// out alive, and the party comes home at t18824 with one of the lair's material. (Since K8: seed 3, 22 of 23 cleared.)
         /// </summary>
-        private const ulong ClearSeed = 3;
+        private const ulong ClearSeed = 20261009;
 
         [Fact]
         public void AnArmedPartyClearsANest()
@@ -172,12 +173,13 @@ namespace Simpiens.Core.Tests
             Assert.True(run.ClearedAt >= 0, "It emptied the lair.");
             Assert.True(run.HomeAt >= 0 && !run.TurnedBack, "It came home as ordered.");
             Assert.True(run.Haul > 0, "With what it picked up of the lair's material.");
+            Assert.True(run.Watch.DeedTotal(Simpiens.Simulation.Skills.Deed.ClearWon) >= 1, "Home from a won clear: a deed for each member with the party (Epic 11, S0.5).");
             Assert.True(run.Collapsed.All(run.Rescued.Contains), "Everyone who fell was carried out.");
             Assert.Equal(0, run.Deaths);
             AssertTheDaysHeld(run);
         }
 
-        /// <summary>Gate seed 6: a member falls in the lair, the guild sends a mate who carries it out, and it stands again at t23036 (K7.4's measurement).</summary>
+        /// <summary>Gate seed 6: a member falls in the lair, the guild sends a mate who carries it out, and it stands again (K7.4's measurement; at S3.6 three fall and all three are carried out alive, the first standing at t26502).</summary>
         private const ulong CarrySeed = 6;
 
         [Fact]
@@ -198,8 +200,14 @@ namespace Simpiens.Core.Tests
         /// 23 gate seeds in eight days (9 before the fight's start sent the whole party in together; with four, the mates carry
         /// everyone out); seed 7 until the Matriarch joined the warren (Epic 10 Part 3, K10.2a) moved every creature's id and
         /// timing: still 2 of 23 (seeds 8 and 17), here first at t30345.
+        /// Seed 62 since passions and practice by challenge (Epic 11, S1.5), off the gate seeds: over ten days a death on 1 of
+        /// the 23 (seed 20, too late for its newcomer within the horizon) and on 12 of seeds 21 to 100, rescuers now carrying
+        /// most of the fallen out (Epic 11's finding F4). On this one the first death is at t16981, and a newcomer settles at t37141.
+        /// Gate seed 16 since Epic 11's teachers (S3.6, on S3's final build): over ten days a death on 7 of the 23 gate seeds; on
+        /// this one, the earliest whose newcomer settles within the horizon, the first death is at t25051 and a newcomer settles
+        /// at t45211.
         /// </summary>
-        private const ulong DeathSeed = 8;
+        private const ulong DeathSeed = 16;
 
         [Fact]
         public void DeathHasItsCost()
@@ -215,36 +223,52 @@ namespace Simpiens.Core.Tests
             Assert.Equal(0, run.Watch.IntentFaults);
         }
 
-        /// <summary>The measurement behind the clear's and the carry's seeds: every gate seed's eight days (explicit, a few minutes).</summary>
+        /// <summary>The measurement behind the clear's and the carry's seeds: every gate seed's eight days, eight at a time (explicit, a few minutes).</summary>
         [Fact(Explicit = true)]
         public void MeasureClearsOnTheGateSeeds()
         {
             int cleared = 0, carried = 0, died = 0;
-            foreach (var seed in OutpostWatch.GateSeeds)
+            var seeds = OutpostWatch.GateSeeds;
+            var lines = new string[seeds.Length];
+            System.Threading.Tasks.Parallel.For(0, seeds.Length, new System.Threading.Tasks.ParallelOptions { MaxDegreeOfParallelism = 8 }, i =>
             {
-                var run = Play(seed, 8 * DayClock.TicksPerDay, null);
-                if (run.ClearedAt >= 0) cleared++;
-                if (run.RescuedLived > 0) carried++;
-                if (run.Deaths > 0) died++;
+                var run = Play(seeds[i], 8 * DayClock.TicksPerDay, null);
+                if (run.ClearedAt >= 0) System.Threading.Interlocked.Increment(ref cleared);
+                if (run.RescuedLived > 0) System.Threading.Interlocked.Increment(ref carried);
+                if (run.Deaths > 0) System.Threading.Interlocked.Increment(ref died);
                 var failures = run.Watch.DayFailures();
-                TestContext.Current.TestOutputHelper?.WriteLine($"seed {seed}: {run}; days {(failures.Count == 0 ? "hold" : "FAIL: " + string.Join("; ", failures))}");
-            }
+                lines[i] = $"seed {seeds[i]}: {run}; days {(failures.Count == 0 ? "hold" : "FAIL: " + string.Join("; ", failures))}";
+            });
+            foreach (var line in lines) TestContext.Current.TestOutputHelper?.WriteLine(line);
             TestContext.Current.TestOutputHelper?.WriteLine($"a lair cleared on {cleared}, a fallen member carried out alive on {carried}, a death on {died} of {OutpostWatch.GateSeeds.Length} seeds");
         }
 
-        /// <summary>The measurement behind the death's seed: two unarmed against the beetles, under the Bold rule (explicit, a few minutes).</summary>
+        /// <summary>
+        /// The measurement behind the death's seed: two unarmed against the beetles, under the Bold rule, over the DoD's ten days
+        /// (explicit, a few minutes). SIMPIENS_SEEDS ("21..100") measures other seeds than the gate's, eight at a time.
+        /// </summary>
         [Fact(Explicit = true)]
         public void MeasureUnderArmedClearsOnTheGateSeeds()
         {
-            int died = 0;
-            foreach (var seed in OutpostWatch.GateSeeds)
+            var seeds = OutpostWatch.GateSeeds;
+            var range = System.Environment.GetEnvironmentVariable("SIMPIENS_SEEDS");
+            if (!string.IsNullOrEmpty(range) && range.Contains(".."))
             {
-                var run = Play(seed, 8 * DayClock.TicksPerDay, null, RetreatRule.Bold, arm: false, CreatureKind.StoneBeetle, size: 2);
-                if (run.Deaths > 0) died++;
-                var failures = run.Watch.DayFailures();
-                TestContext.Current.TestOutputHelper?.WriteLine($"seed {seed}: {run}; days {(failures.Count == 0 ? "hold" : "FAIL: " + string.Join("; ", failures))}{(run.Jitters.Count > 0 ? "; jitter " + string.Join(" | ", run.Jitters) : "")}");
+                var ends = range.Split("..");
+                ulong from = ulong.Parse(ends[0]), to = ulong.Parse(ends[1]);
+                seeds = Enumerable.Range(0, (int)(to - from + 1)).Select(i => from + (ulong)i).ToArray();
             }
-            TestContext.Current.TestOutputHelper?.WriteLine($"a death on {died} of {OutpostWatch.GateSeeds.Length} seeds");
+            var lines = new string[seeds.Length];
+            int died = 0;
+            System.Threading.Tasks.Parallel.For(0, seeds.Length, new System.Threading.Tasks.ParallelOptions { MaxDegreeOfParallelism = 8 }, i =>
+            {
+                var run = Play(seeds[i], 10 * DayClock.TicksPerDay, null, RetreatRule.Bold, arm: false, CreatureKind.StoneBeetle, size: 2);
+                if (run.Deaths > 0) System.Threading.Interlocked.Increment(ref died);
+                var failures = run.Watch.DayFailures();
+                lines[i] = $"seed {seeds[i]}: {run}; days {(failures.Count == 0 ? "hold" : "FAIL: " + string.Join("; ", failures))}{(run.Jitters.Count > 0 ? "; jitter " + string.Join(" | ", run.Jitters) : "")}";
+            });
+            foreach (var line in lines) TestContext.Current.TestOutputHelper?.WriteLine(line);
+            TestContext.Current.TestOutputHelper?.WriteLine($"a death on {died} of {seeds.Length} seeds");
         }
     }
 }

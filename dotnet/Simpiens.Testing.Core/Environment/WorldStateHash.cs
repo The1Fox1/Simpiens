@@ -124,6 +124,13 @@ namespace Simpiens.Testing.Environment
                 // Its skills (Epic 10 Part 3, K9.1): each one's experience, drawn at spawn, raised by practice and saved
                 var skills = s.Skills;
                 for (int k = 0; k < Simpiens.Simulation.Skills.SkillTable.Capacity; k++) Mix(ref h, skills.ExperienceAt(k));
+                // Who it has become (Epic 11, S0.4): mixed once anything is written, so a record nothing has touched moves no hash
+                var traits = s.Traits;
+                if (!traits.IsEmpty)
+                {
+                    var words = System.Runtime.InteropServices.MemoryMarshal.Cast<byte, int>(Simpiens.Simulation.Skills.CrawlerTraits.BytesOf(traits));
+                    for (int w = 0; w < words.Length; w++) Mix(ref h, words[w]);
+                }
                 string intent = !includeWork ? "-" : s.CurrentIntent != null ? s.CurrentIntent.GetType().Name : "none";
                 string goal = !includeWork ? "-" : s.ActiveGoal != null ? s.ActiveGoal.Name : "none";
                 Mix(ref h, intent);

@@ -29,6 +29,14 @@ namespace Simpiens.Simulation.Economy
         Sling         = 21, // A ranged weapon the caravan supplies cheaply (Epic 10 Part 3, K8.1, Q15; placeholder name)
         Crossbow      = 22, // A ranged weapon made at the forge from ore and a hide (K8.1, Q15; placeholder name)
         MatriarchPelt = 23, // The Matriarch's trophy, sure at her slaying (Epic 10 Part 3, K10, Q12; placeholder name)
-        KeeperStone   = 24 // The Gatekeeper's trophy, sure at its slaying (K10, Q12; placeholder name)
+        KeeperStone   = 24, // The Gatekeeper's trophy, sure at its slaying (K10, Q12; placeholder name)
+        // Manuals (Epic 11, S3.2, Q10, D11): one primer a skill, teaching to the top of Novice; read and used up
+        MeleePrimer   = 25, // placeholder names, as the rest
+        RangedPrimer  = 26,
+        MiningPrimer  = 27,
+        ForagingPrimer = 28,
+        SmithingPrimer = 29,
+        AlchemyPrimer = 30,
+        MedicinePrimer = 31
     }
 }

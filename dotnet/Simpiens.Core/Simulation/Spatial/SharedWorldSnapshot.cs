@@ -141,6 +141,13 @@ namespace Simpiens.Simulation.Spatial
         /// <summary>True when lair <paramref name="lairIndex"/>'s boss is alive.</summary>
         public bool IsBossAlive(int lairIndex) => lairIndex >= 0 && lairIndex < 64 && (BossLairMask & (1UL << lairIndex)) != 0;
 
+        /// <summary>Which of the map's stations stand built (bit i = station i, Epic 11, S3.4): a drill yard to drill at.</summary>
+        public ulong BuiltStationMask { get; private set; }
+        public void SetBuiltStations(ulong mask) => BuiltStationMask = mask;
+
+        /// <summary>Whether the map's station <paramref name="stationIndex"/> stands built.</summary>
+        public bool IsStationBuilt(int stationIndex) => stationIndex >= 0 && stationIndex < 64 && (BuiltStationMask & (1UL << stationIndex)) != 0;
+
         public bool IsSectorCharted(int sectorId)
         {
             if (sectorId < 0 || sectorId >= 64) return true;

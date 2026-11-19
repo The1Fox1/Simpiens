@@ -46,6 +46,8 @@ namespace Simpiens.Presentation.Art
                .Add(ArtKeys.PropStill, Sheet, new[] { "Iso_Still" }, IsometricSprites.StillWidth, IsometricSprites.StillHeight + IsometricSprites.StillRise,
                    pivotY: IsometricSprites.BlockPivotY(IsometricSprites.StillHeight, IsometricSprites.StillRise))
                .Add(ArtKeys.PropStationPlot, Sheet, new[] { "Iso_StationPlot" }, IsometricSprites.PlotWidth, IsometricSprites.PlotHeight)
+               .Add(ArtKeys.PropDrillYard, Sheet, new[] { "Iso_DrillYard" }, IsometricSprites.DrillYardWidth, IsometricSprites.DrillYardHeight + IsometricSprites.DrillYardRise,
+                   pivotY: IsometricSprites.BlockPivotY(IsometricSprites.DrillYardHeight, IsometricSprites.DrillYardRise)) // Epic 11, S3.4
                .Add(ArtKeys.PropCairn, Sheet, new[] { "Prop_Cairn" }, Standing, Standing, pivotY: FeetPivot) // a body (Epic 10 Part 3, K5.8b), standing as the hearth does
                .Add(ArtKeys.CrawlerShadow, Sheet, new[] { "Iso_Shadow" }, IsometricSprites.Shadow.Width, IsometricSprites.Shadow.Height)
                .Add(ArtKeys.SelectionRing, Sheet, new[] { "Iso_Selection_Ring" }, IsometricSprites.SelectionRing.Width, IsometricSprites.SelectionRing.Height)

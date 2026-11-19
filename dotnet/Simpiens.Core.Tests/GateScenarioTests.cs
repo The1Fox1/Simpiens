@@ -110,9 +110,9 @@ namespace Simpiens.Core.Tests
 
         /// <summary>
         /// The default seed (the DoD's, Q13): measured (K10.6) four blades kitted with ring coats and two draughts each break the
-        /// Gatekeeper on 17 of the 23 gate seeds in sixteen days, 1.5 attempts each, and on none unkitted; here on the fourth
-        /// attempt, at t126676 (day 12.6), the keeper left at 37, 31 and 55 by the three before. The bound: within sixteen days and
-        /// six attempts.
+        /// Gatekeeper on 17 of the 23 gate seeds in sixteen days, 1.5 attempts each, and on none unkitted; then on the fourth
+        /// attempt, at t126676 (day 12.6). Re-measured at Epic 11's S3.6 (teachers): 18 of 23, 1.9 attempts each, none
+        /// unkitted; here on the first attempt, at t74508 (day 7.4). The bound: within sixteen days and six attempts.
         /// </summary>
         [Fact]
         public void TheGuildBreaksTheGatekeeper()
@@ -125,6 +125,7 @@ namespace Simpiens.Core.Tests
             Assert.True(run.GateAttempts >= 1 && run.GateAttempts <= MaxAttempts, $"The guild went at the gate {run.GateAttempts} times (at most {MaxAttempts}).");
             Assert.True(run.BreachedAt > run.FirstGateSentAt, "The Gatekeeper fell and the gate is breached.");
             Assert.True(run.Breaker != default && run.Party.Contains(run.Breaker), "The chronicle names the member who broke it.");
+            Assert.True(watch.DeedTotal(Simpiens.Simulation.Skills.Deed.BossSlain) >= 1, "Breaking the Gatekeeper is a boss slain (Epic 11, S0.5).");
             Assert.Equal(0, run.Deaths);
             Assert.Equal(0, watch.ConservationViolations);
             Assert.Equal(0, watch.IntentFaults);

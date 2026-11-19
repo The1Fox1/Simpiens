@@ -41,6 +41,9 @@ namespace Simpiens.Simulation.Items
         /// Origin: from a creature's body (Epic 10 Part 3, K4.2). No node yields a creature's material, so no Gather bounty
         /// asks for it and no pickaxe works it.
         /// </summary>
-        Creature = 1u << 11
+        Creature = 1u << 11,
+
+        /// <summary>A manual (Epic 11, S3.2, D11): read at rest, practising the work its <see cref="ManualBlock"/> names, and used up.</summary>
+        Manual = 1u << 12
     }
 }

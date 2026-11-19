@@ -117,7 +117,29 @@ namespace Simpiens.Presentation.Dashboard
 
         /// <summary>Its skills, the best four first (Epic 10 Part 3, K9.5): "Smithing 5 · Foraging 4 · Melee 1 · Mining 1"; so a recruit's show before it is signed.</summary>
         public string Skills { get; private set; } = string.Empty;
+
+        /// <summary>
+        /// Its skills as the dossier lists them, each with its passion (Epic 11, S1.6): the best four, and every skill it loves
+        /// even at 0 (its nature); a flame marks keen and burning.
+        /// </summary>
+        public System.Collections.Generic.IReadOnlyList<SkillTexts.Shown> SkillsShown => _skillsShown;
+        private readonly System.Collections.Generic.List<SkillTexts.Shown> _skillsShown = new System.Collections.Generic.List<SkillTexts.Shown>(Simpiens.Simulation.Skills.SkillTable.Capacity);
         public const string NoGear = "None";
+
+        /// <summary>A skill the mastery budget holds (Epic 11, S2.5, D7): "Foraging held at 5: two crafts past Apprentice"; empty when none is.</summary>
+        public string SkillHeld { get; private set; } = string.Empty;
+
+        /// <summary>
+        /// Who taught it (Epic 11, S3.5, D9): each skill's first teacher from its traits record, "Mining taught by Bram", the
+        /// departed named from the departed roll; joined by " · ", empty when nobody taught it.
+        /// </summary>
+        public string Taught { get; private set; } = string.Empty;
+
+        /// <summary>The line under the skills: who taught it, then a skill the budget holds; empty when neither.</summary>
+        public string SkillNotes => Taught.Length == 0 ? SkillHeld : SkillHeld.Length == 0 ? Taught : Taught + " · " + SkillHeld;
+
+        /// <summary>A member's or artisan's asking wage above its wage (Epic 11, S2.5, D8): "asks 7g"; empty otherwise.</summary>
+        public string Asks { get; private set; } = string.Empty;
 
         public float Hunger { get; private set; }
         public float Energy { get; private set; }
@@ -162,6 +184,10 @@ namespace Simpiens.Presentation.Dashboard
             _shownRows.Clear();
             Equipment.Refresh(null);
             Skills = string.Empty;
+            _skillsShown.Clear();
+            SkillHeld = string.Empty;
+            Asks = string.Empty;
+            Taught = string.Empty;
             if (!HasCrawler)
             {
                 if (crawler != default) ShowTheDead(crawler);
@@ -180,6 +206,10 @@ namespace Simpiens.Presentation.Dashboard
             Describe(node.Id, agent);
             Equipment.Refresh(agent.Inventory);
             Skills = SkillTexts.Best(agent.Skills, 4);
+            SkillTexts.BestShown(agent.Skills, agent.Traits, 4, keepPassions: true, _skillsShown);
+            SkillHeld = SkillTexts.Held(agent.Skills);
+            Taught = TaughtBy(agent.Traits);
+            Asks = AsksOf(agent);
             Hunger = agent.Hunger;
             Energy = agent.Energy;
             Social = agent.Social;
@@ -212,6 +242,43 @@ namespace Simpiens.Presentation.Dashboard
                 _affinities.Add(_rows[i].Line);
                 _shownRows.Add(_rows[i]);
             }
+        }
+
+        // Each skill's first teacher (Epic 11, S3.5): a living teacher by its name here, the departed by the roll's
+        private string TaughtBy(in Simpiens.Simulation.Skills.CrawlerTraits traits)
+        {
+            var parts = new System.Collections.Generic.List<string>(Simpiens.Simulation.Skills.CrawlerTraits.TeacherSlots);
+            for (int i = 0; i < Simpiens.Simulation.Skills.CrawlerTraits.TeacherSlots; i++)
+            {
+                var record = traits.TeacherAt(i);
+                if (record.Skill == Simpiens.Simulation.Skills.Skill.None || record.Teacher == default) continue;
+                var skill = Simpiens.Simulation.Skills.SkillTable.Get(record.Skill);
+                if (skill == null) continue;
+                parts.Add($"{skill.DisplayName} taught by {TeacherName(record.Teacher)}");
+            }
+            return string.Join(" · ", parts);
+        }
+
+        private string TeacherName(EntityId teacher)
+        {
+            var node = _context.Registry?.GetEntity(teacher);
+            if (node?.Agent != null) return _context.FriendlyName(teacher, node.Agent.GivenName ?? UnknownName);
+            var departed = _context.Departed?.Departed;
+            for (int i = departed != null ? departed.Count - 1 : -1; i >= 0; i--)
+                if (departed[i].Id == teacher && !string.IsNullOrEmpty(departed[i].GivenName)) return departed[i].GivenName;
+            return _context.FriendlyName(teacher, UnknownName);
+        }
+
+        // A member's or artisan's asking wage against its contract's (Epic 11, S2.5, D8)
+        private string AsksOf(Simpiens.Cognition.AgentState agent)
+        {
+            var sim = _context.Simulation;
+            if (sim == null) return string.Empty;
+            if (sim.Guild.TryGetContract(agent.AgentId, out var member))
+                return SkillTexts.Asks(member.Wage, Simpiens.Simulation.Guild.GuildRules.AskingWage(agent, sim.Economy.Guild));
+            if (sim.Workshops != null && sim.Workshops.TryGetContract(agent.AgentId, out var artisan))
+                return SkillTexts.Asks(artisan.Wage, Simpiens.Simulation.Workshops.WorkshopRules.AskingWage(agent, sim.Economy.Workshops, sim.Economy.Guild));
+            return string.Empty;
         }
 
         // The header (Epic UI-Beta B3): the portrait's key, and its words, rebuilt only when they change

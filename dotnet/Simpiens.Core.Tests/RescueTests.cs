@@ -56,6 +56,8 @@ namespace Simpiens.Core.Tests
             // A rescue is practice in medicine (Epic 10 Part 3, K9.2)
             var rescue = told.First(e => e.EventType == ChronicleEventType.CrawlerRescued && e.ActorBId == fallen.AgentId);
             var rescuer = sim.Host.CrawlerStates.First(c => c.AgentId == rescue.ActorAId);
+            Assert.True(rescuer.Traits.Count(Simpiens.Simulation.Skills.Deed.Rescue) >= 1 && fallen.Traits.Count(Simpiens.Simulation.Skills.Deed.DowningSurvived) >= 1,
+                "The rescue is the rescuer's deed, and the fallen survived a downing (Epic 11, S0.5).");
             Assert.True(rescuer.Skills.Experience(Simpiens.Simulation.Skills.Skill.Medicine) >= medicine[rescuer.AgentId] + Simpiens.Simulation.Skills.SkillRules.RescueExperience, "Its rescuer practised medicine.");
         }
 

@@ -89,6 +89,8 @@ namespace Simpiens.Core.Session.Layouts
         /// <summary>Where the forge and the still may be built (Epic 10 Part 2, Q2, Q10): the workshop row's west half, clear of the lane.</summary>
         public const string Forge = "workshop.forge";
         public const string Still = "workshop.still";
+        /// <summary>The guildhall's drill yard (Epic 11, S3.4, D10): in the hall's west half, inside the door.</summary>
+        public const string DrillYard = "guildhall.yard";
         public const float StationRadius = 1.5f;
 
         public const int SpawnPointCount = 12;
@@ -243,6 +245,8 @@ namespace Simpiens.Core.Session.Layouts
             // --- Workshop row: where the forge and the still may be built (Epic 10 Part 2); nothing stands there yet ---
             b.Station(Forge, StationKind.Forge, new Vec2(-5f, -21f), StationRadius);
             b.Station(Still, StationKind.Still, new Vec2(-1f, -21f), StationRadius);
+            // --- The guildhall's yard (Epic 11, S3.4, D10): a drill yard may be built there, west of the barracks ---
+            b.Station(DrillYard, StationKind.DrillYard, new Vec2(12f, -21.5f), StationRadius);
 
             // --- Road Gate spawn points: two rows of six ---
             for (int i = 0; i < SpawnPointCount; i++)

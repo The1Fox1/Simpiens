@@ -56,6 +56,7 @@ namespace Simpiens.Core.Tests
             Assert.True(buyers.Count >= 1 && buyers.All(b => !b.IsDrifter), "A resident bought one.");
             Assert.True(firstMinedWithOne >= 0, "A buyer mined with its pickaxe, faster (ToolValidator times it).");
             Assert.Equal(sim.Simulation.Economy.Workshops.ConstructionCost, ledger.GetSinkTotal(WorkshopService.ConstructionSinkName));
+            Assert.Equal((int)workshops[forge].Made, watch.DeedTotal(Simpiens.Simulation.Skills.Deed.Make)); // each make a deed of its hand (Epic 11, S0.5)
             Assert.Equal(0, watch.ConservationViolations);
             var failures = watch.DayFailures();
             Assert.True(failures.Count == 0, "The days failed:\n  " + string.Join("\n  ", failures));

@@ -73,6 +73,7 @@ namespace Simpiens.Cognition.Planning.Handlers
                     context.GetSectorForPosition(node.Position), context.CurrentTick, ChronicleIntensity.Dramatic, 1f));
                 Rescue.Remember(node.Id, rescuer, fallen, context.CurrentTick);
                 context.Practise(rescuer, Simpiens.Simulation.Skills.SkillWork.Tend(), Simpiens.Simulation.Skills.SkillRules.RescueExperience, Simpiens.Simulation.Skills.PracticeSource.Work); // a rescue is practice (K9.2)
+                rescuer.AddDeed(Simpiens.Simulation.Skills.Deed.Rescue); // and a deed (Epic 11, S0.5)
                 return IntentResult.Success;
             }
             if (result != IntentResult.InProgress)
@@ -124,6 +125,7 @@ namespace Simpiens.Cognition.Planning.Handlers
                 context.GetSectorForPosition(node.Position), context.CurrentTick, ChronicleIntensity.Dramatic, 2f));
             Rescue.Remember(node.Id, rescuer, fallen, context.CurrentTick);
             context.Practise(rescuer, Simpiens.Simulation.Skills.SkillWork.Tend(), Simpiens.Simulation.Skills.SkillRules.RescueExperience, Simpiens.Simulation.Skills.PracticeSource.Work); // a rescue is practice (K9.2)
+            rescuer.AddDeed(Simpiens.Simulation.Skills.Deed.Rescue); // and a deed (Epic 11, S0.5)
             return IntentResult.Success;
         }
     }

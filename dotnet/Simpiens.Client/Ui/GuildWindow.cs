@@ -22,10 +22,15 @@ namespace Simpiens.Client.Ui
     /// </summary>
     public sealed class GuildWindow
     {
+        private static readonly System.Collections.Generic.List<Simpiens.Presentation.Dashboard.SkillTexts.Shown> NoSkills = new System.Collections.Generic.List<Simpiens.Presentation.Dashboard.SkillTexts.Shown>(0);
+
         public const float Width = 960f;
 
         /// <summary>Two lines (Epic 10 Part 2, W5.1), so the guild's eight cards fit a 720-row window.</summary>
         private const float CardHeight = 48f;
+
+        /// <summary>With an ask shown (Epic 11, S2.5), the wage rises and the ask sits under it.</summary>
+        private const float WageAbove = -7f, AsksBelow = 10f;
 
         /// <summary>Where a card's middle column (health, standing, gear) begins.</summary>
         private const float StandingX = 270f;
@@ -41,10 +46,10 @@ namespace Simpiens.Client.Ui
         private sealed class MemberCard
         {
             public ContainerRuntime Root, Gap;
-            public TextRuntime Name, Doing, Health, Standing, Unpaid, Wage;
+            public TextRuntime Name, Doing, Health, Standing, Unpaid, Wage, Asks;
             public SpriteRuntime Face;
             public WornLine Equipment;
-            public TextRuntime Skills;
+            public SkillLine Skills;
             public ContainerRuntime FaceBox;
             public Slider WageSlider;
             public Button Dismiss, Party;
@@ -207,6 +212,9 @@ namespace Simpiens.Client.Ui
         public string CardName(int index) => _cards[index].Name.Text;
         public string CardStanding(int index) => _cards[index].Standing.Text;
         public Slider WageSlider(int index) => _cards[index].WageSlider;
+
+        /// <summary>What a card shows of its member's asking wage (Epic 11, S2.5): "asks 7g", or empty.</summary>
+        public string AsksShown(int index) => _cards[index].Asks.Visible ? _cards[index].Asks.Text : string.Empty;
         public string SkillsShown(int index) => _cards[index].Skills.Text;
         public Button DismissButton(int index) => _cards[index].Dismiss;
         public Button PartyButton(int index) => _cards[index].Party;
@@ -236,10 +244,10 @@ namespace Simpiens.Client.Ui
             card.Unpaid = UiParts.Text(string.Empty, UiStyle.Warning, UiText.Small);
             UiParts.CentreVertically(card.Unpaid);
             // Its two best skills beside its name (Epic 10 Part 3, K9.5); they give way to an unpaid warning
-            card.Skills = UiParts.Text(string.Empty, UiStyle.TextSecondary, UiText.Small);
-            UiParts.CentreVertically(card.Skills);
+            card.Skills = new SkillLine(label: null); // with a flame on a skill it loves (Epic 11, S1.6)
+            UiParts.CentreVertically(card.Skills.Visual);
             nameLine.Children.Add(card.Name);
-            nameLine.Children.Add(card.Skills);
+            nameLine.Children.Add(card.Skills.Visual);
             nameLine.Children.Add(card.Unpaid);
             // Clipped short of the standing column: a ten-letter name beside two masters' skills would reach it
             var nameClip = new ContainerRuntime { Width = StandingX - who.X - 8f, HeightUnits = DimensionUnitType.RelativeToChildren, Height = 0f, ClipsChildren = true };
@@ -277,6 +285,13 @@ namespace Simpiens.Client.Ui
             card.Wage.X = 650f;
             UiParts.CentreVertically(card.Wage);
             card.Root.Children.Add(card.Wage);
+            // What it asks above its wage, in amber under it (Epic 11, S2.5, D8): "asks 7g"
+            card.Asks = UiParts.Text(string.Empty, UiStyle.Warning, UiText.Small);
+            card.Asks.X = 650f;
+            UiParts.CentreVertically(card.Asks);
+            card.Asks.Y = AsksBelow;
+            card.Asks.Visible = false;
+            card.Root.Children.Add(card.Asks);
             card.Dismiss = UiParts.Button("Dismiss", 78f, 28f);
             card.Dismiss.Visual.XUnits = GeneralUnitType.PixelsFromLarge;
             card.Dismiss.Visual.XOrigin = HorizontalAlignment.Right;
@@ -363,10 +378,17 @@ namespace Simpiens.Client.Ui
                 card.Equipment.Show(row.Equipment, brief: true, suffix: row.Bunk.Length > 0 ? "· " + row.Bunk : string.Empty);
                 UiParts.SetText(card.Standing, row.Standing);
                 UiParts.SetText(card.Unpaid, UnpaidText(row.UnpaidVisits));
-                card.Skills.Visible = row.UnpaidVisits == 0;
-                UiParts.SetText(card.Skills, row.UnpaidVisits == 0 && row.Skills != Simpiens.Presentation.Dashboard.SkillTexts.None ? row.Skills : string.Empty);
+                card.Skills.Visual.Visible = row.UnpaidVisits == 0;
+                card.Skills.Show(row.UnpaidVisits == 0 ? row.SkillsShown : NoSkills);
                 if ((int)Math.Round(card.WageSlider.Value) != row.PendingWage) card.WageSlider.Value = row.PendingWage;
                 UiParts.SetText(card.Wage, WageText(row.PendingWage));
+                bool asks = row.Asks.Length > 0;
+                if (card.Asks.Visible != asks)
+                {
+                    card.Asks.Visible = asks;
+                    card.Wage.Y = asks ? WageAbove : 0f;
+                }
+                if (asks) UiParts.SetText(card.Asks, row.Asks);
                 string party = PartyText(row.Party);
                 if (card.Party.Text != party) card.Party.Text = party;
             }

@@ -156,6 +156,7 @@ namespace Simpiens.Simulation
                 if (agent == null || agent.HasLeft) continue;
                 if (!agent.IsDowned || !InDanger(node.Position))
                 {
+                    if (agent.BleedsOutAt != 0) agent.AddDeed(Simpiens.Simulation.Skills.Deed.DowningSurvived); // its clock stopped and it lives (Epic 11, S0.5)
                     agent.BleedsOutAt = 0;
                     continue;
                 }
@@ -186,22 +187,132 @@ namespace Simpiens.Simulation
         /// Practice (Epic 10 Part 3, K9.2, Q18), the simulation's one entry for it: adds <paramref name="experience"/> of
         /// practice at <paramref name="work"/> to <paramref name="agent"/>'s skill for that work (the table's,
         /// <see cref="Simpiens.Simulation.Skills.SkillTable.SkillFor"/>), no higher than <paramref name="source"/>'s ceiling
-        /// (K9.8a). A level gained is logged; a band reached (Apprentice, Journeyman, Master) is told in the chronicle. Main
+        /// (K9.8a) and its mastery budget (Epic 11, D7). Work done beside a better hand at the same work is taught by it too (Epic 11, S3.1, D9). The crawler's passion for the skill multiplies it, and work at a passion eases frustration (Epic 11, D4). A level gained is logged; a band reached (Apprentice, Journeyman, Master) is told in the chronicle. Main
         /// thread.
         /// </summary>
+        /// <inheritdoc/>
+        public event Action<AgentState, Simpiens.Simulation.Skills.Skill, int, Simpiens.Simulation.Skills.PracticeSource> Practised;
+
         public void Practise(AgentState agent, in Simpiens.Simulation.Skills.SkillWork work, int experience, in Simpiens.Simulation.Skills.PracticeSource source)
         {
             if (agent == null || experience <= 0) return;
             var skill = Simpiens.Simulation.Skills.SkillTable.SkillFor(work);
             if (skill == Simpiens.Simulation.Skills.Skill.None) return;
+            uint now = (uint)(_clock?.CurrentTick ?? 0);
+            if (source.Kind == Simpiens.Simulation.Skills.PracticeKind.Work)
+            {
+                // A better hand at the same work nearby teaches it (Epic 11, S3.1, D9), judged before this act raises it
+                var mentor = FindMentor(agent, work, now);
+                agent.LastPracticed = work;
+                agent.LastPracticedAt = now;
+                PractiseOwn(agent, work, skill, experience, source);
+                if (mentor != null) Teach(mentor, agent, work, skill, experience, now);
+                return;
+            }
+            PractiseOwn(agent, work, skill, experience, source);
+        }
+
+        // The practice itself: the passion, the challenge, the ceilings, the level and band told
+        private void PractiseOwn(AgentState agent, in Simpiens.Simulation.Skills.SkillWork work, Simpiens.Simulation.Skills.Skill skill, int experience, in Simpiens.Simulation.Skills.PracticeSource source)
+        {
             var before = agent.Skills.Band(skill);
-            if (!agent.Practise(skill, experience, out int level, source.Ceiling)) return;
+            int had = agent.Skills.Experience(skill);
+            // A passion speeds every source of practice, and work at it eases frustration (Epic 11, S1.2, Q7, D4); an act
+            // below the crawler's level teaches it less (S1.3, Q8, D5)
+            var passion = Simpiens.Simulation.Skills.PassionTable.Get(agent.Traits.PassionFor(skill));
+            int challenge = Simpiens.Simulation.Skills.SkillRules.ChallengePercent(agent.Skills.Level(skill), source.Challenge);
+            experience = (int)(((long)experience * passion.PracticePercent * challenge + 5000) / 10000);
+            if (passion.FrustrationEased > 0f) agent.RelieveFrustration(passion.FrustrationEased);
+            // The mastery budget holds the skill beside the source's ceiling (Epic 11, S2.1, Q6, D7)
+            int ceiling = Math.Min(source.Ceiling, Simpiens.Simulation.Skills.SkillRules.BudgetCeiling(agent.Skills, skill));
+            bool gained = agent.Practise(skill, experience, out int level, ceiling);
+            int granted = agent.Skills.Experience(skill) - had;
+            if (granted > 0) Practised?.Invoke(agent, skill, granted, source);
+            if (!gained) return;
             var band = Simpiens.Simulation.Skills.SkillRules.BandOf(level);
             SimLog.Simulation.ZLogInformation($"{SimLog.Agent(agent.AgentId)} reached {Simpiens.Simulation.Skills.SkillTable.NameOf(skill)} {level} ({Simpiens.Simulation.Skills.SkillRules.NameOf(band)})");
             if (band == before) return;
             uint tick = (uint)(_clock?.CurrentTick ?? 0);
             ChronicleService?.RecordEvent(new ChronicleEvent(ChronicleEventType.SkillBandReached, agent.AgentId, default,
                 GetSectorForPosition(agent.Position), tick, ChronicleIntensity.Notable, (byte)skill * 256 + (byte)band));
+            TellTheAsk(agent, tick);
+        }
+
+        /// <summary>
+        /// The better hand that teaches <paramref name="learner"/> at <paramref name="work"/> now (Epic 11, S3.1, Q10, D9): a
+        /// crawler whose effective level at the work stands at least <see cref="Simpiens.Simulation.Skills.SkillRules.MentorLead"/>
+        /// above the learner's, who practised the same work within the hour, within
+        /// <see cref="Simpiens.Simulation.Skills.SkillRules.MentorRange"/> units, on its feet; the best of them, the lowest id on a
+        /// tie, so no order of the registry decides. Allocates nothing; null for none.
+        /// </summary>
+        private AgentState FindMentor(AgentState learner, in Simpiens.Simulation.Skills.SkillWork work, uint now)
+        {
+            var entities = _worldRegistry?.ActiveEntities;
+            if (entities == null) return null;
+            int needed = Simpiens.Simulation.Skills.CrawlerSkills.Level(learner, work) + Simpiens.Simulation.Skills.SkillRules.MentorLead;
+            if (needed > Simpiens.Simulation.Skills.SkillRules.MaxLevel) return null;
+            uint recent = (uint)(Simpiens.Simulation.Skills.SkillRules.MentorRecentHours * DayClock.TicksPerHour);
+            float range = Simpiens.Simulation.Skills.SkillRules.MentorRange * Simpiens.Simulation.Skills.SkillRules.MentorRange;
+            AgentState best = null;
+            int bestLevel = 0;
+            for (int i = 0; i < entities.Count; i++)
+            {
+                var other = entities[i]?.Agent;
+                if (other == null || other == learner || other.HasLeft || other.IsDowned) continue;
+                if (other.LastPracticedAt > now || now - other.LastPracticedAt > recent || !other.LastPracticed.Equals(work)) continue;
+                int level = Simpiens.Simulation.Skills.CrawlerSkills.Level(other, work);
+                if (level < needed || (other.Position - learner.Position).SqrMagnitude > range) continue;
+                if (best != null && (level < bestLevel || (level == bestLevel && other.AgentId.CompareTo(best.AgentId) > 0))) continue;
+                best = other;
+                bestLevel = level;
+            }
+            return best;
+        }
+
+        /// <summary>
+        /// A mentor's lesson (Epic 11, S3.1, D9): half the act's experience at source Mentor, to the mentor's level less two,
+        /// multiplied by the learner's passion. The first lesson in a skill records the mentor as its first teacher (the traits
+        /// record's slots), counts the mentor's "taught" deed and is told in the chronicle.
+        /// </summary>
+        private void Teach(AgentState mentor, AgentState learner, in Simpiens.Simulation.Skills.SkillWork work, Simpiens.Simulation.Skills.Skill skill, int experience, uint now)
+        {
+            int lesson = experience * Simpiens.Simulation.Skills.SkillRules.MentorPercent / 100;
+            if (lesson <= 0) return;
+            int ceiling = Simpiens.Simulation.Skills.CrawlerSkills.Level(mentor, work) - Simpiens.Simulation.Skills.SkillRules.MentorCeilingBelow;
+            int had = learner.Skills.Experience(skill);
+            PractiseOwn(learner, work, skill, lesson, Simpiens.Simulation.Skills.PracticeSource.Mentor(ceiling));
+            if (learner.Skills.Experience(skill) <= had) return;
+            var traits = learner.Traits;
+            if (!traits.RecordTeacher(skill, mentor.AgentId)) return;
+            learner.Traits = traits;
+            mentor.AddDeed(Simpiens.Simulation.Skills.Deed.Taught);
+            SimLog.Simulation.ZLogInformation($"{SimLog.Agent(mentor.AgentId)} taught {SimLog.Agent(learner.AgentId)} {Simpiens.Simulation.Skills.SkillTable.NameOf(skill)}");
+            ChronicleService?.RecordEvent(new ChronicleEvent(ChronicleEventType.FirstLesson, learner.AgentId, mentor.AgentId,
+                GetSectorForPosition(learner.Position), now, ChronicleIntensity.Notable, (byte)skill));
+        }
+
+        /// <summary>
+        /// A member or an artisan that reached a band asks for a raise (Epic 11, S2.2, Q9, D8), told once: when its asking wage
+        /// now stands above its contract's.
+        /// </summary>
+        private void TellTheAsk(AgentState agent, uint tick)
+        {
+            ushort wage, asking;
+            if (Guild.TryGetContract(agent.AgentId, out var member))
+            {
+                wage = member.Wage;
+                asking = Simpiens.Simulation.Guild.GuildRules.AskingWage(agent, Economy.Guild);
+            }
+            else if (Workshops.TryGetContract(agent.AgentId, out var artisan))
+            {
+                wage = artisan.Wage;
+                asking = Simpiens.Simulation.Workshops.WorkshopService.AskingWage(this, agent);
+            }
+            else return;
+            if (asking <= wage) return;
+            SimLog.Economy.ZLogInformation($"{SimLog.Agent(agent.AgentId)} asks for a raise, from {wage}g to {asking}g a visit");
+            ChronicleService?.RecordEvent(new ChronicleEvent(ChronicleEventType.RaiseAsked, agent.AgentId, PlayerEntityId,
+                GetSectorForPosition(agent.Position), tick, ChronicleIntensity.Notable, asking));
         }
 
         public bool HasLineOfSight(Vec2 from, Vec2 to)
@@ -292,6 +403,12 @@ namespace Simpiens.Simulation
         void Simpiens.Simulation.Creatures.ICreatureWorld.CreatureSlain(EntityId slayer, Simpiens.Simulation.Creatures.CreatureState creature, System.ReadOnlySpan<ItemInstance> drops, uint tick)
         {
             Piles.Drop(this, creature.Position, drops, 0, slayer, tick); // its loot, claimed for the slayer (K4.2)
+            var killer = _worldRegistry?.GetEntity(slayer)?.Agent; // the slayer's deeds (Epic 11, S0.5)
+            if (killer != null)
+            {
+                killer.AddDeed(Simpiens.Simulation.Skills.Deed.CreatureSlain);
+                if (creature.Definition != null && creature.Definition.IsBoss) killer.AddDeed(Simpiens.Simulation.Skills.Deed.BossSlain);
+            }
             SimLog.Simulation.ZLogInformation($"{SimLog.Agent(slayer)} slew a {Simpiens.Simulation.Creatures.CreatureCatalog.NameOf(creature.Kind)} at {creature.Position}");
             Chronicle?.RecordEvent(new Simpiens.Narrative.ChronicleEvent(Simpiens.Narrative.ChronicleEventType.CreatureSlain, slayer, creature.Id,
                 GetSectorForPosition(creature.Position), tick, Simpiens.Narrative.ChronicleIntensity.Dramatic, (byte)creature.Kind));
@@ -777,6 +894,7 @@ namespace Simpiens.Simulation
                 if (_sectors != null) _spatialPartition.SetExploredSectors(_sectors.ExploredMask);
                 _spatialPartition.SetChartedLairs(Creatures.ChartedMask); // the lairs known to everyone (Epic 10 Part 3, K2.3)
                 _spatialPartition.SetBossLairs(Creatures.BossMask); // the lairs whose boss lives (K10.2a)
+                _spatialPartition.SetBuiltStations(Workshops.BuiltMask); // the stations standing: a drill yard (Epic 11, S3.4)
                 _spatialPartition.SetPiles(Piles.Piles); // the items on the ground (K4.3b)
                 _spatialPartition.SetHunts(_market.Hunts); // the hunts' parties (K6.2)
                 ValidateBunkOccupancy();

@@ -11,6 +11,13 @@ namespace Simpiens.Cognition.Planning
     /// </summary>
     public static class Considerations
     {
+        /// <summary>
+        /// How much more a crawler weighs <paramref name="work"/> for the passion it holds for the work's skill (Epic 11, S1.4,
+        /// A10, D6): ×1 with none, ×1.15 keen, ×1.3 burning. From its copy of the traits record; no planner fact.
+        /// </summary>
+        public static float PassionWeight(in AgentContext context, in Simpiens.Simulation.Skills.SkillWork work) =>
+            Simpiens.Simulation.Skills.PassionTable.Get(context.Traits.PassionFor(Simpiens.Simulation.Skills.SkillTable.SkillFor(work))).WorkWeight;
+
         /// <summary>The session's economy tuning as seen by cognition (published on the world snapshot).</summary>
         public static EconomyTuning Economy(in AgentContext context)
         {
@@ -63,6 +70,12 @@ namespace Simpiens.Cognition.Planning
         {
             return (economy ?? EconomyTuning.Default).BaseValue(item) * TraitFactor(personality.Greed, -GreedOnPrice);
         }
+
+        /// <summary>The most this crawler pays for a manual (Epic 11, S3.3, D11): its base value, lowered by greed, as gear's is.</summary>
+        public static ushort ManualReservationPrice(in AgentContext context, ItemType item) => GearReservationPrice(context, item);
+
+        /// <summary>The gold a crawler keeps besides a manual's price and a ration's (Epic 11, S3.3): books are bought from a spare purse.</summary>
+        public const int ManualPurseReserve = 15;
 
         /// <summary>The most this crawler pays for a piece of equipment: its calm value, rounded.</summary>
         public static ushort GearReservationPrice(in AgentContext context, ItemType item)

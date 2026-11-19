@@ -45,6 +45,27 @@ namespace Simpiens.Core.Tests
         public void Skills() => new Simpiens.Testing.Skills.SkillsValidator().RunAllValidationTests();
 
         [Fact]
+        public void Deeds() => new Simpiens.Testing.Skills.DeedsValidator().RunAllValidationTests();
+
+        [Fact]
+        public void Passions() => new Simpiens.Testing.Skills.PassionValidator().RunAllValidationTests();
+
+        [Fact]
+        public void Upkeep() => new Simpiens.Testing.Skills.UpkeepValidator().RunAllValidationTests();
+
+        [Fact]
+        public void Mentors() => new Simpiens.Testing.Skills.MentorValidator().RunAllValidationTests();
+
+        [Fact]
+        public void Manuals() => new Simpiens.Testing.Skills.ManualValidator().RunAllValidationTests();
+
+        [Fact]
+        public void Reading() => new Simpiens.Testing.Skills.ReadingValidator().RunAllValidationTests();
+
+        [Fact]
+        public void DrillYard() => new Simpiens.Testing.Skills.DrillValidator().RunAllValidationTests();
+
+        [Fact]
         public void GivenNames() => new Simpiens.Testing.People.GivenNamesValidator().RunAllValidationTests();
 
         [Fact]

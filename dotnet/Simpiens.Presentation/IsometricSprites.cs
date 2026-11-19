@@ -26,6 +26,8 @@ namespace Simpiens.Presentation
         public const int ForgeWidth = 32, ForgeHeight = 16, ForgeRise = 10;
         public const int StillWidth = 24, StillHeight = 12, StillRise = 16;
         public const int PlotWidth = 32, PlotHeight = 16;
+        /// <summary>The drill yard (Epic 11, S3.4): a post standing on a sanded footprint.</summary>
+        public const int DrillYardWidth = 24, DrillYardHeight = 12, DrillYardRise = 18;
 
         private static readonly List<PixelSprite> _all = new List<PixelSprite>(8);
 
@@ -44,6 +46,7 @@ namespace Simpiens.Presentation
         public static PixelSprite Forge { get; }
         public static PixelSprite Still { get; }
         public static PixelSprite StationPlot { get; }
+        public static PixelSprite DrillYard { get; }
 
         // Top-down's palette (ProceduralSprites): flagstone, rock, slate walls, the bunk's wood, pillow and blanket
         private static readonly Rgba32 Flagstone = new Rgba32(232, 232, 232), Speckle = new Rgba32(212, 212, 212), Joint = new Rgba32(190, 190, 190);
@@ -65,6 +68,7 @@ namespace Simpiens.Presentation
             Forge = Add("Iso_Forge", ForgePixels(), ForgeWidth, ForgeHeight + ForgeRise);
             Still = Add("Iso_Still", StillPixels(), StillWidth, StillHeight + StillRise);
             StationPlot = Add("Iso_StationPlot", PlotPixels(), PlotWidth, PlotHeight);
+            DrillYard = Add("Iso_DrillYard", DrillYardPixels(), DrillYardWidth, DrillYardHeight + DrillYardRise); // Epic 11, S3.4
         }
 
         /// <summary>The pivot of a block <paramref name="rise"/> pixels tall on a <paramref name="height"/>-pixel footprint: its footprint's centre.</summary>
@@ -267,6 +271,44 @@ namespace Simpiens.Presentation
             for (int x = 10; x <= 20; x++) { pixels[1 * width + x] = pipe; pixels[2 * width + x] = x <= 11 ? copper : pipeDark; }
             for (int y = 1; y <= 13; y++) { pixels[y * width + 20] = pipe; pixels[y * width + 21] = pipeDark; }
             pixels[14 * width + 20] = draught;
+            return pixels;
+        }
+
+        /// <summary>
+        /// The drill yard (Epic 11, S3.4): a sanded footprint, and on it a wooden post with a straw body bound with rope and
+        /// its arms out, lit from the top left.
+        /// </summary>
+        private static Rgba32[] DrillYardPixels()
+        {
+            int width = DrillYardWidth, height = DrillYardHeight + DrillYardRise;
+            var sand = new Rgba32(176, 156, 118);
+            var sandDark = new Rgba32(146, 126, 92);
+            var wood = new Rgba32(120, 72, 32);
+            var woodDark = new Rgba32(78, 45, 18);
+            var straw = new Rgba32(214, 186, 112);
+            var strawDark = new Rgba32(168, 138, 70);
+            var rope = new Rgba32(161, 98, 7);
+            var pixels = new Rgba32[width * height];
+            // The sanded footprint, on the floor
+            for (int y = 0; y < DrillYardHeight; y++)
+                for (int x = 0; x < width; x++)
+                    if (InDiamond(x, y, width * 0.5f, DrillYardHeight * 0.5f, width, DrillYardHeight))
+                        pixels[(y + DrillYardRise) * width + x] = Hash(x, y, 7u) % 5 == 0 ? sandDark : sand;
+            // The post, from the footprint's centre up
+            int cx = width / 2, foot = DrillYardRise + DrillYardHeight / 2;
+            for (int y = 6; y <= foot; y++) { pixels[y * width + cx - 1] = wood; pixels[y * width + cx] = woodDark; }
+            // Its arms
+            for (int x = cx - 7; x <= cx + 6; x++) { pixels[9 * width + x] = wood; pixels[10 * width + x] = woodDark; }
+            // The straw body, round, bound twice with rope
+            for (int y = 2; y <= 16; y++)
+            {
+                for (int x = cx - 4; x <= cx + 3; x++)
+                {
+                    float nx = (x + 0.5f - cx) / 4f, ny = (y + 0.5f - 9f) / 7.5f;
+                    if (nx * nx + ny * ny > 1f) continue;
+                    pixels[y * width + x] = y == 6 || y == 13 ? rope : nx + ny * 0.5f > 0.2f ? strawDark : straw;
+                }
+            }
             return pixels;
         }
 

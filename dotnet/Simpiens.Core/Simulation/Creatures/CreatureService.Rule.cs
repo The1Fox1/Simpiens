@@ -167,8 +167,10 @@ namespace Simpiens.Simulation.Creatures
             var agent = blow.Crawler.Agent;
             if (creature == null || !creature.IsAlive) return;
             // Practice (K9.2): a shot, hit or miss; a blow in reach that landed
-            if (blow.Ranged) world.Practise(agent, Simpiens.Simulation.Skills.SkillWork.Fight(ranged: true), Simpiens.Simulation.Skills.SkillRules.ShotExperience, Simpiens.Simulation.Skills.PracticeSource.Work);
-            else if (blow.Outcome.Hit) world.Practise(agent, Simpiens.Simulation.Skills.SkillWork.Fight(ranged: false), Simpiens.Simulation.Skills.SkillRules.HitExperience, Simpiens.Simulation.Skills.PracticeSource.Work);
+            // by the challenge of what it fights (Epic 11, S1.3)
+            var practice = Simpiens.Simulation.Skills.PracticeSource.WorkAt(creature.Definition?.Challenge ?? Simpiens.Simulation.Skills.SkillRules.MaxLevel);
+            if (blow.Ranged) world.Practise(agent, Simpiens.Simulation.Skills.SkillWork.Fight(ranged: true), Simpiens.Simulation.Skills.SkillRules.ShotExperience, practice);
+            else if (blow.Outcome.Hit) world.Practise(agent, Simpiens.Simulation.Skills.SkillWork.Fight(ranged: false), Simpiens.Simulation.Skills.SkillRules.HitExperience, practice);
             if (agent?.Inventory != null && CombatRules.WearOnShot(agent.Inventory)) // a ranged weapon wears per shot, hit or miss (K8.1)
                 SimLog.Simulation.ZLogInformation($"{SimLog.Agent(agent.AgentId)}'s ranged weapon broke shooting at {CreatureCatalog.NameOf(creature.Kind)} {creature.Id}");
             if (!blow.Outcome.Hit)

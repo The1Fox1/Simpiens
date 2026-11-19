@@ -38,6 +38,9 @@ namespace Simpiens.Simulation.Spatial
         /// <summary>Which of the map's lairs have their boss alive (bit i = lair i, Epic 10 Part 3, K10.2a), published in every following snapshot. Main thread only.</summary>
         void SetBossLairs(ulong mask) { }
 
+        /// <summary>Which of the map's stations stand built (bit i = station i, Epic 11, S3.4), published in every following snapshot. Main thread only.</summary>
+        void SetBuiltStations(ulong mask) { }
+
         /// <summary>The items on the ground (Epic 10 Part 3, K4.3b), copied into every following snapshot as they are then. Main thread only.</summary>
         void SetPiles(IReadOnlyList<Simpiens.Simulation.Loot.LootPile> piles);
 
@@ -80,6 +83,9 @@ namespace Simpiens.Simulation.Spatial
 
         private ulong _bossLairs;
         public void SetBossLairs(ulong mask) => _bossLairs = mask;
+
+        private ulong _builtStations;
+        public void SetBuiltStations(ulong mask) => _builtStations = mask;
 
         private IReadOnlyList<Simpiens.Simulation.Loot.LootPile> _piles;
         public void SetPiles(IReadOnlyList<Simpiens.Simulation.Loot.LootPile> piles) => _piles = piles;
@@ -210,6 +216,7 @@ namespace Simpiens.Simulation.Spatial
             _currentTickSnapshot.SetExploredSectors(_exploredSectors);
             _currentTickSnapshot.SetChartedLairs(_chartedLairs);
             _currentTickSnapshot.SetBossLairs(_bossLairs); // K10.2a
+            _currentTickSnapshot.SetBuiltStations(_builtStations); // Epic 11, S3.4
             _currentTickSnapshot.SetPiles(_piles); // copied now, on the main thread (K4.3b)
             _currentTickSnapshot.SetHunts(_hunts); // K6.2
             _currentTickSnapshot.SetOccupiedBunks(_occupiedBunks);

@@ -453,6 +453,7 @@ namespace Simpiens.Simulation.Guild
                 if (!member.IsWithParty || !host.TryGetCrawler(member.CrawlerId, out var crawler)) continue;
                 crawler.Memory?.RecordInteraction(WorldRegistry.PlayerEntityId, 0, tuning.ReturnedTrust, 0, 0, tick);
                 host.Groups?.UpdateAllegiance(member.CrawlerId, _groupId, tuning.ReturnedAllegiance);
+                if (party.Record.Cleared) crawler.AddDeed(Simpiens.Simulation.Skills.Deed.ClearWon); // home from a won clear: a deed (Epic 11, S0.5)
             }
 
             SimLog.Economy.ZLogInformation($"Party {party.Slot} came back with {haul} {item}{(party.Record.TurnedBack ? " (turned back)" : "")}");

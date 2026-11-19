@@ -24,6 +24,9 @@ namespace Simpiens.Presentation.Dashboard
         /// <summary>Its two best skills (Epic 10 Part 3, K9.5): "Melee 4 · Mining 2"; who to put at a party's front and back.</summary>
         public string Skills { get; internal set; } = string.Empty;
 
+        /// <summary>Its two best skills with their passions (Epic 11, S1.6): a flame on a skill it loves.</summary>
+        public System.Collections.Generic.List<SkillTexts.Shown> SkillsShown { get; } = new System.Collections.Generic.List<SkillTexts.Shown>(2);
+
         /// <summary>"Bunk 3": the bunk kept for it in the barracks (Epic 10 Part 2, W5.2); empty when it has none.</summary>
         public string Bunk { get; internal set; } = string.Empty;
 
@@ -33,6 +36,9 @@ namespace Simpiens.Presentation.Dashboard
 
         /// <summary>The wage it is paid now.</summary>
         public int Wage { get; internal set; }
+
+        /// <summary>Its asking wage above its wage (Epic 11, S2.5, D8): "asks 7g"; empty when it asks no more.</summary>
+        public string Asks { get; internal set; } = string.Empty;
 
         /// <summary>Its party, 1 or 2, or 0 for none (Epic 10 Part 2, W5, D65), as the guild holds it.</summary>
         public byte Party { get; internal set; }
@@ -127,7 +133,9 @@ namespace Simpiens.Presentation.Dashboard
                 var node = _context.Registry?.GetEntity(contract.CrawlerId);
                 var agent = node?.Agent;
                 row.Name = node != null ? _context.FriendlyName(node.Id, node.Name) : DossierModel.UnknownName;
+                row.Asks = string.Empty;
                 if (agent == null) continue;
+                row.Asks = SkillTexts.Asks(contract.Wage, GuildRules.AskingWage(agent, tuning));
                 row.HasPortrait = agent.Look.IsComplete;
                 row.Portrait = row.HasPortrait ? Simpiens.Presentation.Art.People.PortraitKey.Of(node.Id, agent, _moods, _context.Clock?.CurrentTick ?? 0) : default;
                 row.Doing = PlanText.Action(agent.HasActivePlan ? agent.ActivePlan.CurrentAction : null);
@@ -137,6 +145,7 @@ namespace Simpiens.Presentation.Dashboard
                 var (trust, warmth) = GuildRules.Standing(agent, (uint)(_context.Clock?.CurrentTick ?? 0));
                 row.Standing = Invariant($"Trust {trust} · Warmth {warmth}");
                 row.Skills = SkillTexts.Best(agent.Skills, 2);
+                SkillTexts.BestShown(agent.Skills, agent.Traits, 2, keepPassions: false, row.SkillsShown);
             }
             if (_rows.Count > members) _rows.RemoveRange(members, _rows.Count - members);
             Status = Invariant($"{members} of {tuning.MaxMembers} members · {wages}g in wages a visit") + (lodging > 0 ? Invariant($", {lodging}g back for bunks") : string.Empty);

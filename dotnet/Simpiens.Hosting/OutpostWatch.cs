@@ -116,6 +116,14 @@ namespace Simpiens.Hosting
         /// given name, and ticks two living crawlers shared a name; any fails the day.
         /// </summary>
         public int Faceless, SharedNames;
+
+        /// <summary>
+        /// The mastery budget (Epic 11, S2.1, D7): crawler-ticks at which a crawler held more than two skills past Apprentice
+        /// or more than one at Master, and the first; any fails the day. And crawler-ticks at which a skill stood held by the
+        /// budget, with the first (who, which skill, at what).
+        /// </summary>
+        public int BudgetBreaches, HeldByBudget;
+        public string FirstBudgetBreach, FirstHeldByBudget;
         public string FirstIdentityFault;
         private readonly HashSet<string> _livingNames = new HashSet<string>();
 
@@ -132,6 +140,27 @@ namespace Simpiens.Hosting
         /// <summary>Fighting back (Epic 10 Part 3, K3.3): fights begun, creatures slain while watched, and the most residents armed at once.</summary>
         public int Fights, Kills, MostArmed;
         private readonly int _killsAtStart;
+
+        /// <summary>
+        /// Practice granted while watched (Epic 11, S0.2): experience by skill id, and by the kind of its source (the work, and
+        /// later a mentor, a manual, the yard), from the simulation's <c>Practised</c> event.
+        /// </summary>
+        public readonly int[] PracticeBySkill = new int[Simpiens.Simulation.Skills.SkillTable.Capacity];
+        public readonly int[] PracticeBySource = new int[8];
+
+        // Every crawler present at any watched tick, residents, drifters and newcomers, the departed kept
+        private readonly HashSet<Simpiens.Cognition.AgentState> _everyone = new HashSet<Simpiens.Cognition.AgentState>();
+
+        /// <summary>
+        /// The count of <paramref name="deed"/> over every crawler watched, the departed included (Epic 11, S0.5): what the
+        /// live scenarios compare with the outcome they saw (a kill, a make, a rescue, a hunt paid, a clear won).
+        /// </summary>
+        public int DeedTotal(Simpiens.Simulation.Skills.Deed deed)
+        {
+            int total = 0;
+            foreach (var state in _everyone) total += state.Traits.Count(deed);
+            return total;
+        }
 
         /// <summary>The rim of a lair's reach that a path may graze on its way past: an entry is deeper than this.</summary>
         public const float LairEdgeBand = 1f;
@@ -154,6 +183,11 @@ namespace Simpiens.Hosting
             _baselineSalvage = TotalSalvage(sim.Simulation);
             _faultsAtStart = sim.Simulation.IntentFaults;
             _killsAtStart = sim.Simulation.Creatures.Kills;
+            sim.Simulation.Practised += (agent, skill, experience, source) =>
+            {
+                if ((byte)skill < PracticeBySkill.Length) PracticeBySkill[(byte)skill] += experience;
+                if ((byte)source.Kind < PracticeBySource.Length) PracticeBySource[(byte)source.Kind] += experience;
+            };
             Anomalies = AnomalyDetector.For(sim);
             Anomalies.AnomalyFound += record =>
             {
@@ -233,6 +267,7 @@ namespace Simpiens.Hosting
             for (int i = 0; i < present.Count; i++)
             {
                 var state = present[i];
+                _everyone.Add(state);
                 if (state.Inventory != null) agentGold += (uint)state.Inventory.Gold;
                 // Past the lone limit through what it wears (Epic 10 Part 2, D51: a respirator opens the Gallery to the bold), off an expedition
                 if (Vitality.LoneDanger(Vitality.HazardAt(map, state.Position), state.Inventory) > Vitality.LoneHazardLimit && !sim.Guild.IsOnExpedition(state.AgentId))
@@ -240,6 +275,7 @@ namespace Simpiens.Hosting
                     AloneInTheChamber++;
                     FirstAloneInTheChamber ??= $"t{rel}: {_sim.Host.CrawlerNames[i]} at {state.Position}";
                 }
+                ObserveBudget(state, rel, _sim.Host.CrawlerNames[i]);
                 if (!LookCatalog.IsValid(state.Look) || string.IsNullOrEmpty(state.GivenName))
                 {
                     Faceless++;
@@ -283,6 +319,23 @@ namespace Simpiens.Hosting
                     ConservationViolations++;
                     if (SimMath.Abs(discrepancy) > SimMath.Abs(WorstDiscrepancy)) WorstDiscrepancy = discrepancy;
                 }
+            }
+        }
+
+        private void ObserveBudget(Simpiens.Cognition.AgentState state, long rel, string name)
+        {
+            var skills = state.Skills;
+            if (!Simpiens.Simulation.Skills.SkillRules.KeepsTheBudget(skills))
+            {
+                BudgetBreaches++;
+                FirstBudgetBreach ??= $"t{rel}: {name} holds {skills}";
+            }
+            var all = Simpiens.Simulation.Skills.SkillTable.All;
+            for (int s = 0; s < all.Count; s++)
+            {
+                if (!Simpiens.Simulation.Skills.SkillRules.HeldByBudget(skills, all[s].Id, out int ceiling, out var hold)) continue;
+                HeldByBudget++;
+                FirstHeldByBudget ??= $"t{rel}: {name}'s {all[s].DisplayName} held at {ceiling} ({hold}; {skills})";
             }
         }
 
@@ -397,6 +450,7 @@ namespace Simpiens.Hosting
             if (Anomalies.JitterCount + Anomalies.PenetrationCount + Anomalies.BoundaryBreachCount > 0)
                 failures.Add($"{Anomalies.Summary()}; first {Anomalies.First}");
             if (IntentFaults > 0) failures.Add($"{IntentFaults} intent handlers threw (first {_sim.Simulation.FirstIntentFault})");
+            if (BudgetBreaches > 0) failures.Add($"the mastery budget broken {BudgetBreaches} crawler-ticks (first {FirstBudgetBreach})");
             if (Faceless + SharedNames > 0) failures.Add($"who's who: {Faceless} faceless or nameless, {SharedNames} shared names (first {FirstIdentityFault})");
             return failures;
         }

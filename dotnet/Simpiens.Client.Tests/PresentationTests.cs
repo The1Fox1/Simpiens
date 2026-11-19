@@ -81,7 +81,7 @@ namespace Simpiens.Client.Tests
         {
             // 12 crawler states x 2 frames, berry bush, ore vein, herb patch, wall, campfire x 2, bunk, floor, rock,
             // and the selection ring (M1.5)
-            Assert.Equal(40, ProceduralSprites.All.Count); // 34, plus Epic 10 G2's glowstone, graphics V5's stall, Part 2's forge, still and plot, and Part 3's cairn (K5.8b)
+            Assert.Equal(41, ProceduralSprites.All.Count); // 34, plus Epic 10 G2's glowstone, graphics V5's stall, Part 2's forge, still and plot, Part 3's cairn (K5.8b) and Epic 11's drill yard (S3.4)
             for (int i = 0; i < ProceduralSprites.All.Count; i++)
             {
                 var sprite = ProceduralSprites.All[i];

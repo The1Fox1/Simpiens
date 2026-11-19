@@ -62,6 +62,7 @@ namespace Simpiens.Simulation.Persistence
         public byte DownedDetail;
         private ushort _pad;
         public Simpiens.Simulation.Skills.SkillSet Skills; // Epic 10 Part 3, K9.1: 16 experiences, inside format 11
+        public Simpiens.Simulation.Skills.CrawlerTraits Traits; // Epic 11, S0.4 (format 12): who it has become, 256 bytes
     }
 
     /// <summary>

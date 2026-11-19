@@ -46,6 +46,15 @@ namespace Simpiens.Simulation.Items
         /// </summary>
         public string ArtKey { get; }
 
+        /// <summary>
+        /// The level harvesting it demands (Epic 11, S1.3, Q8, D5): a harvester above it learns less from each unit. Herbs 3,
+        /// ore 4, glowstone 7; an Apprentice's 3 for anything a row leaves unset.
+        /// </summary>
+        public byte HarvestChallenge { get; init; } = 3;
+
+        /// <summary>What it teaches when it is a manual (Epic 11, S3.2, D11); null otherwise.</summary>
+        public ManualBlock Manual { get; init; }
+
         /// <summary>Its slot, stat modifiers and life when it is equipment (§3.7); null otherwise.</summary>
         public EquipmentBlock Equipment { get; }
 

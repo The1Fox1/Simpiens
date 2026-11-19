@@ -164,7 +164,9 @@ namespace Simpiens.Testing.Persistence
                     new Simpiens.Simulation.Workshops.StationState
                     {
                         Kind = Simpiens.Simulation.Items.StationKind.Still, Built = true, Order = (ItemType)9, HeldOutput = 1, HeldGrade = 1, Made = 2
-                    }
+                    },
+                    // The guildhall's drill yard, built (Epic 11, S3.4): no order, no artisan
+                    new Simpiens.Simulation.Workshops.StationState { Kind = Simpiens.Simulation.Items.StationKind.DrillYard, Built = true }
                 },
                 // The forge's artisan, unpaid once, on the day shift and off on a break (W1.2, W1.3), and a crawler who can't
                 // be hired again yet
@@ -436,6 +438,10 @@ namespace Simpiens.Testing.Persistence
                 Skills = Simpiens.Simulation.Skills.SkillSet.Generate(11, A, new AgentPersonality(-0.3f, 0.6f, 0.2f, -0.9f, 0.1f))
             };
             state.Practise(Simpiens.Simulation.Skills.Skill.Mining, 137, out _); // mid-level experience comes back too
+            var traits = default(Simpiens.Simulation.Skills.CrawlerTraits); // Epic 11, S0.4: who it has become comes back whole
+            traits.SetPassion(Simpiens.Simulation.Skills.Skill.Smithing, Simpiens.Simulation.Skills.Passion.Burning);
+            traits.RecordTeacher(Simpiens.Simulation.Skills.Skill.Mining, B);
+            state.Traits = traits;
             state.Activity.RecordSalvageHarvest(80u);
             state.Activity.RecordSalvageSale(95u);
             var record = state.CaptureRecord();
@@ -458,6 +464,8 @@ namespace Simpiens.Testing.Persistence
             Assert(fresh.Look == state.Look && fresh.Look.IsComplete, "The look came back (Epic UI-Beta B1).");
             Assert(fresh.Skills == state.Skills && fresh.Skills.Experience(Simpiens.Simulation.Skills.Skill.Mining) == state.Skills.Experience(Simpiens.Simulation.Skills.Skill.Mining)
                 && fresh.Skills != default, "The skills came back, experience and all (Epic 10 Part 3, K9.1).");
+            Assert(fresh.Traits == state.Traits && fresh.Traits.PassionFor(Simpiens.Simulation.Skills.Skill.Smithing) == Simpiens.Simulation.Skills.Passion.Burning
+                && fresh.Traits.TeacherOf(Simpiens.Simulation.Skills.Skill.Mining) == B, "The traits record came back whole: a passion and a teacher (Epic 11, S0.4).");
 
             bool refused = false;
             try

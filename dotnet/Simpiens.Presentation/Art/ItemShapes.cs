@@ -25,6 +25,7 @@ namespace Simpiens.Presentation.Art
         public const string Plates = "plates";
         public const string Sling = "sling";
         public const string Crossbow = "crossbow";
+        public const string Book = "book";
 
         public const int GlyphSize = 12;
 
@@ -176,6 +177,23 @@ namespace Simpiens.Presentation.Art
                 "............",
             },
             // A steel prod bowed across the top, its string, and a wooden stock down to the trigger (the crossbow; K8.1)
+            // A closed book standing a little turned, its cover in the primary colour, a band and clasp in the secondary, the
+            // pages' edge light (the manuals, Epic 11, S3.2)
+            [Book] = new[]
+            {
+                "............",
+                "..1111111...",
+                "..1222222a..",
+                "..12a2222ab.",
+                "..12aa222ab.",
+                "..1222222ab.",
+                "..1bbbbbbab.",
+                "..1222222ab.",
+                "..1222222ab.",
+                "..1222222ab.",
+                "..33333333b.",
+                "...dddddddd.",
+            },
             [Crossbow] = new[]
             {
                 "1..........3",

@@ -125,9 +125,11 @@ namespace Simpiens.Cognition.Planning
                     if (price > treasury) continue;
                     if (stallKnown && !economy.StallHasRoom(stall, record.ResourceKind)) continue;
                     // What it earns an hour, as near as distance tells: a pickaxe's owner mines faster, so ore pays it better (D36)
-                    // and a skilled hand harvests faster, so its own trade pays it better (Epic 10 Part 3, K9.4, Q21)
+                    // and a skilled hand harvests faster, so its own trade pays it better (Epic 10 Part 3, K9.4, Q21); and it
+                    // weighs the work it loves more (Epic 11, S1.4, D6)
                     score = price * CrawlerStats.MiningSpeed(context.Inventory, record.ResourceKind)
                         * Simpiens.Cognition.Planning.Handlers.HarvestResourceIntentHandler.SkillSpeed(context.Skills, context.Inventory, record.ResourceKind) / dist;
+                    score = (float)(score * Considerations.PassionWeight(context, Simpiens.Simulation.Skills.SkillWork.Harvest(record.ResourceKind)));
                 }
 
                 if (!found || score > bestScore || (score == bestScore && record.EntityId.CompareTo(best.EntityId) < 0))
@@ -645,6 +647,38 @@ namespace Simpiens.Cognition.Planning
                 if (Vitality.LoneDanger(hazard, CrawlerStats.KindResistance(context.Inventory, hazard.Kind, swap)) <= Vitality.LoneHazardLimit) return true;
             }
             return false;
+        }
+
+        /// <summary>
+        /// The manual this resident would buy now (Epic 11, S3.3, Q10, D11): among the manuals the nearest reachable stall sells
+        /// and has in stock, at or under its price with a ration's and a spare purse's gold to spare, one for a skill it loves
+        /// (keen or burning, the burning first) that still stands below the manual's ceiling. Passions only: the passionless
+        /// don't buy books, so the shelf doesn't draw every purse. One manual carried at a time; none for a drifter.
+        /// </summary>
+        public static bool TryChooseManual(in AgentContext context, out ItemType manual)
+        {
+            manual = ItemType.None;
+            if (context.IsDrifter || context.Inventory == null || Simpiens.Cognition.Inventory.InventoryGroups.HasAny(context.Inventory, ItemCategory.Manual)) return false;
+            if (GetStallAccess(context, out var stall) != StallAccess.Reachable) return false;
+            int gold = context.Inventory.Gold;
+            ushort food = stall.SellPriceOf(FoodForSale(stall));
+            int bestLove = 0;
+            var manuals = ItemCatalog.InCategory(ItemCategory.Manual);
+            for (int i = 0; i < manuals.Count; i++)
+            {
+                var item = manuals[i];
+                var block = ItemCatalog.Get(item).Manual;
+                if (block == null || stall.SellStockOf(item) < 1) continue;
+                ushort price = stall.SellPriceOf(item);
+                if (price == 0 || price > Considerations.ManualReservationPrice(context, item) || gold < price + food + Considerations.ManualPurseReserve) continue;
+                var skill = Simpiens.Simulation.Skills.SkillTable.SkillFor(block.Work);
+                int love = (int)context.Traits.PassionFor(skill);
+                if (love <= bestLove) continue; // passions only, the burning first; the first in id order on a tie
+                if (Simpiens.Simulation.Skills.CrawlerSkills.Level(context.Skills, context.Inventory, block.Work) >= block.Ceiling) continue;
+                bestLove = love;
+                manual = item;
+            }
+            return manual != ItemType.None;
         }
 
         /// <summary>

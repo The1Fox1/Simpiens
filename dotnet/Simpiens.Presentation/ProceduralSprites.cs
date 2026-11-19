@@ -21,7 +21,7 @@ namespace Simpiens.Presentation
         private static readonly PixelSprite _herbPatchSprite;
         private static readonly PixelSprite _glowstoneSprite;
         private static readonly PixelSprite _stallSprite;
-        private static readonly PixelSprite _forgeSprite, _stillSprite, _stationPlotSprite, _cairnSprite;
+        private static readonly PixelSprite _forgeSprite, _stillSprite, _stationPlotSprite, _cairnSprite, _drillYardSprite;
 
         /// <summary>A body's cairn (Epic 10 Part 3, K5.8b).</summary>
         public static PixelSprite CairnSprite => _cairnSprite;
@@ -36,6 +36,9 @@ namespace Simpiens.Presentation
         public static PixelSprite ForgeSprite => _forgeSprite;
         public static PixelSprite StillSprite => _stillSprite;
         public static PixelSprite StationPlotSprite => _stationPlotSprite;
+
+        /// <summary>The guildhall's drill yard (Epic 11, S3.4).</summary>
+        public static PixelSprite DrillYardSprite => _drillYardSprite;
         private static readonly PixelSprite _wallSprite;
         private static readonly PixelSprite[] _campfireSprites = new PixelSprite[2];
 
@@ -313,11 +316,14 @@ namespace Simpiens.Presentation
                 { 'g', new Rgba32(103, 232, 249, 255) }, // The draught's jar
                 { 'w', new Rgba32(78, 45, 18, 255) },    // Wood
                 { 'T', new Rgba32(120, 72, 32, 255) },   // Stakes
-                { 'r', new Rgba32(161, 98, 7, 255) }     // Rope
+                { 'r', new Rgba32(161, 98, 7, 255) },    // Rope
+                { 'h', new Rgba32(214, 186, 112, 255) }, // Straw (the drill yard's post, Epic 11, S3.4)
+                { 'H', new Rgba32(168, 138, 70, 255) }   // Straw, shaded
             };
             _forgeSprite = CreateSprite(PatternForge, stationPalette, "Prop_Forge");
             _stillSprite = CreateSprite(PatternStill, stationPalette, "Prop_Still");
             _stationPlotSprite = CreateSprite(PatternStationPlot, stationPalette, "Prop_StationPlot");
+            _drillYardSprite = CreateSprite(PatternDrillYard, stationPalette, "Prop_DrillYard"); // Epic 11, S3.4
 
             // A body's cairn (Epic 10 Part 3, K5.8b): stones heaped where a crawler fell
             var cairnPalette = new Dictionary<char, Rgba32>
@@ -461,6 +467,27 @@ namespace Simpiens.Presentation
             "................",
             "................",
             "................",
+        };
+
+        // The drill yard (Epic 11, S3.4): a straw post with its arms bound with rope, on a stone foot; a weapon stand at its side
+        private static readonly string[] PatternDrillYard =
+        {
+            "................",
+            "......####......",
+            ".....#hhhH#.....",
+            ".....#hrrH#.....",
+            "..####hhhH####..",
+            ".#wwwwwwwwwwwww#",
+            "..####hhhH####..",
+            ".....#hhhH#.....",
+            ".....#hrrH#.....",
+            ".....#hhhH#.....",
+            "......#ww#...#p#",
+            "......#ww#...#p#",
+            "......#ww#..#wTw",
+            "....##wwww##.#w#",
+            "....#SSssSS#.###",
+            "....########....",
         };
 
         private static readonly string[] PatternCairn =

@@ -9,7 +9,9 @@ namespace Simpiens.Simulation.Items
         /// <summary>Ore and glowstone into tools and gear.</summary>
         Forge = 1,
         /// <summary>The Alchemy Still: herbs into draughts.</summary>
-        Still = 2
+        Still = 2,
+        /// <summary>The guildhall's drill yard (Epic 11, S3.4, Q10, D10): no recipes and no artisan; guild members drill there.</summary>
+        DrillYard = 3
     }
 
     /// <summary>One of a recipe's inputs: an item and how many of it one make takes.</summary>
@@ -58,6 +60,9 @@ namespace Simpiens.Simulation.Items
 
         /// <summary>Ticks of an artisan's work one make takes.</summary>
         public ushort WorkTicks { get; }
+
+        /// <summary>The level a make demands (Epic 11, S1.3, Q8, D5): an artisan above it learns less from each. An Apprentice's 3 unless the row says.</summary>
+        public byte Challenge { get; init; } = 3;
 
         public int InputCount => _inputs.Length;
         public RecipeInput GetInput(int index) => _inputs[index];

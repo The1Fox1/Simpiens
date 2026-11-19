@@ -173,6 +173,8 @@ namespace Simpiens.Simulation.Economy
             // (two ore and a hide, two hours' work), none to start
             items[(int)ItemType.Sling] = new ItemTerms(12, StallRole.Sells, 10, 0);
             items[(int)ItemType.Crossbow] = new ItemTerms(60, StallRole.Sells, 45, 0);
+            // Manuals (Epic 11, S3.2, D11): primers at 25g, worth 30g to a neutral reader; the caravan brings them, none to start
+            for (var primer = ItemType.MeleePrimer; primer <= ItemType.MedicinePrimer; primer++) items[(int)primer] = new ItemTerms(30, StallRole.Sells, 25, 0);
             return items;
         }
 

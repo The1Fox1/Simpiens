@@ -49,6 +49,9 @@ namespace Simpiens.Cognition.Planning.Domain
             graph.RegisterAction(new ClaimHuntAction()); // K6.2
             graph.RegisterAction(new HuntLairAction(pathfinder));
             graph.RegisterAction(new FightForPartyAction(pathfinder)); // K7.2a
+            graph.RegisterAction(new BuyManualAction()); // Epic 11, S3.3
+            graph.RegisterAction(new ReadManualAction());
+            graph.RegisterAction(new DrillAction(pathfinder)); // Epic 11, S3.4
             return graph;
         }
 
@@ -70,6 +73,9 @@ namespace Simpiens.Cognition.Planning.Domain
                 new RescueGoal(), // K5.3
                 new HuntGoal(), // K6.2
                 new CarryMedicineGoal(),
+                new StudyGoal(), // Epic 11, S3.3
+                new ReadManualGoal(),
+                new DrillGoal(), // Epic 11, S3.4
                 new LiquidateSalvageGoal(),
                 new FulfillBountyGoal(),
                 new EarnIncomeGoal(),
