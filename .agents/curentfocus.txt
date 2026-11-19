@@ -7,7 +7,7 @@
 # "Done" = emerges in the live simulation: a live scenario on the real session with
 # nothing injected, headless in dotnet test since 2026-10-23 (ROADMAP §1B).
 # Keep this file short: history lives in the epic docs, .agents/architecture_history.md and git.
-# Last reconciled: 2026-11-17 (Epic 11's plan 1 Craft: S0-S3 done on feat/epic11-craft, unpushed; the producer's review next). 2026-11-16 (Epic 11 ACTIVE, plan 1 Craft under way; Epic 10 COMPLETED: "Part 3 passes. Close out Epic 10"; Parts 2 and 3 closed out together, Milestones 3 and 4 COMPLETED, Epics UI-4 and UI-5 delivered; the close-out merged as PR #24; Epic 11 next, QUEUED until the producer's go)
+# Last reconciled: 2026-11-18 (Epic 11's plan 1 Craft closed out: the review passed, "This looks good. Let's wrap it up with C.1 and C.2"; its PR into main waits for the producer's merge). 2026-11-17 (Epic 11's plan 1 Craft: S0-S3 done on feat/epic11-craft, unpushed; the producer's review next). 2026-11-16 (Epic 11 ACTIVE, plan 1 Craft under way; Epic 10 COMPLETED: "Part 3 passes. Close out Epic 10"; Parts 2 and 3 closed out together, Milestones 3 and 4 COMPLETED, Epics UI-4 and UI-5 delivered; the close-out merged as PR #24; Epic 11 next, QUEUED until the producer's go)
 # ------------------------------------------------------------------------------
 
 CURRENT FOCUS
@@ -37,10 +37,14 @@ CURRENT FOCUS
   Lantern & Stone (U0-U12; in Epic UI-Beta by default), merged as one PR, #22 (2026-11-04); every look passed.
   B6, the gate with a play session, waits.
 - NOW: Epic 11, the skill system (Milestone 5; docs/epics/epic-11.md) [ACTIVE 2026-11-16: "For now proceed with epic 11
-  Craft"; economy flukes tolerated until they ruin a test scenario]. S0-S9, its Q1-Q16 by exception. Four plans, one PR each (.agents/epic11_plan.md): Craft S0-S3, Technique and Calling
-  S4-S5, Legend S6-S7, Masterworks and the gate S8-S9. Plan 1, Craft (.agents/epic11_craft_plan.md, D1-D12), is
-  under way on feat/epic11-craft (S0 first; stop for the producer's look after S1). NEXT: Epic UI-Beta's B6. The descent is
-  Epic 12; the MCP narrative is Epic N.
+  Craft"; economy flukes tolerated until they ruin a test scenario]. S0-S9, its Q1-Q16 by exception. Four plans, one PR
+  each (.agents/epic11_plan.md): Craft S0-S3, Technique and Calling S4-S5, Legend S6-S7, Masterworks and the gate S8-S9.
+  - Plan 1, Craft [done]: passions, practice by challenge, the mastery budget, the asking wage, mentors, primers, the
+    drill yard; D1-D12, F1-F8 in the epic; growth curves in docs/skills-model.md 5.5. The review passed 2026-11-17
+    ("This looks good. Let's wrap it up with C.1 and C.2"); closed out 2026-11-18; the plan is deleted. Its PR
+    (feat/epic11-craft into main) waits for the producer's merge.
+  - NEXT: plan 2, Technique and Calling, drafted when plan 1 merges, from its measurements. Epic UI-Beta's B6 waits
+    as before. The descent is Epic 12; the MCP narrative is Epic N.
 
 - Epic UI-Beta, Crawler Identity and the Interface Pass [ACTIVE 2026-11-02] (docs/epics/epic-ui-beta.md): B0 and B1
   (every crawler's look and given name, saved; save format 7) merged as PR #17; B2-B5 and the UI polish merged as

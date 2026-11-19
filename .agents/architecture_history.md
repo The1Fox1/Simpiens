@@ -1790,3 +1790,29 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
   - Milestone T's rules were already in `docs/time-model.md`.
   - Git keeps the plans: `git log --diff-filter=D -- .agents/`.
 - **One PR for Part 3 and the close-out** (#24, `feat/epic10-part3`), per the producer's one-PR-per-plan rule. Part 2's code reached main as PR #23.
+
+## 2026-11-18: Epic 11 plan 1, Craft (S0–S3), closed out (at the producer's "This looks good. Let's wrap it up with C.1 and C.2")
+- **The plans** (2026-11-16, at "Prepare to work on Epic 11"): four plans, one PR each, along the epic's layers: Craft (S0–S3), Technique and Calling (S4–S5), Legend (S6–S7), Masterworks and the gate (S8–S9). Each later plan is drafted when the one before merges, from what it measured. The index, `.agents/epic11_plan.md`, stays until the epic's close-out.
+- **The go and the stops:** "For now proceed with epic 11 Craft" (2026-11-16); "Complete S2-S3 I will review afterwards" (2026-11-17), folding S1's look into one review after S3; "This looks good" passed it. No decision was overturned.
+- **Decisions D1–D12** (the epic's §0):
+  - *Groundwork:* `CrawlerTraits`, a 256-byte record beside the skills with room for every later plan's fields (D1, save format 12, plan 1's one raise); deeds as a table counted where they happen (D2); practice observed through `Practised`, which no rule reads (D12).
+  - *Passions and challenge:* a passion is a table row and a draw on its own salt (D3); it multiplies every source before the ceiling (D4); `PracticeSource` carries the challenge an act demands, and a crawler above it learns less (D5); passions weigh the salvage choice through `Considerations`, with no planner fact (D6).
+  - *The cost of mastery:* at most two skills past Apprentice and one at Master, held in practice's one entry (D7); the asking wage, the reservation wage raised by the best band, read by signing, the visit's pay, the chronicle and the dashboard (D8).
+  - *Teachers:* mentors judged in practice's one entry, half the act to the mentor's level less two, with the first teacher recorded (D9); the drill yard, a station kind with no artisan and no recipes (D10); primers, item rows with a `ManualBlock`, bought and read at the hearth (D11).
+  - *Every source through one entry:* the work, a mentor, a manual and the yard all enter by `Practise`, so the passion, the challenge and the budget apply alike and nothing else reads learned levels.
+- **Deviations from the draft:**
+  - *Manuals for passions only* (D11 drafted "passions first"): the passionless don't buy books, so the shelf doesn't draw every purse in a strained economy (F6). One condition opens it.
+  - *The primers' wholesale at 2g, not 8g* (F7): the first visit's 56g left the crafting profile's stations unbuilt on 6 of 20 seeds. Variants isolated the cause (no primers 19 of 20, mentors off 14, 2g 16).
+  - *The DoDs' shapes follow growth:* nobody holds two skills past Apprentice or reaches Master in two weeks (F1). `SpecialistsEmerge` asserts the budget at every tick and the asking wage live, and the hold is proven by a validator. In `AMasterTeachesAnApprentice` the teacher is an Apprentice (F8); the run says so and keeps the epic's name.
+- **Golden re-recorded seven times,** each in its own commit naming its cause: the passions in the record (S1.1), passions speeding practice (S1.2), practice by challenge (S1.3), mentors (S3.1), the primers on the shelf (S3.2), reading (S3.3) and the 2g wholesale (S3.6).
+- **Moved DoDs were re-picked twice,** at S1.5 and S3.6, each from a measurement across the gate seeds on that milestone's final build, never from one seed.
+- **The gates:** S0 core 292/292; S1 294/294 and client 521/521; S2 300/300 and 524/524; S3 and C.1 306/306 (19 explicit not run) and 527/527 in the pinned image; golden 3/3, seeds 1–120 120/120 with and without the guild, and the MonoGame and Android compiles clean at every one. C.1's soak: 18/18 and 20/20 on each player profile.
+- **What it changed** (`docs/skills-model.md` §5.5): every skill now grows; with the hunting players a Journeyman is made on 19 of 23 seeds (14 before); the top doesn't move (highest 7, no Master, no second skill past Apprentice). Plan 2's techniques are tuned on these curves.
+- **Open, in the epic's §7:** F1 and F8 (growth stops short of the budget and of Master teachers; plan 2 reads them), F2 answered by the primers, F3, F4 and F5 (watches), F6 (the open economy, the producer's), F7 (fixed, at its band's edge).
+- **Process lessons:**
+  - *Measure from a copy of the bin in the scratchpad,* so a build doesn't change a long run's binaries under it. Tests that scan the source (names, reads, the golden file) fail from a copy, so judge those in place.
+  - *Run parallel measurement lanes as separate background commands.* Chained in one shell, a lane was dropped and had to be run again.
+  - *A new early cost needs the poorest stall's view:* the soak at day 3 found the primers' first visit too dear before any live scenario did.
+  - *Check every claim in a commit message against the run before pushing.* Local commits that said more than their runs showed were amended before anything was published.
+- **The plan deleted:** `.agents/epic11_craft_plan.md`. Its decisions and findings were already in the epic, its measurements in `docs/skills-model.md` and `docs/economy-model.md`. Git keeps it: `git log --diff-filter=D -- .agents/`.
+- **One PR,** `feat/epic11-craft` into `main` (46 commits from `30c931b`, the close-out last), merged on the producer's word.

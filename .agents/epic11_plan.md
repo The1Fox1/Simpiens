@@ -8,7 +8,7 @@ Working document (AGENTS.md, Documentation Protocol 6). The producer asked for i
 
 | Plan | Milestones | What the player gets | Estimate (agent days) | Complexity | The producer's stops |
 | :--- | :--- | :--- | :-: | :--- | :--- |
-| [`epic11_craft_plan.md`](epic11_craft_plan.md) | S0–S3, **Craft** | Passions, practice by challenge, the mastery budget and upkeep, teachers (mentors, manuals, the drill yard) | 11–15 | Very Complex as a whole; every step Basic or Possibly Complex | The go; the look at S1; S2's soak bands (by exception); the merge |
+| Craft (**done**, closed out 2026-11-18; the plan deleted) | S0–S3, **Craft** | Passions, practice by challenge, the mastery budget and upkeep, teachers (mentors, manuals, the drill yard) | 11–15 | Very Complex as a whole; every step Basic or Possibly Complex | The go; the look at S1; S2's soak bands (by exception); the merge |
 | Technique and Calling (drafted when plan 1 merges) | S4–S5 | A technique chosen at each band, sponsored by the patron; callings, party roles, capstones, Leadership | 8–11 | Very Complex; S4's effects step supervised | The look at S4; the merge |
 | Legend (drafted when plan 2 merges) | S6–S7 | Epithets, scars and earned traits from deeds; named creatures after the Nemesis system | 8–11 | Very Complex; S7 supervised | The looks at S6 and S7; the merge |
 | Masterworks and the gate (drafted when plan 3 merges) | S8–S9 | Masterworks with a maker and a story; every scenario together; the play session; the close-out | 5–8 | Very Complex; S8 supervised | The play session; the merge |
@@ -27,8 +27,8 @@ In all, 32–45 agent days. Epic 10 Part 3's single plan (K0–K11) was estimate
 - **Later plans are drafted late on purpose.** Each is drafted when its predecessor merges, from what that plan measured: S0's growth curves set S4's numbers, and S6's deeds set S7's names. A plan drafted today would be written twice.
 
 ## Order
-1. **Plan 1, Craft:** branch `feat/epic11-craft`, cut from `main` at `30c931b` (after PR #24). Work starts at the producer's go.
-2. **Plan 2:** drafted when plan 1 merges, from its measurements, on a new branch cut from `main`.
+1. **Plan 1, Craft:** branch `feat/epic11-craft`, cut from `main` at `30c931b` (after PR #24). Done: S0–S3 from the producer's go (2026-11-16) to the review (2026-11-17, "This looks good. Let's wrap it up with C.1 and C.2"), closed out on 2026-11-18. It took two calendar days against the 11–15 agent days estimated. Its PR into `main` waits for the producer's merge. Its decisions (D1–D12) and findings (F1–F8) are in the epic, its numbers in `docs/skills-model.md` §5, its summary in `architecture_history.md`.
+2. **Plan 2:** drafted when plan 1 merges, from its measurements (`docs/skills-model.md` §5.5, the curves at craft complete), on a new branch cut from `main`.
 3. **Plans 3 and 4** in turn, the same way.
 4. **The epic's close-out** comes with plan 4. Every plan here is then deleted, and this index with them.
 

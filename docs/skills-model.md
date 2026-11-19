@@ -201,3 +201,47 @@ Levels gained a seed with the hunting players: melee 2.0, mining 14.0, foraging 
 - **Primers sell early.** Someone who loves a craft buys and reads its primer within the hour after the caravan's first visit on 8 seeds, and within days on the rest. Ranged and medicine (F2) are bought and read too: the first road into either skill.
 - **The yard is drilled in melee:** members carry no ranged weapon in the guild profile, so drill raises melee.
 
+
+### 5.5 Craft complete (C.1, 2026-11-17)
+S0.3's measurement a third time, on plan 1's final build: passions, practice by challenge, the mastery budget, the asking wage, mentors and primers on the shelf. The `hunting` profile doesn't build the drill yard, so neither run drills. These are the curves plan 2's techniques are tuned on.
+
+| | No player | Hunting players |
+| :--- | :--- | :--- |
+| Seeds where someone reaches Journeyman | 5 of 23 (from day 12.0) | 19 of 23 (from day 4.4) |
+| Residents holding a Journeyman's skill at day 14 | 0.22 a seed (most 1) | 1.13 a seed (most 3) |
+| Seeds where someone reaches Master | 0 | 0 |
+| Residents with two skills past Apprentice | 0 | 0 |
+| Highest level reached | 6 (mining) | 7 (smithing and alchemy) |
+| Deaths | 0 | 0 |
+
+Levels gained a seed, by skill, with the bands reached across all 23 seeds:
+
+| Skill | No player | Hunting players |
+| :--- | :--- | :--- |
+| Melee | 2.7 (27 to Apprentice) | 4.6 (27 to Apprentice) |
+| Ranged | 2.7 (27 to Apprentice) | 2.9 (30 to Apprentice) |
+| Mining | 20.0 (137 to Apprentice, 5 to Journeyman) | 14.3 (72 to Apprentice, 2 to Journeyman) |
+| Foraging | 14.2 (54 to Apprentice) | 10.0 (35 to Apprentice) |
+| Smithing | 1.6 (15 to Apprentice) | 5.6 (32 to Apprentice, 7 to Journeyman) |
+| Alchemy | 1.6 (15 to Apprentice) | 6.0 (35 to Apprentice, 17 to Journeyman) |
+| Medicine | 1.6 (13 to Apprentice) | 1.6 (15 to Apprentice) |
+
+Practice a seed with the hunting players: mining about 6,740 experience, foraging 4,350, alchemy 2,680, smithing 2,220, melee 1,480, ranged 650 and medicine 360.
+
+**Across plan 1** (hunting players):
+
+| | S0.3, before | S1.5, passions and challenge | C.1, craft complete |
+| :--- | :-: | :-: | :-: |
+| Seeds with a Journeyman | 14 of 23 | 15 of 23 | 19 of 23 |
+| Journeymen held at day 14, a seed | 0.91 | 0.96 | 1.13 |
+| Skills that grow at all | 5 of 7 | 5 of 7 | 7 of 7 |
+| Highest level | 8 | 7 | 7 |
+
+**What it means for plan 2:**
+- **Teachers widen the base, not the top.** Every skill now grows, with or without a player. With no player, smithing, alchemy and medicine each take about 360 experience a seed, about one primer read: primers are the road into those skills and into ranged (F2 answered for the start). With no player, mining's Apprentices rose from 113 (S0.3) to 137, with passions and the mentors at the seams.
+- **The top stays where it was.** Nobody reaches Master in two weeks and nobody holds two skills past Apprentice, so the budget still doesn't bind (F1) and every teacher is an Apprentice (F8). The artisans are the outpost's specialists: of the 26 Journeyman bands reached in the hunting run, 17 are the still's alchemy and 7 the forge's smithing.
+- **For techniques (S4):**
+  - *At Apprentice:* every resident starts with one or two talents there, and 11 to 12 more Apprentice bands a seed are reached in two weeks (246 in the hunting run, 288 with no player). A technique at Apprentice is chosen by everyone, mostly at spawn or in the first days.
+  - *At Journeyman:* about one resident a seed in two weeks with the players, mostly an artisan, and almost never a fighter; a fifth of one with no player.
+  - *At Master:* never in two weeks.
+  - Plan 2 tunes on these numbers, or measures over a longer horizon.
