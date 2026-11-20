@@ -137,8 +137,8 @@ Working document (AGENTS.md, Documentation Protocol 6), one of Epic 11's plans (
 - [x] **S6.8 DoD `TheOutpostRemembers`** (done 2026-11-20: gate seed 3, on the guild's ordinary clears; an epithet on 19 of 23 gate seeds and a scar on 12 in ten days; F13 corrected: the soak's parties carry draughts, the guild's clears without them down members) [Possibly Complex: a live DoD]
   - On the real outpost with the guild's player ordering clears (the soak's hunting players never down anyone, F13), within ten days: a crawler earns an epithet on its own, and a crawler downed and brought back carries a scar, both in the chronicle; on screen in `LegendOnScreenTests`.
   - Its seed from a measurement across the gate seeds (`MeasureTheOutpostRemembersOnTheGateSeeds`).
-- [ ] **S6.9 S6's gate** [Basic: the gates (§4)]
-- [ ] **The producer's look at S6:** a brief in the epic's §4, written at S6.9.
+- [x] **S6.9 S6's gate** (done 2026-11-20: core 325/325, client 542/542 pinned, golden 3/3, compiles clean; seeds and soak at S6.5) [Basic: the gates (§4)]
+- [ ] **The producer's look at S6:** the brief is in the epic's §4.
 
 ### S7. Named creatures (4–5 days), then the producer's look
 **Complexity:** Very Complex as the epic stamps it (a new mechanism in the creatures' rule and save; supervised). Split so the name and the save, the growth, the grudges and the hunt land alone. **S7.1–S7.3 are supervised by the developer** (the creatures' rule and save); if the producer is away, they are listed for review on return and nothing in them goes in unflagged.
