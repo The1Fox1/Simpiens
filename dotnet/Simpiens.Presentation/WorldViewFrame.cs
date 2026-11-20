@@ -66,6 +66,8 @@ namespace Simpiens.Presentation
         public ItemType Carried;
         /// <summary>A crawler's look (Epic UI-Beta B2), its body drawn from it; default (no look) for props and for crawlers given none.</summary>
         public CrawlerLook Look;
+        /// <summary>The scars a crawler bears (Epic 11, S6.7), drawn on its body; none for props.</summary>
+        public Simpiens.Presentation.Art.People.ScarMarks Scars;
         /// <summary>Who a crawler is to the outpost (Epic UI-Beta B2); Resident for props.</summary>
         public CrawlerStanding Standing;
         /// <summary>One of the patron's people (Epic 11, S4.8): a guild member or a station's artisan; false for the rest and props.</summary>
@@ -235,6 +237,7 @@ namespace Simpiens.Presentation
                     Worn = agent?.Inventory != null ? WornLook.Of(agent.Inventory) : default,
                     Carried = agent?.Inventory != null ? agent.Inventory.FirstHeld(ItemCategory.Resource) : ItemType.None,
                     Look = agent != null ? agent.Look : default,
+                    Scars = agent != null ? Simpiens.Presentation.Art.People.ScarMarks.Of(agent.Traits) : default,
                     Standing = agent != null ? StandingOf(agent) : CrawlerStanding.Resident,
                     Ours = agent != null && (agent.Memberships.Has(GroupType.FactionGuild) || agent.Memberships.Has(GroupType.Workshop)),
                     Role = agent != null && agent.Memberships.Has(GroupType.FactionGuild) ? Simpiens.Simulation.Skills.CallingTable.RoleOf(agent.Traits.Calling) : Simpiens.Simulation.Skills.PartyRole.None,

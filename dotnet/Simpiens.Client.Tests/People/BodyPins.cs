@@ -34,14 +34,19 @@ namespace Simpiens.Client.Tests.People
             // A coat on the body (Epic 10 Part 3, K1.5): hazard gear by build, and with a hard hat and the tabard over it
             foreach (var build in LookCatalog.Options(LookGene.Build)) yield return Body($"Body/coat/{build.Key}", Basis.With(LookGene.Build, build.Id), WornLook.Wearing(ItemType.HazardGear), false);
             yield return Body("Body/hat-and-coat", Basis, WornLook.Wearing(ItemType.HardHat).And(Simpiens.Simulation.Items.EquipmentSlot.Body, ItemType.HazardGear), true);
+            // Scars (Epic 11, S6.7): all four places, on the basis and on the lightest and darkest skin
+            var everywhere = ScarMarks.With(Simpiens.Simulation.Skills.ScarShape.Cut, Simpiens.Simulation.Skills.ScarPlace.LeftCheek, Simpiens.Simulation.Skills.ScarPlace.Brow, Simpiens.Simulation.Skills.ScarPlace.RightCheek, Simpiens.Simulation.Skills.ScarPlace.Chin);
+            yield return Body("Body/scar/all", Basis, default, false, everywhere);
+            yield return Body("Body/scar/tone-1", Basis.With(LookGene.SkinTone, LookCatalog.IdOf(LookGene.SkinTone, "tone-1")), default, false, everywhere);
+            yield return Body("Body/scar/tone-10", Basis.With(LookGene.SkinTone, LookCatalog.IdOf(LookGene.SkinTone, "tone-10")), default, false, everywhere);
             for (uint i = 0; i < PeopleSheetTests.CrowdSize; i++)
                 yield return Body($"Body/crowd/{i:D2}", CrawlerLook.Generate(PeopleSheetTests.CrowdSeed, new EntityId(i + 1u, 0u, 0u, 0u)), default, false);
         }
 
-        private static PixelSprite Body(string name, CrawlerLook look, WornLook worn, bool tabard)
+        private static PixelSprite Body(string name, CrawlerLook look, WornLook worn, bool tabard, ScarMarks scars = default)
         {
             var pixels = new Rgba32[BodyKit.PixelsPerBody];
-            BodyKit.Bake(look, worn, tabard, pixels);
+            BodyKit.Bake(look, worn, tabard, pixels, scars);
             return new PixelSprite(name, BodyKit.Size, BodyKit.Size * BodyKit.FrameCount, pixels); // the frames stacked
         }
 

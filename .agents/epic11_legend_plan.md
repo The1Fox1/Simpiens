@@ -131,7 +131,7 @@ Working document (AGENTS.md, Documentation Protocol 6), one of Epic 11's plans (
   - **Names:** the epithet in every name shown (D36), with the longest name, epithet and title fitted on each card at 1280×720.
   - **The dossier:** the legend line and its tips; the dossier still fits 720 rows.
   - **The checks:** `LegendOnScreenTests` (names, the line, its tips, the fit).
-- [ ] **S6.7 Scars on the body and the portrait** [Possibly Complex: art across two keys]
+- [x] **S6.7 Scars on the body and the portrait** (done 2026-11-20; a fleck of scar red at each place on the body; each shape at its place on the portrait; the frames carry the scars) [Possibly Complex: art across two keys]
   - **The art:** `BodyKit` and `PortraitKit` draw each scar at its place; `PortraitKey` and the bodies' key hold the scars.
   - **The checks:** look at the people sheet; re-record the art pins in their own commit; changed renders recorded in the pinned image in their own commit.
 - [ ] **S6.8 DoD `TheOutpostRemembers`** [Possibly Complex: a live DoD]
