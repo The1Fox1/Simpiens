@@ -71,5 +71,6 @@ namespace Simpiens.Simulation
         public const uint PileId = 15; // a pile's id, its own sequence apart from the entities' (K4.1)
         public const uint Skills = 16; // a crawler's starting skills (K9.1)
         public const uint Passions = 17; // a crawler's passions (Epic 11, S1.1, D3)
+        public const uint Techniques = 18; // a crawler's pick of a technique at a band reached (Epic 11, S4.2, D15)
     }
 }

@@ -100,7 +100,7 @@ namespace Simpiens.Cognition
                 State.Memberships = _simulationManager.Groups.GetMemberships(State.AgentId);
             }
             // And of its part in the guild's expedition (Epic 10 G5)
-            State.Expedition = _simulationManager?.Guild != null ? _simulationManager.Guild.OrderFor(State.AgentId) : default;
+            State.Expedition = _simulationManager?.Guild != null ? _simulationManager.Guild.OrderFor(State.AgentId, Simpiens.Simulation.Skills.CallingTable.RoleOf(State.Traits.Calling)) : default; // its calling's role (Epic 11, S5.4)
             // And of its station's work, on shift (Epic 10 Part 2, W1.3)
             State.Station = _simulationManager?.Workshops != null ? _simulationManager.Workshops.OrderFor(State.AgentId, (uint)currentTick) : default;
             // And of the bunk the guild keeps for it (Epic 10 Part 2, W5.2)

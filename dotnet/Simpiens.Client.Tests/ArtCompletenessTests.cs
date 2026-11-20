@@ -120,6 +120,8 @@ namespace Simpiens.Client.Tests
             used.Add(catalog.Id(ArtKeys.FxShot)); // shots in flight (Epic 10 Part 3, K8.4a)
             used.Add(catalog.Id(ArtKeys.FxSpit));
             used.Add(catalog.Id(ArtKeys.FxBar)); // a boss's health bar (Epic 10 Part 3, K10.5b)
+            foreach (Simpiens.Simulation.Skills.PartyRole role in System.Enum.GetValues(typeof(Simpiens.Simulation.Skills.PartyRole)))
+                if (ArtKeys.Badge(role) != null) used.Add(catalog.Id(ArtKeys.Badge(role))); // a guild member's role badge (Epic 11, S5.8)
             used.Add(catalog.Id(ArtKeys.PropGate)); // the descent gate, sealed and breached (K10.5c)
             used.Add(catalog.Id(ArtKeys.PropGateOpen));
             foreach (Simpiens.Simulation.World.HazardKind kind in System.Enum.GetValues(typeof(Simpiens.Simulation.World.HazardKind)))

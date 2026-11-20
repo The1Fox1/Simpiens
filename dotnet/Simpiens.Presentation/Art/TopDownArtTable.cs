@@ -33,6 +33,7 @@ namespace Simpiens.Presentation.Art
             {
                 NameOffset = new Vec2(0f, 0.65f), NameHeight = 0f, // above the crawler (Unity's CameraController)
                 CarryOffset = new Vec2(0.25f, 0.3f), CarryHeight = 0f, // over its pack, at its upper right
+                BadgeOffset = new Vec2(-0.25f, 0.3f), BadgeHeight = 0f, // a role badge at its upper left (Epic 11, S5.8)
                 RideOffset = new Vec2(0f, 0.3f), RideHeight = 0f, // a carried crawler across its back, up the screen (Epic 10 Part 3, K5.8a)
                 // On the stall's counter, its lower half: four goods as their 8x8 markers (a 12-px map sprite would cover it)
                 DisplaySlots = new[] { (new Vec2(-0.69f, -0.22f), 0f), (new Vec2(-0.23f, -0.22f), 0f), (new Vec2(0.23f, -0.22f), 0f), (new Vec2(0.69f, -0.22f), 0f) },
@@ -64,6 +65,11 @@ namespace Simpiens.Presentation.Art
                .Add(ArtKeys.FxSpit, Sheet, new[] { ShotSprites.SpitName }, 0.5f, 0.5f, Art)
                // A boss's health bar (Epic 10 Part 3, K10.5b): twelve pixels by one and a half, for a creature a crawler's size
                .Add(ArtKeys.FxBar, Sheet, new[] { BarSprites.Name }, 0.75f, 0.1f, Art)
+               // A guild member's role badge (Epic 11, S5.8): seven pixels, at the art's sixteen a unit
+               .Add(ArtKeys.BadgeFront, Sheet, new[] { BadgeSprites.Front }, BadgeSprites.Size / 16f, BadgeSprites.Size / 16f, Art)
+               .Add(ArtKeys.BadgeBack, Sheet, new[] { BadgeSprites.Back }, BadgeSprites.Size / 16f, BadgeSprites.Size / 16f, Art)
+               .Add(ArtKeys.BadgeCarrier, Sheet, new[] { BadgeSprites.Carrier }, BadgeSprites.Size / 16f, BadgeSprites.Size / 16f, Art)
+               .Add(ArtKeys.BadgeLeader, Sheet, new[] { BadgeSprites.Leader }, BadgeSprites.Size / 16f, BadgeSprites.Size / 16f, Art)
                // The descent gate (Epic 10 Part 3, K10.5c): two cells, sealed or breached
                .Add(ArtKeys.PropGate, Sheet, new[] { GateSprites.Sealed }, 2f, 2f, Art)
                .Add(ArtKeys.PropGateOpen, Sheet, new[] { GateSprites.Open }, 2f, 2f, Art)

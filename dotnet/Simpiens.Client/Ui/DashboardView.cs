@@ -34,6 +34,7 @@ namespace Simpiens.Client.Ui
             Inspector = new InspectorCard(model, portraits); // Epic UI-Beta B4: on the map, under the windows
             ui.Root.Children.Add(Inspector.Root);
             Panels.FindOnMap = FindOnMap;
+            Panels.OpenTechniques = OpenTechniques;
             Merchant = new MerchantWindow(model.Merchant, icons);
             Merchant.Window.CloseButton.Click += (_, _) => { Model.Merchant.Close(); Refresh(); };
             ui.Root.Children.Add(Merchant.Window.Veil);
@@ -48,6 +49,9 @@ namespace Simpiens.Client.Ui
             Stations.FindOnMap = FindOnMap;
             Stations.Window.CloseButton.Click += (_, _) => { Model.Stations.Close(); Refresh(); };
             ui.Root.Children.Add(Stations.Window.Veil);
+            Techniques = new TechniqueTreeWindow(model.Techniques, portraits);
+            Techniques.Window.CloseButton.Click += (_, _) => { Model.Techniques.Close(); Refresh(); };
+            ui.Root.Children.Add(Techniques.Window.Veil);
             Header.MerchantButton.Click += (_, _) => { Model.ToggleMerchant(); Refresh(); };
             Header.BountiesButton.Click += (_, _) => { Model.ToggleBounties(); Refresh(); };
             Header.GuildButton.Click += (_, _) => { Model.ToggleGuild(); Refresh(); };
@@ -71,6 +75,7 @@ namespace Simpiens.Client.Ui
             Bounties.Window.Motion = motion;
             Guild.Window.Motion = motion;
             Stations.Window.Motion = motion;
+            Techniques.Window.Motion = motion;
             Sessions = new SessionSwitchBar(model.Sessions);
             ui.Root.Children.Add(Sessions.Root);
             ui.Root.Children.Add(Header.Menu); // over everything but the tips: the session switch sits where it drops
@@ -86,6 +91,9 @@ namespace Simpiens.Client.Ui
 
         /// <summary>The station window (Epic 10 Part 2, W1.6a).</summary>
         public StationWindow Stations { get; }
+
+        /// <summary>A crawler's technique tree (Epic 11, S4.11, D25).</summary>
+        public TechniqueTreeWindow Techniques { get; }
 
         /// <summary>The most recipes any station has: the window's rows, built once.</summary>
         private static int MostRecipes()
@@ -123,6 +131,7 @@ namespace Simpiens.Client.Ui
             Bounties.Window.IsShown = false;
             Guild.Window.IsShown = false;
             Stations.Window.IsShown = false;
+            Techniques.Window.IsShown = false;
             for (int i = 0; i < _trackers.Count; i++) _trackers[i].Root.Visible = false;
             Inspector.Root.Visible = false;
             Sessions.Root.Visible = false;
@@ -140,6 +149,13 @@ namespace Simpiens.Client.Ui
         public void FindOnMap(EntityId crawler)
         {
             Model.FindOnMap(crawler);
+            Refresh();
+        }
+
+        /// <summary>Sponsor, or the dossier's techniques line (Epic 11, S4.11, D25): that crawler's technique tree.</summary>
+        public void OpenTechniques(EntityId crawler)
+        {
+            Model.OpenTechniques(crawler);
             Refresh();
         }
 
@@ -169,6 +185,7 @@ namespace Simpiens.Client.Ui
                 Bounties.Window.Animate(realSeconds);
                 Guild.Window.Animate(realSeconds);
                 Stations.Window.Animate(realSeconds);
+                Techniques.Window.Animate(realSeconds);
             }
             if (realSeconds > 0f) _sinceRefresh += realSeconds;
             bool newSession = Model.SessionVersion != _sessionVersion; // a switch or a load shows at once, not at the next refresh
@@ -191,6 +208,7 @@ namespace Simpiens.Client.Ui
             Bounties.Bind();
             Guild.Bind();
             Stations.Bind();
+            Techniques.Bind();
             for (int i = 0; i < _trackers.Count; i++) _trackers[i].Bind(Model.Guild.Expedition.Trackers[i], mapView: !Model.PanelsVisible);
             Inspector.Bind();
             Sessions?.Bind();

@@ -26,6 +26,7 @@ namespace Simpiens.Presentation.Art
             {
                 NameOffset = Vec2.Zero, NameHeight = 1.125f, // over the head: a 16-pixel sprite is one unit tall
                 CarryOffset = Vec2.Zero, CarryHeight = 1.25f, // centred over the head
+                BadgeOffset = new Vec2(-0.3f, 0.3f), BadgeHeight = 1f, // a role badge beside the head, to its left on screen (Epic 11, S5.8)
                 RideOffset = Vec2.Zero, RideHeight = 0.55f, // a carried crawler across the shoulders (Epic 10 Part 3, K5.8a)
                 // Along the counter's front edge, 12 px apart on screen ((s, -s) on the floor is horizontal), on its top (8 px up)
                 DisplaySlots = new[] { (new Vec2(-0.5625f, 0.5625f), 0.5f), (new Vec2(-0.1875f, 0.1875f), 0.5f), (new Vec2(0.1875f, -0.1875f), 0.5f), (new Vec2(0.5625f, -0.5625f), 0.5f) },
@@ -60,6 +61,10 @@ namespace Simpiens.Presentation.Art
                .Add(ArtKeys.FxShot, Sheet, new[] { ShotSprites.ShotName }, ShotSprites.Size, ShotSprites.Size, pivotY: ShotPivot)
                .Add(ArtKeys.FxSpit, Sheet, new[] { ShotSprites.SpitName }, ShotSprites.Size, ShotSprites.Size, pivotY: ShotPivot)
                .Add(ArtKeys.FxBar, Sheet, new[] { BarSprites.Name }, 12f, 1.5f) // a boss's health bar (K10.5b), as top-down's
+               .Add(ArtKeys.BadgeFront, Sheet, new[] { BadgeSprites.Front }, BadgeSprites.Size, BadgeSprites.Size) // a role badge (Epic 11, S5.8), as top-down's
+               .Add(ArtKeys.BadgeBack, Sheet, new[] { BadgeSprites.Back }, BadgeSprites.Size, BadgeSprites.Size)
+               .Add(ArtKeys.BadgeCarrier, Sheet, new[] { BadgeSprites.Carrier }, BadgeSprites.Size, BadgeSprites.Size)
+               .Add(ArtKeys.BadgeLeader, Sheet, new[] { BadgeSprites.Leader }, BadgeSprites.Size, BadgeSprites.Size)
                .Add(ArtKeys.PropGate, Sheet, new[] { GateSprites.Sealed }, 2f * Standing, 2f * Standing, pivotY: FeetPivot) // the descent gate (K10.5c), standing
                .Add(ArtKeys.PropGateOpen, Sheet, new[] { GateSprites.Open }, 2f * Standing, 2f * Standing, pivotY: FeetPivot)
                .Add(ArtKeys.Missing, Sheet, new[] { MissingArt.Name }, Standing, Standing, pivotY: FeetPivot);

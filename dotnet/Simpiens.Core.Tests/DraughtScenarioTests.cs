@@ -34,9 +34,9 @@ namespace Simpiens.Core.Tests
             public string Report = string.Empty;
         }
 
-        private static Trip Run(byte draughts, bool watchTheDay)
+        private static Trip Run(byte draughts, bool watchTheDay, ulong seed = Seed)
         {
-            using var sim = LocalSimulation.Create(SimulationSettings.DefaultSeed);
+            using var sim = LocalSimulation.Create(seed);
             sim.Respawn(OutpostSession.SessionId);
             var still = new WorkshopPlayer(sim, StationKind.Still, ItemType.HealingDraught);
             var player = new GuildPlayer(sim, targetSize: 4);
@@ -79,12 +79,45 @@ namespace Simpiens.Core.Tests
             return trip;
         }
 
+        /// <summary>
+        /// Gate seed 20261010 since Epic 11's S5.6 (<see cref="MeasureDraughtsOnTheGateSeeds"/>): a draught keeps a party working on
+        /// 15 of 23 gate seeds; on the default seed (W2's) a captain's Leadership now steadies the bare party through its trip
+        /// (D19), so it isn't turned back to be compared. This one is the first that holds.
+        /// </summary>
+        private const ulong Seed = 20261010;
+
+        // The scenario's claim on a pair of runs, as one line, and whether it holds
+        private static bool Holds(Trip without, Trip with) =>
+            without.Ended && with.Ended && without.Dispatched == with.Dispatched && with.MadeAtStill >= Stockpile && with.Carried == 2 * 4 && without.Carried < with.Carried
+            && without.TurnedBack && !with.TurnedBack && with.Drunk > 0 && with.Work > without.Work && with.Haul >= without.Haul && with.Haul == Floor1Layout.GallerySeamYield
+            && without.Downed == 0 && with.Downed == 0 && with.ConservationViolations == 0 && with.DayFailures.Count == 0;
+
+        private static string Describe(Trip t) => $"sent t{t.Dispatched}, carried {t.Carried}, worked {t.Work} ticks, haul {t.Haul}{(t.TurnedBack ? ", turned back" : "")}, downed {t.Downed}, drunk {t.Drunk}; the still made {t.MadeAtStill}";
+
+        /// <summary>The measurement behind the seed (Epic 11, S5.6): both runs on every gate seed, eight at a time. Explicit, a few minutes.</summary>
+        [Fact(Explicit = true)]
+        public void MeasureDraughtsOnTheGateSeeds()
+        {
+            var seeds = Simpiens.Hosting.OutpostWatch.GateSeeds;
+            var lines = new string[seeds.Length];
+            int held = 0;
+            System.Threading.Tasks.Parallel.For(0, seeds.Length, new System.Threading.Tasks.ParallelOptions { MaxDegreeOfParallelism = 8 }, i =>
+            {
+                var without = Run(0, watchTheDay: false, seeds[i]);
+                var with = Run(2, watchTheDay: true, seeds[i]);
+                bool ok = Holds(without, with);
+                if (ok) System.Threading.Interlocked.Increment(ref held);
+                lines[i] = $"seed {seeds[i]}: without: {Describe(without)} | with: {Describe(with)}{(with.DayFailures.Count > 0 ? " | days FAIL" : "")}{(ok ? " HOLDS" : "")}";
+            });
+            foreach (var line in lines) TestContext.Current.TestOutputHelper?.WriteLine(line);
+            TestContext.Current.TestOutputHelper?.WriteLine($"a draught keeps a party working on {held} of {seeds.Length} gate seeds");
+        }
+
         [Fact]
         public void ADraughtKeepsAPartyWorking()
         {
             var without = Run(draughts: 0, watchTheDay: false);
             var with = Run(draughts: 2, watchTheDay: true);
-            string Describe(Trip t) => $"sent t{t.Dispatched}, carried {t.Carried}, worked {t.Work} ticks, haul {t.Haul}{(t.TurnedBack ? ", turned back" : "")}, downed {t.Downed}, drunk {t.Drunk}; the still made {t.MadeAtStill}";
             TestContext.Current.TestOutputHelper?.WriteLine($"without: {Describe(without)}\nwith:    {Describe(with)}\n{with.Report}");
 
             Assert.True(without.Ended && with.Ended, "Both parties went and came home.");

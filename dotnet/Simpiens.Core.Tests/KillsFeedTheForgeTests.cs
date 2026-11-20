@@ -76,8 +76,10 @@ namespace Simpiens.Core.Tests
         /// and 19 without.
         /// Gate seed 424242 since passions and practice by challenge (Epic 11, S1.5): worn on 7 of 23 (424242, 20261010, 1, 2,
         /// 3, 10, 18), seed 15 no longer; this one first, at t33880 (a chitin plate).
+        /// Gate seed 20261010 since the techniques (Epic 11, S4.7): worn on 7 of 23 again (20261010, 2, 5, 10, 14, 15, 18; seed
+        /// 2's days fail on thrashing), 424242 no longer; this one first, at t34262 (a chitin plate).
         /// </summary>
-        private const ulong Seed = 424242;
+        private const ulong Seed = 20261010;
 
         [Fact]
         public void AKillsMaterialsBecomeArmourAResidentWears()

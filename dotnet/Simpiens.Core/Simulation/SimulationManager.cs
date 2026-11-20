@@ -114,9 +114,16 @@ namespace Simpiens.Simulation
         /// <summary>The loaded map (immutable); null before one is loaded.</summary>
         public Simpiens.Simulation.World.MapDefinition Map => _sectors?.Map;
 
+        /// <summary>
+        /// The session's seed (Epic 11, S4.2, D15): what a crawler's pick of a technique at a band reached is drawn on. Set
+        /// where the lairs are filled and on a load; 0 in a simulation built by hand until a test sets it.
+        /// </summary>
+        public ulong Seed { get; set; }
+
         /// <summary>Fills the map's lairs on <paramref name="seed"/> (a session's start, K2.1). Main thread.</summary>
         public void PopulateLairs(ulong seed)
         {
+            Seed = seed;
             Creatures.Populate(this, seed);
             Piles.Begin(this, seed); // no piles at a session's start (K4.1)
         }
@@ -221,7 +228,11 @@ namespace Simpiens.Simulation
             // below the crawler's level teaches it less (S1.3, Q8, D5)
             var passion = Simpiens.Simulation.Skills.PassionTable.Get(agent.Traits.PassionFor(skill));
             int challenge = Simpiens.Simulation.Skills.SkillRules.ChallengePercent(agent.Skills.Level(skill), source.Challenge);
-            experience = (int)(((long)experience * passion.PracticePercent * challenge + 5000) / 10000);
+            // Its techniques' practice beside the passion (Epic 11, S4.4, D14): a student learns faster, a hard driver slower
+            int practice = Simpiens.Simulation.Skills.CrawlerTechniques.Get(agent.Traits, agent.Skills, skill, Simpiens.Simulation.Skills.TechniqueStat.Practice);
+            experience = practice == 0
+                ? (int)(((long)experience * passion.PracticePercent * challenge + 5000) / 10000)
+                : (int)(((long)experience * passion.PracticePercent * challenge * (100 + practice) + 500000) / 1000000);
             if (passion.FrustrationEased > 0f) agent.RelieveFrustration(passion.FrustrationEased);
             // The mastery budget holds the skill beside the source's ceiling (Epic 11, S2.1, Q6, D7)
             int ceiling = Math.Min(source.Ceiling, Simpiens.Simulation.Skills.SkillRules.BudgetCeiling(agent.Skills, skill));
@@ -235,7 +246,36 @@ namespace Simpiens.Simulation
             uint tick = (uint)(_clock?.CurrentTick ?? 0);
             ChronicleService?.RecordEvent(new ChronicleEvent(ChronicleEventType.SkillBandReached, agent.AgentId, default,
                 GetSectorForPosition(agent.Position), tick, ChronicleIntensity.Notable, (byte)skill * 256 + (byte)band));
+            PickTechnique(agent, skill, tick);
+            JudgeCalling(agent, tick);
             TellTheAsk(agent, tick);
+        }
+
+        /// <summary>A band reached may earn another calling (Epic 11, S5.3, D21): judged again, and a change told in the chronicle.</summary>
+        private void JudgeCalling(AgentState agent, uint tick)
+        {
+            var traits = agent.Traits;
+            if (!Simpiens.Simulation.Skills.CallingRules.Rejudge(agent.Skills, ref traits, out _)) return;
+            agent.Traits = traits;
+            SimLog.Simulation.ZLogInformation($"{SimLog.Agent(agent.AgentId)} is now a {Simpiens.Simulation.Skills.CallingTable.NameOf(traits.Calling)}");
+            if (traits.Calling == Simpiens.Simulation.Skills.Calling.None) return;
+            ChronicleService?.RecordEvent(new ChronicleEvent(ChronicleEventType.CallingEarned, agent.AgentId, default,
+                GetSectorForPosition(agent.Position), tick, ChronicleIntensity.Notable, (byte)traits.Calling));
+        }
+
+        /// <summary>
+        /// A band reached is a moment (Epic 11, S4.2, Q3, D15): the crawler picks one of the band's techniques by its nature,
+        /// if its slot is empty, and the chronicle tells it.
+        /// </summary>
+        private void PickTechnique(AgentState agent, Simpiens.Simulation.Skills.Skill skill, uint tick)
+        {
+            var traits = agent.Traits;
+            var picked = Simpiens.Simulation.Skills.TechniqueRules.FillReached(Seed, agent.AgentId, agent.Personality, agent.Skills, skill, ref traits);
+            if (picked == Simpiens.Simulation.Skills.Technique.None) return;
+            agent.Traits = traits;
+            SimLog.Simulation.ZLogInformation($"{SimLog.Agent(agent.AgentId)} took up {Simpiens.Simulation.Skills.TechniqueTable.NameOf(picked)}");
+            ChronicleService?.RecordEvent(new ChronicleEvent(ChronicleEventType.TechniqueChosen, agent.AgentId, default,
+                GetSectorForPosition(agent.Position), tick, ChronicleIntensity.Notable, (byte)picked));
         }
 
         /// <summary>
@@ -276,7 +316,9 @@ namespace Simpiens.Simulation
         /// </summary>
         private void Teach(AgentState mentor, AgentState learner, in Simpiens.Simulation.Skills.SkillWork work, Simpiens.Simulation.Skills.Skill skill, int experience, uint now)
         {
-            int lesson = experience * Simpiens.Simulation.Skills.SkillRules.MentorPercent / 100;
+            // A mentor's techniques may teach more of the act (Epic 11, S4.4, D14: a Master's lessons)
+            int share = Simpiens.Simulation.Skills.SkillRules.MentorPercent + Simpiens.Simulation.Skills.CrawlerTechniques.Get(mentor, work, Simpiens.Simulation.Skills.TechniqueStat.Teach);
+            int lesson = experience * share / 100;
             if (lesson <= 0) return;
             int ceiling = Simpiens.Simulation.Skills.CrawlerSkills.Level(mentor, work) - Simpiens.Simulation.Skills.SkillRules.MentorCeilingBelow;
             int had = learner.Skills.Experience(skill);
@@ -715,6 +757,11 @@ namespace Simpiens.Simulation
                 // The guildhall's parties (Epic 10 Part 2, W5)
                 case InfluenceCommandType.FormParty:
                     Guild.FormParty(this, influence.FormParty, currentTick);
+                    break;
+
+                // Techniques (Epic 11, S4.6, D16): the patron proposes, the crawler disposes
+                case InfluenceCommandType.SponsorTechnique:
+                    Simpiens.Simulation.Guild.SponsorRules.Sponsor(Guild, Workshops, this, influence.SponsorTechnique.CrawlerId, influence.SponsorTechnique.Technique, currentTick);
                     break;
 
                 case InfluenceCommandType.GiveGear:

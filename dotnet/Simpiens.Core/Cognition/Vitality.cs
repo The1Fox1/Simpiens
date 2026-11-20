@@ -30,9 +30,31 @@ namespace Simpiens.Cognition
         /// <summary>A rescuer carries the fallen at half its pace (Epic 10 Part 3, K5.2).</summary>
         public const float CarrySpeedFactor = 0.5f;
 
-        /// <summary>The share of its pace <paramref name="rescuer"/> carries at (Epic 10 Part 3, K9.3d): half, and more by its skill at tending the fallen, four fifths at the most.</summary>
-        public static float CarrySpeed(AgentState rescuer) => rescuer == null ? CarrySpeedFactor
-            : (float)(CarrySpeedFactor + Simpiens.Simulation.Skills.SkillRules.CarryBonus(Simpiens.Simulation.Skills.CrawlerSkills.Level(rescuer, Simpiens.Simulation.Skills.SkillWork.Tend())));
+        /// <summary>
+        /// The share of its pace <paramref name="rescuer"/> carries at (Epic 10 Part 3, K9.3d): half, and more by its skill at
+        /// tending the fallen, four fifths at the most; times its techniques' pace at tending (Epic 11, S4.4, D14: Strong Back).
+        /// </summary>
+        public static float CarrySpeed(AgentState rescuer)
+        {
+            if (rescuer == null) return CarrySpeedFactor;
+            var tend = Simpiens.Simulation.Skills.SkillWork.Tend();
+            float share = (float)(CarrySpeedFactor + Simpiens.Simulation.Skills.SkillRules.CarryBonus(Simpiens.Simulation.Skills.CrawlerSkills.Level(rescuer, tend)));
+            int pace = Simpiens.Simulation.Skills.CrawlerTechniques.Get(rescuer, tend, Simpiens.Simulation.Skills.TechniqueStat.Pace);
+            return pace == 0 ? share : (float)(share * Simpiens.Simulation.Skills.CrawlerTechniques.Factor(pace));
+        }
+
+        /// <summary>
+        /// How much more a medicine <paramref name="giver"/> gives heals (Epic 10 Part 3, K9.3d): by its skill at tending the
+        /// fallen, times its techniques' healing (Epic 11, S4.4, D14: Steady Hands); the medicine's own with nobody.
+        /// </summary>
+        public static float MedicineFactor(AgentState giver)
+        {
+            if (giver == null) return 1f;
+            var tend = Simpiens.Simulation.Skills.SkillWork.Tend();
+            float factor = Simpiens.Simulation.Skills.SkillRules.HealFactor(Simpiens.Simulation.Skills.CrawlerSkills.Level(giver, tend));
+            int heal = Simpiens.Simulation.Skills.CrawlerTechniques.Get(giver, tend, Simpiens.Simulation.Skills.TechniqueStat.Heal);
+            return heal == 0 ? factor : (float)(factor * Simpiens.Simulation.Skills.CrawlerTechniques.Factor(heal));
+        }
 
         /// <summary>Only a crawler at least this bold (personality) and this healthy goes into a hazard sector for its salvage.</summary>
         public const float VentureRiskTolerance = 0.3f;
@@ -121,7 +143,7 @@ namespace Simpiens.Cognition
             {
                 if (!snapshot.IsLairCharted(i) || !Simpiens.Simulation.Creatures.LairReach.Holds(lairs[i], position)) continue;
                 if (ignoreAt.HasValue && Simpiens.Simulation.Creatures.LairReach.Holds(lairs[i], ignoreAt.Value)) continue;
-                if (BravesLair(lairs[i], snapshot.IsBossAlive(i), context.Skills, context.Inventory, context.Health, context.Personality.RiskTolerancePercent, context.IsDowned)) continue;
+                if (BravesLair(lairs[i], snapshot.IsBossAlive(i), context.Skills, context.Inventory, context.Traits, context.Health, context.Personality.RiskTolerancePercent, context.IsDowned)) continue;
                 if (defense < 0f) defense = Simpiens.Simulation.Items.CrawlerStats.Get(context.Inventory, Simpiens.Simulation.Items.StatKind.Defense);
                 float danger = Simpiens.Simulation.Creatures.LairReach.Danger(lairs[i], defense, snapshot.IsBossAlive(i));
                 if (danger > worst) worst = danger;
@@ -162,14 +184,14 @@ namespace Simpiens.Cognition
         /// <paramref name="lair"/>'s smallest pack one by one (Epic 10 Part 3, K3.3, D21): each creature's harm a second
         /// through its defense, times what its own blows take to slay one (the combat rule's hit chance for its attack less
         /// the creature's defense, every swing), over the pack still standing: n, n - 1, ... 1 of them. Infinite for blows
-        /// that can't hurt. It judges by the fighter the fight would build (<see cref="Simpiens.Simulation.Combat.Combatant.ForCrawler(EntityId, Vec2, float, float, bool, in Simpiens.Simulation.Skills.SkillSet, Simpiens.Cognition.Inventory.IAgentInventory)"/>,
-        /// K9.8b): its skill's hit chance and damage, its swing in whole ticks.
+        /// that can't hurt. It judges by the fighter the fight would build (<see cref="Simpiens.Simulation.Combat.Combatant.ForCrawler(EntityId, Vec2, float, float, bool, in Simpiens.Simulation.Skills.SkillSet, Simpiens.Cognition.Inventory.IAgentInventory, in Simpiens.Simulation.Skills.CrawlerTraits)"/>,
+        /// K9.8b): its skill's hit chance and damage, its techniques (Epic 11, S4.3), its swing in whole ticks.
         /// </summary>
-        public static float HarmToClear(in Simpiens.Simulation.World.LairDefinition lair, bool bossAlive, in Simpiens.Simulation.Skills.SkillSet skills, Simpiens.Cognition.Inventory.IAgentInventory worn)
+        public static float HarmToClear(in Simpiens.Simulation.World.LairDefinition lair, bool bossAlive, in Simpiens.Simulation.Skills.SkillSet skills, Simpiens.Cognition.Inventory.IAgentInventory worn, in Simpiens.Simulation.Skills.CrawlerTraits traits)
         {
             var kind = Simpiens.Simulation.Creatures.CreatureCatalog.Get(lair.Kind);
             if (kind == null || kind.PackMin == 0) return 0f;
-            var me = Simpiens.Simulation.Combat.Combatant.ForCrawler(default, default, 0f, MaxHealth, standing: true, skills, worn);
+            var me = Simpiens.Simulation.Combat.Combatant.ForCrawler(default, default, 0f, MaxHealth, standing: true, skills, worn, traits);
             float interval = (float)(me.SwingInterval / (float)Simpiens.Simulation.Combat.CombatRules.TicksPerSecond);
             float perSecond = (float)(Simpiens.Simulation.Combat.CombatRules.HitChance(me) * Simpiens.Simulation.Combat.CombatRules.Mitigated(me.Attack, kind.Defense) / SimMath.Max(0.1f, interval));
             if (perSecond <= 0f) return float.MaxValue;
@@ -194,8 +216,8 @@ namespace Simpiens.Cognition
         /// "past what it would brave alone"): bold, armed, on its feet, and expecting to slay its smallest pack before its health
         /// falls to the retreat line.
         /// </summary>
-        public static bool BravesLair(in Simpiens.Simulation.World.LairDefinition lair, bool bossAlive, in Simpiens.Simulation.Skills.SkillSet skills, Simpiens.Cognition.Inventory.IAgentInventory worn, float health, int riskTolerancePercent, bool downed) =>
-            !downed && riskTolerancePercent >= VentureRiskTolerancePercent && IsArmed(worn) && HarmToClear(lair, bossAlive, skills, worn) <= health - RetreatBelow;
+        public static bool BravesLair(in Simpiens.Simulation.World.LairDefinition lair, bool bossAlive, in Simpiens.Simulation.Skills.SkillSet skills, Simpiens.Cognition.Inventory.IAgentInventory worn, in Simpiens.Simulation.Skills.CrawlerTraits traits, float health, int riskTolerancePercent, bool downed) =>
+            !downed && riskTolerancePercent >= VentureRiskTolerancePercent && IsArmed(worn) && HarmToClear(lair, bossAlive, skills, worn, traits) <= health - RetreatBelow;
 
         /// <summary>The same, for a crawler already known to venture or not, wearing <paramref name="worn"/>.</summary>
         public static bool WouldEnterAt(bool venture, Simpiens.Simulation.Spatial.SharedWorldSnapshot snapshot, Vec2 position, Simpiens.Cognition.Inventory.IAgentInventory worn)
@@ -220,12 +242,19 @@ namespace Simpiens.Cognition
         /// <summary>
         /// True when this crawler, struck by a creature, fights back instead of fleeing (Epic 10 Part 3, K3.3, Q6): bold (as
         /// one who would venture into danger), armed (what it wields strikes harder than a bare hand) and on its feet above
-        /// the retreat line.
+        /// the retreat line. Armed and unyielding (a technique's rule flag, Epic 11, S4.5, D14), it fights back bold or not.
         /// </summary>
         public static bool FightsBack(in AgentContext context) =>
             !context.IsDowned && context.Health >= FightLine(context.Expedition)
-            && ((context.Personality.RiskTolerancePercent >= VentureRiskTolerancePercent && IsArmed(context.Inventory))
+            && ((IsArmed(context.Inventory) && (context.Personality.RiskTolerancePercent >= VentureRiskTolerancePercent || Unyielding(context)))
                 || context.Expedition.IsFighting); // under a clear's orders every member fights, bold or not (Epic 10 Part 3, K7.2a)
+
+        /// <summary>True when a technique the crawler holds at the fight it would fight makes it stand when struck (Epic 11, S4.5: Unyielding), through the door.</summary>
+        public static bool Unyielding(in AgentContext context)
+        {
+            bool ranged = context.Inventory != null && Simpiens.Simulation.Items.CrawlerStats.Get(context.Inventory, Simpiens.Simulation.Items.StatKind.Range) > 0f;
+            return Simpiens.Simulation.Skills.CrawlerTechniques.Get(context.Traits, context.Skills, Simpiens.Simulation.Skills.SkillWork.Fight(ranged), Simpiens.Simulation.Skills.TechniqueStat.Unyielding) > 0;
+        }
 
         /// <summary>
         /// The health under which a crawler gives a fight up: its own <see cref="RetreatBelow"/>, or, under a clear's orders at

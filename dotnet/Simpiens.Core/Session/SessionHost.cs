@@ -421,6 +421,12 @@ namespace Simpiens.Core.Session
             state.Skills = Simpiens.Simulation.Skills.SkillSet.Generate(seed, state.AgentId, state.Personality);
             // Its passions (Epic 11, S1.1, D3), on their own salt after the skills', so no earlier draw moves
             state.Traits = Simpiens.Simulation.Skills.PassionTable.Draw(seed, state.AgentId, state.Personality, state.Skills, state.Traits);
+            // Its techniques at the bands its talents start in (Epic 11, S4.2, D15), by its nature, on their own salt
+            state.Traits = Simpiens.Simulation.Skills.TechniqueRules.PickAtSpawn(seed, state.AgentId, state.Personality, state.Skills, state.Traits);
+            // Its calling, from its best skill and the technique it took there (Epic 11, S5.3, D21); not told
+            var traits = state.Traits;
+            Simpiens.Simulation.Skills.CallingRules.Rejudge(state.Skills, ref traits, out _);
+            state.Traits = traits;
 
             var living = new HashSet<string>(_crawlers.Count);
             for (int i = 0; i < _crawlers.Count; i++)

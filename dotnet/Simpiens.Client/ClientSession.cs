@@ -35,6 +35,7 @@ namespace Simpiens.Client
             Selection = new WorldSelection(Frames, Simulation.Sectors, Identity);
             Scenes = new SceneDirector(Frames);
             if (Options.DemoScenes) DemoScenes.AddTo(Scenes);
+            if (Options.SkillScenes) Simpiens.Presentation.Cutscenes.SkillScenes.AddTo(Scenes); // a technique picked (Epic 11, S4.8)
             SaveGame = new SaveGameService(Simulation.Host, Options.SaveDirectory ?? ClientOptions.DefaultSaveDirectory());
             var context = DashboardContext.From(Simulation.Services, SaveGame, HostCommands);
             context.ShowDebugIds = Options.ShowDebugIds;

@@ -29,6 +29,13 @@ namespace Simpiens.Core.Tests
             public readonly int[] Peak = new int[SkillTable.Capacity];
             public long FirstJourneyman = -1, FirstMaster = -1;
             public string FirstJourneymanWho = "-";
+            // Techniques (Epic 11, S4.7): held at the end, and picked during the run (held at the end, not at the start), by id and band
+            public readonly int[] HeldAtEnd = new int[256];
+            public readonly int[] PickedInRun = new int[256];
+            public readonly int[] PickedByBand = new int[4];
+            // Callings (Epic 11, S5.6): held at the end, and how many residents' changed during the run
+            public readonly int[] CallingAtEnd = new int[256];
+            public int CallingsChanged;
         }
 
         private static Growth Play(ulong seed, string profile, long horizon)
@@ -40,12 +47,18 @@ namespace Simpiens.Core.Tests
             var growth = new Growth();
             var start = new Dictionary<EntityId, SkillSet>();
             var last = new Dictionary<EntityId, SkillSet>();
+            var startTraits = new Dictionary<EntityId, CrawlerTraits>();
+            var lastTraits = new Dictionary<EntityId, CrawlerTraits>();
             while (sim.Clock.CurrentTick < horizon)
             {
                 foreach (var crawler in sim.Host.CrawlerStates)
                 {
                     if (crawler.IsDrifter) continue;
-                    if (!start.ContainsKey(crawler.AgentId)) start[crawler.AgentId] = crawler.Skills;
+                    if (!start.ContainsKey(crawler.AgentId))
+                    {
+                        start[crawler.AgentId] = crawler.Skills;
+                        startTraits[crawler.AgentId] = crawler.Traits;
+                    }
                 }
                 watch.Run(1);
                 long now = sim.Clock.CurrentTick;
@@ -53,6 +66,7 @@ namespace Simpiens.Core.Tests
                 {
                     if (crawler.IsDrifter || !start.ContainsKey(crawler.AgentId)) continue;
                     last[crawler.AgentId] = crawler.Skills;
+                    lastTraits[crawler.AgentId] = crawler.Traits;
                     var all = SkillTable.All;
                     for (int i = 0; i < all.Count; i++)
                     {
@@ -86,6 +100,22 @@ namespace Simpiens.Core.Tests
                     if (after >= 6) { past++; journeyman = true; }
                     if (after >= 9) master = true;
                 }
+                var traitsThen = startTraits[id];
+                var traitsNow = lastTraits.TryGetValue(id, out var seenTraits) ? seenTraits : traitsThen;
+                foreach (var row in SkillTable.All)
+                    for (var band = SkillBand.Apprentice; band <= SkillBand.Master; band++)
+                    {
+                        var held = traitsNow.TechniqueIn(row.Id, band);
+                        if (held == Technique.None) continue;
+                        growth.HeldAtEnd[(byte)held]++;
+                        if (traitsThen.TechniqueIn(row.Id, band) != held)
+                        {
+                            growth.PickedInRun[(byte)held]++;
+                            growth.PickedByBand[(byte)band]++;
+                        }
+                    }
+                growth.CallingAtEnd[(byte)traitsNow.Calling]++;
+                if (traitsNow.Calling != traitsThen.Calling) growth.CallingsChanged++;
                 if (journeyman) growth.Journeymen++;
                 if (master) growth.Masters++;
                 if (past >= 2) growth.TwoPastApprentice++;
@@ -122,6 +152,20 @@ namespace Simpiens.Core.Tests
                 {
                     int s = (byte)row.Id;
                     sum.Append($"  {row.DisplayName,-9} levels gained {runs.Average(r => r.LevelsGained[s]):F1}/seed; reached Apprentice {runs.Sum(r => r.ReachedApprentice[s])}, Journeyman {runs.Sum(r => r.ReachedJourneyman[s])}, Master {runs.Sum(r => r.ReachedMaster[s])}; practice {runs.Average(r => r.Practice[s]):F0} xp/seed; highest level {runs.Max(r => r.Peak[s])}\n");
+                }
+                sum.Append($"techniques picked in the run: {runs.Average(r => r.PickedByBand.Sum()):F1} a seed (Apprentice {runs.Sum(r => r.PickedByBand[1])}, Journeyman {runs.Sum(r => r.PickedByBand[2])}, Master {runs.Sum(r => r.PickedByBand[3])} in all)\n");
+                sum.Append($"callings at the end ({runs.Sum(r => r.CallingsChanged)} changed in the run):");
+                foreach (var row in CallingTable.All)
+                {
+                    int held = runs.Sum(r => r.CallingAtEnd[(byte)row.Id]);
+                    if (held > 0) sum.Append($" {row.DisplayName} {held};");
+                }
+                sum.Append($" none {runs.Sum(r => r.CallingAtEnd[0])}\n");
+                sum.Append("held at the end (picked in the run):");
+                foreach (var row in TechniqueTable.All)
+                {
+                    int held = runs.Sum(r => r.HeldAtEnd[(byte)row.Id]);
+                    if (held > 0) sum.Append($" {row.DisplayName} {held} ({runs.Sum(r => r.PickedInRun[(byte)row.Id])});");
                 }
                 out_?.WriteLine(sum.ToString());
             }

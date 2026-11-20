@@ -370,6 +370,7 @@ namespace Simpiens.Testing.Economy
             for (int t = 0; t < 60 * DayClock.TicksPerDay && o.Sim.Workshops[o.Forge].Made < 36; t++)
             {
                 uint made = o.Sim.Workshops[o.Forge].Made;
+                smith.Traits = default; // no technique picked at a band reached counts here: K9's numbers alone (Epic 11's are TechniqueEffectsValidator's)
                 o.Sim.Workshops.Work(o.Sim, o.Forge);
                 ticks++;
                 if (o.Sim.Workshops[o.Forge].Made == made) continue;
@@ -378,6 +379,7 @@ namespace Simpiens.Testing.Economy
                 ticks = 0;
             }
             o.Sim.ActiveStalls[0].TryGetGood(ItemType.RingCoat, out var shelf);
+            smith.Traits = default;
             int experience = smith.Skills.Experience(smithing);
             Assert(o.Sim.Workshops[o.Forge].Made == 36 && experience == 36 * Simpiens.Simulation.Skills.SkillRules.MakeExperience, $"Each make is practice ({experience} experience after {o.Sim.Workshops[o.Forge].Made}).");
             Assert(smith.Skills.Level(smithing) == 6 && WorkshopService.GradeOf(smith, StationKind.Forge) == Grades.Masterwork, "From thirty-five makes a Journeyman, who makes Masterwork.");

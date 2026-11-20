@@ -70,28 +70,58 @@ namespace Simpiens.Simulation.Combat
         /// weapon or armour adds to or multiplies the base, as a pickaxe multiplies harvest speed.
         /// </summary>
         public static Combatant ForCrawler(AgentState state, float bodyRadius) =>
-            ForCrawler(state.AgentId, state.Position, bodyRadius, state.Health, standing: !state.IsDowned && state.Health > 0f, state.Skills, state.Inventory);
+            ForCrawler(state.AgentId, state.Position, bodyRadius, state.Health, standing: !state.IsDowned && state.Health > 0f, state.Skills, state.Inventory, state.Traits);
 
         /// <summary>
-        /// As <see cref="ForCrawler(AgentState, float)"/>, from what a crawler is made of rather than its state: its skills
-        /// and what it wears, which cognition's copy holds too (Epic 10 Part 3, K9.8b: a lair is judged by the fighter the
-        /// fight would build).
+        /// As <see cref="ForCrawler(AgentState, float)"/>, from what a crawler is made of rather than its state: its skills,
+        /// what it wears and its techniques, which cognition's copy holds too (Epic 10 Part 3, K9.8b: a lair is judged by the
+        /// fighter the fight would build).
         /// </summary>
         public static Combatant ForCrawler(EntityId id, Vec2 position, float bodyRadius, float health, bool standing,
-            in Simpiens.Simulation.Skills.SkillSet skills, Simpiens.Cognition.Inventory.IAgentInventory worn)
+            in Simpiens.Simulation.Skills.SkillSet skills, Simpiens.Cognition.Inventory.IAgentInventory worn, in Simpiens.Simulation.Skills.CrawlerTraits traits)
         {
             // Its skill at the fight it fights (Epic 10 Part 3, K9.3a, Q20): ranged with a weapon that has a range, melee
             // otherwise; the hit chance and a little damage. Unskilled, both are the numbers before skills
             float range = CrawlerStats.Get(worn, StatKind.Range);
-            int level = Simpiens.Simulation.Skills.CrawlerSkills.Level(skills, worn, Simpiens.Simulation.Skills.SkillWork.Fight(range > 0f));
+            var work = Simpiens.Simulation.Skills.SkillWork.Fight(range > 0f);
+            int level = Simpiens.Simulation.Skills.CrawlerSkills.Level(skills, worn, work);
+            float attack = (float)(CrawlerStats.Get(worn, StatKind.Attack, CombatRules.UnarmedAttack) * Simpiens.Simulation.Skills.SkillRules.DamageFactor(level));
+            float defense = CrawlerStats.Get(worn, StatKind.Defense);
+            float interval = CrawlerStats.Get(worn, StatKind.AttackInterval, CombatRules.UnarmedIntervalSeconds);
+            float proficiency = Simpiens.Simulation.Skills.SkillRules.HitBonus(level);
+
+            // Its techniques at that fight (Epic 11, S4.3, D14), through the one door: the harm of a blow, and more of it below
+            // half health; defense, never below none; the hit chance; how often it swings; how far it shoots. None held, the
+            // numbers are untouched
+            int attackPercent = Simpiens.Simulation.Skills.CrawlerTechniques.Get(traits, skills, work, Simpiens.Simulation.Skills.TechniqueStat.Attack);
+            if (attackPercent != 0) attack = (float)(attack * Simpiens.Simulation.Skills.CrawlerTechniques.Factor(attackPercent));
+            if (health < LastStandBelow)
+            {
+                int lastStand = Simpiens.Simulation.Skills.CrawlerTechniques.Get(traits, skills, work, Simpiens.Simulation.Skills.TechniqueStat.LastStand);
+                if (lastStand != 0) attack = (float)(attack * Simpiens.Simulation.Skills.CrawlerTechniques.Factor(lastStand));
+            }
+            int guard = Simpiens.Simulation.Skills.CrawlerTechniques.Get(traits, skills, work, Simpiens.Simulation.Skills.TechniqueStat.Defense);
+            if (guard != 0) defense = SimMath.Max(0f, (float)(defense + guard));
+            int hit = Simpiens.Simulation.Skills.CrawlerTechniques.Get(traits, skills, work, Simpiens.Simulation.Skills.TechniqueStat.Hit);
+            if (hit != 0) proficiency = (float)(proficiency + (float)(hit / 100f));
+            int pace = Simpiens.Simulation.Skills.CrawlerTechniques.Get(traits, skills, work, Simpiens.Simulation.Skills.TechniqueStat.Pace);
+            if (pace != 0) interval = (float)(interval / Simpiens.Simulation.Skills.CrawlerTechniques.Factor(pace));
+            if (range > 0f)
+            {
+                int reach = Simpiens.Simulation.Skills.CrawlerTechniques.Get(traits, skills, work, Simpiens.Simulation.Skills.TechniqueStat.Range);
+                if (reach != 0) range = (float)(range * Simpiens.Simulation.Skills.CrawlerTechniques.Factor(reach));
+            }
             return new Combatant(id, position, bodyRadius, health, standing,
-                attack: (float)(CrawlerStats.Get(worn, StatKind.Attack, CombatRules.UnarmedAttack) * Simpiens.Simulation.Skills.SkillRules.DamageFactor(level)),
-                defense: CrawlerStats.Get(worn, StatKind.Defense),
+                attack: attack,
+                defense: defense,
                 reach: CrawlerStats.Get(worn, StatKind.Reach, CombatRules.UnarmedReach),
-                swingInterval: CombatRules.SecondsToTicks(CrawlerStats.Get(worn, StatKind.AttackInterval, CombatRules.UnarmedIntervalSeconds)),
+                swingInterval: CombatRules.SecondsToTicks(interval),
                 range: range,
-                proficiency: Simpiens.Simulation.Skills.SkillRules.HitBonus(level));
+                proficiency: proficiency);
         }
+
+        /// <summary>A last stand's harm counts below this health: half a crawler's (Epic 11, S4.3).</summary>
+        public const float LastStandBelow = Simpiens.Cognition.Vitality.MaxHealth * 0.5f;
 
         /// <summary>
         /// A creature as a fighter (K0.4): what it brings from its kind, its health from its own record (K2). On its feet while

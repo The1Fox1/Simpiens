@@ -108,8 +108,109 @@ Every source goes through practice's one entry, so a passion multiplies it and t
 - **Lineage:** the first lesson in a skill records the mentor in the learner's traits record (four slots) and counts the mentor's "taught" deed; the chronicle tells it ("learned foraging at Vesna's side"), and the dossier says "Foraging taught by Vesna".
 - **Mentors aren't saved:** each crawler's last practice is work in progress, so after a load nobody teaches until it works again.
 
+### 3.6 Techniques (Epic 11, S4)
+- **A choice at each band** (`TechniqueTable`, D13): two techniques at each band above Novice of each of the seven skills, 42 in all, each with an upside and a cost. A crawler holds one per band of each skill, in its traits record.
+- **The pick** (D15): at a band reached, and at spawn for the talents, the crawler picks one of the band's two by its nature: each weighted 1 + 2 × its lean in the crawler's personality, on its own salt, the same whenever it gets there. With a lean of 0.8 toward one and none toward the other, about 72% pick the first. A slot held is never picked over.
+- **Sponsorship** (D16): the patron may pay one of its people to take up the band's other: 20g, 40g, 80g by band, into the crawler's purse. It refuses under trust 50 or warmth 0, or a technique whose lean in its personality is −0.5 or less.
+- **The effects** (D14) are numbers in the technique's own skill's work, read through one door (`CrawlerTechniques.Get`), summed over the techniques held and held within bounds:
+
+| Stat | In | Bounds |
+| :--- | :--- | :-: |
+| Attack (%) | a fight | −50 to +100 |
+| Defense (flat, never below none) | a fight | −5 to +10 |
+| Hit (hundredths) | a fight | −20 to +20 |
+| Pace (%): a swing's interval, a harvest, a make, a carry | any work | −50 to +100 |
+| Range (%) | a fight from range | −50 to +50 |
+| Last stand (% attack below half health) | a fight | 0 to +100 |
+| Unyielding (a flag: struck, it fights back if armed, bold or not) | a fight in reach | 0 or 1 |
+| Practice (%), beside the passion | any work | −50 to +100 |
+| Grade (levels toward a make's grade, within 0 and 10) | making | −3 to +3 |
+| Heal (% of a medicine given) | tending | −50 to +100 |
+| Teach (points on a mentor's 50%) | any work | 0 to +50 |
+
+The techniques (first guesses, to tune):
+
+| # | Skill | Band | Technique | Lean | Effects |
+| :-: | :--- | :--- | :--- | :--- | :--- |
+| 1 | Melee | Apprentice | Shield Wall | cautious | defense +3; attack −15% |
+| 2 | Melee | Apprentice | Reckless Fury | bold | attack +25%; defense −2 |
+| 3 | Melee | Journeyman | Quick Blade | diligent | pace +20%; attack −10% |
+| 4 | Melee | Journeyman | Heavy Blows | bold | attack +20%; pace −15% |
+| 5 | Melee | Master | Unyielding | loyal | never flees a blow; defense +2; pace −10% |
+| 6 | Melee | Master | Last Stand | bold | attack +40% below half health; defense −2 |
+| 7 | Ranged | Apprentice | Steady Aim | cautious | hit +8; pace −15% |
+| 8 | Ranged | Apprentice | Quick Draw | bold | pace +20%; hit −5 |
+| 9 | Ranged | Journeyman | Long Shot | diligent | range +25%; attack −10% |
+| 10 | Ranged | Journeyman | Point Blank | bold | attack +20%; range −20% |
+| 11 | Ranged | Master | Deadeye | cautious | hit +10; attack +10%; pace −20% |
+| 12 | Ranged | Master | Rapid Fire | bold | pace +30%; hit −8 |
+| 13 | Mining | Apprentice | Seam Student | diligent | practice +25%; pace −10% |
+| 14 | Mining | Apprentice | Hard Driver | greedy | pace +15%; practice −20% |
+| 15 | Mining | Journeyman | Patient Pick | cautious | practice +30%; pace −5% |
+| 16 | Mining | Journeyman | Rich Veins | greedy | pace +20%; practice −30% |
+| 17 | Mining | Master | Old Hand's Lessons | sociable | teach +25; pace −10% |
+| 18 | Mining | Master | Mother Lode | greedy | pace +30%; practice −40% |
+| 19 | Foraging | Apprentice | Gentle Hands | cautious | practice +25%; pace −10% |
+| 20 | Foraging | Apprentice | Quick Hands | bold | pace +15%; practice −20% |
+| 21 | Foraging | Journeyman | Herb Lore | diligent | practice +30%; pace −5% |
+| 22 | Foraging | Journeyman | Wide Ranger | greedy | pace +20%; practice −30% |
+| 23 | Foraging | Master | Green Teacher | sociable | teach +25; pace −10% |
+| 24 | Foraging | Master | Bountiful Harvest | greedy | pace +30%; practice −40% |
+| 25 | Smithing | Apprentice | Fine Temper | diligent | grade +2; pace −20% |
+| 26 | Smithing | Apprentice | Fast Forge | greedy | pace +20%; grade −2 |
+| 27 | Smithing | Journeyman | Studied Hammer | cautious | practice +30%; pace −10% |
+| 28 | Smithing | Journeyman | Hot Iron | bold | pace +25%; practice −30% |
+| 29 | Smithing | Master | Forge Lessons | sociable | teach +25; pace −10% |
+| 30 | Smithing | Master | Masterstroke | diligent | grade +3; pace −25% |
+| 31 | Alchemy | Apprentice | Careful Measure | cautious | practice +25%; pace −10% |
+| 32 | Alchemy | Apprentice | Quick Brew | bold | pace +15%; practice −20% |
+| 33 | Alchemy | Journeyman | Patient Still | diligent | practice +30%; pace −5% |
+| 34 | Alchemy | Journeyman | Big Batches | greedy | pace +25%; practice −30% |
+| 35 | Alchemy | Master | Still Lessons | sociable | teach +25; pace −10% |
+| 36 | Alchemy | Master | Alchemist's Haste | bold | pace +30%; practice −40% |
+| 37 | Medicine | Apprentice | Steady Hands | sociable | heal +40%; pace −15% |
+| 38 | Medicine | Apprentice | Strong Back | bold | pace +25%; heal −25% |
+| 39 | Medicine | Journeyman | Bedside Study | diligent | practice +40%; heal −10% |
+| 40 | Medicine | Journeyman | Triage | cautious | heal +30%; practice −30% |
+| 41 | Medicine | Master | Surgeon's Lessons | sociable | teach +25; pace −10% |
+| 42 | Medicine | Master | Miracle Worker | loyal | heal +60%; pace −20% |
+
+### 3.7 Leadership (Epic 11, S5.1)
+- **An eighth skill**, practised by leading a party out and home. Leaned by loyalty in the draw, as the others by theirs.
+- **The captain** of a party out is the member on its feet with the best Leadership, the lowest id on a tie (a Captain by calling has the best Leadership by definition, being its best skill).
+- **Practice:** at a trip's delivery the captain takes 40 for each mate brought home, at the trip's challenge (a gathering 3, a clear its lair's kind's: rats 2, beetles 7).
+- **What a level does:** the captain steadies its party: the retreat rules' health line, 3% lower a level (Steady's 55 is 46.75 under a Leadership 5 captain). The party's focus is chosen nearest the captain.
+
+### 3.8 Callings and party roles (Epic 11, S5)
+- **A calling is earned** from the crawler's best skill (the highest learned level, then the most experience, then the display order) at Apprentice or above and the Apprentice technique it took there. It keeps its skill while that skill ties the top. Every resident holds one from spawn.
+- **At Master** in its skill a calling takes its Master title and its capstone, an effect through the techniques' door.
+
+| Skill | Technique | Calling | Role | Master title | Capstone |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| Melee | Shield Wall | Warden | front | Master Warden | +3 defense |
+| Melee | Reckless Fury | Berserker | front | Warlord | +20% attack |
+| Ranged | Steady Aim | Marksman | back | Master Marksman | +5 to hit |
+| Ranged | Quick Draw | Skirmisher | back | Master Skirmisher | 15% faster |
+| Mining | Seam Student | Prospector | — | Master Prospector | 15% faster |
+| Mining | Hard Driver | Rockbreaker | — | Master Rockbreaker | 15% faster |
+| Foraging | Gentle Hands | Herbalist | — | Master Herbalist | 15% faster |
+| Foraging | Quick Hands | Gleaner | — | Master Gleaner | 15% faster |
+| Smithing | Fine Temper | Smith | — | Master Smith | 15% faster |
+| Smithing | Fast Forge | Forgehand | — | Forgemaster | 15% faster |
+| Alchemy | Careful Measure | Apothecary | — | Master Apothecary | 15% faster |
+| Alchemy | Quick Brew | Brewer | — | Master Brewer | 15% faster |
+| Medicine | Steady Hands | Field Surgeon | carrier | Master Surgeon | +20% healing |
+| Medicine | Strong Back | Bearer | carrier | Master Bearer | 20% faster carrying |
+| Leadership | (any) | Captain | leader | Commander | none yet |
+
+- **The roles the guild's orders read** (a member's order carries its calling's role):
+  - **Front:** at a clear's fight a creature choosing its quarry sees a Front member 3 units nearer than it is, and a creature chasing a mate of the same fight turns on a Front member within 3 units of it.
+  - **Back:** the clear's arms give the Back a weapon with a range first, as many as the order asks shooters.
+  - **Carrier:** the guild sends a Carrier to a fallen mate before the healthiest.
+  - **Leader:** the party's captain (§3.7).
+
 ## 4. What a level does
-How good a crawler is at a work is its **effective level**, `CrawlerSkills.Level(skills, worn, work)`, the one number every effect and choice reads. Today it equals the learned level. Gear, techniques or callings that change how good a crawler is enter there (`SkillReadsTests` guards it).
+How good a crawler is at a work is its **effective level**, `CrawlerSkills.Level(skills, worn, work)`, the one number every effect and choice reads. Today it equals the learned level. Gear, techniques or callings that change how good a crawler is enter there (`SkillReadsTests` guards it). A technique doesn't raise a level: it changes the work's numbers below through its own door (§3.6).
 
 | Work | Per level | At 0 | At 10 |
 | :--- | :--- | :--- | :--- |
@@ -245,3 +346,64 @@ Practice a seed with the hunting players: mining about 6,740 experience, foragin
   - *At Journeyman:* about one resident a seed in two weeks with the players, mostly an artisan, and almost never a fighter; a fifth of one with no player.
   - *At Master:* never in two weeks.
   - Plan 2 tunes on these numbers, or measures over a longer horizon.
+
+### 5.6 With techniques (S4.7, 2026-11-19)
+S0.3's measurement a fourth time, on plan 2's S4 build: a technique picked at each band reached (and at spawn for the talents), its effects on the fight and the work (§6). Melee and ranged are scored the same way as before; the counts of techniques come from the traits records at day 14 against day 0.
+
+| | No player | Hunting players |
+| :--- | :--- | :--- |
+| Seeds where someone reaches Journeyman | 3 of 23 (from day 8.0) | 20 of 23 (from day 4.4) |
+| Residents holding a Journeyman's skill at day 14 | 0.13 a seed (most 1) | 1.22 a seed (most 3) |
+| Seeds where someone reaches Master | 0 | 0 |
+| Residents with two skills past Apprentice | 0 | 0 |
+| Highest level reached | 6 (mining) | 8 (alchemy) |
+| Deaths | 0 | 0 |
+| Techniques picked in the run, a seed | 12.8 (292 at Apprentice, 3 at Journeyman) | 12.1 (250 at Apprentice, 28 at Journeyman) |
+
+With the hunting players, levels gained a seed: melee 4.7 (2 reached Journeyman, the first melee Journeymen in any measurement), ranged 2.7, mining 14.6 (2), foraging 10.4, smithing 5.1 (8), alchemy 6.3 (16), medicine 2.0. The first Journeyman of a seed is the still's alchemist on 13 of the 20 where one is made, a smith on 4, a fighter on 2 and a miner on 1.
+
+**Which techniques are held** (hunting players, at day 14, with how many were picked during the run): each Apprentice pair splits by nature, close to even across the outpost: Shield Wall 41 (11) and Reckless Fury 49 (18); Steady Aim 57 (18) and Quick Draw 49 (9); Seam Student 70 (36) and Hard Driver 65 (38); Gentle Hands 41 (20) and Quick Hands 37 (18); Fine Temper 55 (18) and Fast Forge 42 (13); Careful Measure 41 (18) and Quick Brew 41 (15); Steady Hands 41 (12) and Strong Back 36 (6). At Journeyman, 28 picks in all, mostly the artisans': Patient Still 9, Big Batches 7, Hot Iron 5, Studied Hammer 3, Heavy Blows 2. No Master technique.
+
+**What it means:**
+- **Techniques change who grows, not how far.** The students' +25–30% practice and the drivers' −20–30% roughly cancel across the outpost. The top moves a step (a Journeyman on 20 seeds against 19; the highest level 8 against 7), and still nobody reaches Master or a second skill past Apprentice (F1, F8).
+- **Apprentice techniques are everyone's,** from spawn: every talent holds one, and 11–13 more are picked a seed in two weeks. They are what the player sees and sponsors.
+- **Journeyman techniques are the artisans'.** Master techniques and Unyielding are proven by validators only.
+
+### 5.7 With Leadership and callings (S5.6, 2026-11-19)
+The same measurement on S5's build: Leadership an eighth skill (in every draw, practised by a party's captain), callings earned, party roles in the guild's orders.
+
+| | No player | Hunting players |
+| :--- | :--- | :--- |
+| Seeds where someone reaches Journeyman | 4 of 23 (from day 12.3) | 18 of 23 (from day 4.0) |
+| Residents holding a Journeyman's skill at day 14 | 0.17 a seed (most 1) | 1.43 a seed (most 3) |
+| Seeds where someone reaches Master | 0 | 0 |
+| Residents with two skills past Apprentice | 0 | 0 |
+| Highest level reached | 6 (mining) | 8 (alchemy) |
+| Techniques picked in the run, a seed | 11.7 | 12.1 (32 at Journeyman in all) |
+| Callings changed in the run | 1 | 24 |
+
+- **Leadership** grows only where parties go out: with the hunting players 0.7 levels a seed, 6 captains to Apprentice and one to Journeyman (Leadership 6) across the 23 seeds, 416 experience a seed; none with no player.
+- **Every resident holds a calling** from spawn (none without one), spread across all fifteen (hunting players, at day 14): Smith 29, Marksman 25, Apothecary 24, Rockbreaker 23, Captain 23, Skirmisher 20, Warden 16, Berserker 16, Forgehand 16, Field Surgeon 16, Brewer 16, Bearer 15, Prospector 14, Herbalist 14, Gleaner 9.
+- **Callings change with the work:** 24 residents' changed in two weeks with the players, one with none. A Warden earned during a run is rare (finding F12): over ten days of the DoD's scenario a guild member became one on 2 of 23 gate seeds, since a member's melee, from the yard to 5, seldom passes the talent it started with.
+- **The front holds where it stands:** on both seeds the Warden took the most of the creatures' blows at the next clear (26 against a mate's 4 at the most; 7 against 2).
+
+### 5.8 Technique and Calling complete (C.1, 2026-11-19)
+Plan 2's final build. Its fourteen days are §5.7's: no code that runs in the simulation changed after S5.6. The same measurement over 28 days on the gate seeds asks what plan 3 will find past the two weeks every DoD runs.
+
+| | No player, 28 days | Hunting players, 28 days | Hunting players, 14 days (§5.7) |
+| :--- | :-: | :-: | :-: |
+| Seeds where someone reaches Journeyman | 19 of 23 (from day 12.3) | 22 of 23 (from day 4.0) | 18 of 23 |
+| Residents holding a Journeyman's skill at the end | 1.83 a seed (most 4) | 3.57 a seed (most 7) | 1.43 |
+| Residents with two skills past Apprentice | 0 | 4, on 4 seeds | 0 |
+| Seeds where someone reaches Master | 0 | 0 | 0 |
+| Highest level reached | 7 (mining) | 8 (melee, smithing, alchemy) | 8 |
+| Techniques picked at Journeyman in the run | 42 | 82 | 32 |
+| Leadership | none | 1.7 levels a seed; 11 to Apprentice, 4 to Journeyman | 0.7 |
+| Callings changed in the run | 40 | 59 | 24 |
+
+**What it means for plan 3 (Legend):**
+- **The budget starts to bind after about four weeks** (F1): four residents hold two skills past Apprentice by day 28, so a third skill held at 5 is a month's story, not a fortnight's.
+- **Master stays out of reach** (F8): nobody reaches it in 28 days. Master techniques, capstones and Master titles are the validators' until growth past Journeyman quickens or runs grow longer.
+- **Journeymen and their techniques grow with time:** 82 Journeyman picks in 28 days against 32 in 14, mostly the artisans' and the miners'. Legend's deeds will meet Journeymen on most seeds in a month.
+- **Callings move with the work:** 59 changed in four weeks with the players; a calling is a living label, not a birth one.
+

@@ -68,6 +68,10 @@ namespace Simpiens.Presentation
         public CrawlerLook Look;
         /// <summary>Who a crawler is to the outpost (Epic UI-Beta B2); Resident for props.</summary>
         public CrawlerStanding Standing;
+        /// <summary>One of the patron's people (Epic 11, S4.8): a guild member or a station's artisan; false for the rest and props.</summary>
+        public bool Ours;
+        /// <summary>A guild member's calling's part in a party (Epic 11, S5.8): its badge over its body; none for the rest and props.</summary>
+        public Simpiens.Simulation.Skills.PartyRole Role;
         /// <summary>A creature's kind (Epic 10 Part 3, K2.5); None for crawlers and props.</summary>
         public Simpiens.Simulation.Creatures.CreatureKind Creature;
         /// <summary>What a creature is doing: resting at its place, roaming, chasing, fleeing, going home.</summary>
@@ -232,6 +236,8 @@ namespace Simpiens.Presentation
                     Carried = agent?.Inventory != null ? agent.Inventory.FirstHeld(ItemCategory.Resource) : ItemType.None,
                     Look = agent != null ? agent.Look : default,
                     Standing = agent != null ? StandingOf(agent) : CrawlerStanding.Resident,
+                    Ours = agent != null && (agent.Memberships.Has(GroupType.FactionGuild) || agent.Memberships.Has(GroupType.Workshop)),
+                    Role = agent != null && agent.Memberships.Has(GroupType.FactionGuild) ? Simpiens.Simulation.Skills.CallingTable.RoleOf(agent.Traits.Calling) : Simpiens.Simulation.Skills.PartyRole.None,
                     Creature = creature != null ? creature.Kind : Simpiens.Simulation.Creatures.CreatureKind.None,
                     CreatureMode = creature != null ? creature.Mode : default,
                     CreatureTarget = creature != null ? creature.Target : default,

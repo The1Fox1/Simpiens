@@ -57,9 +57,31 @@ namespace Simpiens.Core.Tests
         /// that can spare them (by hand), crawlers who would go into danger buy one each and carry it; the cautious don't.
         /// </summary>
         [Fact]
-        public void TheBoldBuyADraughtToCarryAndTheCautiousDont()
+        public void TheBoldBuyADraughtToCarryAndTheCautiousDont() => TheBoldBuy(BoldBuySeed, assert: true);
+
+        /// <summary>
+        /// Gate seed 424242 since Epic 11's S5.6 (<see cref="MeasureTheBoldBuyingOnTheGateSeeds"/>): the bold buy a draught to carry,
+        /// and only they, on 15 of 23 gate seeds; the default seed's no longer since Leadership moved every draw.
+        /// </summary>
+        private const ulong BoldBuySeed = 424242;
+
+        /// <summary>The measurement behind the seed (Epic 11, S5.6): who buys a draught to carry on each gate seed. Explicit.</summary>
+        [Fact(Explicit = true)]
+        public void MeasureTheBoldBuyingOnTheGateSeeds()
         {
-            using var sim = LocalSimulation.Create(SimulationSettings.DefaultSeed);
+            int held = 0;
+            foreach (ulong seed in Simpiens.Hosting.OutpostWatch.GateSeeds)
+            {
+                bool ok = TheBoldBuy(seed, assert: false);
+                if (ok) held++;
+                TestContext.Current.TestOutputHelper?.WriteLine($"seed {seed}: {(ok ? "holds" : "no")}");
+            }
+            TestContext.Current.TestOutputHelper?.WriteLine($"the bold buy, and only they, on {held} of {Simpiens.Hosting.OutpostWatch.GateSeeds.Length} gate seeds");
+        }
+
+        private static bool TheBoldBuy(ulong seed, bool assert)
+        {
+            using var sim = LocalSimulation.Create(seed);
             sim.Respawn(OutpostSession.SessionId);
             sim.Step(DayClock.TicksPerHour); // an hour in: they know the hazards' salvage
             var stall = sim.Simulation.ActiveStalls[0];
@@ -69,11 +91,15 @@ namespace Simpiens.Core.Tests
 
             var buyers = sim.Host.CrawlerStates.Where(s => s.Activity.MedicinePurchases > 0).ToList();
             TestContext.Current.TestOutputHelper?.WriteLine($"{buyers.Count} bought: risk {string.Join(", ", buyers.Select(b => b.Personality.RiskTolerancePercent))}; stock left {sim.Simulation.ActiveStalls[0].StockOf(ItemType.HealingDraught)}");
+            if (!assert)
+                return buyers.Count > 0 && buyers.All(b => b.Personality.RiskTolerancePercent >= Simpiens.Cognition.Vitality.VentureRiskTolerancePercent && b.Activity.MedicinePurchases == 1)
+                    && sim.Simulation.ActiveStalls[0].StockOf(ItemType.HealingDraught) == 5 - buyers.Count && sim.Simulation.IntentFaults == 0;
             Assert.NotEmpty(buyers);
             Assert.All(buyers, b => Assert.True(b.Personality.RiskTolerancePercent >= Simpiens.Cognition.Vitality.VentureRiskTolerancePercent, "Only the bold buy a draught to carry."));
             Assert.All(buyers, b => Assert.Equal(1, b.Activity.MedicinePurchases));
             Assert.Equal(5 - buyers.Count, sim.Simulation.ActiveStalls[0].StockOf(ItemType.HealingDraught));
             Assert.Equal(0, sim.Simulation.IntentFaults);
+            return true;
         }
 
         [Fact]

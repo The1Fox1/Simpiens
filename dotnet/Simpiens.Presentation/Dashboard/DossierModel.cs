@@ -135,6 +135,31 @@ namespace Simpiens.Presentation.Dashboard
         /// </summary>
         public string Taught { get; private set; } = string.Empty;
 
+        /// <summary>The techniques it holds (Epic 11, S4.9, D18), by name in the skills' order: "Shield Wall · Seam Student"; empty for none.</summary>
+        public string Techniques { get; private set; } = string.Empty;
+
+        /// <summary>Each technique with its skill and what it does, a line each, for the line's tooltip: "Shield Wall (Melee): +3 defense, 15% less damage".</summary>
+        public string TechniquesTip { get; private set; } = string.Empty;
+
+        /// <summary>A guild member's calling's part in a party (Epic 11, S5.8): its badge at the portrait's corner; none for the rest.</summary>
+        public Simpiens.Simulation.Skills.PartyRole Role { get; private set; }
+
+        /// <summary>
+        /// One of the patron's people (a guild member or an artisan): the sway's second button is Sponsor, which opens its
+        /// technique tree (Epic 11, S4.11, D25), rather than Recruit.
+        /// </summary>
+        public bool IsOurs { get; private set; }
+
+        /// <summary>
+        /// The sponsorship open to it (Epic 11, S4.9, D18; the tree since S4.11, D25): "2 techniques open to sponsor, from 20g.",
+        /// or why none is: the reason the dossier's offer (the other technique at the top band of its best skill) is refused,
+        /// "Sponsor Shield Wall? Not yet: trust 40 of 50."; empty for one not of the patron's people.
+        /// </summary>
+        public string SponsorText { get; private set; } = string.Empty;
+
+        /// <summary>The techniques line's tip ends with this: a click on it opens the tree.</summary>
+        public const string TreeHint = "Click for the technique tree.";
+
         /// <summary>The line under the skills: who taught it, then a skill the budget holds; empty when neither.</summary>
         public string SkillNotes => Taught.Length == 0 ? SkillHeld : SkillHeld.Length == 0 ? Taught : Taught + " · " + SkillHeld;
 
@@ -188,6 +213,9 @@ namespace Simpiens.Presentation.Dashboard
             SkillHeld = string.Empty;
             Asks = string.Empty;
             Taught = string.Empty;
+            Techniques = TechniquesTip = SponsorText = string.Empty;
+            IsOurs = false;
+            Role = Simpiens.Simulation.Skills.PartyRole.None;
             if (!HasCrawler)
             {
                 if (crawler != default) ShowTheDead(crawler);
@@ -195,7 +223,9 @@ namespace Simpiens.Presentation.Dashboard
             }
 
             string friendly = _context.FriendlyName(node.Id, node.Name);
-            string title = _context.Identity != null ? _context.Identity.GetFriendlyTitle(node.Id) : string.Empty;
+            // Its calling's title (Epic 11, S5.7, D24: "Bram the Warden"), else the identity's placeholder title
+            string title = CallingTexts.Title(agent.Skills, agent.Traits);
+            if (title.Length == 0) title = _context.Identity != null ? _context.Identity.GetFriendlyTitle(node.Id) : string.Empty;
             Name = (string.IsNullOrEmpty(title) ? friendly : $"{friendly} the {title}") + _context.DebugSuffix(node.Name);
             Residency = Stay(agent.DepartsAtTick, _context.Clock?.CurrentTick ?? 0);
             if (Residency.Length > 0) Name += " · " + Residency;
@@ -210,6 +240,7 @@ namespace Simpiens.Presentation.Dashboard
             SkillHeld = SkillTexts.Held(agent.Skills);
             Taught = TaughtBy(agent.Traits);
             Asks = AsksOf(agent);
+            DescribeTechniques(agent);
             Hunger = agent.Hunger;
             Energy = agent.Energy;
             Social = agent.Social;
@@ -242,6 +273,50 @@ namespace Simpiens.Presentation.Dashboard
                 _affinities.Add(_rows[i].Line);
                 _shownRows.Add(_rows[i]);
             }
+        }
+
+        // The techniques it holds, and the sponsorship on offer to one of the patron's people (Epic 11, S4.9, D18)
+        private void DescribeTechniques(Simpiens.Cognition.AgentState agent)
+        {
+            System.Span<Simpiens.Simulation.Skills.Technique> held = stackalloc Simpiens.Simulation.Skills.Technique[Simpiens.Simulation.Skills.CrawlerTraits.TechniqueSlots];
+            int count = Simpiens.Simulation.Skills.CrawlerTechniques.Held(agent.Traits, held);
+            var names = new System.Text.StringBuilder();
+            var tip = new System.Text.StringBuilder();
+            for (int i = 0; i < count; i++)
+            {
+                var row = Simpiens.Simulation.Skills.TechniqueTable.Get(held[i]);
+                if (row == null) continue;
+                if (names.Length > 0) { names.Append(" · "); tip.Append('\n'); }
+                names.Append(row.DisplayName);
+                tip.Append(row.DisplayName).Append(" (").Append(Simpiens.Simulation.Skills.SkillTable.Get(row.Skill)?.DisplayName).Append("): ").Append(row.Words);
+            }
+            Techniques = names.ToString();
+            if (tip.Length > 0) tip.Append('\n').Append(TreeHint);
+            TechniquesTip = tip.ToString();
+
+            var sim = _context.Simulation;
+            var host = sim as Simpiens.Simulation.Guild.IGuildHost;
+            if (sim == null || host == null) return;
+            bool member = sim.Guild.TryGetContract(agent.AgentId, out _);
+            Role = member ? Simpiens.Simulation.Skills.CallingTable.RoleOf(agent.Traits.Calling) : Simpiens.Simulation.Skills.PartyRole.None;
+            IsOurs = member || (sim.Workshops != null && sim.Workshops.IsArtisan(agent.AgentId));
+            if (!IsOurs) return;
+            var offer = Simpiens.Simulation.Guild.SponsorRules.Offer(agent.Skills, agent.Traits, out _);
+            if (offer == Simpiens.Simulation.Skills.Technique.None)
+            {
+                SponsorText = "No technique to sponsor yet.";
+                return;
+            }
+            uint tick = (uint)(_context.Clock?.CurrentTick ?? 0);
+            int open = TechniqueTreeModel.OpenCount(sim, agent, tick, out ushort cheapest);
+            if (open > 0)
+            {
+                SponsorText = Invariant($"{open} technique{(open == 1 ? string.Empty : "s")} open to sponsor, from {cheapest}g.");
+                return;
+            }
+            // None open: why the dossier's offer is refused
+            var check = Simpiens.Simulation.Guild.SponsorRules.CheckSponsor(sim.Guild, sim.Workshops, host, agent.AgentId, offer, tick, out ushort price);
+            SponsorText = Invariant($"Sponsor {Simpiens.Simulation.Skills.TechniqueTable.Get(offer).DisplayName}? ") + Simpiens.Simulation.Guild.SponsorRules.Describe(check, agent, offer, price, sim.Economy.Guild, tick);
         }
 
         // Each skill's first teacher (Epic 11, S3.5): a living teacher by its name here, the departed by the roll's

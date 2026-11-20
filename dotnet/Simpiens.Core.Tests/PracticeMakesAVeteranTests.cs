@@ -84,10 +84,10 @@ namespace Simpiens.Core.Tests
                         }
                     }
                     if (run.MiningRoseAt < 0 && !crawler.IsDrifter
-                        && HarvestResourceIntentHandler.SkillSpeed(crawler.Skills, crawler.Inventory, ItemType.IronOre) > HarvestResourceIntentHandler.SkillSpeed(was, crawler.Inventory, ItemType.IronOre))
+                        && HarvestResourceIntentHandler.SkillSpeed(crawler.Skills, crawler.Inventory, crawler.Traits, ItemType.IronOre) > HarvestResourceIntentHandler.SkillSpeed(was, crawler.Inventory, crawler.Traits, ItemType.IronOre))
                     {
                         run.MiningRoseAt = now;
-                        run.Miner = $"{crawler.GivenName}, Mining {was.Level(Skill.Mining)} to {crawler.Skills.Level(Skill.Mining)}: pace {HarvestResourceIntentHandler.SkillSpeed(was, crawler.Inventory, ItemType.IronOre):F2} to {HarvestResourceIntentHandler.SkillSpeed(crawler.Skills, crawler.Inventory, ItemType.IronOre):F2}";
+                        run.Miner = $"{crawler.GivenName}, Mining {was.Level(Skill.Mining)} to {crawler.Skills.Level(Skill.Mining)}: pace {HarvestResourceIntentHandler.SkillSpeed(was, crawler.Inventory, crawler.Traits, ItemType.IronOre):F2} to {HarvestResourceIntentHandler.SkillSpeed(crawler.Skills, crawler.Inventory, crawler.Traits, ItemType.IronOre):F2}";
                     }
                 }
                 var artisan = forge >= 0 ? workshops.ArtisanAt(forge) : default;

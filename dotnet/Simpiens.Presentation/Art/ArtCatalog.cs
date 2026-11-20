@@ -83,6 +83,8 @@ namespace Simpiens.Presentation.Art
         {
             CarryOffset = builder.CarryOffset;
             CarryHeight = builder.CarryHeight;
+            BadgeOffset = builder.BadgeOffset;
+            BadgeHeight = builder.BadgeHeight;
             RideOffset = builder.RideOffset;
             RideHeight = builder.RideHeight;
             DisplaySlots = builder.DisplaySlots ?? System.Array.Empty<(Vec2 Offset, float Height)>();
@@ -116,6 +118,11 @@ namespace Simpiens.Presentation.Art
         public Vec2 CarryOffset { get; }
 
         public float CarryHeight { get; }
+
+        /// <summary>Where a guild member's role badge hangs (Epic 11, S5.8): <see cref="BadgeOffset"/> on the floor from it, <see cref="BadgeHeight"/> units up.</summary>
+        public Vec2 BadgeOffset { get; }
+
+        public float BadgeHeight { get; }
 
         /// <summary>Where a carried crawler rides on its rescuer (Epic 10 Part 3, K5.8a): <see cref="RideOffset"/> on the floor from it, <see cref="RideHeight"/> units up.</summary>
         public Vec2 RideOffset { get; }
@@ -204,6 +211,10 @@ namespace Simpiens.Presentation.Art
             public float NameHeight { get; set; }
 
             public Vec2 CarryOffset { get; set; }
+
+            public Vec2 BadgeOffset { get; set; }
+
+            public float BadgeHeight { get; set; }
 
             public float CarryHeight { get; set; }
             public Vec2 RideOffset { get; set; }

@@ -28,7 +28,7 @@ namespace Simpiens.Core.Tests
         public void EveryCrawlerDrawsANewSkillAtSpawn()
         {
             using var extended = TestCatalogs.MycologyAndGlowcaps();
-            Assert.Equal(8, SkillTable.All.Count);
+            Assert.Equal(9, SkillTable.All.Count); // the eight, Leadership among them (Epic 11, S5.1), and Mycology
             Assert.Equal(TestCatalogs.Mycology, SkillTable.SkillFor(SkillWork.Harvest(TestCatalogs.Glowcap)));
             Assert.Equal(Skill.Mining, SkillTable.SkillFor(SkillWork.Harvest(ItemType.IronOre))); // the others' work keeps its skill
 

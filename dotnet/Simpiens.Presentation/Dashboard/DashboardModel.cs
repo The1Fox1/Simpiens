@@ -28,7 +28,8 @@ namespace Simpiens.Presentation.Dashboard
             Bounties = new BountyBoardModel(_context);
             Guild = new GuildModel(_context, Moods);
             Stations = new StationModel(_context, Moods);
-            _windows = new IDashboardWindow[] { Merchant, Bounties, Guild, Stations };
+            Techniques = new TechniqueTreeModel(_context, Moods);
+            _windows = new IDashboardWindow[] { Merchant, Bounties, Guild, Stations, Techniques };
             Sectors = new SectorPanelModel(_context, Moods);
             Dossier = new DossierModel(_context, Guild, Moods);
             Inspector = new InspectorModel(_context, Moods);
@@ -86,6 +87,9 @@ namespace Simpiens.Presentation.Dashboard
 
         /// <summary>The station window (Epic 10 Part 2, W1.6a): building, the artisan, its shifts and the order.</summary>
         public StationModel Stations { get; }
+
+        /// <summary>A crawler's technique tree (Epic 11, S4.11, D25): its techniques by skill and band, and sponsorship.</summary>
+        public TechniqueTreeModel Techniques { get; }
         public SectorPanelModel Sectors { get; }
         public DossierModel Dossier { get; }
         public SaveSlotModel Saves { get; }
@@ -139,6 +143,16 @@ namespace Simpiens.Presentation.Dashboard
         {
             CloseAllBut(Stations);
             Stations.Open(index);
+        }
+
+        /// <summary>
+        /// <paramref name="crawlerId"/>'s technique tree (Epic 11, S4.11, D25): the dossier's Sponsor for one of the patron's
+        /// people, or its techniques line for anyone.
+        /// </summary>
+        public void OpenTechniques(EntityId crawlerId)
+        {
+            CloseAllBut(Techniques);
+            Techniques.Open(crawlerId);
         }
 
         public void ToggleStations()
@@ -204,6 +218,7 @@ namespace Simpiens.Presentation.Dashboard
             Bounties.Refresh();
             Guild.Refresh();
             Stations.Refresh();
+            Techniques.Refresh();
             Inspector.Refresh(PanelsVisible ? default : SelectedCrawler, _selection != null && _selection.Following, PanelsVisible ? default : SelectedCreature);
             if (!PanelsVisible) return;
             Sectors.Refresh(SelectedCrawler);

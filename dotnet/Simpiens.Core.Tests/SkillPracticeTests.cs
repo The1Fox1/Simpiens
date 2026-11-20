@@ -80,7 +80,9 @@ namespace Simpiens.Core.Tests
                 var mine = acts.Where(a => a.Who == r && (a.Skill == Skill.Mining || a.Skill == Skill.Foraging)).ToList();
                 units += harvested;
                 Assert.Equal(harvested, mine.Count); // one act of practice a unit (a skill at its ceiling would tell none: nobody is at 10)
-                Assert.True(mine.All(a => a.Experience > 0 && a.Experience <= 2 * SkillRules.UnitExperience), "A unit's practice, at most a burning passion's double.");
+                // At most a burning passion's double, and a student's share beside it (Epic 11, S4.4: Seam Student, Herb Lore)
+                Assert.True(mine.All(a => a.Experience > 0 && a.Experience <= (2 * SkillRules.UnitExperience * (100 + CrawlerTechniques.Get(r.Traits, r.Skills, a.Skill, TechniqueStat.Practice)) + 99) / 100),
+                    "A unit's practice, at most a burning passion's double and its techniques' share.");
             }
             Assert.True(units > 10, $"The residents harvested in their morning ({units} units).");
         }

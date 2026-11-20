@@ -38,7 +38,8 @@ namespace Simpiens.Testing.Skills
                 Assert(manual.Experience == ManualBlock.PrimerExperience && manual.Ceiling == ManualBlock.PrimerCeiling, $"{definition.Name}: 300 experience, to 3.");
                 Assert(definition.Equipment == null && definition.ConsumeEffectCount == 0 && !definition.Is(ItemCategory.Consumable), $"{definition.Name} is read, not worn or eaten.");
             }
-            foreach (var row in SkillTable.All) Assert(taught.Contains(row.Id), $"{row.DisplayName} has its primer.");
+            // Every skill but leading a party, which is learned by leading (Epic 11, S5.1, D19: no primer)
+            foreach (var row in SkillTable.All) Assert(row.Use == SkillUse.Lead ? !taught.Contains(row.Id) : taught.Contains(row.Id), $"{row.DisplayName} has its primer, or (Leadership) none.");
             foreach (var definition in ItemCatalog.All)
                 Assert((definition.Manual != null) == definition.Is(ItemCategory.Manual), $"{definition.Name}: a manual block only on a manual.");
             TestLog.Log($"[PASS] Test 1: a primer for each of the {taught.Count} skills, each naming the work it teaches, 300 experience to 3.");

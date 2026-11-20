@@ -18,7 +18,8 @@ namespace Simpiens.Simulation.Skills
         Foraging = 4,
         Smithing = 5,
         Alchemy = 6,
-        Medicine = 7
+        Medicine = 7,
+        Leadership = 8
     }
 
     /// <summary>The kind of work that practises a skill and that the skill makes better (K9.1): each row of the table names one.</summary>
@@ -34,7 +35,9 @@ namespace Simpiens.Simulation.Skills
         /// <summary>Making at the row's <see cref="SkillDefinition.Station"/>: a make is practice; the make's grade and speed.</summary>
         Make = 4,
         /// <summary>Tending the fallen: a rescue is practice; carrying faster, and a medicine given heals more.</summary>
-        Tend = 5
+        Tend = 5,
+        /// <summary>Leading a party (Epic 11, S5.1, D19): each mate brought home is practice; the party holds longer under its retreat rule.</summary>
+        Lead = 6
     }
 
     /// <summary>Which way a personality leans a skill's draw as a starting talent (Q19: "the bold lean toward melee").</summary>
@@ -149,7 +152,7 @@ namespace Simpiens.Simulation.Skills
 
         private static volatile Tables _tables = new Tables(Definitions());
 
-        /// <summary>The game's skills (Q17): two for a fight, two for the harvest, two for the stations, one for the fallen.</summary>
+        /// <summary>The game's skills (Q17): two for a fight, two for the harvest, two for the stations, one for the fallen, and leading a party (Epic 11, S5.1).</summary>
         private static SkillDefinition[] Definitions() => new[]
         {
             new SkillDefinition(Skill.Melee, "Melee", "Melee", SkillUse.MeleeFight) { Lean = SkillLean.Bold, Practitioner = "fighter", Order = 0 },
@@ -158,7 +161,8 @@ namespace Simpiens.Simulation.Skills
             new SkillDefinition(Skill.Foraging, "Foraging", "Foraging", SkillUse.Harvest) { Harvests = ItemCategory.Botanical, Practitioner = "forager", Order = 3 },
             new SkillDefinition(Skill.Smithing, "Smithing", "Smithing", SkillUse.Make) { Station = StationKind.Forge, Lean = SkillLean.Diligent, Practitioner = "smith", Order = 4 },
             new SkillDefinition(Skill.Alchemy, "Alchemy", "Alchemy", SkillUse.Make) { Station = StationKind.Still, Practitioner = "alchemist", Order = 5 },
-            new SkillDefinition(Skill.Medicine, "Medicine", "Medicine", SkillUse.Tend) { Lean = SkillLean.Sociable, Practitioner = "medic", Order = 6 }
+            new SkillDefinition(Skill.Medicine, "Medicine", "Medicine", SkillUse.Tend) { Lean = SkillLean.Sociable, Practitioner = "medic", Order = 6 },
+            new SkillDefinition(Skill.Leadership, "Leadership", "Leadership", SkillUse.Lead) { Lean = SkillLean.Loyal, Practitioner = "captain", Order = 7 }
         };
 
         /// <summary>

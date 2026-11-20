@@ -49,6 +49,29 @@ namespace Simpiens.Simulation.Guild
             }
         }
 
+        private readonly List<AgentState> _withParty = new List<AgentState>(DispatchExpeditionCommand.MaxMembers);
+
+        /// <summary>
+        /// The captain of <paramref name="party"/> (Epic 11, S5.1, D19): among its members with the party, on its feet, the best
+        /// effective Leadership, the lowest id on a tie (<see cref="GuildRules.Captain"/>); null when none is. Main thread.
+        /// </summary>
+        public AgentState CaptainOf(IGuildHost host, GuildParty party)
+        {
+            _withParty.Clear();
+            var roster = party?.Roster;
+            for (int i = 0; roster != null && i < roster.Count; i++)
+                if (roster[i].IsWithParty && host.TryGetCrawler(roster[i].CrawlerId, out var crawler)) _withParty.Add(crawler);
+            return GuildRules.Captain(_withParty);
+        }
+
+        /// <summary>The retreat rule's health line for <paramref name="party"/>, steadied by its captain's Leadership (D19).</summary>
+        public float RetreatLine(IGuildHost host, GuildParty party, in ExpeditionTuning tuning)
+        {
+            var captain = CaptainOf(host, party);
+            int level = captain != null ? Simpiens.Simulation.Skills.CrawlerSkills.Level(captain, Simpiens.Simulation.Skills.SkillWork.Lead()) : 0;
+            return GuildRules.Steadied(tuning.RetreatHealth(party.Record.Rule), level);
+        }
+
         /// <summary>The party <paramref name="crawlerId"/> is on the roster of, or null.</summary>
         public GuildParty PartyOf(EntityId crawlerId)
         {
@@ -73,14 +96,14 @@ namespace Simpiens.Simulation.Guild
         /// <paramref name="crawlerId"/>'s part in an expedition, for cognition (Epic 10 G5.4): the stage, the sector and, at
         /// work, its node. Default when it isn't with a party out.
         /// </summary>
-        public Simpiens.Cognition.Contracts.ExpeditionOrder OrderFor(EntityId crawlerId)
+        public Simpiens.Cognition.Contracts.ExpeditionOrder OrderFor(EntityId crawlerId, Simpiens.Simulation.Skills.PartyRole role = Simpiens.Simulation.Skills.PartyRole.None)
         {
             var party = PartyOf(crawlerId);
             if (party == null || !party.IsOut) return default;
             var member = party.Roster[party.IndexOf(crawlerId)];
             if (!member.IsWithParty) return default;
             return new Simpiens.Cognition.Contracts.ExpeditionOrder(party.Record.Stage, party.Record.TargetSectorId, member.NodeId, member.NodePosition,
-                party.Record.Kind, party.Record.LairIndex, party.Focus, party.Carrier == crawlerId ? party.Fallen : default);
+                party.Record.Kind, party.Record.LairIndex, party.Focus, party.Carrier == crawlerId ? party.Fallen : default, role);
         }
 
         /// <summary>
@@ -456,10 +479,24 @@ namespace Simpiens.Simulation.Guild
                 if (party.Record.Cleared) crawler.AddDeed(Simpiens.Simulation.Skills.Deed.ClearWon); // home from a won clear: a deed (Epic 11, S0.5)
             }
 
+            // The captain led them home (Epic 11, S5.1, D19): Leadership for each mate brought home, at the trip's challenge
+            var captain = CaptainOf(host, party);
+            int lesson = GuildRules.LeadLesson(party.CountWithParty());
+            if (captain != null && lesson > 0)
+                host.Practise(captain, Simpiens.Simulation.Skills.SkillWork.Lead(), lesson, Simpiens.Simulation.Skills.PracticeSource.WorkAt(TripChallenge(host, party)));
+
             SimLog.Economy.ZLogInformation($"Party {party.Slot} came back with {haul} {item}{(party.Record.TurnedBack ? " (turned back)" : "")}");
             host.ChronicleService?.RecordEvent(new ChronicleEvent(party.Record.TurnedBack && haul == 0 ? ChronicleEventType.ExpeditionTurnedBack : ChronicleEventType.ExpeditionReturned,
                 party.FirstWithParty(), WorldRegistry.PlayerEntityId, party.Record.TargetSectorId, tick, ChronicleIntensity.Dramatic, haul));
             EndExpedition(host, party, tick);
+        }
+
+        /// <summary>A trip's challenge to its captain (D19): a clear's, its lair's kind's; a gathering's, <see cref="Simpiens.Simulation.Skills.SkillRules.GatherChallenge"/>.</summary>
+        public static int TripChallenge(IGuildHost host, GuildParty party)
+        {
+            if (party.Record.Kind == ExpeditionKind.Clear && host.Lairs != null && party.Record.LairIndex < host.Lairs.Count)
+                return Simpiens.Simulation.Creatures.CreatureCatalog.Get(host.Lairs[party.Record.LairIndex].Definition.Kind)?.Challenge ?? Simpiens.Simulation.Skills.SkillRules.GatherChallenge;
+            return Simpiens.Simulation.Skills.SkillRules.GatherChallenge;
         }
 
         /// <summary>
@@ -661,9 +698,9 @@ namespace Simpiens.Simulation.Guild
         /// Epic 10 Part 2, W2, D43) doesn't count: it drinks at the treat line instead of turning the party back, so what the
         /// party carries is how long it keeps working.
         /// </summary>
-        private static bool ShouldTurnBack(IGuildHost host, GuildParty party, in ExpeditionTuning tuning)
+        private bool ShouldTurnBack(IGuildHost host, GuildParty party, in ExpeditionTuning tuning)
         {
-            float floor = tuning.RetreatHealth(party.Record.Rule);
+            float floor = RetreatLine(host, party, tuning); // steadied by its captain (Epic 11, S5.1, D19)
             var roster = party.Roster;
             for (int i = 0; i < roster.Count; i++)
             {
@@ -713,14 +750,16 @@ namespace Simpiens.Simulation.Guild
 
         /// <summary>
         /// Focus fire (K7.2a, Q8): the party fights one creature at a time, the leader's choice: the lair's living creature
-        /// nearest the first member with the party, then the weakest, then the lowest id. Kept while it lives.
+        /// nearest its captain (Epic 11, S5.4, D22; the first member with the party until then), then the weakest, then the
+        /// lowest id. Kept while it lives.
         /// </summary>
-        private static void ChooseFocus(IGuildHost host, GuildParty party)
+        private void ChooseFocus(IGuildHost host, GuildParty party)
         {
             if (party.Focus != default && host.TryGetCreature(party.Focus, out var held) && held.IsAlive) return;
             party.Focus = default;
             var lairs = host.Lairs;
-            if (lairs == null || party.Record.LairIndex >= lairs.Count || !host.TryGetCrawler(party.FirstWithParty(), out var leader)) return;
+            var leader = CaptainOf(host, party);
+            if (lairs == null || party.Record.LairIndex >= lairs.Count || leader == null) return;
             var lair = lairs[party.Record.LairIndex];
             float bestDistance = float.MaxValue, bestHealth = float.MaxValue;
             for (int slot = 0; slot < lair.Pack; slot++)
@@ -738,8 +777,8 @@ namespace Simpiens.Simulation.Guild
 
         /// <summary>
         /// Rescue under orders (K7.2c, D42): one fallen member at a time (the first in the roster collapsed in danger), carried
-        /// out by the mate the guild sends: with the party, on its feet and carrying nobody, the most health first, then the
-        /// nearest, then the lowest id. The rest hold the line. Kept until the fallen is out of danger, up or gone, or its
+        /// out by the mate the guild sends: with the party, on its feet and carrying nobody, a Carrier by calling first (Epic 11,
+        /// S5.4, D22), then the most health, then the nearest, then the lowest id. The rest hold the line. Kept until the fallen is out of danger, up or gone, or its
         /// carrier falls or leaves; then the next.
         /// </summary>
         private static void ChooseCarrier(IGuildHost host, GuildParty party)
@@ -764,8 +803,7 @@ namespace Simpiens.Simulation.Guild
             {
                 if (!roster[i].IsWithParty || !host.TryGetCrawler(roster[i].CrawlerId, out var c) || c.HasLeft || c.IsDowned || c.Carrying != default) continue;
                 float d = (c.Position - fallen.Position).SqrMagnitude;
-                bool better = best == null || c.Health > best.Health
-                    || (c.Health == best.Health && (d < bestDistance || (d == bestDistance && c.AgentId.CompareTo(best.AgentId) < 0)));
+                bool better = GuildRules.CarriesBefore(c, d, best, bestDistance);
                 if (!better) continue;
                 best = c;
                 bestDistance = d;
@@ -782,9 +820,9 @@ namespace Simpiens.Simulation.Guild
         /// as a gathering's D43): it drinks in the fight below the treat line instead, so what the party carries is how long it
         /// fights.
         /// </summary>
-        private static bool ShouldTurnBackFromFight(IGuildHost host, GuildParty party, in ExpeditionTuning tuning)
+        private bool ShouldTurnBackFromFight(IGuildHost host, GuildParty party, in ExpeditionTuning tuning)
         {
-            float floor = tuning.RetreatHealth(party.Record.Rule);
+            float floor = RetreatLine(host, party, tuning); // steadied by its captain (Epic 11, S5.1, D19)
             var roster = party.Roster;
             int with = 0, down = 0, judged = 0;
             float health = 0f;

@@ -57,6 +57,12 @@ namespace Simpiens.Client
         /// </summary>
         public bool StoryScenes { get; set; }
 
+        /// <summary>
+        /// The skills' moments as dynamic scenes (Epic 11, S4.8, D17): a technique picked by one of the patron's people. The
+        /// desktop game turns it on; tests and the pinned renders leave it off, unless a test looks at one.
+        /// </summary>
+        public bool SkillScenes { get; set; }
+
         /// <summary>Development builds: F3 shows the frame's timings by phase in a corner (review D1).</summary>
         public bool TimingsOverlay { get; set; }
 

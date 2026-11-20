@@ -66,6 +66,27 @@ namespace Simpiens.Core.Tests
         public void DrillYard() => new Simpiens.Testing.Skills.DrillValidator().RunAllValidationTests();
 
         [Fact]
+        public void Techniques() => new Simpiens.Testing.Skills.TechniqueValidator().RunAllValidationTests();
+
+        [Fact]
+        public void TechniquePicks() => new Simpiens.Testing.Skills.TechniquePickValidator().RunAllValidationTests();
+
+        [Fact]
+        public void TechniqueEffects() => new Simpiens.Testing.Skills.TechniqueEffectsValidator().RunAllValidationTests();
+
+        [Fact]
+        public void Sponsorship() => new Simpiens.Testing.Skills.SponsorValidator().RunAllValidationTests();
+
+        [Fact]
+        public void Leadership() => new Simpiens.Testing.Skills.LeadershipValidator().RunAllValidationTests();
+
+        [Fact]
+        public void Callings() => new Simpiens.Testing.Skills.CallingValidator().RunAllValidationTests();
+
+        [Fact]
+        public void PartyRoles() => new Simpiens.Testing.Skills.PartyRoleValidator().RunAllValidationTests();
+
+        [Fact]
         public void GivenNames() => new Simpiens.Testing.People.GivenNamesValidator().RunAllValidationTests();
 
         [Fact]

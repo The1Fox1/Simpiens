@@ -91,7 +91,7 @@ namespace Simpiens.Hosting
             for (int i = 0; i < crawlers.Count; i++)
             {
                 var c = crawlers[i];
-                if (!c.IsDrifter && Vitality.BravesLair(lair, bossAlive, c.Skills, c.Inventory, Vitality.MaxHealth, c.Personality.RiskTolerancePercent, downed: false)) return true;
+                if (!c.IsDrifter && Vitality.BravesLair(lair, bossAlive, c.Skills, c.Inventory, c.Traits, Vitality.MaxHealth, c.Personality.RiskTolerancePercent, downed: false)) return true;
             }
             return false;
         }

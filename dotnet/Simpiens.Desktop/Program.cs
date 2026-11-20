@@ -50,6 +50,7 @@ more (AGENTS.md, Logging).";
 
             options.UiMotion = true; // windows arrive and figures roll (the UI polish plan, U7)
             options.StoryScenes = true; // the story's hard cutscenes: the breach (Epic 10 Part 3, K10.5d)
+            options.SkillScenes = true; // the skills' moments: a technique picked by one of the patron's people (Epic 11, S4.8)
 #if DEBUG
             // Development builds offer the Dev Map (the canary pens) through the session switch, as Unity's editor did,
             // the demonstration cutscenes (F9, and dynamic scenes over play) and the frame's timings (F3)

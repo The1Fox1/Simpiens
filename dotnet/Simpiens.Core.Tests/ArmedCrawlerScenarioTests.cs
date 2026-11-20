@@ -93,7 +93,7 @@ namespace Simpiens.Core.Tests
                         for (int l = 0; l < lairs.Count; l++)
                         {
                             if (Simpiens.Simulation.Creatures.LairReach.Holds(lairs[l].Definition, crawler.Position)
-                                && Vitality.BravesLair(lairs[l].Definition, sim.Simulation.Creatures.IsBossAlive(l), crawler.Skills, crawler.Inventory, crawler.Health, crawler.Personality.RiskTolerancePercent, crawler.IsDowned))
+                                && Vitality.BravesLair(lairs[l].Definition, sim.Simulation.Creatures.IsBossAlive(l), crawler.Skills, crawler.Inventory, crawler.Traits, crawler.Health, crawler.Personality.RiskTolerancePercent, crawler.IsDowned))
                             {
                                 braved.Add(crawler.AgentId);
                                 break;

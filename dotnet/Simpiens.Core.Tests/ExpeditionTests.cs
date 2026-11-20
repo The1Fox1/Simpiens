@@ -79,6 +79,17 @@ namespace Simpiens.Core.Tests
         }
 
         /// <summary>The default seed's outpost with <paramref name="count"/> residents signed on at the most a wage may be (so the greedy sign too).</summary>
+        /// <summary>
+        /// By hand: a member with no Leadership, so its party's captain doesn't steady the retreat rule's line (Epic 11, S5.1, D19)
+        /// and these tests read the rule's own numbers; <c>LeadershipValidator</c> holds the steadied ones.
+        /// </summary>
+        internal static void NoLeadership(AgentState crawler)
+        {
+            var skills = crawler.Skills;
+            skills.Set(Simpiens.Simulation.Skills.Skill.Leadership, 0);
+            crawler.Skills = skills;
+        }
+
         private static Outpost NewOutpost(int count = 4)
         {
             var sim = LocalSimulation.Create(SimulationSettings.DefaultSeed);
@@ -90,6 +101,7 @@ namespace Simpiens.Core.Tests
                 var crawler = sim.Host.CrawlerStates[i];
                 crawler.Memory.SetAffinity(WorldRegistry.PlayerEntityId, new AffinityRecord(60, 80, 0, 0, 1, 0));
                 Assert.Equal(GuildRules.Check.Ok, o.Guild.Recruit(o.Host, crawler.AgentId, tuning.MaxWage, 0));
+                NoLeadership(crawler);
                 o.Members[i] = crawler;
             }
             o.Home = sim.Simulation.ActiveStalls[0].Position;

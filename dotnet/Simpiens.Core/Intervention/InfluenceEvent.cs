@@ -26,7 +26,22 @@ namespace Simpiens.Intervention
         OrderStation = 13,
         SetShifts = 14,
         /// <summary>The guildhall (Epic 10 Part 2, W5, D65): set one of the guild's parties' members.</summary>
-        FormParty = 15
+        FormParty = 15,
+        /// <summary>Techniques (Epic 11, S4.6, D16): offer a member or an artisan gold to take up a band's other technique.</summary>
+        SponsorTechnique = 16
+    }
+
+    /// <summary>The patron offers one of its people gold to take up <see cref="Technique"/> in place of the band's other (Epic 11, S4.6, D16).</summary>
+    public readonly struct SponsorTechniqueCommand
+    {
+        public readonly EntityId CrawlerId;
+        public readonly Simpiens.Simulation.Skills.Technique Technique;
+
+        public SponsorTechniqueCommand(EntityId crawlerId, Simpiens.Simulation.Skills.Technique technique)
+        {
+            CrawlerId = crawlerId;
+            Technique = technique;
+        }
     }
 
     /// <summary>The player signs a crawler on with the guild at a wage per caravan visit (Epic 10 G4, D2).</summary>
@@ -373,6 +388,7 @@ namespace Simpiens.Intervention
         public readonly HireArtisanCommand HireArtisan;
         public readonly OrderStationCommand OrderStation;
         public readonly SetShiftsCommand SetShifts;
+        public readonly SponsorTechniqueCommand SponsorTechnique;
 
         public string LegacyCommandName => CommandType switch
         {
@@ -391,6 +407,7 @@ namespace Simpiens.Intervention
             InfluenceCommandType.OrderStation => "OrderStation",
             InfluenceCommandType.SetShifts => "SetShifts",
             InfluenceCommandType.FormParty => "FormParty",
+            InfluenceCommandType.SponsorTechnique => "SponsorTechnique",
             _ => string.Empty
         };
 
@@ -411,8 +428,10 @@ namespace Simpiens.Intervention
             in OrderStationCommand orderStation = default,
             in SetShiftsCommand setShifts = default,
             in RecallExpeditionCommand recallExpedition = default,
-            in FormPartyCommand formParty = default)
+            in FormPartyCommand formParty = default,
+            in SponsorTechniqueCommand sponsorTechnique = default)
         {
+            SponsorTechnique = sponsorTechnique;
             RecallExpedition = recallExpedition;
             FormParty = formParty;
             BuildStation = buildStation;
@@ -485,6 +504,11 @@ namespace Simpiens.Intervention
         public static InfluenceEvent CreateSetShifts(string sourceId, EntityId crawlerId, byte shifts)
         {
             return new InfluenceEvent(sourceId, InfluenceCommandType.SetShifts, setShifts: new SetShiftsCommand(crawlerId, shifts));
+        }
+
+        public static InfluenceEvent CreateSponsorTechnique(string sourceId, EntityId crawlerId, Simpiens.Simulation.Skills.Technique technique)
+        {
+            return new InfluenceEvent(sourceId, InfluenceCommandType.SponsorTechnique, sponsorTechnique: new SponsorTechniqueCommand(crawlerId, technique));
         }
 
         public static InfluenceEvent CreatePostBounty(string sourceId, in PostBountyCommand cmd)

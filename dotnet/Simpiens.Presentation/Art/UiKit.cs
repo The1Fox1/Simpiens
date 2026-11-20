@@ -58,6 +58,8 @@ namespace Simpiens.Presentation.Art
         public const string PassionKeen = "Ui_PassionKeen";
         /// <summary>A burning passion (Epic 11, S1.6): two flames.</summary>
         public const string PassionBurning = "Ui_PassionBurning";
+        /// <summary>A guild member's role at its portrait's corner (Epic 11, S5.8): a shield, an arrow, a cross, a star.</summary>
+        public const string RoleFront = "Ui_RoleFront", RoleBack = "Ui_RoleBack", RoleCarrier = "Ui_RoleCarrier", RoleLeader = "Ui_RoleLeader";
 
         // The palette as art (UiStyle's values): warm grey stone, never brown
         private static readonly Rgba32 StoneDark = Rgb(0x1c1815);
@@ -108,6 +110,10 @@ namespace Simpiens.Presentation.Art
             Glyph(Anvil, "########", ".#######", "...####.", "....##..", "...####.", "..######"),
             Glyph(PassionKeen, "..#...", "..##..", ".###..", ".####.", "######", "##.###", ".####."),
             Glyph(PassionBurning, ".#....#.", ".##..##.", "###.###.", "########", "########", "##.##.##", ".######."),
+            Glyph(RoleFront, "######", "######", "######", ".####.", "..##.."),
+            Glyph(RoleBack, "...###", "....##", "...#.#", "..#...", ".#....", "#....."),
+            Glyph(RoleCarrier, "..##..", "..##..", "######", "######", "..##..", "..##.."),
+            Glyph(RoleLeader, "..##..", "..##..", "######", ".####.", ".#..#.", "#....#"),
         };
 
         /// <summary>

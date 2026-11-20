@@ -40,6 +40,9 @@ namespace Simpiens.Simulation.Skills
         /// <summary>Tending the fallen: carrying one out of danger, or standing one up with a medicine.</summary>
         public static SkillWork Tend() => new SkillWork(SkillUse.Tend);
 
+        /// <summary>Leading a party out and home (Epic 11, S5.1, D19).</summary>
+        public static SkillWork Lead() => new SkillWork(SkillUse.Lead);
+
         public bool Equals(SkillWork other) => Use == other.Use && Item == other.Item && Station == other.Station;
 
         public override bool Equals(object obj) => obj is SkillWork other && Equals(other);

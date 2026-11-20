@@ -168,6 +168,20 @@ namespace Simpiens.Simulation.Skills
         /// <summary>The drill's practice comes in this many lots a game hour (five each).</summary>
         public const int YardLotsPerHour = 6;
 
+        // --- Leadership (Epic 11, S5.1, Q11, D19) ---
+
+        /// <summary>A party's captain practises this for each mate it brings home, at a trip's delivery.</summary>
+        public const int LeadExperience = 40;
+
+        /// <summary>A gathering trip's challenge to its captain; a clear's is its lair's kind's.</summary>
+        public const int GatherChallenge = 3;
+
+        /// <summary>A captain steadies its party: the retreat rules' health line falls by this share a level of its Leadership (30% at 10).</summary>
+        public const float SteadyPerLevel = 0.03f;
+
+        /// <summary>What a party's retreat line is multiplied by under a captain at <paramref name="level"/>: 1 with none, 0.7 at 10.</summary>
+        public static float SteadyFactor(int level) => (float)(1f - (float)(SteadyPerLevel * Clamp(level)));
+
         // --- What a level does (K9.3, Q20) ---
 
         /// <summary>A fighter's hit chance rises by this a level: 70% unskilled, 90% at Master 10 (the combat rule caps it at 95%).</summary>

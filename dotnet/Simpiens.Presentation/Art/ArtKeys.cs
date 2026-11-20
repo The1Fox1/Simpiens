@@ -69,6 +69,19 @@ namespace Simpiens.Presentation.Art
         public const string FxSpit = "fx/spit";
         /// <summary>A boss's health bar (Epic 10 Part 3, K10.5b): the row's size is the bar's for a creature a crawler's size.</summary>
         public const string FxBar = "fx/bar";
+        /// <summary>A guild member's role badge over its body (Epic 11, S5.8, D24): the front, the back, a carrier, a leader.</summary>
+        public const string BadgeFront = "badge/front", BadgeBack = "badge/back", BadgeCarrier = "badge/carrier", BadgeLeader = "badge/leader";
+
+        /// <summary>The badge's key for <paramref name="role"/>; null for none.</summary>
+        public static string Badge(Simpiens.Simulation.Skills.PartyRole role) => role switch
+        {
+            Simpiens.Simulation.Skills.PartyRole.Front => BadgeFront,
+            Simpiens.Simulation.Skills.PartyRole.Back => BadgeBack,
+            Simpiens.Simulation.Skills.PartyRole.Carrier => BadgeCarrier,
+            Simpiens.Simulation.Skills.PartyRole.Leader => BadgeLeader,
+            _ => null
+        };
+
         /// <summary>The descent gate, sealed and breached (Epic 10 Part 3, K10.5c).</summary>
         public const string PropGate = "prop/gate", PropGateOpen = "prop/gate-open";
 

@@ -93,6 +93,7 @@ namespace Simpiens.Core.Tests
             {
                 residents[i].Memory.SetAffinity(WorldRegistry.PlayerEntityId, new AffinityRecord(60, 80, 0, 0, 1, 0));
                 Assert.Equal(GuildRules.Check.Ok, o.Guild.Recruit(o.Host, residents[i].AgentId, tuning.MaxWage, 0));
+                ExpeditionTests.NoLeadership(residents[i]); // the rule's own line, unsteadied by a captain (Epic 11, S5.1)
                 o.Members[i] = residents[i];
             }
             return o;
