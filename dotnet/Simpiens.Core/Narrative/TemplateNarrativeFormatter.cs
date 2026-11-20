@@ -200,6 +200,17 @@ namespace Simpiens.Narrative
                     return $"{actorA} is now {("AEIOU".IndexOf(word[0]) >= 0 ? "an" : "a")} {word}.";
                 }
 
+                case ChronicleEventType.EpithetEarned:
+                {
+                    var epithet = (Simpiens.Simulation.Skills.Epithet)((int)evt.ExtraData / 256);
+                    string words = Simpiens.Simulation.Skills.EpithetRules.WordsOf(epithet, (byte)((int)evt.ExtraData % 256), actorB);
+                    var row = Simpiens.Simulation.Skills.EpithetTable.Get(epithet);
+                    var deed = row != null ? Simpiens.Simulation.Skills.DeedTable.Get(row.Deed) : null;
+                    if (words.Length == 0) return $"{actorA} has earned a name.";
+                    string named = Simpiens.Simulation.Skills.EpithetRules.NameWith(actorA, words);
+                    return deed == null ? $"{actorA} is {named} now." : $"{actorA} is {named} now, for {deed.CountOf(row.Count)}.";
+                }
+
                 case ChronicleEventType.TechniqueSponsored:
                     return $"{actorA} took up {Simpiens.Simulation.Skills.TechniqueTable.Get((Simpiens.Simulation.Skills.Technique)(byte)evt.ExtraData)?.DisplayName ?? "a new way"}, for the patron's gold.";
 

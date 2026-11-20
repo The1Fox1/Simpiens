@@ -59,7 +59,8 @@ namespace Simpiens.Narrative
         FirstLesson = 49, // Epic 11, S3.1 (D9): ActorA was first taught a skill by ActorB, its mentor; the extra is the skill
         TechniqueChosen = 50, // Epic 11, S4.2 (D15): ActorA reached a band and took up a technique by its nature; the extra is the technique
         TechniqueSponsored = 51, // Epic 11, S4.6 (D16): ActorA took up a technique for the patron's (ActorB's) gold; the extra is the technique
-        CallingEarned = 52 // Epic 11, S5.3 (D21): ActorA's best skill and its technique there earned it a calling; the extra is the calling
+        CallingEarned = 52, // Epic 11, S5.3 (D21): ActorA's best skill and its technique there earned it a calling; the extra is the calling
+        EpithetEarned = 53 // Epic 11, S6.1 (D27): ActorA earned an epithet; ActorB is the crawler it names, if any; the extra is the epithet x 256 + the kind it names
     }
 
     /// <summary>

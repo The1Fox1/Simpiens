@@ -108,7 +108,7 @@ Working document (AGENTS.md, Documentation Protocol 6), one of Epic 11's plans (
   - Check §0 against the code; a difference becomes a finding (F13 onward).
   - **The measurement:** the growth measurement (`SkillGrowthMeasurementTests`) also reports each deed per resident and the downings by cause, at 14 and 28 days, no player and hunting players, from a copied Release bin. Written to `docs/skills-model.md` §5.9.
   - **Set from it:** D27's and D29's thresholds, so that a legend is earned on most seeds in two weeks and by few crawlers on each.
-- [ ] **S6.1 The epithet table and its rule** [Possibly Complex: a new table whose ids are saved]
+- [x] **S6.1 The epithet table and its rule** (done 2026-11-20; golden unchanged: no epithet is earned in its 3,000 ticks) [Possibly Complex: a new table whose ids are saved]
   - **The table:** D27's `Epithet`, `EpithetTable`, the kinds' `SlayerEpithet` column; the traits record's epithet and its subject (spare bytes, so the format holds).
   - **The rule:** `EpithetRules.Judge`, called where each deed is counted; `EpithetEarned` in the chronicle.
   - **The checks:** `EpithetValidator` (the table, the ranks, a row per form, the rule at each threshold, one held, the round trip); `EpithetNamesTests`. Golden re-recorded in its own commit if an epithet is earned within its 3,000 ticks.

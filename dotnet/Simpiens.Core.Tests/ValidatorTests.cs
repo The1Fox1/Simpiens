@@ -87,6 +87,9 @@ namespace Simpiens.Core.Tests
         public void PartyRoles() => new Simpiens.Testing.Skills.PartyRoleValidator().RunAllValidationTests();
 
         [Fact]
+        public void Epithets() => new Simpiens.Testing.Skills.EpithetValidator().RunAllValidationTests();
+
+        [Fact]
         public void GivenNames() => new Simpiens.Testing.People.GivenNamesValidator().RunAllValidationTests();
 
         [Fact]

@@ -57,6 +57,16 @@ namespace Simpiens.Simulation.Skills
         private byte _first;
     }
 
+    /// <summary>What the record has changed that the crawler's runtime has yet to tell the chronicle (Epic 11, S6.1): told once, on the main thread.</summary>
+    [System.Flags]
+    public enum LegendNews : byte
+    {
+        None = 0,
+        Epithet = 1,
+        Trait = 2,
+        Scar = 4
+    }
+
     /// <summary>The record's unused room, so later fields fit without changing its size.</summary>
     [InlineArray(CrawlerTraits.SpareBytes)]
     public struct TraitsSpare
@@ -72,7 +82,7 @@ namespace Simpiens.Simulation.Skills
     /// <item><b>Techniques</b> (plan 2): one id for each band above Novice of each skill, reserved.</item>
     /// <item><b>Teachers</b> (S3): who first taught each of up to four skills.</item>
     /// <item><b>Deeds</b> (S0.5): a count for each deed id, where the deed happens (A7).</item>
-    /// <item><b>A calling, an epithet, earned traits and scars</b> (plans 2 and 3), reserved.</item>
+    /// <item><b>A calling</b> (plan 2), <b>an epithet</b> with the kind or crawler it names (plan 3, S6.1), earned traits and scars (plan 3), and what is yet to be told.</item>
     /// </list>
     /// The room left over (<see cref="SpareBytes"/>) takes later fields without changing its size or the save's format. Its
     /// size is pinned (<c>EconomySerializationValidator</c>).
@@ -90,18 +100,20 @@ namespace Simpiens.Simulation.Skills
         public const int TeacherSlots = 4;
 
         /// <summary>What's left of <see cref="Size"/> after the fields.</summary>
-        public const int SpareBytes = 68;
+        public const int SpareBytes = 51;
 
         private PassionBytes _passions;     //   0: 16
         private TechniqueBytes _techniques; //  16: 48
         private TeacherRecords _teachers;   //  64: 80
         private DeedCounts _deeds;          // 144: 32
         private byte _calling;              // 176
-        private byte _reserved;             // 177
+        private byte _news;                 // 177: what is yet to be told (S6.1)
         private ushort _epithet;            // 178
         private FourBytes _earnedTraits;    // 180
         private FourBytes _scars;           // 184
-        private TraitsSpare _spare;         // 188: 68
+        private EntityId _epithetSubject;   // 188: 16, the crawler an epithet names (S6.1)
+        private byte _epithetKind;          // 204: the creature kind an epithet names (S6.1)
+        private TraitsSpare _spare;         // 205: 51
 
         // --- Passions (S1) ---
 
@@ -142,6 +154,34 @@ namespace Simpiens.Simulation.Skills
         public readonly Calling Calling => (Calling)_calling;
 
         public void SetCalling(Calling calling) => _calling = (byte)calling;
+
+        // --- The epithet (Epic 11, S6.1, D27) ---
+
+        /// <summary>The epithet it holds (the highest rank earned, <see cref="EpithetRules.Judge"/>); none until it earns one.</summary>
+        public readonly Epithet Epithet => (Epithet)_epithet;
+
+        /// <summary>The creature kind its epithet names ("Beetlebane": the kind of the kill that earned it); 0 for none.</summary>
+        public readonly byte EpithetKind => _epithetKind;
+
+        /// <summary>The crawler its epithet names ("Ama's Avenger"); none for an epithet that names nobody.</summary>
+        public readonly EntityId EpithetSubject => _epithetSubject;
+
+        /// <summary>Holds <paramref name="epithet"/>, naming <paramref name="kind"/> and <paramref name="subject"/> where its form does.</summary>
+        public void SetEpithet(Epithet epithet, byte kind, EntityId subject)
+        {
+            _epithet = (ushort)epithet;
+            _epithetKind = kind;
+            _epithetSubject = subject;
+        }
+
+        // --- What is yet to be told (Epic 11, S6.1) ---
+
+        /// <summary>What the record has changed that the chronicle hasn't been told: the crawler's runtime tells it and clears it.</summary>
+        public readonly LegendNews News => (LegendNews)_news;
+
+        public void AddNews(LegendNews news) => _news |= (byte)news;
+
+        public void ClearNews(LegendNews news) => _news &= (byte)~news;
 
         // --- Teachers (S3) ---
 

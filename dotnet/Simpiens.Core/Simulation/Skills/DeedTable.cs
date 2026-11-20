@@ -32,11 +32,12 @@ namespace Simpiens.Simulation.Skills
     /// <summary>One deed: a row of <see cref="DeedTable"/>.</summary>
     public sealed class DeedDefinition
     {
-        public DeedDefinition(Deed id, string name, string displayName)
+        public DeedDefinition(Deed id, string name, string displayName, string one = null)
         {
             Id = id;
             Name = name;
             DisplayName = displayName;
+            One = one ?? displayName;
         }
 
         public Deed Id { get; }
@@ -46,6 +47,12 @@ namespace Simpiens.Simulation.Skills
 
         /// <summary>The player's words for its count: "creatures slain".</summary>
         public string DisplayName { get; }
+
+        /// <summary>The player's words for one (Epic 11, S6.1): "a creature slain".</summary>
+        public string One { get; }
+
+        /// <summary>A count of it in the chronicle's words: "a boss slain", "three creatures slain".</summary>
+        public string CountOf(int count) => count == 1 ? One : $"{EpithetRules.CountWords(count)} {DisplayName}";
 
         public override string ToString() => Name;
     }
@@ -62,14 +69,14 @@ namespace Simpiens.Simulation.Skills
         {
             var rows = new[]
             {
-                new DeedDefinition(Deed.CreatureSlain, "CreatureSlain", "creatures slain"),
-                new DeedDefinition(Deed.BossSlain, "BossSlain", "bosses slain"),
-                new DeedDefinition(Deed.Rescue, "Rescue", "rescues"),
-                new DeedDefinition(Deed.Make, "Make", "makes"),
-                new DeedDefinition(Deed.DowningSurvived, "DowningSurvived", "downings survived"),
-                new DeedDefinition(Deed.HuntPaid, "HuntPaid", "hunts paid"),
-                new DeedDefinition(Deed.ClearWon, "ClearWon", "clears won"),
-                new DeedDefinition(Deed.Taught, "Taught", "crawlers taught")
+                new DeedDefinition(Deed.CreatureSlain, "CreatureSlain", "creatures slain", "a creature slain"),
+                new DeedDefinition(Deed.BossSlain, "BossSlain", "bosses slain", "a boss slain"),
+                new DeedDefinition(Deed.Rescue, "Rescue", "rescues", "a rescue"),
+                new DeedDefinition(Deed.Make, "Make", "makes", "a make"),
+                new DeedDefinition(Deed.DowningSurvived, "DowningSurvived", "downings survived", "a downing survived"),
+                new DeedDefinition(Deed.HuntPaid, "HuntPaid", "hunts paid", "a hunt paid"),
+                new DeedDefinition(Deed.ClearWon, "ClearWon", "clears won", "a clear won"),
+                new DeedDefinition(Deed.Taught, "Taught", "crawlers taught", "a crawler taught")
             };
             var byId = new DeedDefinition[Capacity];
             foreach (var row in rows)

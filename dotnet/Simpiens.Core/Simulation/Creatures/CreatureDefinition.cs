@@ -34,6 +34,12 @@ namespace Simpiens.Simulation.Creatures
         /// <summary>Its art's key in kebab case ("burrow-rat"), as an item's is; the art tables come with the client's creatures (K2.5).</summary>
         public string ArtKey { get; }
 
+        /// <summary>
+        /// The epithet of one who slays its kind (Epic 11, S6.1, D27): "Beetlebane", earned at the kill that brings a crawler's
+        /// creatures slain to the epithet's count, or by a boss slain. Null for a kind that gives none.
+        /// </summary>
+        public string SlayerEpithet { get; init; }
+
         /// <summary>Health when whole.</summary>
         public float MaxHealth { get; init; }
 

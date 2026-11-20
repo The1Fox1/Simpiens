@@ -448,8 +448,8 @@ namespace Simpiens.Simulation
             var killer = _worldRegistry?.GetEntity(slayer)?.Agent; // the slayer's deeds (Epic 11, S0.5)
             if (killer != null)
             {
-                killer.AddDeed(Simpiens.Simulation.Skills.Deed.CreatureSlain);
-                if (creature.Definition != null && creature.Definition.IsBoss) killer.AddDeed(Simpiens.Simulation.Skills.Deed.BossSlain);
+                killer.AddDeed(Simpiens.Simulation.Skills.Deed.CreatureSlain, (byte)creature.Kind); // the kind, for its slayer's epithet (Epic 11, S6.1)
+                if (creature.Definition != null && creature.Definition.IsBoss) killer.AddDeed(Simpiens.Simulation.Skills.Deed.BossSlain, (byte)creature.Kind);
             }
             SimLog.Simulation.ZLogInformation($"{SimLog.Agent(slayer)} slew a {Simpiens.Simulation.Creatures.CreatureCatalog.NameOf(creature.Kind)} at {creature.Position}");
             Chronicle?.RecordEvent(new Simpiens.Narrative.ChronicleEvent(Simpiens.Narrative.ChronicleEventType.CreatureSlain, slayer, creature.Id,
