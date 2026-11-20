@@ -38,6 +38,9 @@ namespace Simpiens.Client.Ui
         private readonly SpriteRuntime _portraitBadge; // Epic 11, S5.8: a guild member's role at its portrait's corner
         private readonly ContainerRuntime _techniquesLine;
         private string _techniquesTip;
+        private readonly TextRuntime _legend; // Epic 11, S6.6: its epithet, earned traits and scars, their words in the line's tip
+        private readonly ContainerRuntime _legendLine;
+        private string _legendTip;
         private readonly GraphicalUiElement _affinitiesViewer;
         private const float AffinitiesHeight = 70f, HeldLineHeight = 14f; // the held line takes its 11-point line from the feelings
         private readonly SkillLine _skills; // Epic 10 Part 3, K9.5; with passions' flames since Epic 11, S1.6
@@ -177,6 +180,12 @@ namespace Simpiens.Client.Ui
             _techniques = UiParts.Text(string.Empty, UiStyle.TextSecondary, UiText.Small);
             _techniquesLine.Children.Add(_techniques);
             _dossierDetails.Children.Add(_techniquesLine);
+            // Its legend (Epic 11, S6.6, D36): "Beetlebane, 3 creatures slain · Battle-Hardened · a scar", what each is in the tip;
+            // shown only when it has any, its line from the feelings' list as the techniques' is
+            _legendLine = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, HeightUnits = DimensionUnitType.RelativeToChildren, Height = 0f, HasEvents = true, Visible = false };
+            _legend = UiParts.Text(string.Empty, UiStyle.Accent, UiText.Small);
+            _legendLine.Children.Add(_legend);
+            _dossierDetails.Children.Add(_legendLine);
             _held = UiParts.Text(string.Empty, UiStyle.TextMuted, UiText.Small);
             _held.Visible = false;
             _dossierDetails.Children.Add(_held);
@@ -289,6 +298,12 @@ namespace Simpiens.Client.Ui
 
         /// <summary>The element whose tip says what each technique does.</summary>
         public GraphicalUiElement TechniquesLine => _techniquesLine;
+
+        /// <summary>The legend line as shown (Epic 11, S6.6); empty when hidden.</summary>
+        public string LegendShown => _legendLine.Visible ? _legend.Text : string.Empty;
+
+        /// <summary>The element whose tip says what the epithet, each trait and each scar are.</summary>
+        public GraphicalUiElement LegendLine => _legendLine;
 
         /// <summary>The sway's second button as shown (its words are <see cref="RecruitShown"/>): "Recruit" for a resident, "Sponsor" for one of the patron's people.</summary>
         public string SwayButtonShown => RecruitButton.Text;
@@ -481,12 +496,19 @@ namespace Simpiens.Client.Ui
             UiParts.SetText(_groups, dossier.Groups);
             _skills.Show(dossier.SkillsShown);
             string notes = dossier.SkillNotes;
-            bool held = notes.Length > 0, techniques = dossier.Techniques.Length > 0;
-            if (_held.Visible != held || _techniquesLine.Visible != techniques)
+            bool held = notes.Length > 0, techniques = dossier.Techniques.Length > 0, legend = dossier.Legend.Length > 0;
+            if (_held.Visible != held || _techniquesLine.Visible != techniques || _legendLine.Visible != legend)
             {
                 _held.Visible = held;
                 _techniquesLine.Visible = techniques;
-                _affinitiesViewer.Height = AffinitiesHeight - (held ? HeldLineHeight : 0f) - (techniques ? HeldLineHeight : 0f);
+                _legendLine.Visible = legend;
+                _affinitiesViewer.Height = AffinitiesHeight - (held ? HeldLineHeight : 0f) - (techniques ? HeldLineHeight : 0f) - (legend ? HeldLineHeight : 0f);
+            }
+            if (legend) UiParts.SetText(_legend, dossier.Legend);
+            if (!string.Equals(_legendTip, dossier.LegendTip, System.StringComparison.Ordinal))
+            {
+                _legendTip = dossier.LegendTip;
+                Tips?.Register(_legendLine, _legendTip.Length > 0 ? _legendTip : null);
             }
             if (held) UiParts.SetText(_held, notes);
             if (techniques) UiParts.SetText(_techniques, dossier.Techniques);

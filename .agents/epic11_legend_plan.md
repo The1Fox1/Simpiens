@@ -127,7 +127,7 @@ Working document (AGENTS.md, Documentation Protocol 6), one of Epic 11's plans (
 - [x] **S6.5 Re-measured** (done 2026-11-20: growth as before; epithets on 20 of 23 seeds with the players; seeds 1–120 both ways, the soak 18/18 and 20/20 ×3; no DoD moved) [Possibly Complex: measuring]
   - The 14-day growth and deeds on the gate seeds (`docs/skills-model.md` §5.10); the gate seeds' day, the soak, seeds 1–120 with and without the guild.
   - **Moved DoDs** are re-picked once, each from a measurement across the gate seeds, each in its own commit.
-- [ ] **S6.6 The client: epithets and the legend line** [Possibly Complex: the client]
+- [x] **S6.6 The client: epithets and the legend line** (done 2026-11-20; the guild's card shows the epithet before its title, its name line holding two skills; the expedition tracker and the chronicle's actor names stay plain) [Possibly Complex: the client]
   - **Names:** the epithet in every name shown (D36), with the longest name, epithet and title fitted on each card at 1280×720.
   - **The dossier:** the legend line and its tips; the dossier still fits 720 rows.
   - **The checks:** `LegendOnScreenTests` (names, the line, its tips, the fit).

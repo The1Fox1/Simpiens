@@ -69,7 +69,7 @@ namespace Simpiens.Presentation.Dashboard
             if (!IsShown) return;
             CrawlerId = node.Id;
             Following = following;
-            Name = _context.FriendlyName(node.Id, node.Name);
+            Name = _context.LegendName(node.Id, node.Name); // with its epithet (Epic 11, S6.6)
             State = agent.VisualState;
             Badge = agent.IsDowned ? DossierModel.DownedBadge : State.ToString().ToUpperInvariant();
             HasPortrait = agent.Look.IsComplete;

@@ -332,7 +332,7 @@ namespace Simpiens.Presentation.Dashboard
             }
             var node = _context.Registry?.GetEntity(id);
             var agent = node?.Agent;
-            ArtisanName = node != null ? _context.FriendlyName(id, node.Name) : DossierModel.UnknownName;
+            ArtisanName = node != null ? _context.LegendName(id, node.Name) : DossierModel.UnknownName; // with its epithet (Epic 11, S6.6)
             ArtisanHasPortrait = agent != null && agent.Look.IsComplete;
             ArtisanPortrait = ArtisanHasPortrait ? PortraitKey.Of(id, agent, _moods, Tick) : default;
             Asks = agent != null ? SkillTexts.Asks(contract.Wage, WorkshopRules.AskingWage(agent, tuning, _context.Simulation.Economy.Guild)) : string.Empty;
@@ -405,7 +405,7 @@ namespace Simpiens.Presentation.Dashboard
                 _candidates.Add(new StationCandidateRow
                 {
                     CrawlerId = id,
-                    Name = _context.FriendlyName(id, DossierModel.UnknownName),
+                    Name = _context.LegendName(id, DossierModel.UnknownName),
                     HasPortrait = crawler.Look.IsComplete,
                     Portrait = crawler.Look.IsComplete ? PortraitKey.Of(id, crawler, _moods, tick) : default,
                     Standing = (craft != Simpiens.Simulation.Skills.Skill.None ? Invariant($"{Simpiens.Simulation.Skills.SkillTable.Get(craft).DisplayName} {Simpiens.Simulation.Skills.CrawlerSkills.Level(crawler, work)} · ") : string.Empty)

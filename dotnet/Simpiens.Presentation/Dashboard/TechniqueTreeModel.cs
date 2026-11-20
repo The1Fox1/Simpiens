@@ -288,7 +288,7 @@ namespace Simpiens.Presentation.Dashboard
 
             string title = CallingTexts.Title(agent.Skills, agent.Traits);
             string friendly = _context.FriendlyName(CrawlerId, agent.GivenName ?? DossierModel.UnknownName);
-            Name = title.Length == 0 ? friendly : $"{friendly} the {title}";
+            Name = Simpiens.Simulation.Skills.EpithetRules.NameWith(friendly, _context.EpithetOf(agent.Traits), title); // with its epithet (Epic 11, S6.6)
             Standing = StandingOf(agent, sim, tick);
             Treasury = sim != null && sim.ActiveStalls != null && sim.ActiveStalls.Count > 0 ? Invariant($"Treasury {sim.ActiveStalls[0].TreasuryGold}g") : string.Empty;
             HasPortrait = agent.Look.IsComplete;
