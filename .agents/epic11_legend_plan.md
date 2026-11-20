@@ -134,8 +134,8 @@ Working document (AGENTS.md, Documentation Protocol 6), one of Epic 11's plans (
 - [x] **S6.7 Scars on the body and the portrait** (done 2026-11-20; a fleck of scar red at each place on the body; each shape at its place on the portrait; the frames carry the scars) [Possibly Complex: art across two keys]
   - **The art:** `BodyKit` and `PortraitKit` draw each scar at its place; `PortraitKey` and the bodies' key hold the scars.
   - **The checks:** look at the people sheet; re-record the art pins in their own commit; changed renders recorded in the pinned image in their own commit.
-- [ ] **S6.8 DoD `TheOutpostRemembers`** [Possibly Complex: a live DoD]
-  - On the real outpost with the hunting players, within 14 days: a crawler earns an epithet on its own, and a crawler downed and brought back carries a scar, both in the chronicle and on screen.
+- [x] **S6.8 DoD `TheOutpostRemembers`** (done 2026-11-20: gate seed 3, on the guild's ordinary clears; an epithet on 19 of 23 gate seeds and a scar on 12 in ten days; F13 corrected: the soak's parties carry draughts, the guild's clears without them down members) [Possibly Complex: a live DoD]
+  - On the real outpost with the guild's player ordering clears (the soak's hunting players never down anyone, F13), within ten days: a crawler earns an epithet on its own, and a crawler downed and brought back carries a scar, both in the chronicle; on screen in `LegendOnScreenTests`.
   - Its seed from a measurement across the gate seeds (`MeasureTheOutpostRemembersOnTheGateSeeds`).
 - [ ] **S6.9 S6's gate** [Basic: the gates (§4)]
 - [ ] **The producer's look at S6:** a brief in the epic's §4, written at S6.9.
