@@ -197,6 +197,24 @@ namespace Simpiens.Presentation.Dashboard
 
         public static string Percent(float value) => Invariant($"{value:F0}%");
 
+        /// <summary>The playtest tools work on a living crawler shown, with a queue to send to (development builds show them).</summary>
+        public bool CanPlaytest => HasCrawler && !IsDead && _context.Intervention != null;
+
+        /// <summary>Down works on one on its feet.</summary>
+        public bool CanDown => CanPlaytest && Badge != DownedBadge;
+
+        /// <summary>Playtest: its warmth and trust toward the player at their most, on the next tick.</summary>
+        public void MaxStanding()
+        {
+            if (CanPlaytest) _context.Intervention.QueueInfluence(InfluenceEvent.CreatePlaytest("Player", CrawlerId, PlaytestAction.MaxStanding));
+        }
+
+        /// <summary>Playtest: downed where it stands, on the next tick.</summary>
+        public void Down()
+        {
+            if (CanDown) _context.Intervention.QueueInfluence(InfluenceEvent.CreatePlaytest("Player", CrawlerId, PlaytestAction.Down));
+        }
+
         /// <summary>The Calm Frustration button works only with a crawler shown and a queue to send to.</summary>
         public bool CanCalm => HasCrawler && !IsDead && _context.Intervention != null;
 

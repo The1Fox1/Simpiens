@@ -57,6 +57,7 @@ more (AGENTS.md, Logging).";
             options.DemoScenes = true;
             options.TimingsOverlay = true;
             options.ShowDebugIds = true;
+            options.PlaytestTools = true; // Max trust and Down in the dossier
             options.ConfigureServices = services => Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<Simpiens.Core.Session.ISessionDefinition>(services, new Simpiens.Testing.Sessions.CanaryPenSession());
 #endif
             ConsoleSimLogSink.Install();

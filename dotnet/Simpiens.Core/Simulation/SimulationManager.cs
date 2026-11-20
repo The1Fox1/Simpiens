@@ -734,6 +734,9 @@ namespace Simpiens.Simulation
                     ExecuteUpdateStallPricesCommand(influence.UpdateStallPrices);
                     break;
 
+                case InfluenceCommandType.Playtest:
+                    ExecutePlaytestCommand(influence.Playtest, currentTick);
+                    break;
                 case InfluenceCommandType.CalmCrawler:
                     ExecuteCalmCrawlerCommand(influence.CalmCrawler);
                     break;
@@ -792,6 +795,43 @@ namespace Simpiens.Simulation
 
                 case InfluenceCommandType.SetShifts:
                     Workshops.SetShifts(this, influence.SetShifts.CrawlerId, influence.SetShifts.Shifts);
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// A playtest tool, applied on the tick (2026-11-20): its standing with the player at its most, or downed where it stands
+        /// as a stone beetle's blow would (its bleeding clock started: in danger it bleeds out unless carried out; out of danger
+        /// the fallen's rule stops the clock at once, a downing survived with its scar, and it lies until it heals).
+        /// </summary>
+        private void ExecutePlaytestCommand(in Simpiens.Intervention.PlaytestCommand cmd, long currentTick)
+        {
+            var node = _worldRegistry?.GetEntity(cmd.CrawlerId);
+            var agent = node?.Agent;
+            if (agent == null || agent.HasLeft)
+            {
+                SimLog.Intervention.ZLogWarning($"Playtest {cmd.Action} rejected: no crawler {SimLog.Agent(cmd.CrawlerId)}");
+                return;
+            }
+            uint tick = (uint)currentTick;
+            switch (cmd.Action)
+            {
+                case Simpiens.Intervention.PlaytestAction.MaxStanding:
+                    if (agent.Memory == null) return;
+                    var was = agent.Memory.GetAffinity(Simpiens.Simulation.WorldRegistry.PlayerEntityId, tick);
+                    agent.Memory.SetAffinity(Simpiens.Simulation.WorldRegistry.PlayerEntityId, new Simpiens.Cognition.Social.AffinityRecord(100, 100, 0, was.Respect, was.InteractionCount, tick));
+                    SimLog.Intervention.ZLogInformation($"Playtest: {SimLog.Agent(node.Id)}'s warmth and trust toward the player at their most");
+                    break;
+                case Simpiens.Intervention.PlaytestAction.Down:
+                    if (agent.IsDowned) return;
+                    agent.Health = 0f;
+                    agent.IsDowned = true;
+                    agent.DownedBy = DeathCause.Creature;
+                    agent.DownedDetail = (byte)Simpiens.Simulation.Creatures.CreatureKind.StoneBeetle;
+                    agent.Activity.TimesDowned++;
+                    agent.BleedsOutAt = tick + DayClock.Hours(BleedOutHours);
+                    SimLog.Intervention.ZLogInformation($"Playtest: {SimLog.Agent(node.Id)} downed at {node.Position}");
+                    _chronicleService?.RecordEvent(new ChronicleEvent(ChronicleEventType.CrawlerDowned, node.Id, default, GetSectorForPosition(node.Position), tick, ChronicleIntensity.Crisis));
                     break;
             }
         }

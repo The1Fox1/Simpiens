@@ -15,12 +15,13 @@ namespace Simpiens.Client.Ui
         private int _sessionVersion;
 
         /// <param name="motion">The interface moves (<see cref="ClientOptions.UiMotion"/>): windows arrive, the gold rolls.</param>
-        public DashboardView(UiLayer ui, DashboardModel model, float refreshSeconds, IconAtlas icons, PortraitAtlas portraits = null, bool motion = false)
+        /// <param name="playtest">The dossier's playtest tools (<see cref="ClientOptions.PlaytestTools"/>).</param>
+        public DashboardView(UiLayer ui, DashboardModel model, float refreshSeconds, IconAtlas icons, PortraitAtlas portraits = null, bool motion = false, bool playtest = false)
         {
             Model = model;
             _refreshSeconds = refreshSeconds;
             Header = new HeaderBar(icons) { Motion = motion };
-            Panels = new DashboardPanels(model, icons, portraits);
+            Panels = new DashboardPanels(model, icons, portraits, playtest);
             ui.Root.Children.Add(Panels.Root); // under the windows and the header
             // A tracker per party (Epic 10 Part 2, W5.3b), the second under the first
             var trackers = ExpeditionTracker.Column();

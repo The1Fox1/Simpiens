@@ -70,6 +70,13 @@ namespace Simpiens.Client
         public bool ShowDebugIds { get; set; }
 
         /// <summary>
+        /// Development builds: playtest tools in the dossier (2026-11-20, the producer's "make simulations a bit easier to control
+        /// for playtesting"): Max trust (warmth and trust toward the player at their most) and Down (downed where it stands).
+        /// They leave as typed commands, as every action does. Tests and the pinned renders leave them off.
+        /// </summary>
+        public bool PlaytestTools { get; set; }
+
+        /// <summary>
         /// The interface moves (the UI polish plan, U7): windows arrive, figures roll. The desktop game turns it on; tests and
         /// the pinned renders leave it off, so nothing they capture is mid-tween.
         /// </summary>

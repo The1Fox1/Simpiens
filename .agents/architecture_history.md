@@ -1849,3 +1849,11 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
 - **Not offered:** sponsoring a band not yet reached (a promise kept until the crawler gets there, in the traits record's spare bytes). The producer's call.
 - **Process lessons:** a Gum container takes events by default, so one inside a button (a node's effects column) swallows its clicks: set `HasEvents = false` on it; and a container never added to its parent lays out against the screen, unseen, while its texts still measure, so a layout test needs the render beside it.
 - **Checks:** `TechniqueTreeTests` (6, the render among them); the read guards list the model (learned levels and held techniques, shown); core 318/318, client 539/539 in the pinned image, golden 3/3, the MonoGame and Android compiles clean. On `feat/epic11-technique`, in PR #26.
+
+## 2026-11-20: playtest tools in the dossier (before Epic 11's S7)
+- **The ask:** "Before we move on I want to make simulations a bit easier to control for playtesting. Add a Max turst&affinity button and a down agent button."
+- **As commands:** one typed command, `PlaytestCommand` (`InfluenceCommandType.Playtest`, 17) with its action, applied on the tick like every player action, so a playtest stays deterministic and saveable. A server would refuse it outside a development session (multiplayer-readiness, ROADMAP §1A.1).
+  - *Max trust:* the crawler's warmth and trust toward the player at 100, its fear of the player 0, its respect kept. It signs on and takes a sponsor's gold at once.
+  - *Down:* health 0 and downed where it stands, as a stone beetle's blow would, its bleeding clock started. In a lair or a hazard it bleeds out unless a friend carries it out; out of danger the fallen's rule stops the clock at once, a downing survived (the deed, a beetle's claw, a trait by nature), and it lies until it heals. A crawler already down isn't downed again.
+- **In the client:** two small buttons under the dossier's mood line, beside the portrait, where the header has room (`ClientOptions.PlaytestTools`, on in the desktop game's development builds, off in tests and renders). Down greys while the crawler is down.
+- **Checks:** `PlaytestCommandsTests` (core), `PlaytestToolsTests` (client); core 326/326, client 544/544 in the pinned image, golden 3/3 unchanged, the MonoGame and Android compiles clean.

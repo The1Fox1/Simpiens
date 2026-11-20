@@ -59,7 +59,7 @@ namespace Simpiens.Client.Ui
         private readonly List<(ContainerRuntime Row, ContainerRuntime FaceBox, SpriteRuntime Face)> _affinityFaces = new List<(ContainerRuntime, ContainerRuntime, SpriteRuntime)>(16);
         private readonly DriveBar _health, _hunger, _energy, _social, _frustration;
 
-        public DashboardPanels(DashboardModel model, IconAtlas icons, PortraitAtlas portraits = null)
+        public DashboardPanels(DashboardModel model, IconAtlas icons, PortraitAtlas portraits = null, bool playtest = false)
         {
             _icons = icons;
             _portraits = portraits;
@@ -149,6 +149,19 @@ namespace Simpiens.Client.Ui
             who.Children.Add(badge);
             _moodLine = UiParts.Text(string.Empty, UiStyle.TextLight, UiText.Small);
             who.Children.Add(_moodLine);
+            // The playtest tools (development builds, ClientOptions.PlaytestTools): under the mood, beside the portrait, where the
+            // header has room; built only when asked for, so the dossier tests and renders see nothing of them
+            if (playtest)
+            {
+                var tools = new ContainerRuntime { ChildrenLayout = ChildrenLayout.LeftToRightStack, StackSpacing = 6f, WidthUnits = DimensionUnitType.RelativeToChildren, Width = 0f, Height = 22f };
+                MaxTrustButton = UiParts.Button("Max trust", 78f, 22f, UiText.SmallBold);
+                DownButton = UiParts.Button("Down", 58f, 22f, UiText.SmallBold);
+                MaxTrustButton.Click += (_, _) => { _model.Dossier.MaxStanding(); };
+                DownButton.Click += (_, _) => { _model.Dossier.Down(); };
+                tools.Children.Add(MaxTrustButton.Visual);
+                tools.Children.Add(DownButton.Visual);
+                who.Children.Add(tools);
+            }
             header.Children.Add(who);
             _dossierDetails.Children.Add(header);
             // No gap under the header, and none of their own before the sections below (the column's spacing breaks them): the
@@ -284,6 +297,11 @@ namespace Simpiens.Client.Ui
 
         public ContainerRuntime Root { get; }
         public Button CalmButton { get; }
+
+        /// <summary>The playtest tools (development builds): its warmth and trust toward the player at their most; downed where it stands. Null without them.</summary>
+        public Button MaxTrustButton { get; }
+        public Button DownButton { get; }
+        private bool _playtestTipped;
         public Button RecruitButton { get; }
         public string GroupsShown => _groups.Text;
 
@@ -493,6 +511,17 @@ namespace Simpiens.Client.Ui
             for (int i = affinities.Count; i < _affinityRows.Count; i++) _affinityFaces[i].Row.Visible = false;
             _affinitiesEmpty.Visible = affinities.Count == 0;
             CalmButton.IsEnabled = dossier.CanCalm;
+            if (MaxTrustButton != null)
+            {
+                MaxTrustButton.IsEnabled = dossier.CanPlaytest;
+                DownButton.IsEnabled = dossier.CanDown;
+                if (!_playtestTipped && Tips != null)
+                {
+                    _playtestTipped = true;
+                    Tips.Register(MaxTrustButton.Visual, "Playtest: its warmth and trust toward you at their most (100).");
+                    Tips.Register(DownButton.Visual, "Playtest: downed where it stands, as by a beetle. In a lair or a hazard it bleeds out unless carried out; elsewhere it counts as a downing survived, and lies until it heals.");
+                }
+            }
             UiParts.SetText(_groups, dossier.Groups);
             _skills.Show(dossier.SkillsShown);
             string notes = dossier.SkillNotes;

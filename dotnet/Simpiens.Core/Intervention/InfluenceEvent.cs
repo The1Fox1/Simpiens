@@ -28,7 +28,36 @@ namespace Simpiens.Intervention
         /// <summary>The guildhall (Epic 10 Part 2, W5, D65): set one of the guild's parties' members.</summary>
         FormParty = 15,
         /// <summary>Techniques (Epic 11, S4.6, D16): offer a member or an artisan gold to take up a band's other technique.</summary>
-        SponsorTechnique = 16
+        SponsorTechnique = 16,
+        /// <summary>
+        /// A playtest tool (2026-11-20, the producer's "make simulations a bit easier to control for playtesting"): a crawler's
+        /// standing with the player at its most, or the crawler downed. Development builds offer it; a server would refuse it
+        /// outside a development session.
+        /// </summary>
+        Playtest = 17
+    }
+
+    /// <summary>What a playtest command does to its crawler.</summary>
+    public enum PlaytestAction : byte
+    {
+        None = 0,
+        /// <summary>Its warmth and trust toward the player at their most (100), its fear of the player none.</summary>
+        MaxStanding = 1,
+        /// <summary>Downed where it stands, as a stone beetle's blow would: the fallen's rule takes it from there.</summary>
+        Down = 2
+    }
+
+    /// <summary>A playtest tool applied to one crawler (development builds; see <see cref="InfluenceCommandType.Playtest"/>).</summary>
+    public readonly struct PlaytestCommand
+    {
+        public readonly EntityId CrawlerId;
+        public readonly PlaytestAction Action;
+
+        public PlaytestCommand(EntityId crawlerId, PlaytestAction action)
+        {
+            CrawlerId = crawlerId;
+            Action = action;
+        }
     }
 
     /// <summary>The patron offers one of its people gold to take up <see cref="Technique"/> in place of the band's other (Epic 11, S4.6, D16).</summary>
@@ -389,6 +418,7 @@ namespace Simpiens.Intervention
         public readonly OrderStationCommand OrderStation;
         public readonly SetShiftsCommand SetShifts;
         public readonly SponsorTechniqueCommand SponsorTechnique;
+        public readonly PlaytestCommand Playtest;
 
         public string LegacyCommandName => CommandType switch
         {
@@ -408,6 +438,7 @@ namespace Simpiens.Intervention
             InfluenceCommandType.SetShifts => "SetShifts",
             InfluenceCommandType.FormParty => "FormParty",
             InfluenceCommandType.SponsorTechnique => "SponsorTechnique",
+            InfluenceCommandType.Playtest => "Playtest",
             _ => string.Empty
         };
 
@@ -429,9 +460,11 @@ namespace Simpiens.Intervention
             in SetShiftsCommand setShifts = default,
             in RecallExpeditionCommand recallExpedition = default,
             in FormPartyCommand formParty = default,
-            in SponsorTechniqueCommand sponsorTechnique = default)
+            in SponsorTechniqueCommand sponsorTechnique = default,
+            in PlaytestCommand playtest = default)
         {
             SponsorTechnique = sponsorTechnique;
+            Playtest = playtest;
             RecallExpedition = recallExpedition;
             FormParty = formParty;
             BuildStation = buildStation;
@@ -504,6 +537,12 @@ namespace Simpiens.Intervention
         public static InfluenceEvent CreateSetShifts(string sourceId, EntityId crawlerId, byte shifts)
         {
             return new InfluenceEvent(sourceId, InfluenceCommandType.SetShifts, setShifts: new SetShiftsCommand(crawlerId, shifts));
+        }
+
+        /// <summary>A playtest tool on <paramref name="crawlerId"/> (development builds).</summary>
+        public static InfluenceEvent CreatePlaytest(string sourceId, EntityId crawlerId, PlaytestAction action)
+        {
+            return new InfluenceEvent(sourceId, InfluenceCommandType.Playtest, playtest: new PlaytestCommand(crawlerId, action));
         }
 
         public static InfluenceEvent CreateSponsorTechnique(string sourceId, EntityId crawlerId, Simpiens.Simulation.Skills.Technique technique)
