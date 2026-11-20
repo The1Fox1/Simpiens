@@ -298,7 +298,11 @@ namespace Simpiens.Cognition
                 _simulationManager?.RecordStoryEvent(new ChronicleEvent(ChronicleEventType.ScarTaken, State.AgentId, default, 0, (uint)currentTick,
                     ChronicleIntensity.Notable, (int)traits.ScarAt(slot) * 256 + slot));
             }
-            traits.ClearNews(Simpiens.Simulation.Skills.LegendNews.Epithet | Simpiens.Simulation.Skills.LegendNews.Scar);
+            // The trait last earned (one deed earns one; two in a tick is told as the later)
+            if ((traits.News & Simpiens.Simulation.Skills.LegendNews.Trait) != 0 && traits.TraitCount > 0)
+                _simulationManager?.RecordStoryEvent(new ChronicleEvent(ChronicleEventType.TraitEarned, State.AgentId, default, 0, (uint)currentTick,
+                    ChronicleIntensity.Notable, (byte)traits.TraitAt(traits.TraitCount - 1)));
+            traits.ClearNews(Simpiens.Simulation.Skills.LegendNews.Epithet | Simpiens.Simulation.Skills.LegendNews.Scar | Simpiens.Simulation.Skills.LegendNews.Trait);
             State.Traits = traits;
         }
 

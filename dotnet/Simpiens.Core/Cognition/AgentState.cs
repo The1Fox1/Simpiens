@@ -157,14 +157,15 @@ namespace Simpiens.Cognition
 
         /// <summary>
         /// Counts one <paramref name="deed"/> in its traits record (Epic 11, S0.5, A7): where the deed happens, on the main thread;
-        /// then judges its legend (S6.1, D27): an epithet the count earns, naming <paramref name="kind"/> (a creature slain) or
-        /// <paramref name="subject"/> (a crawler) where its form does. The runtime tells the chronicle.
+        /// then judges its legend: an epithet the count earns (S6.1, D27), naming <paramref name="kind"/> (a creature slain) or
+        /// <paramref name="subject"/> (a crawler) where its form does, and a trait (S6.3, D29). The runtime tells the chronicle.
         /// </summary>
         internal void AddDeed(Simpiens.Simulation.Skills.Deed deed, byte kind = 0, EntityId subject = default)
         {
             var traits = Traits;
             traits.Add(deed);
             Simpiens.Simulation.Skills.EpithetRules.Judge(ref traits, deed, kind, subject);
+            Simpiens.Simulation.Skills.EarnedTraitRules.Judge(ref traits, deed, Personality); // and a trait it earns (S6.3, D29)
             Traits = traits;
         }
 

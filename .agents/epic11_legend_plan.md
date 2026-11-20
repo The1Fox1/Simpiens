@@ -116,7 +116,7 @@ Working document (AGENTS.md, Documentation Protocol 6), one of Epic 11's plans (
   - **The table:** D28's `Scar`, `ScarTable` (by a creature's kind or a hazard's, its place by the scars held).
   - **The rule:** at a downing survived; `ScarTaken` in the chronicle.
   - **The checks:** `ScarValidator` (the table, a scar for each cause, the places in order, four at most, the round trip).
-- [ ] **S6.3 Earned traits through the door** [Possibly Complex: a behaviour change; cognition reads a hurt]
+- [x] **S6.3 Earned traits through the door** (done 2026-11-20; golden unchanged; one new stat, Dread, for Shaken's lair judgement) [Possibly Complex: a behaviour change; cognition reads a hurt]
   - **The table:** D29's `EarnedTrait`, `EarnedTraitTable`, `EarnedTraitRules` (judged where deeds are counted and at a downing survived, by nature for the bold and the cautious).
   - **The door:** `CrawlerTechniques.Get` sums the earned traits that apply to the work; Shaken's lair judgement is read in `Vitality.HarmToClear` through the copy.
   - **The checks:** `EarnedTraitValidator` (a test per kind of trait); the names and reads guards list the table. Golden re-recorded in its own commit if it moves.

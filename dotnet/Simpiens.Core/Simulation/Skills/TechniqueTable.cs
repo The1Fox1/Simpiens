@@ -85,7 +85,9 @@ namespace Simpiens.Simulation.Skills
         /// <summary>A medicine given heals this much more, in percent (tending the fallen).</summary>
         Heal = 10,
         /// <summary>Points added to the share of an act a mentor's lesson teaches (half, by D9).</summary>
-        Teach = 11
+        Teach = 11,
+        /// <summary>A lair's harm, as the crawler judges whether to brave it, in percent more (Epic 11, S6.3: Shaken).</summary>
+        Dread = 12
     }
 
     /// <summary>One effect of a technique: a stat and how much.</summary>
@@ -316,6 +318,7 @@ namespace Simpiens.Simulation.Skills
             TechniqueStat.Grade => (-3, 3),
             TechniqueStat.Heal => (-50, 100),
             TechniqueStat.Teach => (0, 50),
+            TechniqueStat.Dread => (0, 100),
             _ => (0, 0)
         };
 
@@ -389,7 +392,7 @@ namespace Simpiens.Simulation.Skills
         /// <summary>Whether <paramref name="stat"/> changes anything in <paramref name="use"/>'s work: a fight's stats in a fight, grade in making, healing in tending; pace, practice and teaching in any.</summary>
         public static bool AppliesTo(TechniqueStat stat, SkillUse use) => stat switch
         {
-            TechniqueStat.Attack or TechniqueStat.Defense or TechniqueStat.Hit or TechniqueStat.LastStand => use == SkillUse.MeleeFight || use == SkillUse.RangedFight,
+            TechniqueStat.Attack or TechniqueStat.Defense or TechniqueStat.Hit or TechniqueStat.LastStand or TechniqueStat.Dread => use == SkillUse.MeleeFight || use == SkillUse.RangedFight,
             TechniqueStat.Range => use == SkillUse.RangedFight,
             TechniqueStat.Unyielding => use == SkillUse.MeleeFight,
             TechniqueStat.Grade => use == SkillUse.Make,
@@ -416,6 +419,7 @@ namespace Simpiens.Simulation.Skills
                 TechniqueStat.Grade => Invariant($"makes as if {a} level{(a == 1 ? "" : "s")} {(v < 0 ? "worse" : "better")}"),
                 TechniqueStat.Heal => Invariant($"medicine heals {a}% {(v < 0 ? "less" : "more")}"),
                 TechniqueStat.Teach => Invariant($"its lessons teach {SkillRules.MentorPercent + a}% of an act, not {SkillRules.MentorPercent}%"),
+                TechniqueStat.Dread => Invariant($"judges a lair {a}% more dangerous"),
                 _ => string.Empty
             };
         }

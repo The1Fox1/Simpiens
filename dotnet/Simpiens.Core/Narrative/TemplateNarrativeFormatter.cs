@@ -217,6 +217,14 @@ namespace Simpiens.Narrative
                     return scar.Length == 0 ? $"{actorA} lived, and bears the mark." : $"{actorA} lived, and bears {scar}.";
                 }
 
+                case ChronicleEventType.TraitEarned:
+                {
+                    var trait = Simpiens.Simulation.Skills.EarnedTraitTable.Get((Simpiens.Simulation.Skills.EarnedTrait)(byte)evt.ExtraData);
+                    if (trait == null) return $"{actorA} has changed.";
+                    var deed = Simpiens.Simulation.Skills.DeedTable.Get(trait.Deed);
+                    return deed == null ? $"{actorA} is {trait.Words} now." : $"{actorA} is {trait.Words} now, after {deed.CountOf(trait.Count)}.";
+                }
+
                 case ChronicleEventType.TechniqueSponsored:
                     return $"{actorA} took up {Simpiens.Simulation.Skills.TechniqueTable.Get((Simpiens.Simulation.Skills.Technique)(byte)evt.ExtraData)?.DisplayName ?? "a new way"}, for the patron's gold.";
 

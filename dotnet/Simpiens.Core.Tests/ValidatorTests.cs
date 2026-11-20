@@ -93,6 +93,9 @@ namespace Simpiens.Core.Tests
         public void Scars() => new Simpiens.Testing.Skills.ScarValidator().RunAllValidationTests();
 
         [Fact]
+        public void EarnedTraits() => new Simpiens.Testing.Skills.EarnedTraitValidator().RunAllValidationTests();
+
+        [Fact]
         public void GivenNames() => new Simpiens.Testing.People.GivenNamesValidator().RunAllValidationTests();
 
         [Fact]

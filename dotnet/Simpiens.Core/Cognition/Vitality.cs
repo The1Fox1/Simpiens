@@ -199,7 +199,9 @@ namespace Simpiens.Cognition
             float eachTime = kind.MaxHealth / perSecond;
             int n = kind.PackMin;
             float harm = (float)(eachHarm * eachTime * (n * (n + 1) / 2f));
-            if (!lair.HasBoss || !bossAlive) return harm;
+            // A lair judged as its dread says (Epic 11, S6.3, D29: Shaken judges it more dangerous); exactly as before with none
+            float dread = Simpiens.Simulation.Skills.CrawlerTechniques.Factor(Simpiens.Simulation.Skills.CrawlerTechniques.Get(traits, skills, Simpiens.Simulation.Skills.SkillWork.Fight(ranged: false), Simpiens.Simulation.Skills.TechniqueStat.Dread));
+            if (!lair.HasBoss || !bossAlive) return dread == 1f ? harm : (float)(harm * dread);
 
             // A boss at the pack's head while she lives (Epic 10 Part 3, K10, D58, D63): it strikes while the brood falls, then
             // alone until it falls too
@@ -208,7 +210,8 @@ namespace Simpiens.Cognition
             float onBoss = (float)(Simpiens.Simulation.Combat.CombatRules.HitChance(me) * Simpiens.Simulation.Combat.CombatRules.Mitigated(me.Attack, boss.Defense) / SimMath.Max(0.1f, interval));
             if (onBoss <= 0f) return float.MaxValue;
             float bossHarm = Simpiens.Simulation.Creatures.LairReach.HarmPerSecond(boss, me.Defense);
-            return (float)(harm + bossHarm * (n * eachTime + boss.MaxHealth / onBoss));
+            float withBoss = (float)(harm + bossHarm * (n * eachTime + boss.MaxHealth / onBoss));
+            return dread == 1f ? withBoss : (float)(withBoss * dread);
         }
 
         /// <summary>

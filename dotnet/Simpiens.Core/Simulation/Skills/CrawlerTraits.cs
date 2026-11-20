@@ -174,6 +174,42 @@ namespace Simpiens.Simulation.Skills
             _epithetSubject = subject;
         }
 
+        // --- Earned traits (Epic 11, S6.3, D29) ---
+
+        /// <summary>A crawler holds at most this many earned traits (Q12: three); the record's fourth byte stays spare.</summary>
+        public const int EarnedTraitSlots = 3;
+
+        /// <summary>The earned trait in <paramref name="slot"/>, in the order earned; none for a slot not filled.</summary>
+        public readonly EarnedTrait TraitAt(int slot) => (uint)slot < EarnedTraitSlots ? (EarnedTrait)_earnedTraits[slot] : EarnedTrait.None;
+
+        /// <summary>How many earned traits it holds.</summary>
+        public readonly int TraitCount
+        {
+            get
+            {
+                int n = 0;
+                while (n < EarnedTraitSlots && _earnedTraits[n] != 0) n++;
+                return n;
+            }
+        }
+
+        public readonly bool HasTrait(EarnedTrait trait)
+        {
+            if (trait == EarnedTrait.None) return false;
+            for (int i = 0; i < EarnedTraitSlots; i++) if (_earnedTraits[i] == (byte)trait) return true;
+            return false;
+        }
+
+        /// <summary>Holds <paramref name="trait"/> in the next free slot, with news to tell; false for none, one held already, or every slot taken.</summary>
+        public bool AddTrait(EarnedTrait trait)
+        {
+            int slot = TraitCount;
+            if (trait == EarnedTrait.None || HasTrait(trait) || slot >= EarnedTraitSlots) return false;
+            _earnedTraits[slot] = (byte)trait;
+            _news |= (byte)LegendNews.Trait;
+            return true;
+        }
+
         // --- Scars (Epic 11, S6.2, D28) ---
 
         /// <summary>A crawler bears at most this many scars: four places on the face.</summary>

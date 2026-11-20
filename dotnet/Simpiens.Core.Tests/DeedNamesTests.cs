@@ -24,6 +24,7 @@ namespace Simpiens.Core.Tests
             ["Simpiens.Core/Simulation/Economy/Market.cs"] = "a hunt's share paid",
             ["Simpiens.Core/Simulation/Guild/GuildService.Expeditions.cs"] = "home from a won clear",
             ["Simpiens.Core/Simulation/Skills/EpithetTable.cs"] = "the epithets' table (Epic 11, S6.1): each row names the deed whose count earns it; it counts none",
+            ["Simpiens.Core/Simulation/Skills/EarnedTraitTable.cs"] = "the earned traits' table (Epic 11, S6.3): each row names the deed whose count earns it; it counts none",
         };
 
         private static readonly string[] Projects = { "Simpiens.Core", "Simpiens.Presentation", "Simpiens.Client", "Simpiens.Hosting" };
@@ -49,7 +50,7 @@ namespace Simpiens.Core.Tests
 
             var offenders = naming.Keys.Where(f => !Allowed.ContainsKey(f)).OrderBy(f => f).Select(f => $"{f} ({string.Join(", ", naming[f])})").ToList();
             var stale = Allowed.Keys.Where(f => !naming.ContainsKey(f)).OrderBy(f => f).ToList();
-            var counted = naming.Where(kv => kv.Key != "Simpiens.Core/Simulation/Skills/DeedTable.cs" && kv.Key != "Simpiens.Core/Simulation/Skills/EpithetTable.cs").SelectMany(kv => kv.Value).ToHashSet(); // the tables name deeds; they count none
+            var counted = naming.Where(kv => kv.Key != "Simpiens.Core/Simulation/Skills/DeedTable.cs" && kv.Key != "Simpiens.Core/Simulation/Skills/EpithetTable.cs" && kv.Key != "Simpiens.Core/Simulation/Skills/EarnedTraitTable.cs").SelectMany(kv => kv.Value).ToHashSet(); // the tables name deeds; they count none
             var uncounted = Simpiens.Simulation.Skills.DeedTable.All.Select(d => d.Id.ToString()).Where(n => !counted.Contains(n)).ToList();
             Assert.True(offenders.Count == 0, "Count a deed where it happens, and list the place here: " + string.Join("; ", offenders));
             Assert.True(stale.Count == 0, "These files no longer name deeds; take them off the list: " + string.Join("; ", stale));
