@@ -220,7 +220,7 @@ Grades only change what equipment does today, so alchemy's choices are pace and 
 - [x] **S5.7 The client: titles and roles** (done 2026-11-19: the title replaces the identity's placeholder title in the dossier; renders at S5.10) [Possibly Complex: Gum, renders]
   - **Where:** the calling's title on the guild's cards, in the dossier's header and on the roster; the role in the party builder.
   - **The checks:** `CallingsOnScreenTests`; renders after a look.
-- [ ] **S5.8 The client: the badge** [Possibly Complex: UI kit pieces, art pins, a draw item, renders]
+- [x] **S5.8 The client: the badge** (done 2026-11-19: a world-sheet badge over a guild member and a UI kit glyph at its portrait's corner; art pins re-recorded; renders at S5.10) [Possibly Complex: UI kit pieces, art pins, a draw item, renders]
   - **The glyphs:** four role glyphs in the UI kit; at the corner of a member's portrait (dossier, cards) and over its body on the map.
   - **Pins and renders:** the art review sheet looked at, the art pins re-recorded; renders in the pinned image after a look, in their own commits.
 - [x] **S5.9 DoD `ACallingEmerges`** (done 2026-11-19: gate seed 3; 2 of 23, F12) [Possibly Complex: a live scenario]

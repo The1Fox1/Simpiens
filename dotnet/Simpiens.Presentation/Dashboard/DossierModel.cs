@@ -141,6 +141,9 @@ namespace Simpiens.Presentation.Dashboard
         /// <summary>Each technique with its skill and what it does, a line each, for the line's tooltip: "Shield Wall (Melee): +3 defense, 15% less damage".</summary>
         public string TechniquesTip { get; private set; } = string.Empty;
 
+        /// <summary>A guild member's calling's part in a party (Epic 11, S5.8): its badge at the portrait's corner; none for the rest.</summary>
+        public Simpiens.Simulation.Skills.PartyRole Role { get; private set; }
+
         /// <summary>One of the patron's people (a guild member or an artisan): the sway's second action sponsors a technique rather than recruits.</summary>
         public bool IsOurs { get; private set; }
 
@@ -218,6 +221,7 @@ namespace Simpiens.Presentation.Dashboard
             Taught = string.Empty;
             Techniques = TechniquesTip = SponsorText = string.Empty;
             IsOurs = CanSponsor = false;
+            Role = Simpiens.Simulation.Skills.PartyRole.None;
             SponsorOffer = Simpiens.Simulation.Skills.Technique.None;
             if (!HasCrawler)
             {
@@ -299,7 +303,9 @@ namespace Simpiens.Presentation.Dashboard
             var sim = _context.Simulation;
             var host = sim as Simpiens.Simulation.Guild.IGuildHost;
             if (sim == null || host == null) return;
-            IsOurs = sim.Guild.TryGetContract(agent.AgentId, out _) || (sim.Workshops != null && sim.Workshops.IsArtisan(agent.AgentId));
+            bool member = sim.Guild.TryGetContract(agent.AgentId, out _);
+            Role = member ? Simpiens.Simulation.Skills.CallingTable.RoleOf(agent.Traits.Calling) : Simpiens.Simulation.Skills.PartyRole.None;
+            IsOurs = member || (sim.Workshops != null && sim.Workshops.IsArtisan(agent.AgentId));
             if (!IsOurs) return;
             var offer = Simpiens.Simulation.Guild.SponsorRules.Offer(agent.Skills, agent.Traits, out var replacing);
             if (offer == Simpiens.Simulation.Skills.Technique.None)

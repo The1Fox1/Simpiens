@@ -35,6 +35,7 @@ namespace Simpiens.Client.Ui
         private readonly TextRuntime _groups, _recruitText; // Epic 10 G4
         private readonly TextRuntime _held, _asks; // Epic 11, S2.5: a skill the budget holds; an asking wage above the wage
         private readonly TextRuntime _techniques; // Epic 11, S4.9: the techniques it holds, their words in the line's tip
+        private readonly SpriteRuntime _portraitBadge; // Epic 11, S5.8: a guild member's role at its portrait's corner
         private readonly ContainerRuntime _techniquesLine;
         private string _techniquesTip;
         private readonly GraphicalUiElement _affinitiesViewer;
@@ -127,6 +128,10 @@ namespace Simpiens.Client.Ui
                 Visible = false,
             };
             header.Children.Add(Portrait);
+            // A guild member's role badge at the portrait's top right (Epic 11, S5.8, D24)
+            _portraitBadge = UiParts.Glyph(Simpiens.Presentation.Art.UiKit.RoleFront, UiStyle.Accent);
+            _portraitBadge.Visible = false;
+            header.Children.Add(_portraitBadge);
             var who = UiParts.Column(4f);
             _who = who;
             who.WidthUnits = DimensionUnitType.RelativeToParent;
@@ -274,6 +279,9 @@ namespace Simpiens.Client.Ui
         /// <summary>A skill the budget holds, and the asking wage above the wage, as shown (Epic 11, S2.5); empty when hidden.</summary>
         public string SkillNotesShown => _held.Visible ? _held.Text : string.Empty;
 
+        /// <summary>Whether the portrait's role badge shows (Epic 11, S5.8).</summary>
+        public bool PortraitBadgeShown => _portraitBadge.Visible;
+
         /// <summary>The techniques line as shown (Epic 11, S4.9); empty when hidden.</summary>
         public string TechniquesShown => _techniquesLine.Visible ? _techniques.Text : string.Empty;
 
@@ -415,6 +423,14 @@ namespace Simpiens.Client.Ui
                 var source = _portraits.Show(dossier.Portrait);
                 if (source != _portraitShown) Portrait.SourceRectangle = _portraitShown = source;
             }
+            string roleGlyph = portrait ? CallingTexts.Glyph(dossier.Role) : null;
+            if (roleGlyph != null)
+            {
+                UiParts.SetGlyph(_portraitBadge, roleGlyph);
+                _portraitBadge.X = Portrait.Width - _portraitBadge.Width - 3f;
+                _portraitBadge.Y = 3f;
+            }
+            else if (_portraitBadge.Visible) _portraitBadge.Visible = false;
             UiParts.SetText(_dossierBadge, dossier.Badge);
             _dossierBadgeFill.FillColor = UiStyle.StateColor(dossier.State);
             _health.Set(dossier.Health);

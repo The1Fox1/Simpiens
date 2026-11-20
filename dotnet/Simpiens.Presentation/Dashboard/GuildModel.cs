@@ -27,6 +27,9 @@ namespace Simpiens.Presentation.Dashboard
         /// <summary>Its two best skills with their passions (Epic 11, S1.6): a flame on a skill it loves.</summary>
         public System.Collections.Generic.List<SkillTexts.Shown> SkillsShown { get; } = new System.Collections.Generic.List<SkillTexts.Shown>(2);
 
+        /// <summary>Its calling's part in a party (Epic 11, S5.8): its badge at its face's corner.</summary>
+        public Simpiens.Simulation.Skills.PartyRole Role { get; internal set; }
+
         /// <summary>"Bunk 3": the bunk kept for it in the barracks (Epic 10 Part 2, W5.2); empty when it has none.</summary>
         public string Bunk { get; internal set; } = string.Empty;
 
@@ -134,7 +137,9 @@ namespace Simpiens.Presentation.Dashboard
                 var agent = node?.Agent;
                 row.Name = node != null ? _context.FriendlyName(node.Id, node.Name) : DossierModel.UnknownName;
                 row.Asks = string.Empty;
+                row.Role = Simpiens.Simulation.Skills.PartyRole.None;
                 if (agent == null) continue;
+                row.Role = Simpiens.Simulation.Skills.CallingTable.RoleOf(agent.Traits.Calling);
                 row.Asks = SkillTexts.Asks(contract.Wage, GuildRules.AskingWage(agent, tuning));
                 row.HasPortrait = agent.Look.IsComplete;
                 row.Portrait = row.HasPortrait ? Simpiens.Presentation.Art.People.PortraitKey.Of(node.Id, agent, _moods, _context.Clock?.CurrentTick ?? 0) : default;

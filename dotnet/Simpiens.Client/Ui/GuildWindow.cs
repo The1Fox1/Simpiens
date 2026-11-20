@@ -51,6 +51,7 @@ namespace Simpiens.Client.Ui
             public WornLine Equipment;
             public SkillLine Skills;
             public ContainerRuntime FaceBox;
+            public SpriteRuntime Badge;
             public Slider WageSlider;
             public Button Dismiss, Party;
             public int Index;
@@ -235,6 +236,10 @@ namespace Simpiens.Client.Ui
             };
             card.FaceBox.X = 12f;
             UiParts.CentreVertically(card.FaceBox);
+            // Its role badge at the face's top right (Epic 11, S5.8, D24)
+            card.Badge = UiParts.Glyph(Simpiens.Presentation.Art.UiKit.RoleFront, UiStyle.Accent, scale: 1);
+            card.Badge.Visible = false;
+            card.FaceBox.Children.Add(card.Badge);
             card.Root.Children.Add(card.FaceBox);
             var who = UiParts.Column(1f);
             who.X = _portraits != null ? 12f + PortraitAtlas.FaceSize + 8f : 12f;
@@ -371,6 +376,14 @@ namespace Simpiens.Client.Ui
                 if (!shown) continue;
                 var row = rows[i];
                 UiParts.SetFace(card.FaceBox, card.Face, _portraits, row.HasPortrait, row.Portrait);
+                string roleGlyph = Simpiens.Presentation.Dashboard.CallingTexts.Glyph(row.Role);
+                if (roleGlyph != null)
+                {
+                    UiParts.SetGlyph(card.Badge, roleGlyph, scale: 1);
+                    card.Badge.X = card.Face.Width - card.Badge.Width - 1f;
+                    card.Badge.Y = 1f;
+                }
+                else if (card.Badge.Visible) card.Badge.Visible = false;
                 UiParts.SetText(card.Name, row.Name);
                 UiParts.SetText(card.Doing, row.Doing);
                 UiParts.SetText(card.Health, row.Downed ? Invariant($"Health {row.Health:F0}% · {DossierModel.DownedBadge}") : Invariant($"Health {row.Health:F0}%"));

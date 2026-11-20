@@ -28,6 +28,16 @@ namespace Simpiens.Presentation.Dashboard
             return role.Length == 0 || title.Length == 0 ? title : $"{title} ({role})";
         }
 
+        /// <summary>The UI kit's glyph for <paramref name="role"/> at a portrait's corner (Epic 11, S5.8); null for none.</summary>
+        public static string Glyph(PartyRole role) => role switch
+        {
+            PartyRole.Front => Simpiens.Presentation.Art.UiKit.RoleFront,
+            PartyRole.Back => Simpiens.Presentation.Art.UiKit.RoleBack,
+            PartyRole.Carrier => Simpiens.Presentation.Art.UiKit.RoleCarrier,
+            PartyRole.Leader => Simpiens.Presentation.Art.UiKit.RoleLeader,
+            _ => null
+        };
+
         /// <summary>"Warden · Going to bed": <paramref name="title"/> before <paramref name="line"/>, either alone when the other is empty.</summary>
         public static string Before(string title, string line) => title.Length == 0 ? line : line.Length == 0 ? title : $"{title} · {line}";
     }

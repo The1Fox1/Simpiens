@@ -57,6 +57,22 @@ namespace Simpiens.Client.Tests
             ui.Frame(30);
             Assert.StartsWith("Warden (front)", model.Guild.Rows.First(r => r.CrawlerId == warden.AgentId).Doing);
 
+            // Its badge (Epic 11, S5.8): at the portrait's corner, and over its body on the map
+            model.SelectCrawler(warden.AgentId);
+            ui.Frame(30);
+            Assert.True(game.Play.Dashboard.Panels.PortraitBadgeShown, "The dossier's portrait wears the front's badge.");
+            var catalog = game.World.Scene.Catalog;
+            int badge = catalog.Sprite(catalog.Id(Simpiens.Presentation.Art.ArtKeys.BadgeFront), 0);
+            game.World.Rig.Pan(warden.Position - game.World.Rig.Position); // the camera over it
+            ui.Ticks(1); // a tick, so the frames capture it as a member
+            ui.Frame(2);
+            var items = game.World.Scene.Items;
+            bool drawn = false;
+            for (int i = 0; i < items.Count; i++) drawn |= items[i].SpriteIndex == badge;
+            var frame = game.Session.Frames.Current;
+            string role = frame.TryGetIndex(warden.AgentId, out int at) ? frame[at].Role.ToString() : "not in the frame";
+            Assert.True(drawn, $"The map draws the front's badge over it (frame role {role}, tick {frame.Tick}, items {items.Count}, badge sprite {badge}, catalogue {catalog.Name}).");
+
             // At Master, the Master title
             skills.Set(Skill.Melee, 9);
             warden.Skills = skills;

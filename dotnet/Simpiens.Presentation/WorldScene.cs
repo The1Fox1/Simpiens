@@ -56,6 +56,11 @@ namespace Simpiens.Presentation
                 _ring = value.Id(ArtKeys.SelectionRing);
                 _shadow = value.TryId(ArtKeys.CrawlerShadow, out var shadow) ? shadow : ArtId.None;
                 _bar = value.TryId(ArtKeys.FxBar, out var bar) ? bar : ArtId.None;
+                for (int r = 0; r < _badges.Length; r++)
+                {
+                    string badge = ArtKeys.Badge((Simpiens.Simulation.Skills.PartyRole)r);
+                    _badges[r] = badge != null && value.TryId(badge, out var id) ? id : ArtId.None;
+                }
                 _gate = value.TryId(ArtKeys.PropGate, out var gate) ? gate : ArtId.None;
                 _gateOpen = value.TryId(ArtKeys.PropGateOpen, out var open) ? open : ArtId.None;
                 _caravan = value.TryId(ArtKeys.PropCaravan, out var caravan) ? caravan : ArtId.None;
@@ -81,6 +86,7 @@ namespace Simpiens.Presentation
 
         private ArtCatalog _catalog;
         private ArtId _floor, _rock, _wall, _lowWall, _ring, _shadow, _caravan, _bar, _gate, _gateOpen;
+        private readonly ArtId[] _badges = new ArtId[5]; // by PartyRole (Epic 11, S5.8)
         private readonly ArtId[] _hazards = new ArtId[4]; // by HazardKind
 
         /// <summary>Where and when the hazards' animations play (Epic 10 Part 2, the stretch, D69).</summary>
@@ -251,6 +257,14 @@ namespace Simpiens.Presentation
                 silhouette.Silhouette = true;
                 silhouette.Pick = pick;
                 if (ridden) silhouette.Z = _catalog.RideHeight;
+            }
+            // A guild member's role badge (Epic 11, S5.8, D24), where the catalogue hangs it; not on the fallen
+            int role = (int)entity.Role;
+            if (role > 0 && role < _badges.Length && !_badges[role].IsNone && !lying)
+            {
+                ref var badge = ref Add(DrawRole.Crawler, depth, _catalog.Piece(_badges[role], viewSeconds), position + _catalog.BadgeOffset, Shown(White, shown));
+                badge.Z = _catalog.BadgeHeight;
+                badge.Pick = pick;
             }
             if (entity.Carried == ItemType.None) return;
             // What it carries hangs over it, drawn after it at its depth; a click on it picks the carrier
