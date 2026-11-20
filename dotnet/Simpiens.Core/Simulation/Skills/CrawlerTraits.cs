@@ -174,6 +174,35 @@ namespace Simpiens.Simulation.Skills
             _epithetSubject = subject;
         }
 
+        // --- Scars (Epic 11, S6.2, D28) ---
+
+        /// <summary>A crawler bears at most this many scars: four places on the face.</summary>
+        public const int ScarSlots = 4;
+
+        /// <summary>The scar in <paramref name="slot"/> (its place on the face, <see cref="ScarPlace"/>); none for a slot not filled.</summary>
+        public readonly Scar ScarAt(int slot) => (uint)slot < ScarSlots ? (Scar)_scars[slot] : Scar.None;
+
+        /// <summary>How many scars it bears.</summary>
+        public readonly int ScarCount
+        {
+            get
+            {
+                int n = 0;
+                while (n < ScarSlots && _scars[n] != 0) n++;
+                return n;
+            }
+        }
+
+        /// <summary>Takes <paramref name="scar"/> in the next free place, with news to tell; false for none or with every place taken.</summary>
+        public bool AddScar(Scar scar)
+        {
+            int slot = ScarCount;
+            if (scar == Scar.None || slot >= ScarSlots) return false;
+            _scars[slot] = (byte)scar;
+            _news |= (byte)LegendNews.Scar;
+            return true;
+        }
+
         // --- What is yet to be told (Epic 11, S6.1) ---
 
         /// <summary>What the record has changed that the chronicle hasn't been told: the crawler's runtime tells it and clears it.</summary>

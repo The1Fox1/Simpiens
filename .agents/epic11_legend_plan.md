@@ -112,7 +112,7 @@ Working document (AGENTS.md, Documentation Protocol 6), one of Epic 11's plans (
   - **The table:** D27's `Epithet`, `EpithetTable`, the kinds' `SlayerEpithet` column; the traits record's epithet and its subject (spare bytes, so the format holds).
   - **The rule:** `EpithetRules.Judge`, called where each deed is counted; `EpithetEarned` in the chronicle.
   - **The checks:** `EpithetValidator` (the table, the ranks, a row per form, the rule at each threshold, one held, the round trip); `EpithetNamesTests`. Golden re-recorded in its own commit if an epithet is earned within its 3,000 ticks.
-- [ ] **S6.2 Scars** [Possibly Complex: saved in the traits record]
+- [x] **S6.2 Scars** (done 2026-11-20; golden unchanged) [Possibly Complex: saved in the traits record]
   - **The table:** D28's `Scar`, `ScarTable` (by a creature's kind or a hazard's, its place by the scars held).
   - **The rule:** at a downing survived; `ScarTaken` in the chronicle.
   - **The checks:** `ScarValidator` (the table, a scar for each cause, the places in order, four at most, the round trip).

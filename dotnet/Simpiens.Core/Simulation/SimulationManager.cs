@@ -163,7 +163,11 @@ namespace Simpiens.Simulation
                 if (agent == null || agent.HasLeft) continue;
                 if (!agent.IsDowned || !InDanger(node.Position))
                 {
-                    if (agent.BleedsOutAt != 0) agent.AddDeed(Simpiens.Simulation.Skills.Deed.DowningSurvived); // its clock stopped and it lives (Epic 11, S0.5)
+                    if (agent.BleedsOutAt != 0)
+                    {
+                        agent.AddDeed(Simpiens.Simulation.Skills.Deed.DowningSurvived); // its clock stopped and it lives (Epic 11, S0.5)
+                        agent.TakeScar(); // and it carries the mark (S6.2)
+                    }
                     agent.BleedsOutAt = 0;
                     continue;
                 }

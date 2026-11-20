@@ -292,7 +292,13 @@ namespace Simpiens.Cognition
             if ((traits.News & Simpiens.Simulation.Skills.LegendNews.Epithet) != 0 && traits.Epithet != Simpiens.Simulation.Skills.Epithet.None)
                 _simulationManager?.RecordStoryEvent(new ChronicleEvent(ChronicleEventType.EpithetEarned, State.AgentId, traits.EpithetSubject, 0, (uint)currentTick,
                     ChronicleIntensity.Dramatic, (ushort)traits.Epithet * 256 + traits.EpithetKind));
-            traits.ClearNews(Simpiens.Simulation.Skills.LegendNews.Epithet);
+            if ((traits.News & Simpiens.Simulation.Skills.LegendNews.Scar) != 0 && traits.ScarCount > 0)
+            {
+                int slot = traits.ScarCount - 1;
+                _simulationManager?.RecordStoryEvent(new ChronicleEvent(ChronicleEventType.ScarTaken, State.AgentId, default, 0, (uint)currentTick,
+                    ChronicleIntensity.Notable, (int)traits.ScarAt(slot) * 256 + slot));
+            }
+            traits.ClearNews(Simpiens.Simulation.Skills.LegendNews.Epithet | Simpiens.Simulation.Skills.LegendNews.Scar);
             State.Traits = traits;
         }
 

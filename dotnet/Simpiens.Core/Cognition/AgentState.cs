@@ -168,6 +168,16 @@ namespace Simpiens.Cognition
             Traits = traits;
         }
 
+        /// <summary>
+        /// A downing survived marks it (Epic 11, S6.2, D28): the scar what downed it leaves (<see cref="DownedBy"/>, with
+        /// <see cref="DownedDetail"/> its kind), in the next free place on its face. The runtime tells the chronicle.
+        /// </summary>
+        internal void TakeScar()
+        {
+            var traits = Traits;
+            if (traits.AddScar(Simpiens.Simulation.Skills.ScarTable.For(DownedBy, DownedDetail))) Traits = traits;
+        }
+
         /// <summary>The crawler's given name (Epic UI-Beta B1): drawn at spawn to fit its body frame, never shared, saved. Null for a crawler built by hand.</summary>
         public string GivenName { get; set; }
 
