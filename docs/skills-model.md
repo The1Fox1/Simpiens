@@ -175,6 +175,40 @@ The techniques (first guesses, to tune):
 | 41 | Medicine | Master | Surgeon's Lessons | sociable | teach +25; pace −10% |
 | 42 | Medicine | Master | Miracle Worker | loyal | heal +60%; pace −20% |
 
+### 3.7 Leadership (Epic 11, S5.1)
+- **An eighth skill**, practised by leading a party out and home. Leaned by loyalty in the draw, as the others by theirs.
+- **The captain** of a party out is the member on its feet with the best Leadership, the lowest id on a tie (a Captain by calling has the best Leadership by definition, being its best skill).
+- **Practice:** at a trip's delivery the captain takes 40 for each mate brought home, at the trip's challenge (a gathering 3, a clear its lair's kind's: rats 2, beetles 7).
+- **What a level does:** the captain steadies its party: the retreat rules' health line, 3% lower a level (Steady's 55 is 46.75 under a Leadership 5 captain). The party's focus is chosen nearest the captain.
+
+### 3.8 Callings and party roles (Epic 11, S5)
+- **A calling is earned** from the crawler's best skill (the highest learned level, then the most experience, then the display order) at Apprentice or above and the Apprentice technique it took there. It keeps its skill while that skill ties the top. Every resident holds one from spawn.
+- **At Master** in its skill a calling takes its Master title and its capstone, an effect through the techniques' door.
+
+| Skill | Technique | Calling | Role | Master title | Capstone |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| Melee | Shield Wall | Warden | front | Master Warden | +3 defense |
+| Melee | Reckless Fury | Berserker | front | Warlord | +20% attack |
+| Ranged | Steady Aim | Marksman | back | Master Marksman | +5 to hit |
+| Ranged | Quick Draw | Skirmisher | back | Master Skirmisher | 15% faster |
+| Mining | Seam Student | Prospector | — | Master Prospector | 15% faster |
+| Mining | Hard Driver | Rockbreaker | — | Master Rockbreaker | 15% faster |
+| Foraging | Gentle Hands | Herbalist | — | Master Herbalist | 15% faster |
+| Foraging | Quick Hands | Gleaner | — | Master Gleaner | 15% faster |
+| Smithing | Fine Temper | Smith | — | Master Smith | 15% faster |
+| Smithing | Fast Forge | Forgehand | — | Forgemaster | 15% faster |
+| Alchemy | Careful Measure | Apothecary | — | Master Apothecary | 15% faster |
+| Alchemy | Quick Brew | Brewer | — | Master Brewer | 15% faster |
+| Medicine | Steady Hands | Field Surgeon | carrier | Master Surgeon | +20% healing |
+| Medicine | Strong Back | Bearer | carrier | Master Bearer | 20% faster carrying |
+| Leadership | (any) | Captain | leader | Commander | none yet |
+
+- **The roles the guild's orders read** (a member's order carries its calling's role):
+  - **Front:** at a clear's fight a creature choosing its quarry sees a Front member 3 units nearer than it is, and a creature chasing a mate of the same fight turns on a Front member within 3 units of it.
+  - **Back:** the clear's arms give the Back a weapon with a range first, as many as the order asks shooters.
+  - **Carrier:** the guild sends a Carrier to a fallen mate before the healthiest.
+  - **Leader:** the party's captain (§3.7).
+
 ## 4. What a level does
 How good a crawler is at a work is its **effective level**, `CrawlerSkills.Level(skills, worn, work)`, the one number every effect and choice reads. Today it equals the learned level. Gear, techniques or callings that change how good a crawler is enter there (`SkillReadsTests` guards it). A technique doesn't raise a level: it changes the work's numbers below through its own door (§3.6).
 

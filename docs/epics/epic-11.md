@@ -138,6 +138,19 @@ Proposed in plan 2 as defaults while the producer was away ("After drafting plan
 - **D17, the choice scene** (S4.8): a moment, a dynamic scene with one actor written from the chronicle's event (a new trigger kind, `SceneTrigger.OnMoment`): the vow, then the road not taken. For the patron's people only, a game hour apart at the most often (`SkillScenes`), armed by `ClientOptions.SkillScenes`, which the desktop game turns on.
 - **D18, the dossier and the sponsor button** (S4.9): a line of the techniques held, what each does in its tooltip; for one of the patron's people, the sway's second button sponsors the other technique at its best skill's top band (`SponsorRules.Offer`), its words the price or the rule's reason. A resident's button still recruits.
 
+- **D19, Leadership, an eighth skill** (S5.1; Q11, Q15):
+  - **The row:** `Skill.Leadership` (8), practised by leading a party (`SkillUse.Lead`, `SkillWork.Lead()`), leaned by loyalty; its practitioner a captain.
+  - **The captain:** the member of a party out, on its feet, with the best effective Leadership, the lowest id on a tie (`GuildRules.Captain`), derived each time, so nothing new is saved.
+  - **Practice:** at a trip's delivery, 40 for each mate brought home, at the trip's challenge (a gathering 3; a clear, its lair's kind's).
+  - **What a level does:** the captain steadies its party: both retreat rules' health line falls 3% a level (`GuildService.RetreatLine`).
+  - **No techniques and no primer yet:** leading is learned by leading, and a ninth primer would add a caravan cost to a stall already strained (F7, F9).
+  - **Every seed's draw moved** (talents and passions are drawn among all skills); the moved DoDs were re-picked once, at S5.6, with the roles'.
+- **D20, the calling table** (S5.2; A2, Q11): `CallingTable`, fifteen rows, a calling for each Apprentice technique and the Captain for Leadership, each with its party role, its Master title and its capstone (`docs/skills-model.md` §3.8). The plan's "Delver" is Rockbreaker: Delver is a look lineage.
+- **D21, a calling earned** (S5.3; Q11): the best skill (the highest learned level, then the most experience, then the display order), at Apprentice or above, by its Apprentice technique (`CallingRules.Earned`). Kept in the traits record: a calling keeps its skill while that skill ties the top, so it never flickers. Judged at spawn, at a band reached and at a sponsorship; a change told in the chronicle (`CallingEarned`), not at spawn.
+- **D22, party roles the guild's orders read** (S5.4; Q11): the order copy carries the role (`ExpeditionOrder.Role`). Front: at a clear's fight a creature sees a Front member 3 units nearer and turns on one within 3 units of a mate it chases. Back: armed to shoot first (`GuildRules.Shooters`). Carrier: sent to the fallen first (`GuildRules.CarriesBefore`). Leader: the focus is chosen nearest the captain. With no role, every order is as before.
+- **D23, capstones** (S5.5; Q11): at Master in its skill a calling's capstone counts through the techniques' door (a Master Warden +3 defense, a Warlord +20% attack, a Master Marksman +5 hit, a Master Surgeon +20% healing, the crafts' Masters +15% pace, a Master Bearer +20% carrying; the Captain none yet), and the crawler goes by its Master title. Proven by validators: nobody reaches Master in two weeks.
+- **D24, titles, roles and the badge** (S5.7, S5.8): the calling's title in the dossier's header ("Bram the Warden", in place of the identity's placeholder title), before what a resident does on its card, and with its role on the guild's card ("Warden (front)"); the role in the expedition tracker. A guild member's role badge over its body on the map (four world-sheet badges, hung by the catalogue) and at its portrait's corner (four UI kit glyphs).
+
 ## 1. Goal
 **The player promise:** watch a crawler become someone. The miner who burns for the deep seam. The Warden who holds the line. The smith whose blade carries a dead friend's name. The patron can't make a hero, but can pay for the training, sponsor the technique and post the hunt that makes one.
 
@@ -310,6 +323,16 @@ Done means crawlers grow into someone in the live outpost with nothing injected 
   - **In a fight:** a Shield Wall member takes less from each blow and deals less; a Reckless Fury member the other way (not visible directly; the clears' outcomes over days show it).
   - **Decided by exception:** the 42 techniques' numbers (first guesses), the pick's odds, sponsorship's prices and lines (trust 50, against nature at −0.5), the scene's cadence (members only, an hour apart), and the dossier's layout.
 
+### S5. Callings (done 2026-11-19, `feat/epic11-technique`)
+- [x] **Leadership, an eighth skill** (D19): the captain, practice at a trip's delivery, the steadied retreat line; `LeadershipValidator` (3 tests). Golden re-recorded (every draw moved).
+- [x] **The calling table** (D20): fifteen rows; `CallingValidator`, `CallingNamesTests`.
+- [x] **A calling earned** (D21): `CallingRules`, judged at spawn, a band reached and a sponsorship; `CallingValidator` tests 4–5. Golden re-recorded for the hash alone.
+- [x] **Party roles** (D22): the front's draw and step-in in the creatures' rule, the back's arms, the carrier first, the captain's focus; `PartyRoleValidator` (3 tests). Golden unchanged.
+- [x] **Capstones** (D23): through the techniques' door at Master; `TechniqueEffectsValidator` test 11.
+- [x] **Re-measured** (`docs/skills-model.md` §5.7): a Journeyman on 18 of 23 seeds with the hunting players, 1.43 a seed held, still no Master; Leadership grows where parties go out; every resident holds a calling. Five DoDs re-picked across the gate seeds (PassionBurnsBright 8, the draught's scenario 20261010, ATechniqueDecidesAClear 18, the bold's draught 424242, the Matriarch's warren 1); two fixtures set their members' Leadership to 0 to read the retreat rule's own numbers. Findings F11 (the Matriarch's warren braved alone) and F12 (Wardens rare in a run).
+- [x] **The client:** the calling's title on every card and the role in the party builder (`CallingsOnScreenTests`); the role badge over a member's body and at its portrait's corner (art pins re-recorded).
+- [x] **DoD `ACallingEmerges`** (gate seed 3): Lane becomes a Warden at t60619 and, at the clear that ends at t81285, takes 26 of the creatures' blows, a mate 4 at the most; on 2 of 23 gate seeds over ten days (F12).
+
 ## 5. Deferred and out of scope
 
 | Left out | Owner |
@@ -324,6 +347,7 @@ Done means crawlers grow into someone in the live outpost with nothing injected 
 | The hall's wall of the dead and the retired | Later, with ambitions |
 | Tavern rumours written by a language model | Epic N, the agentic narrative engine |
 | Techniques' acts of their own (A4's third kind: a rallying shout, a field splint) | A later plan, when a technique needs one (D14) |
+| Leadership's techniques and primer; the Captain's capstone stat | A later plan, when leading needs a choice or a book (D19, D23) |
 
 ## 6. Risks
 
@@ -353,3 +377,6 @@ Done means crawlers grow into someone in the live outpost with nothing injected 
   - **At plan 1's close (C.1):** the same. The highest level in two weeks is 7, an artisan's (`docs/skills-model.md` §5.5). Plan 2 owns it: a technique at Master won't be seen in two weeks unless growth past Journeyman quickens.
 - **F9 (2026-11-19, S4.7): with techniques, the crafting loop loses members to pay on more seeds.** In the `crafting` profile a quit for want of pay comes on 12 of seeds 1–60 against 5 on `main` before plan 2, while the treasury at day 3 is the same on average (186g against 183g) and goods are made on 50 of 60 against 52. Within the band's quarter across the 60 (20%), but 6 of seeds 1–20 alone (30%). By the producer's standing word ("judge a drifting band across seeds; retune only when no seed choice saves a scenario"), no retune: `TheCraftingLoopHoldsOnMostSeeds` judges seeds 1–40 (7 of 40). The paces techniques change move which seeds' treasuries run dry at a visit; it is Epic 10's F14 and plan 1's F6 again. [Possibly Complex: the producer's economy decision, unscheduled]
 - **F10 (2026-11-19, S4.7): the vermin's hollow isn't charted on gate seed 3's day.** Its scout opens the Deep Seam at t659 as before, but nobody wanders near the beetle hollow all day (on `main` a crawler charted it at t3614). The hollow is charted on 22 of 23 gate seeds, and `VerminDriveTheLoneAway` asks 21; every other check holds on every seed. Charting was emergent, never a promise. [Basic: watch]
+- **F11 (2026-11-19, S5.6): a skilled, best-armed loner would brave the Matriarch's warren.** A bold resident at Apprentice in melee or better, given the glowstone edge and the ring coat, expects to clear her warren alone with health to spare on 11 of 23 gate seeds (19 of 59 bold residents; `MeasureWhoBravesTheWarrenOnTheGateSeeds`). It held before plan 2: melee 3 expected 57 harm of 60 to spare without techniques. `NobodyHuntsTheMatriarchsWarrenAlone` passed on the default seed only because its bold held no melee talent; since Leadership moved every draw it is on gate seed 1 (the scenario holds on 12 of 23). Whether the Matriarch should stand against a skilled loner (Epic 10 Part 3's Q13: "a boss needs a party") is the producer's. [Possibly Complex: a boss's numbers, the producer's decision]
+- **F12 (2026-11-19, S5.9): a Warden earned during a run is rare.** Over ten days of the DoD's scenario a guild member became a Warden on 2 of 23 gate seeds: the drill yard teaches melee to 5, and a member's melee seldom passes the talent it started with, so a member's calling is mostly its spawn's. Wardens at spawn are common (16 across the gate seeds at day 14 with the hunting players). [Basic: watch; plan 3's legend may give fighters more practice]
+

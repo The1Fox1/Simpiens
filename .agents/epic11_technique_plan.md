@@ -227,7 +227,7 @@ Grades only change what equipment does today, so alchemy's choices are pace and 
   - **The run:** the guild player with the drill yard and a clear, on a seed S5.6's measurement picks.
   - **What emerges:** a member becomes a Warden during the run, on its own (melee its best skill, Shield Wall picked); at the clear's fight it holds the front: it takes more of the creatures' blows than any mate, and the clear empties the lair.
   - **The days hold.**
-- [ ] **S5.10 S5's gate and docs** [Basic]
+- [x] **S5.10 S5's gate and docs** (done 2026-11-19: core 318/318 (explicit not run), client 533/533 in the pinned image, golden 3/3, seeds 1–120 120/120 both ways, soak 18/18 and 20/20 x3, MonoGame and Android 0 warnings) [Basic]
   - **Docs:** the epic's §0 (D19–D24) and §4 (S5); `skills-model.md` (Leadership, callings, roles); AGENTS.md ("Adding a calling", Leadership in the skills paragraph).
 
 ### C. The plan's close-out and PR (1 day)
@@ -249,3 +249,4 @@ The producer is away for the whole plan. What they would have looked at or super
 ## Log
 - 2026-11-19: plan 1 merged (PR #25, `aceb183`) on the producer's word; this plan drafted on `feat/epic11-technique` and started at once ("After drafting plan 2 you will begin immediate execution and will attempt to complete it").
 - 2026-11-19: S4 done; its look waits for the producer's return (the brief in the epic's §4). S5 begins.
+- 2026-11-19: S5 done. The close-out begins.
