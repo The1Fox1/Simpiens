@@ -458,6 +458,11 @@ namespace Simpiens.Simulation
             SimLog.Simulation.ZLogInformation($"{SimLog.Agent(slayer)} slew a {Simpiens.Simulation.Creatures.CreatureCatalog.NameOf(creature.Kind)} at {creature.Position}");
             Chronicle?.RecordEvent(new Simpiens.Narrative.ChronicleEvent(Simpiens.Narrative.ChronicleEventType.CreatureSlain, slayer, creature.Id,
                 GetSectorForPosition(creature.Position), tick, Simpiens.Narrative.ChronicleIntensity.Dramatic, (byte)creature.Kind));
+            // Its first: first blood, in the voice of its best skill (Epic 11, S6.4, D30)
+            if (killer != null && killer.Traits.Count(Simpiens.Simulation.Skills.Deed.CreatureSlain) == 1)
+                Chronicle?.RecordEvent(new Simpiens.Narrative.ChronicleEvent(Simpiens.Narrative.ChronicleEventType.FirstBlood, slayer, creature.Id,
+                    GetSectorForPosition(creature.Position), tick, Simpiens.Narrative.ChronicleIntensity.Dramatic,
+                    (byte)creature.Kind + 256 * (byte)Simpiens.Simulation.Skills.CallingRules.BestSkill(killer.Skills)));
 
             // The breach (Epic 10 Part 3, K10.4, Q13): the lair that guards the gate emptied for good (its keeper never returns)
             if ((WorldFlags & Simpiens.Simulation.World.WorldFlags.GateBreached) == 0 && Creatures.GuardsGateEmptyForGood(creature.LairIndex))

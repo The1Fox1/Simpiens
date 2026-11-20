@@ -42,6 +42,27 @@ namespace Simpiens.Simulation.Skills
         }
 
         /// <summary>
+        /// A crawler's best skill (Epic 11, S6.4, D30: the voice the chronicle speaks in): the highest learned level, then the
+        /// most experience, then the display order; none with no level anywhere.
+        /// </summary>
+        public static Skill BestSkill(in SkillSet skills)
+        {
+            var shown = SkillTable.InDisplayOrder;
+            Skill best = Skill.None;
+            int bestLevel = 0, bestExperience = -1;
+            for (int i = 0; i < shown.Count; i++)
+            {
+                var id = shown[i].Id;
+                int level = skills.Level(id), experience = skills.Experience(id);
+                if (level < bestLevel || (level == bestLevel && experience <= bestExperience) || (level == 0 && experience == 0)) continue;
+                best = id;
+                bestLevel = level;
+                bestExperience = experience;
+            }
+            return best;
+        }
+
+        /// <summary>
         /// Judges <paramref name="traits"/>' calling again (at a band reached, a technique picked or sponsored); true when it
         /// changed, with the one it held in <paramref name="was"/>.
         /// </summary>

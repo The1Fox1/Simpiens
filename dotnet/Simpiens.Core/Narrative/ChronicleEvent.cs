@@ -60,9 +60,10 @@ namespace Simpiens.Narrative
         TechniqueChosen = 50, // Epic 11, S4.2 (D15): ActorA reached a band and took up a technique by its nature; the extra is the technique
         TechniqueSponsored = 51, // Epic 11, S4.6 (D16): ActorA took up a technique for the patron's (ActorB's) gold; the extra is the technique
         CallingEarned = 52, // Epic 11, S5.3 (D21): ActorA's best skill and its technique there earned it a calling; the extra is the calling
-        EpithetEarned = 53, // Epic 11, S6.1 (D27): ActorA earned an epithet; ActorB is the crawler it names, if any; the extra is the epithet x 256 + the kind it names
+        EpithetEarned = 53, // Epic 11, S6.1 (D27): ActorA earned an epithet; ActorB is the crawler it names, if any; the extra is its best skill x 65536 + the epithet x 256 + the kind it names
         ScarTaken = 54, // Epic 11, S6.2 (D28): ActorA survived a downing and bears its scar; the extra is the scar x 256 + its place
-        TraitEarned = 55 // Epic 11, S6.3 (D29): ActorA's deeds earned it a trait; the extra is the trait
+        TraitEarned = 55, // Epic 11, S6.3 (D29): ActorA's deeds earned it a trait; the extra is the trait
+        FirstBlood = 56 // Epic 11, S6.4 (D30): ActorA slew its first creature, ActorB; the extra is the creature's kind + 256 x ActorA's best skill
     }
 
     /// <summary>

@@ -120,7 +120,7 @@ Working document (AGENTS.md, Documentation Protocol 6), one of Epic 11's plans (
   - **The table:** D29's `EarnedTrait`, `EarnedTraitTable`, `EarnedTraitRules` (judged where deeds are counted and at a downing survived, by nature for the bold and the cautious).
   - **The door:** `CrawlerTechniques.Get` sums the earned traits that apply to the work; Shaken's lair judgement is read in `Vitality.HarmToClear` through the copy.
   - **The checks:** `EarnedTraitValidator` (a test per kind of trait); the names and reads guards list the table. Golden re-recorded in its own commit if it moves.
-- [ ] **S6.4 First blood and the skills' voices** [Possibly Complex: the chronicle and a moment]
+- [x] **S6.4 First blood and the skills' voices** (done 2026-11-20; golden unchanged; first blood is its own event, `FirstBlood`, so the kill's keeps its meaning) [Possibly Complex: the chronicle and a moment]
   - **The voices:** `SkillDefinition.Voice` lines for each skill; `TemplateNarrativeFormatter` speaks a band reached, an epithet earned and first blood in the crawler's best skill.
   - **First blood:** the moment, from `CreatureSlain` at a count of one (`SkillScenes`).
   - **The checks:** the formatter's tests (a line per skill, the plain fallback); `SkillSceneTests` gains first blood.

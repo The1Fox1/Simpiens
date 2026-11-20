@@ -177,7 +177,8 @@ namespace Simpiens.Narrative
                 {
                     var skill = Simpiens.Simulation.Skills.SkillTable.Get((Simpiens.Simulation.Skills.Skill)((int)evt.ExtraData / 256));
                     string band = Simpiens.Simulation.Skills.SkillRules.NameOf((Simpiens.Simulation.Skills.SkillBand)((int)evt.ExtraData % 256)).ToLowerInvariant();
-                    return $"{actorA} is now {(band.StartsWith("a") ? "an" : "a")} {band} {skill?.Practitioner ?? "hand"}.";
+                    string practitioner = $"{(band.StartsWith("a") ? "an" : "a")} {band} {skill?.Practitioner ?? "hand"}";
+                    return skill?.Voice != null ? $"{Voiced(skill.Voice.Rising, actorA)}: {practitioner} now." : $"{actorA} is now {practitioner}."; // the skill's voice (S6.4)
                 }
 
                 case ChronicleEventType.FirstLesson:
@@ -202,13 +203,16 @@ namespace Simpiens.Narrative
 
                 case ChronicleEventType.EpithetEarned:
                 {
-                    var epithet = (Simpiens.Simulation.Skills.Epithet)((int)evt.ExtraData / 256);
-                    string words = Simpiens.Simulation.Skills.EpithetRules.WordsOf(epithet, (byte)((int)evt.ExtraData % 256), actorB);
+                    int extra = (int)evt.ExtraData;
+                    var epithet = (Simpiens.Simulation.Skills.Epithet)(extra / 256 % 256);
+                    string words = Simpiens.Simulation.Skills.EpithetRules.WordsOf(epithet, (byte)(extra % 256), actorB);
+                    var voice = Simpiens.Simulation.Skills.SkillTable.Get((Simpiens.Simulation.Skills.Skill)(extra / 65536))?.Voice; // its best skill's (S6.4)
                     var row = Simpiens.Simulation.Skills.EpithetTable.Get(epithet);
                     var deed = row != null ? Simpiens.Simulation.Skills.DeedTable.Get(row.Deed) : null;
                     if (words.Length == 0) return $"{actorA} has earned a name.";
                     string named = Simpiens.Simulation.Skills.EpithetRules.NameWith(actorA, words);
-                    return deed == null ? $"{actorA} is {named} now." : $"{actorA} is {named} now, for {deed.CountOf(row.Count)}.";
+                    string why = deed == null ? string.Empty : $", for {deed.CountOf(row.Count)}";
+                    return voice != null ? $"{Voiced(voice.Named, actorA)}: {named}{why}." : $"{actorA} is {named} now{why}.";
                 }
 
                 case ChronicleEventType.ScarTaken:
@@ -230,6 +234,14 @@ namespace Simpiens.Narrative
 
                 case ChronicleEventType.GateBreached:
                     return $"{actorA} broke the Gatekeeper in {sector}: the descent gate stands open, its stairs going down into the dark.";
+
+                case ChronicleEventType.FirstBlood:
+                {
+                    int extra = (int)evt.ExtraData;
+                    string kind = (Simpiens.Simulation.Creatures.CreatureCatalog.Get((Simpiens.Simulation.Creatures.CreatureKind)(extra % 256))?.DisplayName ?? "creature").ToLowerInvariant();
+                    var voice = Simpiens.Simulation.Skills.SkillTable.Get((Simpiens.Simulation.Skills.Skill)(extra / 256))?.Voice;
+                    return voice != null ? $"{Voiced(voice.Blooded, actorA)}: a {kind}, in {sector}." : $"{actorA} drew first blood: a {kind}, in {sector}.";
+                }
 
                 case ChronicleEventType.CreatureSlain:
                     return $"{actorA} slew a {(Simpiens.Simulation.Creatures.CreatureCatalog.Get((Simpiens.Simulation.Creatures.CreatureKind)(byte)evt.ExtraData)?.DisplayName ?? "creature").ToLowerInvariant()} in {sector}.";
@@ -263,5 +275,8 @@ namespace Simpiens.Narrative
             if (sectorId == 0) return "Transit Corridor";
             return $"Sector {sectorId}";
         }
+
+        // A voice's words with the crawler's name (Epic 11, S6.4, D30)
+        private static string Voiced(string words, string name) => string.Format(System.Globalization.CultureInfo.InvariantCulture, words, name);
     }
 }

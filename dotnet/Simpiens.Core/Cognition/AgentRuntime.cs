@@ -291,7 +291,7 @@ namespace Simpiens.Cognition
             if (traits.News == Simpiens.Simulation.Skills.LegendNews.None) return;
             if ((traits.News & Simpiens.Simulation.Skills.LegendNews.Epithet) != 0 && traits.Epithet != Simpiens.Simulation.Skills.Epithet.None)
                 _simulationManager?.RecordStoryEvent(new ChronicleEvent(ChronicleEventType.EpithetEarned, State.AgentId, traits.EpithetSubject, 0, (uint)currentTick,
-                    ChronicleIntensity.Dramatic, (ushort)traits.Epithet * 256 + traits.EpithetKind));
+                    ChronicleIntensity.Dramatic, (byte)Simpiens.Simulation.Skills.CallingRules.BestSkill(State.Skills) * 65536 + (byte)traits.Epithet * 256 + traits.EpithetKind)); // its best skill's voice (S6.4)
             if ((traits.News & Simpiens.Simulation.Skills.LegendNews.Scar) != 0 && traits.ScarCount > 0)
             {
                 int slot = traits.ScarCount - 1;

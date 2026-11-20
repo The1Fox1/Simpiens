@@ -101,7 +101,7 @@ namespace Simpiens.Core.Tests
             var told = Assert.Single(Told(sim), e => e.EventType == ChronicleEventType.SkillBandReached);
             Assert.Equal(crawler.AgentId, told.ActorAId);
             Assert.Equal((int)Skill.Mining * 256 + (int)SkillBand.Apprentice, (int)told.ExtraData);
-            Assert.EndsWith(" is now an apprentice miner.", ((INarrativeFormatter)sim.Services.GetService(typeof(INarrativeFormatter))).FormatEvent(told));
+            Assert.EndsWith("'s pick rings truer: an apprentice miner now." /* in the skill's voice (Epic 11, S6.4, D30) */, ((INarrativeFormatter)sim.Services.GetService(typeof(INarrativeFormatter))).FormatEvent(told));
             ((ISkillPractice)sim.Simulation).Practise(crawler, default, 500, PracticeSource.Work);
             ((ISkillPractice)sim.Simulation).Practise(null, Mining, 500, PracticeSource.Work);
             Assert.Equal(SkillRules.ExperienceFor(3), crawler.Skills.Experience(Skill.Mining)); // no work, nobody: nothing

@@ -25,7 +25,8 @@ namespace Simpiens.Testing.Skills
             ValidateTheRule();
             ValidateTheWords();
             ValidateAKillEarnsOneAndItIsTold();
-            TestLog.Log("<color=green>[EpithetValidator] ALL 4 TESTS PASSED SUCCESSFULLY!</color>");
+            ValidateTheSkillsVoices();
+            TestLog.Log("<color=green>[EpithetValidator] ALL 5 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private static void ValidateTheTable()
@@ -124,6 +125,54 @@ namespace Simpiens.Testing.Skills
             Assert(line.Contains("Beetlebane") && line.Contains("three creatures slain"), $"The chronicle says it: \"{line}\".");
             Assert(System.Runtime.CompilerServices.Unsafe.SizeOf<CrawlerTraits>() == CrawlerTraits.Size, "The record keeps its 256 bytes.");
             TestLog.Log($"[PASS] Test 4: three beetles slain earn Beetlebane, told once by the runtime: \"{line}\"");
+        }
+
+        // The skills' voices (Epic 11, S6.4, D30): every skill speaks, in Latin-1; a band reached in its voice, an epithet and first
+        // blood in the crawler's best skill's; plain where the event names none; and the first kill told as first blood, once
+        private static void ValidateTheSkillsVoices()
+        {
+            foreach (var skill in SkillTable.All)
+            {
+                var voice = skill.Voice;
+                Assert(voice != null, $"{skill.Name} has a voice.");
+                foreach (var words in new[] { voice.Rising, voice.Named, voice.Blooded })
+                {
+                    Assert(words.Contains("{0}"), $"{skill.Name}: \"{words}\" names the crawler.");
+                    foreach (char c in words) Assert(c < 256, $"{skill.Name}: Latin-1.");
+                }
+                Assert(!string.IsNullOrEmpty(voice.FirstKill), $"{skill.Name}: a first kill's line.");
+            }
+            var formatter = new TemplateNarrativeFormatter();
+            var who = EntityId.Generate();
+            string band = formatter.FormatEvent(new ChronicleEvent(ChronicleEventType.SkillBandReached, who, default, 0, 1, ChronicleIntensity.Notable, (int)Skill.Mining * 256 + (int)SkillBand.Journeyman));
+            Assert(band.EndsWith("'s pick rings truer: a journeyman miner now."), $"A band reached in the skill's voice: \"{band}\".");
+            string named = formatter.FormatEvent(new ChronicleEvent(ChronicleEventType.EpithetEarned, who, default, 0, 1, ChronicleIntensity.Dramatic,
+                (int)Skill.Melee * 65536 + (int)Epithet.KindSlayer * 256 + (int)CreatureKind.StoneBeetle));
+            Assert(named.Contains("'s blade has won a name: ") && named.EndsWith(" Beetlebane, for three creatures slain."), $"An epithet in the best skill's voice: \"{named}\".");
+            string plain = formatter.FormatEvent(new ChronicleEvent(ChronicleEventType.EpithetEarned, who, default, 0, 1, ChronicleIntensity.Dramatic, (int)Epithet.Steadfast * 256));
+            Assert(plain.Contains(" is ") && plain.EndsWith(" the Steadfast now, for two rescues."), $"With no skill, plainly: \"{plain}\".");
+            string blooded = formatter.FormatEvent(new ChronicleEvent(ChronicleEventType.FirstBlood, who, default, 0, 1, ChronicleIntensity.Dramatic, (int)CreatureKind.BurrowRat + 256 * (int)Skill.Ranged));
+            Assert(blooded.Contains("'s first shot to kill flew true: a burrow rat, in "), $"First blood in the best skill's voice: \"{blooded}\".");
+
+            // The first kill is first blood, told once; the second isn't
+            var world = new WorldRegistry();
+            var clock = new SimulationClock();
+            var chronicle = new NarrativeChronicleService();
+            var sim = new SimulationManager(world, null, clock: clock, chronicleService: chronicle) { Seed = 7 };
+            sim.SetEconomy(EconomyTuning.Default);
+            clock.AdvanceTicks(100);
+            var crawler = HeadlessEntities.Crawler(world, sim, clock, Vec2.Zero, id: EntityId.Generate());
+            var skills = default(SkillSet);
+            skills.Set(Skill.Smithing, 4);
+            crawler.Agent.Skills = skills;
+            for (int i = 0; i < 2; i++)
+                ((ICreatureWorld)sim).CreatureSlain(crawler.Id, new CreatureState(EntityId.Generate(), CreatureKind.BurrowRat, -1, 0, Vec2.Zero), ReadOnlySpan<ItemInstance>.Empty, (uint)clock.CurrentTick);
+            var all = new List<ChronicleEvent>();
+            chronicle.GetAllRecentEvents(all, 64);
+            var first = all.FindAll(e => e.EventType == ChronicleEventType.FirstBlood && e.ActorAId == crawler.Id);
+            Assert(first.Count == 1 && (int)first[0].ExtraData == (int)CreatureKind.BurrowRat + 256 * (int)Skill.Smithing, "The first kill is first blood, once, in its best skill (smithing).");
+            Assert(CallingRules.BestSkill(skills) == Skill.Smithing && CallingRules.BestSkill(default) == Skill.None, "The best skill; none with nothing learned.");
+            TestLog.Log($"[PASS] Test 5: every skill has a voice; \"{band}\" \"{named}\" \"{blooded}\"");
         }
 
         private static void Count(ref CrawlerTraits traits, Deed deed, byte kind)
