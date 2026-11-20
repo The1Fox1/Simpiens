@@ -259,7 +259,10 @@ namespace Simpiens.Client.Ui
             nameClip.Children.Add(nameLine);
             who.Children.Add(nameClip);
             card.Doing = UiParts.Text(string.Empty, UiStyle.TextMuted, UiText.Small);
-            who.Children.Add(card.Doing);
+            // Clipped as the name line is: its calling and role before what it does (Epic 11, S5.7) can reach the gear's column
+            var doingClip = new ContainerRuntime { Width = StandingX - who.X - 8f, HeightUnits = DimensionUnitType.RelativeToChildren, Height = 0f, ClipsChildren = true };
+            doingClip.Children.Add(card.Doing);
+            who.Children.Add(doingClip);
             card.Root.Children.Add(who);
 
             // Middle: health and standing; then gear
