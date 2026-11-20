@@ -7,7 +7,7 @@
 # "Done" = emerges in the live simulation: a live scenario on the real session with
 # nothing injected, headless in dotnet test since 2026-10-23 (ROADMAP §1B).
 # Keep this file short: history lives in the epic docs, .agents/architecture_history.md and git.
-# Last reconciled: 2026-11-19 (Epic 11's plan 1 Craft merged as PR #25; plan 2 Technique and Calling drafted and under way on feat/epic11-technique, the producer away). 2026-11-18 (Epic 11's plan 1 Craft closed out: the review passed, "This looks good. Let's wrap it up with C.1 and C.2"; its PR into main waits for the producer's merge). 2026-11-17 (Epic 11's plan 1 Craft: S0-S3 done on feat/epic11-craft, unpushed; the producer's review next). 2026-11-16 (Epic 11 ACTIVE, plan 1 Craft under way; Epic 10 COMPLETED: "Part 3 passes. Close out Epic 10"; Parts 2 and 3 closed out together, Milestones 3 and 4 COMPLETED, Epics UI-4 and UI-5 delivered; the close-out merged as PR #24; Epic 11 next, QUEUED until the producer's go)
+# Last reconciled: 2026-11-19 (Epic 11's plan 2 Technique and Calling done and closed out on feat/epic11-technique, the producer away; its PR and S4's look wait for their return. Earlier the same day plan 1 Craft merged as PR #25). 2026-11-18 (Epic 11's plan 1 Craft closed out: the review passed, "This looks good. Let's wrap it up with C.1 and C.2"; its PR into main waits for the producer's merge). 2026-11-17 (Epic 11's plan 1 Craft: S0-S3 done on feat/epic11-craft, unpushed; the producer's review next). 2026-11-16 (Epic 11 ACTIVE, plan 1 Craft under way; Epic 10 COMPLETED: "Part 3 passes. Close out Epic 10"; Parts 2 and 3 closed out together, Milestones 3 and 4 COMPLETED, Epics UI-4 and UI-5 delivered; the close-out merged as PR #24; Epic 11 next, QUEUED until the producer's go)
 # ------------------------------------------------------------------------------
 
 CURRENT FOCUS
@@ -42,10 +42,12 @@ CURRENT FOCUS
   - Plan 1, Craft [done]: passions, practice by challenge, the mastery budget, the asking wage, mentors, primers, the
     drill yard; D1-D12, F1-F8 in the epic; growth curves in docs/skills-model.md 5.5. The review passed 2026-11-17
     ("This looks good. Let's wrap it up with C.1 and C.2"); closed out 2026-11-18; merged as PR #25 on 2026-11-19.
-  - Plan 2, Technique and Calling [under way 2026-11-19, the producer away: "After drafting plan 2 you will begin
-    immediate execution and will attempt to complete it"]: .agents/epic11_technique_plan.md on feat/epic11-technique;
-    S4 techniques (a choice at each band, sponsorship), S5 callings (Leadership, titles, party roles, capstones).
-    S4's look folds into the producer's review on return; the PR is opened at the close-out, not merged.
+  - Plan 2, Technique and Calling [done 2026-11-19, the producer away: "After drafting plan 2 you will begin immediate
+    execution and will attempt to complete it"]: techniques (42, picked by nature, sponsored by the patron), Leadership
+    an eighth skill, callings (15) with party roles and capstones, the choice scene, titles and role badges; D13-D24,
+    F9-F12 in the epic; growth in docs/skills-model.md 5.6-5.8; the plan is deleted. Its PR (feat/epic11-technique
+    into main) and the look at S4 (the brief in the epic's 4) wait for the producer.
+  - NEXT: plan 3, Legend (S6-S7), drafted when plan 2 merges.
   - Epic UI-Beta's B6 waits as before. The descent is Epic 12; the MCP narrative is Epic N.
 
 - Epic UI-Beta, Crawler Identity and the Interface Pass [ACTIVE 2026-11-02] (docs/epics/epic-ui-beta.md): B0 and B1

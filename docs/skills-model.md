@@ -387,3 +387,23 @@ The same measurement on S5's build: Leadership an eighth skill (in every draw, p
 - **Callings change with the work:** 24 residents' changed in two weeks with the players, one with none. A Warden earned during a run is rare (finding F12): over ten days of the DoD's scenario a guild member became one on 2 of 23 gate seeds, since a member's melee, from the yard to 5, seldom passes the talent it started with.
 - **The front holds where it stands:** on both seeds the Warden took the most of the creatures' blows at the next clear (26 against a mate's 4 at the most; 7 against 2).
 
+### 5.8 Technique and Calling complete (C.1, 2026-11-19)
+Plan 2's final build. Its fourteen days are §5.7's: no code that runs in the simulation changed after S5.6. The same measurement over 28 days on the gate seeds asks what plan 3 will find past the two weeks every DoD runs.
+
+| | No player, 28 days | Hunting players, 28 days | Hunting players, 14 days (§5.7) |
+| :--- | :-: | :-: | :-: |
+| Seeds where someone reaches Journeyman | 19 of 23 (from day 12.3) | 22 of 23 (from day 4.0) | 18 of 23 |
+| Residents holding a Journeyman's skill at the end | 1.83 a seed (most 4) | 3.57 a seed (most 7) | 1.43 |
+| Residents with two skills past Apprentice | 0 | 4, on 4 seeds | 0 |
+| Seeds where someone reaches Master | 0 | 0 | 0 |
+| Highest level reached | 7 (mining) | 8 (melee, smithing, alchemy) | 8 |
+| Techniques picked at Journeyman in the run | 42 | 82 | 32 |
+| Leadership | none | 1.7 levels a seed; 11 to Apprentice, 4 to Journeyman | 0.7 |
+| Callings changed in the run | 40 | 59 | 24 |
+
+**What it means for plan 3 (Legend):**
+- **The budget starts to bind after about four weeks** (F1): four residents hold two skills past Apprentice by day 28, so a third skill held at 5 is a month's story, not a fortnight's.
+- **Master stays out of reach** (F8): nobody reaches it in 28 days. Master techniques, capstones and Master titles are the validators' until growth past Journeyman quickens or runs grow longer.
+- **Journeymen and their techniques grow with time:** 82 Journeyman picks in 28 days against 32 in 14, mostly the artisans' and the miners'. Legend's deeds will meet Journeymen on most seeds in a month.
+- **Callings move with the work:** 59 changed in four weeks with the players; a calling is a living label, not a birth one.
+

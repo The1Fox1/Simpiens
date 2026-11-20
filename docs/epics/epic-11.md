@@ -1,9 +1,10 @@
 # Epic 11: Skills, the Heart and Engine of a Crawler
 
-- **Status**: ACTIVE (2026-11-16). The producer gave the go for plan 1: "Economy flukes are tolerable until they completely ruin our testing scenarios. For now proceed with epic 11 Craft". Plan 1, Craft (S0–S3), is done on `feat/epic11-craft`: S0–S3 by 2026-11-17, at the producer's "Complete S2-S3 I will review afterwards"; the review, with S1's look, passed the same day ("This looks good. Let's wrap it up with C.1 and C.2"); closed out on 2026-11-18 and merged as PR #25 on 2026-11-19, on the producer's word. Plan 2, Technique and Calling (S4–S5), was drafted the same day and started at once while the producer is away ("After drafting plan 2 you will begin immediate execution and will attempt to complete it"), on `feat/epic11-technique`; its decisions run from D13. QUEUED from 2026-11-15, when the producer asked for it: "create a new Epic focused on the Skill system heart and engine". It follows Epic 10, which ends with Part 3. Its questions (§0) are defaults that stand by exception.
+- **Status**: ACTIVE (2026-11-16). The producer gave the go for plan 1: "Economy flukes are tolerable until they completely ruin our testing scenarios. For now proceed with epic 11 Craft". Plan 1, Craft (S0–S3), is done on `feat/epic11-craft`: S0–S3 by 2026-11-17, at the producer's "Complete S2-S3 I will review afterwards"; the review, with S1's look, passed the same day ("This looks good. Let's wrap it up with C.1 and C.2"); closed out on 2026-11-18 and merged as PR #25 on 2026-11-19, on the producer's word. Plan 2, Technique and Calling (S4–S5), was drafted the same day and executed at once while the producer was away ("After drafting plan 2 you will begin immediate execution and will attempt to complete it"), on `feat/epic11-technique`: S4 and S5 done and closed out on 2026-11-19; its PR into `main`, and the producer's look at S4, wait for their return. Plan 3, Legend, is drafted when it merges. QUEUED from 2026-11-15, when the producer asked for it: "create a new Epic focused on the Skill system heart and engine". It follows Epic 10, which ends with Part 3. Its questions (§0) are defaults that stand by exception.
 - **Plans** (2026-11-16, at the producer's "Prepare to work on Epic 11. Decide how many implementation plans you will need ... and have the first one drafted and ready to start"):
   - **Four,** one PR each, along the epic's layers: Craft (S0–S3), Technique and Calling (S4–S5), Legend (S6–S7), Masterworks and the gate (S8–S9). Why four, the order and the shared rules: `.agents/epic11_plan.md`.
   - **The first, Craft,** ran from the producer's go (2026-11-16) to its close-out (2026-11-18). Its decisions are D1–D12 below, its findings F1–F8 in §7, its numbers in `docs/skills-model.md` §5, and its summary in `.agents/architecture_history.md`. The plan itself is deleted (git keeps it).
+  - **The second, Technique and Calling,** ran on 2026-11-19 while the producer was away. Its decisions are D13–D24 below, its findings F9–F12 in §7, its numbers in `docs/skills-model.md` §3.6–§3.8 and §5.6–§5.8, and its summary in `.agents/architecture_history.md`. The plan itself is deleted (git keeps it).
   - **Each later plan** is drafted when the one before it merges, from what that plan measured.
 - **Track**: Track A: Core Simulation & Cognition Engine. Its UI is the KNI client's and is built here, as Epic 10 folded in UI-3 to UI-5.
 - **Milestone**: Production Milestone 5, Skills and Careers (ROADMAP §3; Q2).
@@ -217,7 +218,7 @@ What K9 leaves undone:
 - **A9. Numbers live where they belong:** practice, passions and the budget in `SkillRules`; wages and prices in `EconomyTuning`.
 - **A10. Cognition reads copies, and facts are scarce.**
   - Passions and techniques may weigh choices through `Considerations`.
-  - The planner holds 48 of 64 facts (46 when this was drafted; plan 1 added `HasManual` and `Drilled`), so a new fact needs a reason, under R1's guard.
+  - The planner holds 48 of 64 facts (46 when this was drafted; plan 1 added `HasManual` and `Drilled`; plan 2 added none), so a new fact needs a reason, under R1's guard.
 
 ### 2.4 Milestones
 
@@ -332,6 +333,13 @@ Done means crawlers grow into someone in the live outpost with nothing injected 
 - [x] **Re-measured** (`docs/skills-model.md` §5.7): a Journeyman on 18 of 23 seeds with the hunting players, 1.43 a seed held, still no Master; Leadership grows where parties go out; every resident holds a calling. Five DoDs re-picked across the gate seeds (PassionBurnsBright 8, the draught's scenario 20261010, ATechniqueDecidesAClear 18, the bold's draught 424242, the Matriarch's warren 1); two fixtures set their members' Leadership to 0 to read the retreat rule's own numbers. Findings F11 (the Matriarch's warren braved alone) and F12 (Wardens rare in a run).
 - [x] **The client:** the calling's title on every card and the role in the party builder (`CallingsOnScreenTests`); the role badge over a member's body and at its portrait's corner (art pins re-recorded).
 - [x] **DoD `ACallingEmerges`** (gate seed 3): Lane becomes a Warden at t60619 and, at the clear that ends at t81285, takes 26 of the creatures' blows, a mate 4 at the most; on 2 of 23 gate seeds over ten days (F12).
+
+### Plan 2's gate and close-out (2026-11-19, `feat/epic11-technique`)
+- [x] **The Technique and Calling gate** (C.1), on the final build: core 318/318 (explicit not run), every live scenario among them; client 533/533 in the pinned image; golden 3/3; seeds 1–120 120/120 with and without the guild; the soak 18 of 18 and 20 of 20 on each player profile; the MonoGame and Android compiles with 0 warnings. These ran at S5.10; only a client line's clip changed after it, and the pinned image ran with it.
+- [x] **Growth, technique and calling complete** (`docs/skills-model.md` §5.8): over 28 days with the hunting players, a Journeyman on 22 of 23 seeds, four residents with two skills past Apprentice (the budget's first bite), still no Master.
+- [x] **The close-out** (C.2): the roadmap, this file, the focus file, `architecture_history.md`, AGENTS.md and the skills and economy models reconciled; the plan's findings here (F9–F12); the plan deleted, the index kept for plans 3–4.
+- [ ] **The producer's look at S4,** on their return (the brief in S4's section).
+- [ ] **The merge,** on the producer's word.
 
 ## 5. Deferred and out of scope
 
