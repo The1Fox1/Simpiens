@@ -36,6 +36,10 @@ namespace Simpiens.Core.Tests
             // Callings (Epic 11, S5.6): held at the end, and how many residents' changed during the run
             public readonly int[] CallingAtEnd = new int[256];
             public int CallingsChanged;
+            // Deeds (Epic 11, S6.0, D26): each resident's count gained in the run, by deed; downings by their cause
+            public readonly List<int>[] DeedsGained = Enumerable.Range(0, DeedTable.Capacity).Select(_ => new List<int>()).ToArray();
+            public int DownedByCreature, DownedByHazard, DownedMembers, Downings;
+            public readonly Dictionary<EntityId, int> DownedTimes = new Dictionary<EntityId, int>();
         }
 
         private static Growth Play(ulong seed, string profile, long horizon)
@@ -49,6 +53,7 @@ namespace Simpiens.Core.Tests
             var last = new Dictionary<EntityId, SkillSet>();
             var startTraits = new Dictionary<EntityId, CrawlerTraits>();
             var lastTraits = new Dictionary<EntityId, CrawlerTraits>();
+            var wasDowned = new HashSet<EntityId>();
             while (sim.Clock.CurrentTick < horizon)
             {
                 foreach (var crawler in sim.Host.CrawlerStates)
@@ -67,6 +72,16 @@ namespace Simpiens.Core.Tests
                     if (crawler.IsDrifter || !start.ContainsKey(crawler.AgentId)) continue;
                     last[crawler.AgentId] = crawler.Skills;
                     lastTraits[crawler.AgentId] = crawler.Traits;
+                    // A downing: its cause, whose it was (Epic 11, S6.0)
+                    if (crawler.IsDowned && wasDowned.Add(crawler.AgentId))
+                    {
+                        growth.Downings++;
+                        if (crawler.DownedBy == DeathCause.Creature) growth.DownedByCreature++;
+                        else growth.DownedByHazard++;
+                        if (sim.Simulation.Guild.TryGetContract(crawler.AgentId, out _)) growth.DownedMembers++;
+                        growth.DownedTimes[crawler.AgentId] = (growth.DownedTimes.TryGetValue(crawler.AgentId, out int n) ? n : 0) + 1;
+                    }
+                    else if (!crawler.IsDowned) wasDowned.Remove(crawler.AgentId);
                     var all = SkillTable.All;
                     for (int i = 0; i < all.Count; i++)
                     {
@@ -115,6 +130,8 @@ namespace Simpiens.Core.Tests
                         }
                     }
                 growth.CallingAtEnd[(byte)traitsNow.Calling]++;
+                for (int deed = 1; deed < DeedTable.Capacity; deed++)
+                    if (DeedTable.Get((Deed)deed) != null) growth.DeedsGained[deed].Add(traitsNow.Count((Deed)deed) - traitsThen.Count((Deed)deed));
                 if (traitsNow.Calling != traitsThen.Calling) growth.CallingsChanged++;
                 if (journeyman) growth.Journeymen++;
                 if (master) growth.Masters++;
@@ -167,6 +184,17 @@ namespace Simpiens.Core.Tests
                     int held = runs.Sum(r => r.HeldAtEnd[(byte)row.Id]);
                     if (held > 0) sum.Append($" {row.DisplayName} {held} ({runs.Sum(r => r.PickedInRun[(byte)row.Id])});");
                 }
+                // The deeds (Epic 11, S6.0, D26): per resident, how many reach each count, so the epithets' and traits' lines are set from it
+                sum.Append($"\ndeeds gained in the run, of {runs.Sum(r => r.Residents)} residents (residents reaching 1 / 2 / 3 / 5 / 10 / 20 / 40; most; seeds with someone at 3 / 5):\n");
+                foreach (var row in DeedTable.All)
+                {
+                    int deed = (byte)row.Id;
+                    var each = runs.SelectMany(r => r.DeedsGained[deed]).ToArray();
+                    string reach = string.Join(" / ", new[] { 1, 2, 3, 5, 10, 20, 40 }.Select(k => each.Count(n => n >= k)));
+                    sum.Append($"  {row.DisplayName,-18} total {each.Sum()}; {reach}; most {(each.Length > 0 ? each.Max() : 0)}; seeds {runs.Count(r => r.DeedsGained[deed].Any(n => n >= 3))} / {runs.Count(r => r.DeedsGained[deed].Any(n => n >= 5))}\n");
+                }
+                sum.Append($"downings: {runs.Sum(r => r.Downings)} ({runs.Sum(r => r.DownedByCreature)} by a creature, {runs.Sum(r => r.DownedByHazard)} by a hazard; {runs.Sum(r => r.DownedMembers)} of guild members) on {runs.Count(r => r.Downings > 0)} seeds; "
+                    + $"crawlers downed twice or more {runs.Sum(r => r.DownedTimes.Values.Count(n => n >= 2))}; deaths {runs.Sum(r => r.Deaths)}\n");
                 out_?.WriteLine(sum.ToString());
             }
         }

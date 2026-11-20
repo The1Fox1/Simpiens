@@ -407,3 +407,23 @@ Plan 2's final build. Its fourteen days are §5.7's: no code that runs in the si
 - **Journeymen and their techniques grow with time:** 82 Journeyman picks in 28 days against 32 in 14, mostly the artisans' and the miners'. Legend's deeds will meet Journeymen on most seeds in a month.
 - **Callings move with the work:** 59 changed in four weeks with the players; a calling is a living label, not a birth one.
 
+
+### 5.9 Deeds (S6.0, 2026-11-20)
+Plan 2's final build, on the 23 gate seeds (`MeasureGrowthOnTheGateSeeds`, which since S6.0 also counts each deed per resident and each downing by its cause). Of 276 residents, how many gained at least 1 / 2 / 3 / 5 / 10 / 20 / 40 of each deed in the run, and on how many seeds someone reached 3 and 5:
+
+| Deed | No player, 14 days | Hunting players, 14 days | Hunting players, 28 days |
+| :--- | :--- | :--- | :--- |
+| Creatures slain | none | 79 / 46 / 27 / 9 / 0 / 0 / 0; most 8; seeds 18, 8 | 120 / 87 / 69 / 38 / 11 / 0 / 0; most 16; seeds 23, 19 |
+| Bosses slain | none | 5 / 1; most 2 | 23 / 2; most 2 |
+| Rescues | none | none | none |
+| Makes | none (no stations) | 85 / 82 / 76 / 66 / 57 / 34 / 8; most 59 | 115 / 113 / 106 / 102 / 93 / 74 / 26; most 94 |
+| Downings survived | none | none | none |
+| Hunts paid | none | 39 / 25 / 16 / 1 / 0; most 5; seeds 9, 1 | 40 / 33 / 20 / 3 / 0; most 5; seeds 13, 3 |
+| Clears won | none | 97 / 68 / 45 / 17 / 0; most 6; seeds 12, 7 | 134 / 118 / 100 / 64 / 21 / 0; most 15; seeds 20, 16 |
+| Crawlers taught | 140 / 96 / 77 / 55 / 12 / 1 / 0; most 21 | 123 / 85 / 58 / 34 / 8 / 0 / 0; most 16 | 186 / 144 / 108 / 65 / 18 / 3 / 0; most 27 |
+
+**Downings: none.** Over 14 and 28 days, with no player or with the hunting players, no crawler on any gate seed is downed, by a creature or a hazard, and so nobody is rescued and nobody dies. Careful crawlers retreat before anything takes them to nothing (finding F13).
+
+**The lines set from it** (D27, D29), so that a legend is earned on most seeds in two weeks and by few on each:
+- **Epithets:** a creature kind's word at the 3rd kill (18 of 23 seeds in two weeks, 27 residents); a boss's word at the first boss slain; Lairbreaker at 5 clears won (7 seeds, 17 residents; 16 seeds by day 28); the Huntsman at 3 hunts paid (9 seeds, 16 residents); the Teacher at 10 crawlers taught (8 with the players, 12 without, in two weeks); the Maker at 40 makes (8 residents in two weeks). The Steadfast (2 rescues) and the Unbroken (2 downings survived) are earned only where crawlers fall (F13).
+- **Earned traits:** Monster Hunter at 10 kills (none in two weeks, 11 residents by day 28: a month's story); Patient Teacher at 10 taught; Lifesaver at 3 rescues, Battle-Hardened and Shaken at a downing survived: where crawlers fall.

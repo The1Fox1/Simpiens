@@ -1,12 +1,12 @@
 # Epic 11 plan 3: Legend (S6–S7)
 
-Working document (AGENTS.md, Documentation Protocol 6), one of Epic 11's plans ([index](epic11_plan.md)). Written 2026-11-20, when plan 2 merged (PR #26, `d387b05`), at the producer's "This is great. PR plan 2 into main and then draft up plan3". The design is the epic, [`docs/epics/epic-11.md`](../docs/epics/epic-11.md) (§2.3's rules A1–A10 bind every step). Its questions Q1–Q16 stand by exception, Q12 (legend) and Q13 (named creatures) most of all. The decisions below (D26–D37) are this plan's defaults; each moves to the epic's §0 when its step lands. Plan 2's numbers are tuned on, from `docs/skills-model.md` §5.8.
+Working document (AGENTS.md, Documentation Protocol 6), one of Epic 11's plans ([index](epic11_plan.md)). Written 2026-11-20, when plan 2 merged (PR #26, `d387b05`), at the producer's "This is great. PR plan 2 into main and then draft up plan3". **The go,** the same day: "Proceed with legend plan". The design is the epic, [`docs/epics/epic-11.md`](../docs/epics/epic-11.md) (§2.3's rules A1–A10 bind every step). Its questions Q1–Q16 stand by exception, Q12 (legend) and Q13 (named creatures) most of all. The decisions below (D26–D37) are this plan's defaults; each moves to the epic's §0 when its step lands. Plan 2's numbers are tuned on, from `docs/skills-model.md` §5.8.
 
 - **Complexity:** Very Complex as a whole: S6 bundles four kinds of legend (epithets, scars, earned traits, the chronicle's voice) across the core and the client's art, and S7 is a new mechanism in the creatures' rule and their save. Split below so that every step is Basic or Possibly Complex. The epic stamps S7 "supervised": its three steps inside the creatures' rule and save (S7.1–S7.3) are flagged for the developer to supervise, or, if the producer says go and steps away again, listed for their review.
 - **Branch:** `feat/epic11-legend`, cut from `main` at `d387b05`. One PR at the end, with a commit per step.
 - **Estimate:** 8–11 agent days (S6 4–5, S7 4–5, close-out 1).
 - **The producer's stops:**
-  - **the go:** the producer asked for the draft only. S6.0 starts on their word;
+  - **the go:** given 2026-11-20 ("Proceed with legend plan");
   - **the look at S6** (epithets in names, scars on bodies and portraits, the legend in the dossier, the first-blood scene);
   - **the look at S7** (a named creature over the map and in the inspector, the hunt that names it, the avenger);
   - **the merge.** The PR is opened at the close-out and not merged without the producer's word.
@@ -37,17 +37,17 @@ Working document (AGENTS.md, Documentation Protocol 6), one of Epic 11's plans (
   - **One held:** the highest rank earned; a later one of the same rank doesn't replace it. Judged in one rule (`EpithetRules.Judge`) wherever a deed is counted, never rebuilt. The kind or the crawler it names is kept in the traits record's spare bytes (a kind byte and an `EntityId`).
   - **Told:** the chronicle (`EpithetEarned`), and a moment for the patron's people.
   - **Shown:** after the given name, on every card and in the dossier: "Corrin Beetlebane", "Mara the Steadfast"; with a calling, "Corrin Beetlebane the Warden".
-  - **The first rows** (thresholds are first guesses, set at S6.0):
+  - **The first rows** (the lines set at S6.0 from `docs/skills-model.md` §5.9; the Steadfast and the Unbroken are earned only where crawlers fall, F13):
 
     | Epithet | Earned by | Rank |
     | :--- | :--- | :-: |
-    | the kind's word ("Beetlebane") | the 5th creature slain; the kind of that kill | 2 |
+    | the kind's word ("Beetlebane") | the 3rd creature slain; the kind of that kill | 2 |
     | the boss's word ("Broodbane", "Gatebreaker") | a boss slain | 5 |
     | the Steadfast | 3 rescues | 3 |
     | the Unbroken | 2 downings survived | 3 |
-    | Lairbreaker | 3 clears won | 3 |
+    | Lairbreaker | 5 clears won | 3 |
     | the Huntsman | 3 hunts paid | 2 |
-    | the Teacher | 3 crawlers taught | 2 |
+    | the Teacher | 10 crawlers taught | 2 |
     | the Maker | 40 makes | 1 |
     | the victim's name ("Ama's Avenger") | a named creature slain (S7.5) | 6 |
 - **D28, scars after a downing** (Q12):
@@ -58,7 +58,7 @@ Working document (AGENTS.md, Documentation Protocol 6), one of Epic 11's plans (
   - **The table:** `EarnedTraitTable`, a row per `EarnedTrait` id (a byte, never reused): its words, its kind (help, hurt, or an act of its own), the condition that earns it, and its effects as `TechniqueEffect`s scoped to a kind of work.
   - **Three held** (three of the record's four bytes; the fourth stays spare). Earned once, never lost.
   - **Read through the techniques' door** (A1): `CrawlerTechniques.Get` sums the earned traits that apply to the work beside the techniques and the capstone, within the same bounds. A hurt read by cognition goes through the copy.
-  - **The first rows** (first guesses, set at S6.0):
+  - **The first rows** (the lines set at S6.0; Monster Hunter a month's story, the downing's and the rescue's where crawlers fall, F13):
 
     | Trait | Kind | Earned by | Effect |
     | :--- | :--- | :--- | :--- |
@@ -66,7 +66,7 @@ Working document (AGENTS.md, Documentation Protocol 6), one of Epic 11's plans (
     | Shaken | hurt | a downing survived, if cautious | 10% less damage in a fight; a lair judged 25% more dangerous |
     | Monster Hunter | help | 10 creatures slain | 10% more damage in a fight |
     | Lifesaver | help | 3 rescues | carries 15% faster; medicine heals 10% more |
-    | Patient Teacher | help | 3 crawlers taught | its lessons teach 10 points more |
+    | Patient Teacher | help | 10 crawlers taught | its lessons teach 10 points more |
     | Vengeful | its own act | a friend downed or slain by a named creature (S7.3) | a grudge (D33) |
 - **D30, first blood and the skills' voices** (Q12: "the chronicle speaks in a crawler's strongest skill"):
   - **First blood:** the first creature a crawler slays is a moment for the patron's people (a scene from the `CreatureSlain` event when its count becomes one).
@@ -104,7 +104,7 @@ Working document (AGENTS.md, Documentation Protocol 6), one of Epic 11's plans (
 
 ### S6. First legends (4–5 days), then the producer's look
 **Complexity:** Very Complex as the epic stamps it (bundling: epithets, scars, traits and voices). Split here so each table, its rule and its client land and are checked alone; each step is Possibly Complex but two.
-- [ ] **S6.0 The hand-over checked, and the deeds measured** [Possibly Complex: measuring]
+- [x] **S6.0 The hand-over checked, and the deeds measured** (done 2026-11-20: §0 matches the code; `docs/skills-model.md` §5.9; the lines below set from it; F13, nobody falls in ordinary play) [Possibly Complex: measuring]
   - Check §0 against the code; a difference becomes a finding (F13 onward).
   - **The measurement:** the growth measurement (`SkillGrowthMeasurementTests`) also reports each deed per resident and the downings by cause, at 14 and 28 days, no player and hunting players, from a copied Release bin. Written to `docs/skills-model.md` §5.9.
   - **Set from it:** D27's and D29's thresholds, so that a legend is earned on most seeds in two weeks and by few crawlers on each.
