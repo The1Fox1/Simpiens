@@ -22,6 +22,7 @@ namespace Simpiens.Core.Tests
             ["Simpiens.Core/Simulation/Skills/CrawlerTechniques.cs"] = "the door: a stat summed over the techniques held",
             ["Simpiens.Core/Simulation/Guild/SponsorRules.cs"] = "sponsorship's rule: whether the crawler holds the technique already",
             ["Simpiens.Core/Simulation/Skills/CallingRules.cs"] = "a calling earned: the Apprentice technique its best skill holds",
+            ["Simpiens.Presentation/Dashboard/TechniqueTreeModel.cs"] = "the technique tree (Epic 11, D25): which technique each band holds, shown, and what a sponsor would replace",
         };
 
         private static readonly string[] Projects = { "Simpiens.Core", "Simpiens.Presentation", "Simpiens.Client", "Simpiens.Hosting" };

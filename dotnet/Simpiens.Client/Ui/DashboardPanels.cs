@@ -173,6 +173,7 @@ namespace Simpiens.Client.Ui
             // The techniques it holds (Epic 11, S4.9, D18): "Shield Wall · Seam Student", what each does in the line's tip. Shown
             // only when it holds any, taking its line from the feelings' list as the held line does
             _techniquesLine = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, HeightUnits = DimensionUnitType.RelativeToChildren, Height = 0f, HasEvents = true, Visible = false };
+            _techniquesLine.Click += (_, _) => { if (_model.Dossier.HasCrawler && !_model.Dossier.IsDead) OpenTechniques?.Invoke(_model.Dossier.CrawlerId); }; // anyone's tree (S4.11, D25)
             _techniques = UiParts.Text(string.Empty, UiStyle.TextSecondary, UiText.Small);
             _techniquesLine.Children.Add(_techniques);
             _dossierDetails.Children.Add(_techniquesLine);
@@ -220,10 +221,11 @@ namespace Simpiens.Client.Ui
             CalmButton = UiParts.Button("Calm Frustration", 0f, 32f, UiText.BodyBold);
             CalmButton.Click += (_, _) => { _model.Dossier.Calm(); };
             RecruitButton = UiParts.Button("Recruit", 0f, 32f, UiText.BodyBold);
-            // One of the patron's people is sponsored, not recruited (Epic 11, S4.9, D18): the same button, by who is shown
+            // One of the patron's people is sponsored, not recruited (Epic 11, S4.9, D18): the same button, by who is shown,
+            // opens its technique tree (S4.11, D25)
             RecruitButton.Click += (_, _) =>
             {
-                if (_model.Dossier.IsOurs) _model.Dossier.Sponsor();
+                if (_model.Dossier.IsOurs) OpenTechniques?.Invoke(_model.Dossier.CrawlerId);
                 else _model.Dossier.Recruit();
             };
             actions.Children.Add(CalmButton.Visual);
@@ -319,6 +321,9 @@ namespace Simpiens.Client.Ui
 
         /// <summary>A click on a face (Epic UI-Beta B4, D4): the dashboard view finds that crawler on the map.</summary>
         public Action<EntityId> FindOnMap { get; set; }
+
+        /// <summary>Sponsor, or a click on the techniques line (Epic 11, S4.11, D25): the dashboard view opens that crawler's technique tree.</summary>
+        public Action<EntityId> OpenTechniques { get; set; }
 
         /// <summary>The recent events' rows, in order (tests click them).</summary>
         public GraphicalUiElement EventRowBox(int index) => (GraphicalUiElement)_eventRows[index].Parent;
@@ -497,7 +502,7 @@ namespace Simpiens.Client.Ui
             UiParts.SetText(_recruitText, ours ? dossier.SponsorText : dossier.RecruitText);
             string sway = ours ? "Sponsor" : "Recruit";
             if (!string.Equals(RecruitButton.Text, sway, System.StringComparison.Ordinal)) RecruitButton.Text = sway;
-            RecruitButton.IsEnabled = ours ? dossier.CanSponsor : dossier.CanRecruit;
+            RecruitButton.IsEnabled = ours || dossier.CanRecruit; // the tree opens for any of ours, to read it if nothing is open to sponsor
         }
 
         private static ContainerRuntime Panel(float x, float width, string header, out ContainerRuntime body)

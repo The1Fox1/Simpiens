@@ -144,27 +144,21 @@ namespace Simpiens.Presentation.Dashboard
         /// <summary>A guild member's calling's part in a party (Epic 11, S5.8): its badge at the portrait's corner; none for the rest.</summary>
         public Simpiens.Simulation.Skills.PartyRole Role { get; private set; }
 
-        /// <summary>One of the patron's people (a guild member or an artisan): the sway's second action sponsors a technique rather than recruits.</summary>
+        /// <summary>
+        /// One of the patron's people (a guild member or an artisan): the sway's second button is Sponsor, which opens its
+        /// technique tree (Epic 11, S4.11, D25), rather than Recruit.
+        /// </summary>
         public bool IsOurs { get; private set; }
 
         /// <summary>
-        /// The sponsorship on offer (Epic 11, S4.9, D18): the other technique at the top band of its best skill, "Sponsor
-        /// Reckless Fury for Shield Wall: 20g", or why not; empty for one not of the patron's people or holding none.
+        /// The sponsorship open to it (Epic 11, S4.9, D18; the tree since S4.11, D25): "2 techniques open to sponsor, from 20g.",
+        /// or why none is: the reason the dossier's offer (the other technique at the top band of its best skill) is refused,
+        /// "Sponsor Shield Wall? Not yet: trust 40 of 50."; empty for one not of the patron's people.
         /// </summary>
         public string SponsorText { get; private set; } = string.Empty;
 
-        /// <summary>The Sponsor button works only when sponsorship's rule would let it take the offer now.</summary>
-        public bool CanSponsor { get; private set; }
-
-        /// <summary>The technique the Sponsor button offers; none when there is no offer.</summary>
-        public Simpiens.Simulation.Skills.Technique SponsorOffer { get; private set; }
-
-        /// <summary>Sponsor: queues a sponsorship of the offer; it takes it up on the next tick, as the rule allows then.</summary>
-        public void Sponsor()
-        {
-            if (!CanSponsor || _context.Intervention == null) return;
-            _context.Intervention.QueueInfluence(InfluenceEvent.CreateSponsorTechnique("Player", CrawlerId, SponsorOffer));
-        }
+        /// <summary>The techniques line's tip ends with this: a click on it opens the tree.</summary>
+        public const string TreeHint = "Click for the technique tree.";
 
         /// <summary>The line under the skills: who taught it, then a skill the budget holds; empty when neither.</summary>
         public string SkillNotes => Taught.Length == 0 ? SkillHeld : SkillHeld.Length == 0 ? Taught : Taught + " · " + SkillHeld;
@@ -220,9 +214,8 @@ namespace Simpiens.Presentation.Dashboard
             Asks = string.Empty;
             Taught = string.Empty;
             Techniques = TechniquesTip = SponsorText = string.Empty;
-            IsOurs = CanSponsor = false;
+            IsOurs = false;
             Role = Simpiens.Simulation.Skills.PartyRole.None;
-            SponsorOffer = Simpiens.Simulation.Skills.Technique.None;
             if (!HasCrawler)
             {
                 if (crawler != default) ShowTheDead(crawler);
@@ -298,6 +291,7 @@ namespace Simpiens.Presentation.Dashboard
                 tip.Append(row.DisplayName).Append(" (").Append(Simpiens.Simulation.Skills.SkillTable.Get(row.Skill)?.DisplayName).Append("): ").Append(row.Words);
             }
             Techniques = names.ToString();
+            if (tip.Length > 0) tip.Append('\n').Append(TreeHint);
             TechniquesTip = tip.ToString();
 
             var sim = _context.Simulation;
@@ -307,20 +301,22 @@ namespace Simpiens.Presentation.Dashboard
             Role = member ? Simpiens.Simulation.Skills.CallingTable.RoleOf(agent.Traits.Calling) : Simpiens.Simulation.Skills.PartyRole.None;
             IsOurs = member || (sim.Workshops != null && sim.Workshops.IsArtisan(agent.AgentId));
             if (!IsOurs) return;
-            var offer = Simpiens.Simulation.Guild.SponsorRules.Offer(agent.Skills, agent.Traits, out var replacing);
+            var offer = Simpiens.Simulation.Guild.SponsorRules.Offer(agent.Skills, agent.Traits, out _);
             if (offer == Simpiens.Simulation.Skills.Technique.None)
             {
                 SponsorText = "No technique to sponsor yet.";
                 return;
             }
             uint tick = (uint)(_context.Clock?.CurrentTick ?? 0);
+            int open = TechniqueTreeModel.OpenCount(sim, agent, tick, out ushort cheapest);
+            if (open > 0)
+            {
+                SponsorText = Invariant($"{open} technique{(open == 1 ? string.Empty : "s")} open to sponsor, from {cheapest}g.");
+                return;
+            }
+            // None open: why the dossier's offer is refused
             var check = Simpiens.Simulation.Guild.SponsorRules.CheckSponsor(sim.Guild, sim.Workshops, host, agent.AgentId, offer, tick, out ushort price);
-            SponsorOffer = offer;
-            CanSponsor = check == Simpiens.Simulation.Guild.SponsorRules.Check.Ok && _context.Intervention != null;
-            string name = Simpiens.Simulation.Skills.TechniqueTable.Get(offer).DisplayName, instead = Simpiens.Simulation.Skills.TechniqueTable.Get(replacing)?.DisplayName;
-            SponsorText = check == Simpiens.Simulation.Guild.SponsorRules.Check.Ok
-                ? Invariant($"Sponsor {name} for {instead}: {price}g.")
-                : Invariant($"Sponsor {name}? ") + Simpiens.Simulation.Guild.SponsorRules.Describe(check, agent, offer, price, sim.Economy.Guild, tick);
+            SponsorText = Invariant($"Sponsor {Simpiens.Simulation.Skills.TechniqueTable.Get(offer).DisplayName}? ") + Simpiens.Simulation.Guild.SponsorRules.Describe(check, agent, offer, price, sim.Economy.Guild, tick);
         }
 
         // Each skill's first teacher (Epic 11, S3.5): a living teacher by its name here, the departed by the roll's

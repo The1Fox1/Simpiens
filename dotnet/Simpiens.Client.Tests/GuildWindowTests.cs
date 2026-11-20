@@ -54,9 +54,10 @@ namespace Simpiens.Client.Tests
             Assert.True(guild.IsMember(recruit), "The Recruit button's command signed the crawler on.");
             Assert.Equal("Guild 1/8", dashboard.Header.GuildButton.Text);
             Assert.Contains("Guild: member, 5g a visit", dashboard.Panels.GroupsShown);
-            // A member is sponsored, not recruited again (Epic 11, S4.9): the sway's button and words are the sponsor's
+            // A member is sponsored, not recruited again (Epic 11, S4.9): the sway's button and words are the sponsor's, its line
+            // what the technique tree has open for it (S4.11, D25)
             Assert.Equal("Sponsor", dashboard.Panels.SwayButtonShown);
-            Assert.StartsWith("Sponsor ", dashboard.Panels.RecruitShown);
+            Assert.Matches(@"^(\d+ techniques? open to sponsor, from \d+g\.|Sponsor .+\? .+|No technique to sponsor yet\.)$", dashboard.Panels.RecruitShown);
 
             ui.Click(Centre(dashboard.Header.GuildButton));
             var roster = dashboard.Guild;

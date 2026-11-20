@@ -21,6 +21,7 @@ namespace Simpiens.Core.Tests
             ["Simpiens.Core/Simulation/Skills/CrawlerSkills.cs"] = "the seam: the effective level, from the learned one",
             ["Simpiens.Core/Simulation/SimulationManager.cs"] = "practice's one entry: a band reached is the learned band",
             ["Simpiens.Presentation/Dashboard/SkillTexts.cs"] = "the dossier's and the roster's list of what a crawler has learned",
+            ["Simpiens.Presentation/Dashboard/TechniqueTreeModel.cs"] = "the technique tree (Epic 11, D25): each skill's learned level shown, and the bands reached that offer techniques to sponsor",
             ["Simpiens.Core/Simulation/Skills/SkillRules.cs"] = "the mastery budget (Epic 11, D7): practice's own rule, over the levels practice has raised",
             ["Simpiens.Core/Simulation/Skills/PassionTable.cs"] = "the passions' draw at spawn: a starting talent is loved more often (Epic 11, D3); a draw, not an effect",
             ["Simpiens.Core/Simulation/Skills/CrawlerTechniques.cs"] = "the techniques' door (Epic 11, D23): a calling's capstone counts at Master in its skill, the band practice reached",
