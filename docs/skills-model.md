@@ -427,3 +427,15 @@ Plan 2's final build, on the 23 gate seeds (`MeasureGrowthOnTheGateSeeds`, which
 **The lines set from it** (D27, D29), so that a legend is earned on most seeds in two weeks and by few on each:
 - **Epithets:** a creature kind's word at the 3rd kill (18 of 23 seeds in two weeks, 27 residents); a boss's word at the first boss slain; Lairbreaker at 5 clears won (7 seeds, 17 residents; 16 seeds by day 28); the Huntsman at 3 hunts paid (9 seeds, 16 residents); the Teacher at 10 crawlers taught (8 with the players, 12 without, in two weeks); the Maker at 40 makes (8 residents in two weeks). The Steadfast (2 rescues) and the Unbroken (2 downings survived) are earned only where crawlers fall (F13).
 - **Earned traits:** Monster Hunter at 10 kills (none in two weeks, 11 residents by day 28: a month's story); Patient Teacher at 10 taught; Lifesaver at 3 rescues, Battle-Hardened and Shaken at a downing survived: where crawlers fall.
+
+### 5.10 With epithets, scars and earned traits (S6.5, 2026-11-20)
+S6.1–S6.4's build, the 23 gate seeds over 14 days. Growth is §5.7's to the digit (a Journeyman on 18 of 23 seeds with the hunting players, 1.43 a seed; 4 of 23 with no player), and so are the deeds (§5.9): epithets change no number, scars come only with downings, and of the earned traits only Patient Teacher is earned in two weeks.
+
+| Held at day 14 | No player | Hunting players |
+| :--- | :--- | :--- |
+| Residents with an epithet | 12, on 10 seeds | 61, on 20 seeds |
+| By epithet | the Teacher 12 | a kind's word 14 (27 earned it; a higher rank replaced the rest), a boss's word 5, Lairbreaker 15, the Huntsman 11, the Teacher 8, the Maker 8 |
+| Earned traits | Patient Teacher 12 | Patient Teacher 8 |
+| Scars | none | none (no downings, F13) |
+
+Seeds 1–120 pass the outpost's day with and without the guild; the soak holds, 18 of 18 and 20 of 20 on each player profile. No DoD moved. A party's members win their clears together, so Lairbreaker comes to a party at once; the lines are first guesses for the producer.

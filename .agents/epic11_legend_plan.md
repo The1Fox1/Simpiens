@@ -124,7 +124,7 @@ Working document (AGENTS.md, Documentation Protocol 6), one of Epic 11's plans (
   - **The voices:** `SkillDefinition.Voice` lines for each skill; `TemplateNarrativeFormatter` speaks a band reached, an epithet earned and first blood in the crawler's best skill.
   - **First blood:** the moment, from `CreatureSlain` at a count of one (`SkillScenes`).
   - **The checks:** the formatter's tests (a line per skill, the plain fallback); `SkillSceneTests` gains first blood.
-- [ ] **S6.5 Re-measured** [Possibly Complex: measuring]
+- [x] **S6.5 Re-measured** (done 2026-11-20: growth as before; epithets on 20 of 23 seeds with the players; seeds 1–120 both ways, the soak 18/18 and 20/20 ×3; no DoD moved) [Possibly Complex: measuring]
   - The 14-day growth and deeds on the gate seeds (`docs/skills-model.md` §5.10); the gate seeds' day, the soak, seeds 1–120 with and without the guild.
   - **Moved DoDs** are re-picked once, each from a measurement across the gate seeds, each in its own commit.
 - [ ] **S6.6 The client: epithets and the legend line** [Possibly Complex: the client]

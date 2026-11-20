@@ -40,6 +40,10 @@ namespace Simpiens.Core.Tests
             public readonly List<int>[] DeedsGained = Enumerable.Range(0, DeedTable.Capacity).Select(_ => new List<int>()).ToArray();
             public int DownedByCreature, DownedByHazard, DownedMembers, Downings;
             public readonly Dictionary<EntityId, int> DownedTimes = new Dictionary<EntityId, int>();
+            // Legend (Epic 11, S6.5): epithets and earned traits held at the end, by id; scars borne
+            public readonly int[] EpithetAtEnd = new int[256];
+            public readonly int[] TraitAtEnd = new int[256];
+            public int Scars;
         }
 
         private static Growth Play(ulong seed, string profile, long horizon)
@@ -130,6 +134,9 @@ namespace Simpiens.Core.Tests
                         }
                     }
                 growth.CallingAtEnd[(byte)traitsNow.Calling]++;
+                growth.EpithetAtEnd[(byte)traitsNow.Epithet]++;
+                for (int t = 0; t < CrawlerTraits.EarnedTraitSlots; t++) growth.TraitAtEnd[(byte)traitsNow.TraitAt(t)]++;
+                growth.Scars += traitsNow.ScarCount;
                 for (int deed = 1; deed < DeedTable.Capacity; deed++)
                     if (DeedTable.Get((Deed)deed) != null) growth.DeedsGained[deed].Add(traitsNow.Count((Deed)deed) - traitsThen.Count((Deed)deed));
                 if (traitsNow.Calling != traitsThen.Calling) growth.CallingsChanged++;
@@ -195,6 +202,20 @@ namespace Simpiens.Core.Tests
                 }
                 sum.Append($"downings: {runs.Sum(r => r.Downings)} ({runs.Sum(r => r.DownedByCreature)} by a creature, {runs.Sum(r => r.DownedByHazard)} by a hazard; {runs.Sum(r => r.DownedMembers)} of guild members) on {runs.Count(r => r.Downings > 0)} seeds; "
                     + $"crawlers downed twice or more {runs.Sum(r => r.DownedTimes.Values.Count(n => n >= 2))}; deaths {runs.Sum(r => r.Deaths)}\n");
+                // Legend (Epic 11, S6.5)
+                sum.Append($"epithets held at the end: {runs.Sum(r => r.Residents - r.EpithetAtEnd[0])} residents, on {runs.Count(r => r.Residents - r.EpithetAtEnd[0] > 0)} seeds:");
+                foreach (var row in EpithetTable.All)
+                {
+                    int held = runs.Sum(r => r.EpithetAtEnd[(byte)row.Id]);
+                    if (held > 0) sum.Append($" {row.Name} {held};");
+                }
+                sum.Append("\nearned traits held at the end:");
+                foreach (var row in EarnedTraitTable.All)
+                {
+                    int held = runs.Sum(r => r.TraitAtEnd[(byte)row.Id]);
+                    if (held > 0) sum.Append($" {row.Words} {held};");
+                }
+                sum.Append($" scars borne {runs.Sum(r => r.Scars)}\n");
                 out_?.WriteLine(sum.ToString());
             }
         }
