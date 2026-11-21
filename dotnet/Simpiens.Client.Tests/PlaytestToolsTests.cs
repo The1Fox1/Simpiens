@@ -8,21 +8,22 @@ namespace Simpiens.Client.Tests
 {
     /// <summary>
     /// The dossier's playtest tools (2026-11-20): with <see cref="ClientOptions.PlaytestTools"/> (the desktop game's development
-    /// builds), Max Trust and Down sit in the sway, a row under Calm and Recruit, and leave as commands; Down greys once the crawler is down.
-    /// Without the option there are none.
+    /// builds, or --playtest), Calm, Max Trust and Down sit in a row marked PLAYTEST under the sway's Recruit and leave as
+    /// commands; Down greys once the crawler is down. Without the option there are none, and the sway holds Recruit alone
+    /// (Calm Frustration is a debug action: the producer, 2026-11-21).
     /// </summary>
     public class PlaytestToolsTests
     {
         [Fact]
         public void MaxTrustAndDownFromTheDossier()
         {
-            // Where the dossier ends without them at 720 rows: the sway's buttons' bottom
+            // Where the dossier ends without them at 720 rows: the sway's button's bottom
             float without;
             {
                 var plain = UiDriver.Start(new ClientOptions(), 1280, 720);
                 plain.Game.Session.DashboardModel.SelectCrawler(plain.Game.Session.Simulation.Host.CrawlerStates.First(c => !c.IsDrifter).AgentId);
                 plain.Frame(30);
-                without = Bottom(plain.Game.Play.Dashboard.Panels.CalmButton.Visual);
+                without = Bottom(plain.Game.Play.Dashboard.Panels.RecruitButton.Visual);
             }
 
             var ui = UiDriver.Start(new ClientOptions { PlaytestTools = true }, 1280, 720);
@@ -32,15 +33,16 @@ namespace Simpiens.Client.Tests
             ui.Frame(30);
             var panels = game.Play.Dashboard.Panels;
             Assert.NotNull(panels.MaxTrustButton);
-            Assert.True(panels.MaxTrustButton.IsEnabled && panels.DownButton.IsEnabled);
-            // In the sway, a row under Calm and Recruit, lined up with them; at 720 rows the dossier no taller than without them
-            // (the row takes its height from the feelings' list)
+            Assert.True(panels.CalmButton.IsEnabled && panels.MaxTrustButton.IsEnabled && panels.DownButton.IsEnabled);
+            // A row under Recruit, its right edge with Recruit's; at 720 rows the dossier no taller than without them (the row
+            // takes its height from the feelings' list)
+            var recruit = panels.RecruitButton.Visual;
             var calm = panels.CalmButton.Visual;
             var trust = panels.MaxTrustButton.Visual;
             var down = panels.DownButton.Visual;
-            Assert.True(trust.AbsoluteTop >= Bottom(calm) && down.AbsoluteTop == trust.AbsoluteTop, "Under Calm and Recruit.");
-            Assert.True(trust.AbsoluteLeft == calm.AbsoluteLeft && down.AbsoluteLeft == panels.RecruitButton.Visual.AbsoluteLeft
-                && down.AbsoluteWidth == panels.RecruitButton.Visual.AbsoluteWidth, "Lined up with them.");
+            Assert.True(calm.AbsoluteTop >= Bottom(recruit) && trust.AbsoluteTop == calm.AbsoluteTop && down.AbsoluteTop == calm.AbsoluteTop, "Under Recruit, in one row.");
+            Assert.True(calm.AbsoluteLeft < trust.AbsoluteLeft && trust.AbsoluteLeft < down.AbsoluteLeft, "Calm, Max Trust, Down.");
+            Assert.True(System.Math.Abs(down.AbsoluteLeft + down.AbsoluteWidth - (recruit.AbsoluteLeft + recruit.AbsoluteWidth)) <= 2f, "Its right edge with Recruit's.");
             Assert.True(Bottom(down) <= without, $"No taller at 720 rows: the tools end at {Bottom(down)}, the dossier without them at {without}.");
 
             ui.Click(Centre(panels.MaxTrustButton.Visual));
@@ -54,11 +56,13 @@ namespace Simpiens.Client.Tests
             Assert.False(panels.DownButton.IsEnabled, "Down greys once it is down.");
         }
 
-        /// <summary>At 1080 rows (the desktop game's default window) the row is inside the dossier's frame, with the feelings' list whole.</summary>
-        [Fact]
-        public void TheRowIsInsideTheDossierAt1080()
+        /// <summary>At 1080 rows (the desktop game's default window) and larger the row is inside the dossier's frame, with the feelings' list whole.</summary>
+        [Theory]
+        [InlineData(1920, 1080)]
+        [InlineData(2240, 1260)]
+        public void TheRowIsInsideTheDossier(int width, int height)
         {
-            var ui = UiDriver.Start(new ClientOptions { PlaytestTools = true }, 1920, 1080);
+            var ui = UiDriver.Start(new ClientOptions { PlaytestTools = true }, width, height);
             ui.Game.Session.DashboardModel.SelectCrawler(ui.Game.Session.Simulation.Host.CrawlerStates.First(c => !c.IsDrifter).AgentId);
             ui.Frame(30);
             var panels = ui.Game.Play.Dashboard.Panels;
@@ -70,6 +74,7 @@ namespace Simpiens.Client.Tests
         public void WithoutTheOptionThereAreNone()
         {
             var ui = UiDriver.Start(new ClientOptions(), 1280, 720);
+            Assert.Null(ui.Game.Play.Dashboard.Panels.CalmButton); // a debug action, not the player's sway
             Assert.Null(ui.Game.Play.Dashboard.Panels.MaxTrustButton);
             Assert.Null(ui.Game.Play.Dashboard.Panels.DownButton);
         }

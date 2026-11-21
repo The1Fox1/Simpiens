@@ -42,7 +42,7 @@ namespace Simpiens.Client.Ui
         private readonly ContainerRuntime _legendLine;
         private string _legendTip;
         private readonly GraphicalUiElement _affinitiesViewer;
-        private const float PlaytestRowHeight = 24f; // the playtest tools' row in the sway (development builds)
+        private const float PlaytestRowHeight = 24f, PlaytestLabelWidth = 62f; // the playtest tools' row under the sway, and its label
         private const float AffinitiesHeight = 70f, HeldLineHeight = 14f; // the held line takes its 11-point line from the feelings
         private readonly SkillLine _skills; // Epic 10 Part 3, K9.5; with passions' flames since Epic 11, S1.6
         private readonly TextRuntime _description, _moodLine; // Epic UI-Beta B3
@@ -216,7 +216,8 @@ namespace Simpiens.Client.Ui
             _affinitiesList = Scroll(_dossierDetails, AffinitiesHeight, 2f, out _affinitiesViewer); // two rows with faces (UI-Beta B4); it scrolls. Unity's max-height was 120: the guild's lines and the portrait's header took the rest
             _dossierDetails.Children.Add(Window.Gap(0f));
             _dossierDetails.Children.Add(Window.SubHeader("YOUR SWAY"));
-            // Whether it would sign on with the guild, then Calm and Recruit side by side (Epic 10 G4, D6)
+            // Whether it would sign on with the guild, then Recruit (Epic 10 G4, D6). Calm Frustration stood beside it until the
+            // producer named it a debug action (2026-11-21): it is one of the playtest tools now
             _recruitText = UiParts.Text(string.Empty, UiStyle.TextLight, UiText.Small);
             _dossierDetails.Children.Add(_recruitText);
             // In the dossier's stack, so not UiParts.Row, which centres itself in its parent
@@ -228,8 +229,6 @@ namespace Simpiens.Client.Ui
                 Width = 0f,
                 Height = 32f,
             };
-            CalmButton = UiParts.Button("Calm Frustration", 0f, 32f, UiText.BodyBold);
-            CalmButton.Click += (_, _) => { _model.Dossier.Calm(); };
             RecruitButton = UiParts.Button("Recruit", 0f, 32f, UiText.BodyBold);
             // One of the patron's people is sponsored, not recruited (Epic 11, S4.9, D18): the same button, by who is shown,
             // opens its technique tree (S4.11, D25)
@@ -238,11 +237,10 @@ namespace Simpiens.Client.Ui
                 if (_model.Dossier.IsOurs) OpenTechniques?.Invoke(_model.Dossier.CrawlerId);
                 else _model.Dossier.Recruit();
             };
-            actions.Children.Add(CalmButton.Visual);
             actions.Children.Add(RecruitButton.Visual);
             _dossierDetails.Children.Add(actions);
-            // The playtest tools (development builds, ClientOptions.PlaytestTools), a second row of the sway under Calm and Recruit
-            // (the producer, 2026-11-21: looked for there); built only when asked for, so the dossier tests and renders see nothing
+            // The playtest tools (ClientOptions.PlaytestTools: development builds, or --playtest), a row under the sway marked as
+            // such; built only when asked for, so the dossier tests and renders see nothing of them
             if (playtest)
             {
                 var tools = new ContainerRuntime
@@ -253,10 +251,20 @@ namespace Simpiens.Client.Ui
                     Width = 0f,
                     Height = PlaytestRowHeight,
                 };
-                MaxTrustButton = UiParts.Button("Playtest: Max Trust", 0f, PlaytestRowHeight, UiText.SmallBold);
-                DownButton = UiParts.Button("Playtest: Down", 0f, PlaytestRowHeight, UiText.SmallBold);
+                var label = UiParts.Text("PLAYTEST", UiStyle.TextMuted, UiText.SmallBold);
+                label.WidthUnits = DimensionUnitType.Absolute;
+                label.Width = PlaytestLabelWidth;
+                label.YUnits = GeneralUnitType.PixelsFromMiddle;
+                label.YOrigin = VerticalAlignment.Center;
+                label.Y = 0f;
+                tools.Children.Add(label);
+                CalmButton = UiParts.Button("Calm", 0f, PlaytestRowHeight, UiText.SmallBold);
+                MaxTrustButton = UiParts.Button("Max Trust", 0f, PlaytestRowHeight, UiText.SmallBold);
+                DownButton = UiParts.Button("Down", 0f, PlaytestRowHeight, UiText.SmallBold);
+                CalmButton.Click += (_, _) => { _model.Dossier.Calm(); };
                 MaxTrustButton.Click += (_, _) => { _model.Dossier.MaxStanding(); };
                 DownButton.Click += (_, _) => { _model.Dossier.Down(); };
+                tools.Children.Add(CalmButton.Visual);
                 tools.Children.Add(MaxTrustButton.Visual);
                 tools.Children.Add(DownButton.Visual);
                 _dossierDetails.Children.Add(tools);
@@ -298,13 +306,14 @@ namespace Simpiens.Client.Ui
             float words = _portraits != null ? size + 10f : 0f;
             _who.X = words;
             _who.Width = -words;
-            float half = (dossier - 2f * Inner - 8f) / 2f;
-            CalmButton.Width = half;
-            RecruitButton.Width = half;
+            float full = dossier - 2f * Inner;
+            RecruitButton.Width = full;
             if (MaxTrustButton != null)
             {
-                MaxTrustButton.Width = half;
-                DownButton.Width = half;
+                float third = (float)System.Math.Floor((full - PlaytestLabelWidth - 3f * 8f) / 3f);
+                CalmButton.Width = third;
+                MaxTrustButton.Width = third;
+                DownButton.Width = third;
                 // At the smallest portrait (a window of 720 rows) the dossier has no height to spare: the tools' row takes its
                 // height from the feelings' list, as the held line does; a larger window has the room below
                 _playtestTakes = size <= PortraitAtlas.FramedSize * PortraitAtlas.BaseScale ? PlaytestRowHeight + 4f : 0f;
@@ -320,9 +329,11 @@ namespace Simpiens.Client.Ui
         }
 
         public ContainerRuntime Root { get; }
+        /// <summary>
+        /// The playtest tools (development builds, or --playtest): its frustration calmed; its warmth and trust toward the player at
+        /// their most; downed where it stands. Null without them.
+        /// </summary>
         public Button CalmButton { get; }
-
-        /// <summary>The playtest tools (development builds): its warmth and trust toward the player at their most; downed where it stands. Null without them.</summary>
         public Button MaxTrustButton { get; }
         public Button DownButton { get; }
         private bool _playtestTipped;
@@ -535,14 +546,15 @@ namespace Simpiens.Client.Ui
             }
             for (int i = affinities.Count; i < _affinityRows.Count; i++) _affinityFaces[i].Row.Visible = false;
             _affinitiesEmpty.Visible = affinities.Count == 0;
-            CalmButton.IsEnabled = dossier.CanCalm;
             if (MaxTrustButton != null)
             {
+                CalmButton.IsEnabled = dossier.CanCalm;
                 MaxTrustButton.IsEnabled = dossier.CanPlaytest;
                 DownButton.IsEnabled = dossier.CanDown;
                 if (!_playtestTipped && Tips != null)
                 {
                     _playtestTipped = true;
+                    Tips.Register(CalmButton.Visual, "Playtest: its frustration calmed to nothing.");
                     Tips.Register(MaxTrustButton.Visual, "Playtest: its warmth and trust toward you at their most (100).");
                     Tips.Register(DownButton.Visual, "Playtest: downed where it stands, as by a beetle. In a lair or a hazard it bleeds out unless carried out; elsewhere it counts as a downing survived, and lies until it heals.");
                 }

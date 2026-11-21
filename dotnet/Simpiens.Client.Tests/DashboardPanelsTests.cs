@@ -83,10 +83,11 @@ namespace Simpiens.Client.Tests
             Assert.Contains(game.Session.DashboardModel.Context.FriendlyName(walker.Id, walker.Name), game.Play.Dashboard.Panels.DossierName);
         }
 
+        /// <summary>Calm, one of the playtest tools since the producer named it a debug action (2026-11-21), calms on the next tick.</summary>
         [Fact]
         public void CalmFrustrationCalmsTheCrawlerOnTheNextTick()
         {
-            var ui = UiDriver.Start(width: Width, height: Height);
+            var ui = UiDriver.Start(new ClientOptions { PlaytestTools = true }, Width, Height);
             var game = ui.Game;
             var crawler = game.Session.Simulation.Registry.ActiveEntities.First(e => e.Type == EntityType.Pawn);
             game.Session.DashboardModel.SelectCrawler(crawler.Id);

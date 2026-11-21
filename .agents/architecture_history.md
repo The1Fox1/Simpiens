@@ -1862,3 +1862,10 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
 - **Why:** the producer looked for them under YOUR SWAY, with the dossier's other actions, and didn't find them in the header.
 - **Where now:** a second row of the sway, under Calm and Recruit and lined up with them, "Playtest: Max Trust" and "Playtest: Down". At the smallest portrait (a window of 720 rows) the row takes its 28 pixels from the feelings' list, as the held, techniques' and legend lines take theirs, so the dossier is no taller; at 1080 rows (the desktop game's default) there is room below.
 - **Found on the way (open):** at 720 rows the dossier already overruns its frame by about 6 pixels, so the sway's buttons are clipped at the bottom in the committed `render-outpost-dashboard-t300.png`. The optional lines take 14 pixels from the feelings each but cost more with the column's spacing. Not fixed here: it moves the 720 renders, which wait on a look.
+
+## 2026-11-21: Calm Frustration is a playtest tool, not the player's sway
+- **The ask:** "'Calm Frustration' is a debug action but is visible in Release builds leading to misunderstanding. Correct this." (The producer, playing a Release build, saw only Calm and Recruit and took Calm for one of the sway's real actions.)
+- **The sway** holds Recruit alone (Sponsor for one of the patron's people), at the dossier's full width. Epic 10 G4's D6 had put Calm beside it; it was Unity's dashboard action, carried over as a typed command in CLIENT M2.2.
+- **The playtest row** under the sway, marked PLAYTEST: Calm, Max Trust, Down, each a third of what the label leaves. It is built only with `ClientOptions.PlaytestTools`: on in development builds, and now `--playtest` gives it to any build of the desktop game, since the producer playtests in Release.
+- **Unchanged:** `CalmCrawlerCommand` and its validator; no scripted player or live scenario sends it.
+- **Renders:** the 720-row dossier renders lose Calm, and Recruit spans the row; re-recorded in their own commit after a look. The dossier's ~6 px overrun at 720 rows (the entry above) is still open.
