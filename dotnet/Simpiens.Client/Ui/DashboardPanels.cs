@@ -42,6 +42,7 @@ namespace Simpiens.Client.Ui
         private readonly ContainerRuntime _legendLine;
         private string _legendTip;
         private readonly GraphicalUiElement _affinitiesViewer;
+        private const float PlaytestRowHeight = 24f; // the playtest tools' row in the sway (development builds)
         private const float AffinitiesHeight = 70f, HeldLineHeight = 14f; // the held line takes its 11-point line from the feelings
         private readonly SkillLine _skills; // Epic 10 Part 3, K9.5; with passions' flames since Epic 11, S1.6
         private readonly TextRuntime _description, _moodLine; // Epic UI-Beta B3
@@ -149,19 +150,6 @@ namespace Simpiens.Client.Ui
             who.Children.Add(badge);
             _moodLine = UiParts.Text(string.Empty, UiStyle.TextLight, UiText.Small);
             who.Children.Add(_moodLine);
-            // The playtest tools (development builds, ClientOptions.PlaytestTools): under the mood, beside the portrait, where the
-            // header has room; built only when asked for, so the dossier tests and renders see nothing of them
-            if (playtest)
-            {
-                var tools = new ContainerRuntime { ChildrenLayout = ChildrenLayout.LeftToRightStack, StackSpacing = 6f, WidthUnits = DimensionUnitType.RelativeToChildren, Width = 0f, Height = 22f };
-                MaxTrustButton = UiParts.Button("Max trust", 78f, 22f, UiText.SmallBold);
-                DownButton = UiParts.Button("Down", 58f, 22f, UiText.SmallBold);
-                MaxTrustButton.Click += (_, _) => { _model.Dossier.MaxStanding(); };
-                DownButton.Click += (_, _) => { _model.Dossier.Down(); };
-                tools.Children.Add(MaxTrustButton.Visual);
-                tools.Children.Add(DownButton.Visual);
-                who.Children.Add(tools);
-            }
             header.Children.Add(who);
             _dossierDetails.Children.Add(header);
             // No gap under the header, and none of their own before the sections below (the column's spacing breaks them): the
@@ -253,6 +241,26 @@ namespace Simpiens.Client.Ui
             actions.Children.Add(CalmButton.Visual);
             actions.Children.Add(RecruitButton.Visual);
             _dossierDetails.Children.Add(actions);
+            // The playtest tools (development builds, ClientOptions.PlaytestTools), a second row of the sway under Calm and Recruit
+            // (the producer, 2026-11-21: looked for there); built only when asked for, so the dossier tests and renders see nothing
+            if (playtest)
+            {
+                var tools = new ContainerRuntime
+                {
+                    ChildrenLayout = ChildrenLayout.LeftToRightStack,
+                    StackSpacing = 8f,
+                    WidthUnits = DimensionUnitType.RelativeToParent,
+                    Width = 0f,
+                    Height = PlaytestRowHeight,
+                };
+                MaxTrustButton = UiParts.Button("Playtest: Max Trust", 0f, PlaytestRowHeight, UiText.SmallBold);
+                DownButton = UiParts.Button("Playtest: Down", 0f, PlaytestRowHeight, UiText.SmallBold);
+                MaxTrustButton.Click += (_, _) => { _model.Dossier.MaxStanding(); };
+                DownButton.Click += (_, _) => { _model.Dossier.Down(); };
+                tools.Children.Add(MaxTrustButton.Visual);
+                tools.Children.Add(DownButton.Visual);
+                _dossierDetails.Children.Add(tools);
+            }
             dossierBody.Children.Add(_dossierDetails);
             dossier.Children.Add(dossierBody);
             Root.Children.Add(dossier);
@@ -293,6 +301,22 @@ namespace Simpiens.Client.Ui
             float half = (dossier - 2f * Inner - 8f) / 2f;
             CalmButton.Width = half;
             RecruitButton.Width = half;
+            if (MaxTrustButton != null)
+            {
+                MaxTrustButton.Width = half;
+                DownButton.Width = half;
+                // At the smallest portrait (a window of 720 rows) the dossier has no height to spare: the tools' row takes its
+                // height from the feelings' list, as the held line does; a larger window has the room below
+                _playtestTakes = size <= PortraitAtlas.FramedSize * PortraitAtlas.BaseScale ? PlaytestRowHeight + 4f : 0f;
+                FitAffinities();
+            }
+        }
+
+        /// <summary>The feelings' list gives a line to each of the held, techniques' and legend's lines shown, and the playtest tools' row its room at 720 rows.</summary>
+        private void FitAffinities()
+        {
+            float height = AffinitiesHeight - (_held.Visible ? HeldLineHeight : 0f) - (_techniquesLine.Visible ? HeldLineHeight : 0f) - (_legendLine.Visible ? HeldLineHeight : 0f) - _playtestTakes;
+            _affinitiesViewer.Height = System.Math.Max(0f, height);
         }
 
         public ContainerRuntime Root { get; }
@@ -302,6 +326,7 @@ namespace Simpiens.Client.Ui
         public Button MaxTrustButton { get; }
         public Button DownButton { get; }
         private bool _playtestTipped;
+        private float _playtestTakes; // what the playtest tools' row takes from the feelings' list
         public Button RecruitButton { get; }
         public string GroupsShown => _groups.Text;
 
@@ -531,7 +556,7 @@ namespace Simpiens.Client.Ui
                 _held.Visible = held;
                 _techniquesLine.Visible = techniques;
                 _legendLine.Visible = legend;
-                _affinitiesViewer.Height = AffinitiesHeight - (held ? HeldLineHeight : 0f) - (techniques ? HeldLineHeight : 0f) - (legend ? HeldLineHeight : 0f);
+                FitAffinities();
             }
             if (legend) UiParts.SetText(_legend, dossier.Legend);
             if (!string.Equals(_legendTip, dossier.LegendTip, System.StringComparison.Ordinal))
