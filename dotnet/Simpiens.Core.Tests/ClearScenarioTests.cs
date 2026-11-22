@@ -206,8 +206,11 @@ namespace Simpiens.Core.Tests
         /// Gate seed 16 since Epic 11's teachers (S3.6, on S3's final build): over ten days a death on 7 of the 23 gate seeds; on
         /// this one, the earliest whose newcomer settles within the horizon, the first death is at t25051 and a newcomer settles
         /// at t45211.
+        /// Gate seed 11 since named creatures grow and lead (Epic 11, S7.2; on 16 both fallen are now carried out alive): over ten
+        /// days a death on 3 of the 23 gate seeds (5, 8 and 11); on this one, the earliest, the first death is at t46765 and a
+        /// newcomer settles at t66925.
         /// </summary>
-        private const ulong DeathSeed = 16;
+        private const ulong DeathSeed = 11;
 
         [Fact]
         public void DeathHasItsCost()
