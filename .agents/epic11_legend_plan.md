@@ -171,8 +171,8 @@ Working document (AGENTS.md, Documentation Protocol 6), one of Epic 11's plans (
 - [x] **S7.8 DoD `TheBeetleThatRemembers`** [Possibly Complex: a live DoD on a rare trigger] (2026-11-22: gate seed 3; 10 of 23 gate seeds. On the guild's clears the party that was downed in focuses the named creature and slays it, so the clear is the hunt that names it; a hunt bounty naming its quarry is proven by `HuntBountyTests` and the board's test.)
   - On the real outpost, within a bounded run: a creature downs or kills a crawler and earns a name; the guild's player posts a hunt naming it (or orders a clear that focuses it); it is slain; its slayer holds the Avenger epithet. The scripted players act only through commands.
   - Its seed from a measurement across the gate seeds.
-- [ ] **S7.9 S7's gate** [Basic: the gates (§4)]
-- [ ] **The producer's look at S7:** a brief in the epic's §4, written at S7.9.
+- [x] **S7.9 S7's gate** [Basic: the gates (§4)] (2026-11-22: core 335/335, client 549/549, golden 3/3, MonoGame and Android clean; the seeds and the soak at S7.6.)
+- [ ] **The producer's look at S7:** the brief is in the epic's §4.
 
 ### C. Close-out (1 day)
 - [ ] **C.1 The Legend gate** [Basic: the gates on the final build]

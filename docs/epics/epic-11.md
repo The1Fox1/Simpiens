@@ -394,7 +394,7 @@ Done means crawlers grow into someone in the live outpost with nothing injected 
   - **The chronicle in the skills' voices:** "Bram's pick rings truer: a journeyman miner now.", "Corrin's blade has won a name: Corrin Beetlebane, for three creatures slain.", and first blood; for one of your people, first blood is a short scene.
   - **Decided by exception:** the epithets' lines (a party wins Lairbreaker together), scars with no effect, Shaken and Battle-Hardened by nature, the voices' words, the guild card's placement, plain names in the chronicle and the tracker.
 
-### S7. Named creatures (under way, `feat/epic11-legend`)
+### S7. Named creatures (done 2026-11-22, `feat/epic11-legend`; the producer's look and the review of S7.1–S7.3 next)
 - [x] **Downings measured** (S7.0): `docs/skills-model.md` §5.11. The guild's clears down a member on 12 of 23 seeds within ten days and would name a creature on 10, slain by the party in the same fight; nobody falls in careful play (F13).
 - [x] **A creature earns a name; the save's one raise** (D31; supervised, for review): `CreatureTitleTable`, the rule at a downing and at a death, `CreatureNamed` and `CreatureRankRose`; format 13 (the creature's record 112 bytes, the hunt's 80); `NamedCreatureValidator` (6 tests), the round trip in `SessionRestoreValidator`, the name on the live outpost and across a load (`NamedCreatureTests`). Golden unchanged.
 
@@ -411,6 +411,18 @@ Done means crawlers grow into someone in the live outpost with nothing injected 
 - [x] **The client** (D37): the mark and the amber name, the inspector, the board's quarry, the dossier's grudge, the vow and the avenger's word; `NamedCreaturesOnScreenTests` (3 tests). The art sheet's one new sprite (`Badge_Named`) looked at; the art pins re-recorded in their own commit.
 
 - [x] **DoD `TheBeetleThatRemembers`** (gate seed 3): on the guild's clears, the beetle that downs Kwame is Kwame's Bane at t19052, the party's focus at once, and Lane slays it at t19218, Kwame's Avenger; a creature named, focused and avenged on 10 of 23 gate seeds over ten days, the days holding on all 10.
+
+- [x] **S7's gate:** core 335/335, client 549/549 in the pinned image (renders byte for byte; the art pins' one new sprite), golden 3/3, the MonoGame and Android compiles with 0 warnings; seeds 1–120 and the soak at S7.6, with no simulation change after them.
+- [ ] **The developer's review of S7.1–S7.3,** the supervised steps (the creatures' rule and save, done while the producer was away after their go): `212dd3d` (a name and format 13), `378d58d` (growth and the lead), `afce1f3` (grudges), each flagged in its message.
+- [ ] **The producer's look.** D31–D35 and D37 stand as delivered unless overturned. What to look at:
+  - **Start:** the desktop game (`dotnet run --project dotnet/Simpiens.Desktop -c Release -- --seed 3 --playtest`), at 5× or 10×. Recruit four, arm them at the stall (or build the forge), form a party and send a clear against a charted lair. On seed 3 the beetle that downs Kwame takes his name. To force it anywhere: select a resident in a lair and press the dossier's PLAYTEST Down while a beetle strikes, or let a beetle down an unarmed resident.
+  - **On the map:** the named creature's red skull and its name in amber over it ("Kwame's Bane"); selected, the selection names it.
+  - **The inspector** (click the creature with the panels hidden): "A stone beetle, a bane of Deep Seam. It downed Kwame. Its foe: …".
+  - **The chronicle:** "The stone beetle that downed Kwame in Deep Seam has a name now: Kwame's Bane.", its rank's rise ("… the second it has downed: its name grows to Scourge."), "Bram is Vengeful now: Kwame's Bane felled a friend.", and "Lane slew Kwame's Bane in Deep Seam." with Lane's epithet, Kwame's Avenger.
+  - **The bounty board:** Hunt a Lair offers "Kwame's Bane, of Deep Seam" beside its lair; the card names the quarry.
+  - **The dossier:** a Vengeful crawler's legend tip says whom it hates; the avenger's epithet in its name.
+  - **Moments** for your people: the vow when one of them takes a grudge, and the avenger's word.
+  - **Decided by exception:** the titles' growth (+20% health and +10% attack a rank, to 3), the grudge's warmth line (40) and eased bar (a quarter), only a named creature keeping a foe, a death after its downing adding nothing to a name, a boss never named, the placeholder words.
 
 ## 5. Deferred and out of scope
 
