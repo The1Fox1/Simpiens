@@ -399,6 +399,8 @@ Done means crawlers grow into someone in the live outpost with nothing injected 
 
 - [x] **The avenger** (D35): the deed and the epithet by their recipes, counted at the killing blow, told; `NamedCreatureValidator` 10 tests, `DeedsValidator`, `DeedNamesTests`. Golden unchanged.
 
+- [x] **Re-measured** (`docs/skills-model.md` §5.12): growth and legends as §5.10 in careful play; on the bold pairs named beetles down more and are slain less; seeds 1–120 both ways; the soak 18 of 18 and 20 of 20 on each player profile. `DeathHasItsCost` re-picked twice (S7.2, S7.3), no other DoD moved.
+
 ## 5. Deferred and out of scope
 
 | Left out | Owner |

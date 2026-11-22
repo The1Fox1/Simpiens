@@ -163,7 +163,7 @@ Working document (AGENTS.md, Documentation Protocol 6), one of Epic 11's plans (
   - **The checks:** the hunt's validators gain a named hunt (refused for a creature not named or not charted; paid on its death by damage, not on the lair emptied); the round trip.
 - [x] **S7.5 The avenger** [Basic: a deed row and an epithet row, by their recipes] (2026-11-22. The moment, a scene for the patron's people, comes with S7.7's naming scene.)
   - `Deed.NamedCreatureSlain` (9) counted at the killing blow; the Avenger epithet (D35); `NamedCreatureSlain` in the chronicle. `DeedNamesTests` lists the place.
-- [ ] **S7.6 Re-measured** [Possibly Complex: measuring]
+- [x] **S7.6 Re-measured** [Possibly Complex: measuring] (2026-11-22: §5.12. Seeds 1–120 both ways and the soak hold; `DeathHasItsCost` re-picked at S7.2 and S7.3 rather than once here, each in its own commit, so every step's commit stayed green.)
   - As S6.5, with named creatures (`docs/skills-model.md` §5.12). Moved DoDs re-picked once, each in its own commit.
 - [ ] **S7.7 The client: the named creature** [Possibly Complex: art, the inspector, the board, a scene]
   - The name over it and its mark on the map (a badge per view mode, art pins); the inspector's lines; the hunt board's quarry picker; the naming scene.

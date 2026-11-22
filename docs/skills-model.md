@@ -454,3 +454,18 @@ S6's final build, the 23 gate seeds over 14 days (`MeasureDowningsOnTheGateSeeds
 - **Nobody falls in careful play** (F13 stands): with no player or the hunting players no creature downs anyone in two weeks, so no creature is named there.
 - **A clear's named creature dies in the same fight:** the party that was downed in finishes the lair, so the beetle named for a fallen member is slain by its mates the same hour (29 of 29), and its slayer is the avenger (D35). A named creature outlives its naming only where the attackers break off: the pairs under the Bold rule, where the lair keeps its named beetles: of 75, 30 reach rank 2 and 20 rank 3.
 - **The DoD's shape** (S7.8): the guild's clears name a creature on 10 of 23 seeds within ten days, so `TheBeetleThatRemembers` runs them, as `TheOutpostRemembers` does; the Bold rule's pairs aren't needed. A hunt naming its quarry (D34) gets its proof in the validators and the client, since in live play the clear that names a creature also kills it.
+
+### 5.12 With named creatures (S7.6, 2026-11-22)
+S7.1–S7.5's build (a name, growth and the lead, grudges, a hunt's quarry, the avenger), the 23 gate seeds over 14 days.
+
+- **Growth and legends as before:** §5.10 to the digit. A Journeyman's skill at day 14 held by 1.43 residents a seed with the hunting players and 0.17 with none; epithets held by 61 residents on 20 seeds with the hunting players and 12 on 10 with none, the same rows. Nobody falls in careful play (F13), so no creature is named there.
+- **Downings** (`MeasureDowningsOnTheGateSeeds`):
+
+| Play | Seeds with a downing | Downings (by bosses) | Deaths | Named | Rank 2 / 3 | Slain after |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| No player, hunting players | 0 | 0 | 0 | none | | |
+| The guild's clears | 12, all within ten days | 50 (18) | 0 | 32 on 10 seeds | 0 / 0 | 32 |
+| `DeathHasItsCost`'s pairs | 20 (19 within ten days) | 198 (0) | 13 | 49 on 20 seeds | 23 / 18 | 34 |
+
+- **The named creature bites:** on the bold pairs a beetle that grows and leads downs more of them (198 downings against 137 at §5.11, deaths 13 against 7, fewer creatures named because each named one downs more), and fewer are slain after (34 of 49 against 71 of 75): the lair a named creature leads is the wall D32 warns of, which the hunt and the clear answer. On the guild's clears every named creature still dies in the fight that named it.
+- **Moved DoDs:** `DeathHasItsCost`, re-picked at S7.2 (to gate seed 11) and S7.3 (to 8), each in its own commit; no other. Seeds 1–120 pass the outpost's day, 120/120 with and without the guild; the soak holds, 18 of 18, and the `guild`, `crafting` and `hunting` profiles 20 of 20 each on seeds 1–20.
