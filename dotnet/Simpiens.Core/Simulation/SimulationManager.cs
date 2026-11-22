@@ -134,7 +134,7 @@ namespace Simpiens.Simulation
             Creatures.Tick(this, tick);
             Piles.Tick(this, tick);
             TickTheFallen(tick);
-            _market.SettleHunts(Creatures.Lairs, _agentRegistry, tick); // a hunted lair emptied pays its hunters (K6.1)
+            _market.SettleHunts(Creatures, _agentRegistry, tick); // a hunted lair emptied, or a hunt's quarry slain, pays its hunters (K6.1; Epic 11, S7.4)
         }
 
         /// <summary>
@@ -486,7 +486,7 @@ namespace Simpiens.Simulation
         }
 
         void Simpiens.Simulation.Creatures.ICreatureWorld.CreatureHit(EntityId crawler, Simpiens.Simulation.Creatures.CreatureState creature, float damage)
-            => _market.RecordHuntDamage(crawler, creature.LairIndex, damage);
+            => _market.RecordHuntDamage(crawler, creature.LairIndex, creature.Id, damage);
 
         void Simpiens.Simulation.Creatures.ICreatureWorld.CreatureSlain(EntityId slayer, Simpiens.Simulation.Creatures.CreatureState creature, System.ReadOnlySpan<ItemInstance> drops, uint tick)
         {

@@ -55,6 +55,19 @@ namespace Simpiens.Hosting
             }
             var lairs = simulation.Creatures.Lairs;
             int lair = -1;
+            EntityId quarry = default;
+            // A named creature in a charted lair first, the highest rank (Epic 11, S7.4, D34): a hunt naming it
+            var creatures = simulation.Creatures.Creatures;
+            int rank = 0;
+            for (int i = 0; i < creatures.Count; i++)
+            {
+                var c = creatures[i];
+                if (!c.IsNamed || !c.IsAlive || c.Rank <= rank || !simulation.Creatures.IsCharted(c.LairIndex)) continue;
+                if (_kind != CreatureKind.None && lairs[c.LairIndex].Definition.Kind != _kind) continue;
+                rank = c.Rank;
+                lair = c.LairIndex;
+                quarry = c.Id;
+            }
             for (int i = 0; i < lairs.Count && lair < 0; i++)
             {
                 if ((_kind == CreatureKind.None || lairs[i].Definition.Kind == _kind) && simulation.Creatures.IsCharted(i) && lairs[i].Alive > 0) lair = i;
@@ -62,7 +75,7 @@ namespace Simpiens.Hosting
             if (lair < 0 || !SomeoneBraves(lairs[lair].Definition, simulation.Creatures.IsBossAlive(lair), simulation.Creatures.LeaderRank(lair))) return;
             if (simulation.ActiveStalls.Count == 0 || simulation.ActiveStalls[0].TreasuryGold < _reward + _reserve) return;
             _commands.QueueInfluence(InfluenceEvent.CreatePostBounty(SourceId, new PostBountyCommand(0, BountyType.Hunt, 0, ItemType.None, 1, _reward,
-                DayClock.Hours(simulation.Economy.Hunt.LifeHours), default, simulation.ActiveStalls[0].StallEntityId, (byte)lair)));
+                DayClock.Hours(simulation.Economy.Hunt.LifeHours), default, simulation.ActiveStalls[0].StallEntityId, (byte)lair, quarry)));
             _pending = true;
             Posted++;
             if (FirstPostTick < 0) FirstPostTick = tick;

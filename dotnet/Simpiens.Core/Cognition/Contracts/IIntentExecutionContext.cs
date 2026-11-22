@@ -51,6 +51,9 @@ namespace Simpiens.Cognition.Contracts
         /// <summary>The living creature of lair <paramref name="lairIndex"/> nearest <paramref name="from"/> (Epic 10 Part 3, K6.2: a hunter's quarry); false when the lair is empty.</summary>
         bool TryGetNearestLairCreature(int lairIndex, Vec2 from, out Simpiens.Simulation.Creatures.CreatureState creature);
 
+        /// <summary>The open hunt <paramref name="bountyId"/>'s party, with its quarry (Epic 11, S7.4); false once it is closed.</summary>
+        bool TryGetHunt(ushort bountyId, out Simpiens.Simulation.Economy.HuntRecord hunt) { hunt = default; return false; }
+
         /// <summary>A claim on a hunt joins its party while it has room (Epic 10 Part 3, K6.1); true when the crawler is in it.</summary>
         bool TryJoinHunt(ushort bountyId, EntityId crawler);
 

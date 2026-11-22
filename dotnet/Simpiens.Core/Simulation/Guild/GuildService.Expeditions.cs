@@ -749,9 +749,9 @@ namespace Simpiens.Simulation.Guild
         }
 
         /// <summary>
-        /// Focus fire (K7.2a, Q8): the party fights one creature at a time, the leader's choice: the lair's living creature
-        /// nearest its captain (Epic 11, S5.4, D22; the first member with the party until then), then the weakest, then the
-        /// lowest id. Kept while it lives.
+        /// Focus fire (K7.2a, Q8): the party fights one creature at a time, the leader's choice: a named creature first, the
+        /// highest rank (Epic 11, S7.4, D34); then the lair's living creature nearest its captain (Epic 11, S5.4, D22; the first
+        /// member with the party until then), then the weakest, then the lowest id. Kept while it lives.
         /// </summary>
         private void ChooseFocus(IGuildHost host, GuildParty party)
         {
@@ -762,13 +762,16 @@ namespace Simpiens.Simulation.Guild
             if (lairs == null || party.Record.LairIndex >= lairs.Count || leader == null) return;
             var lair = lairs[party.Record.LairIndex];
             float bestDistance = float.MaxValue, bestHealth = float.MaxValue;
+            int bestRank = 0;
             for (int slot = 0; slot < lair.Pack; slot++)
             {
                 var id = lair.MemberIn(slot);
                 if (id == default || !host.TryGetCreature(id, out var c) || !c.IsAlive) continue;
+                if (c.Rank < bestRank) continue; // the named first (S7.4)
                 float d = (c.Position - leader.Position).SqrMagnitude;
-                bool better = d < bestDistance || (d == bestDistance && (c.Health < bestHealth || (c.Health == bestHealth && c.Id.CompareTo(party.Focus) < 0)));
+                bool better = c.Rank > bestRank || d < bestDistance || (d == bestDistance && (c.Health < bestHealth || (c.Health == bestHealth && c.Id.CompareTo(party.Focus) < 0)));
                 if (!better) continue;
+                bestRank = c.Rank;
                 bestDistance = d;
                 bestHealth = c.Health;
                 party.Focus = c.Id;

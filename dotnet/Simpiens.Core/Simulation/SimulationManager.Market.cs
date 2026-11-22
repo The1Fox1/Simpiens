@@ -41,14 +41,23 @@ namespace Simpiens.Simulation
                 SimLog.Intervention.ZLogWarning($"Hunt rejected: lair {cmd.LairIndex} isn't a charted lair with a creature in it");
                 return;
             }
+            // Its quarry, if it names one (Epic 11, S7.4, D34): a named creature living in that lair
+            if (cmd.Quarry != default && (!Creatures.TryGet(cmd.Quarry, out var quarry) || !quarry.IsAlive || !quarry.IsNamed || quarry.LairIndex != cmd.LairIndex))
+            {
+                SimLog.Intervention.ZLogWarning($"Hunt rejected: {cmd.Quarry} isn't a named creature living in lair {cmd.LairIndex}");
+                return;
+            }
             var heart = lairs[cmd.LairIndex].Definition.Position;
             var hunt = new PostBountyCommand(cmd.BountyId, BountyType.Hunt, (byte)GetSectorForPosition(heart), ItemType.None, 1, cmd.RewardGold,
-                cmd.DurationTicks, heart, cmd.CreatorStallId, cmd.LairIndex);
+                cmd.DurationTicks, heart, cmd.CreatorStallId, cmd.LairIndex, cmd.Quarry);
             _market.PostBounty(in hunt, currentTick);
         }
 
         /// <summary>The open hunts' parties (Epic 10 Part 3, K6.1), by bounty id.</summary>
         public IReadOnlyList<HuntRecord> Hunts => _market.Hunts;
+
+        /// <summary>The open hunt <paramref name="bountyId"/>'s party (K6.1), with its quarry (Epic 11, S7.4).</summary>
+        public bool TryGetHunt(ushort bountyId, out HuntRecord hunt) => _market.TryGetHunt(bountyId, out hunt);
 
         /// <summary>The living creature of lair <paramref name="lairIndex"/> nearest <paramref name="from"/> (K6.2), the lowest id on a tie.</summary>
         public bool TryGetNearestLairCreature(int lairIndex, Vec2 from, out Simpiens.Simulation.Creatures.CreatureState creature)

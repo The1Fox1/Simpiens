@@ -284,6 +284,12 @@ namespace Simpiens.Intervention
         public readonly byte LairIndex;
         public const byte NoLair = byte.MaxValue;
 
+        /// <summary>
+        /// A hunt's quarry (Epic 11, S7.4, D34): a named creature of the lair, paid on its death by the damage each hunter dealt
+        /// it, not on the lair emptied; empty for a hunt of the whole lair.
+        /// </summary>
+        public readonly EntityId Quarry;
+
         public PostBountyCommand(
             ushort bountyId,
             BountyType type,
@@ -294,9 +300,11 @@ namespace Simpiens.Intervention
             uint durationTicks = 1000,
             Vec2 targetLocation = default,
             EntityId creatorStallId = default,
-            byte lairIndex = NoLair)
+            byte lairIndex = NoLair,
+            EntityId quarry = default)
         {
             LairIndex = lairIndex;
+            Quarry = quarry;
             BountyId = bountyId;
             Type = type;
             SectorId = sectorId;

@@ -176,6 +176,12 @@ namespace Simpiens.Cognition.Planning.Handlers
             var agent = node.Agent;
             if (agent == null || agent.IsDowned || agent.Health < Vitality.FightLine(agent.Expedition)) return IntentResult.Failed;
             if (!context.TryGetNearestLairCreature(hunt.LairIndex, node.Position, out var creature)) return IntentResult.Success; // the lair is empty
+            // A hunt naming its quarry (Epic 11, S7.4, D34): it first, and done once it is dead
+            if (context.TryGetHunt(hunt.BountyId, out var record) && record.Quarry != default)
+            {
+                if (!context.TryGetCreature(record.Quarry, out var quarry) || !quarry.IsAlive) return IntentResult.Success;
+                creature = quarry;
+            }
             // Under a clear's orders, the party's focus while it lives (Epic 10 Part 3, K7.2a)
             var order = agent.Expedition;
             if (order.IsFighting && order.LairIndex == hunt.LairIndex && order.Focus != default && context.TryGetCreature(order.Focus, out var focus) && focus.IsAlive) creature = focus;

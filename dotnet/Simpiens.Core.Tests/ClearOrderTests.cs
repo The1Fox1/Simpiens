@@ -163,6 +163,23 @@ namespace Simpiens.Core.Tests
                 Assert.True(o.Members[i].Memory.GetAffinity(WorldRegistry.PlayerEntityId, o.Tick).Trust > trust[i], "A cleared lair is thanked as a haul (D43).");
         }
 
+        /// <summary>A named creature in the lair is the party's focus first (Epic 11, S7.4, D34), the farthest though it stands.</summary>
+        [Fact]
+        public void TheNamedIsTheFocusFirst()
+        {
+            using var o = NewOutpost();
+            var at = o.Heart + new Vec2(-1.5f, -1f);
+            var rats = o.Sim.Simulation.Creatures.Creatures.Where(c => c.LairIndex == o.Warren && c.IsAlive && !c.Definition.IsBoss).ToList();
+            Assert.True(rats.Count >= 2, "The warren holds rats besides its Matriarch.");
+            var far = rats.OrderByDescending(c => (c.Position - at).SqrMagnitude).First();
+            var fallen = o.Sim.Host.CrawlerStates.Where(s => !s.IsDrifter && !o.Members.Contains(s)).First(); // downed by hand: the rat takes its name
+            ((ICreatureWorld)o.Sim.Simulation).Strike(o.Sim.Registry.GetEntity(fallen.AgentId), far.Id, new Simpiens.Simulation.Combat.SwingOutcome(true, 1f, 1000f), o.Tick);
+            Assert.True(far.IsNamed);
+            o.ToTheFight();
+            o.Step();
+            Assert.Equal(far.Id, o.Guild.OrderFor(o.Members[0].AgentId).Focus);
+        }
+
         [Fact]
         public void HalfThePartyDownTurnsTheFightBack()
         {

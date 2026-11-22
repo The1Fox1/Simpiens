@@ -157,7 +157,7 @@ Working document (AGENTS.md, Documentation Protocol 6), one of Epic 11's plans (
   - **The creature's:** its foe seen 3 units nearer (D33).
   - **The crawlers':** Vengeful earned by a fallen's friend, the grudge in the traits record, the grudge's lair braved with less to spare (the snapshot's mask of lairs a named creature leads).
   - **The checks:** `GrudgeValidator` (the foe's draw, Vengeful earned by warmth, the eased bar only for the grudge's lair and only for the bold and armed).
-- [ ] **S7.4 A hunt names its quarry** [Possibly Complex: a command's shape and the hunt record, in the same raise]
+- [x] **S7.4 A hunt names its quarry** [Possibly Complex: a command's shape and the hunt record, in the same raise] (2026-11-22. The record's field landed at S7.1. The hunters' handler takes the quarry first and is done at its death, read through the context's `TryGetHunt`. Golden unchanged; no DoD moved.)
   - **The command and the record:** `PostBountyCommand`'s quarry, `HuntRecord`'s; `Market` pays on the quarry's death by damage dealt to it.
   - **The players:** `HuntPlayer` names a charted quarry; `ChooseFocus` takes the named first.
   - **The checks:** the hunt's validators gain a named hunt (refused for a creature not named or not charted; paid on its death by damage, not on the lair emptied); the round trip.
