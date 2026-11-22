@@ -161,7 +161,7 @@ Working document (AGENTS.md, Documentation Protocol 6), one of Epic 11's plans (
   - **The command and the record:** `PostBountyCommand`'s quarry, `HuntRecord`'s; `Market` pays on the quarry's death by damage dealt to it.
   - **The players:** `HuntPlayer` names a charted quarry; `ChooseFocus` takes the named first.
   - **The checks:** the hunt's validators gain a named hunt (refused for a creature not named or not charted; paid on its death by damage, not on the lair emptied); the round trip.
-- [ ] **S7.5 The avenger** [Basic: a deed row and an epithet row, by their recipes]
+- [x] **S7.5 The avenger** [Basic: a deed row and an epithet row, by their recipes] (2026-11-22. The moment, a scene for the patron's people, comes with S7.7's naming scene.)
   - `Deed.NamedCreatureSlain` (9) counted at the killing blow; the Avenger epithet (D35); `NamedCreatureSlain` in the chronicle. `DeedNamesTests` lists the place.
 - [ ] **S7.6 Re-measured** [Possibly Complex: measuring]
   - As S6.5, with named creatures (`docs/skills-model.md` §5.12). Moved DoDs re-picked once, each in its own commit.

@@ -497,7 +497,11 @@ namespace Simpiens.Simulation
             {
                 killer.AddDeed(Simpiens.Simulation.Skills.Deed.CreatureSlain, (byte)creature.Kind); // the kind, for its slayer's epithet (Epic 11, S6.1)
                 if (creature.Definition != null && creature.Definition.IsBoss) killer.AddDeed(Simpiens.Simulation.Skills.Deed.BossSlain, (byte)creature.Kind);
+                if (creature.IsNamed) killer.AddDeed(Simpiens.Simulation.Skills.Deed.NamedCreatureSlain, (byte)creature.Kind, creature.Victim); // the avenger, its victim's name (Epic 11, S7.5, D35)
             }
+            if (creature.IsNamed)
+                Chronicle?.RecordEvent(new Simpiens.Narrative.ChronicleEvent(Simpiens.Narrative.ChronicleEventType.NamedCreatureSlain, slayer, creature.Id,
+                    GetSectorForPosition(creature.Position), tick, Simpiens.Narrative.ChronicleIntensity.Crisis, (byte)creature.Kind + 256 * creature.Rank));
             SimLog.Simulation.ZLogInformation($"{SimLog.Agent(slayer)} slew a {Simpiens.Simulation.Creatures.CreatureCatalog.NameOf(creature.Kind)} at {creature.Position}");
             Chronicle?.RecordEvent(new Simpiens.Narrative.ChronicleEvent(Simpiens.Narrative.ChronicleEventType.CreatureSlain, slayer, creature.Id,
                 GetSectorForPosition(creature.Position), tick, Simpiens.Narrative.ChronicleIntensity.Dramatic, (byte)creature.Kind));

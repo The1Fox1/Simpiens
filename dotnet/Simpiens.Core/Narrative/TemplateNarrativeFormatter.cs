@@ -257,6 +257,10 @@ namespace Simpiens.Narrative
                     return $"{actorB} fell to {actorA} in {sector}, the {Ordinal(renown / 2048)} it has downed: its name grows to {word}.";
                 }
 
+                // The avenger (Epic 11, S7.5, D35): its epithet is told on its own line
+                case ChronicleEventType.NamedCreatureSlain:
+                    return $"{actorA} slew {actorB} in {sector}.";
+
                 case ChronicleEventType.CreatureSlain:
                     return $"{actorA} slew a {(Simpiens.Simulation.Creatures.CreatureCatalog.Get((Simpiens.Simulation.Creatures.CreatureKind)(byte)evt.ExtraData)?.DisplayName ?? "creature").ToLowerInvariant()} in {sector}.";
 

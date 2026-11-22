@@ -18,7 +18,8 @@ namespace Simpiens.Simulation.Skills
         Lairbreaker = 5,
         Huntsman = 6,
         Teacher = 7,
-        Maker = 8
+        Maker = 8,
+        Avenger = 9
     }
 
     /// <summary>How an epithet's words are made (D27).</summary>
@@ -87,6 +88,8 @@ namespace Simpiens.Simulation.Skills
                 new EpithetDefinition(Epithet.Huntsman, "the Huntsman", Deed.HuntPaid, 3, 2),
                 new EpithetDefinition(Epithet.Teacher, "the Teacher", Deed.Taught, 10, 2),
                 new EpithetDefinition(Epithet.Maker, "the Maker", Deed.Make, 40, 1),
+                // The avenger (Epic 11, S7.5, D35): whoever slays a named creature carries its first victim's name, the highest rank
+                new EpithetDefinition(Epithet.Avenger, "{0}'s Avenger", Deed.NamedCreatureSlain, 1, 6, EpithetForm.CrawlerName),
             };
             foreach (var row in rows)
             {

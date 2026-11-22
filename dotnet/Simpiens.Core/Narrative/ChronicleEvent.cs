@@ -65,7 +65,8 @@ namespace Simpiens.Narrative
         TraitEarned = 55, // Epic 11, S6.3 (D29): ActorA's deeds earned it a trait; the extra is the trait
         FirstBlood = 56, // Epic 11, S6.4 (D30): ActorA slew its first creature, ActorB; the extra is the creature's kind + 256 x ActorA's best skill
         CreatureNamed = 57, // Epic 11, S7.1 (D31): creature ActorA downed (or killed) crawler ActorB and took a name from it; the extra is the kind + 256 x the rank + 1024 if it killed + 2048 x the crawlers it has downed
-        CreatureRankRose = 58 // Epic 11, S7.1 (D31): named creature ActorA downed crawler ActorB and its rank rose; the extra as CreatureNamed's
+        CreatureRankRose = 58, // Epic 11, S7.1 (D31): named creature ActorA downed crawler ActorB and its rank rose; the extra as CreatureNamed's
+        NamedCreatureSlain = 59 // Epic 11, S7.5 (D35): ActorA slew named creature ActorB; the extra is its kind + 256 x its rank
     }
 
     /// <summary>

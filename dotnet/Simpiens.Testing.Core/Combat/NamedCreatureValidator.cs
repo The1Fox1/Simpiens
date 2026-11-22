@@ -15,7 +15,8 @@ namespace Simpiens.Testing.Combat
     /// creature named at the downing its blow causes, told; its rank rising with each crawler it downs, to the most; a creature
     /// named at a death it caused; a boss never named; a named creature slain not returning, its place refilled by a plain one;
     /// growing with its rank (S7.2, D32: its health and attack); its lair judged more dangerous, so a lone crawler keeps away;
-    /// and leading its pack, the mates in its lair's reach taking its quarry. The save's round trip is <see cref="Simpiens.Testing.Persistence.SessionRestoreValidator"/>'s. Runs as a test
+    /// and leading its pack, the mates in its lair's reach taking its quarry; and its slayer the avenger (S7.5, D35: the deed,
+    /// "{its victim}'s Avenger", told), a plain kill giving neither. The save's round trip is <see cref="Simpiens.Testing.Persistence.SessionRestoreValidator"/>'s. Runs as a test
     /// (ValidatorTests).
     /// </summary>
     public class NamedCreatureValidator
@@ -34,7 +35,8 @@ namespace Simpiens.Testing.Combat
             ValidateItGrows();
             ValidateTheLairsDanger();
             ValidateItLeadsItsPack();
-            TestLog.Log("<color=green>[NamedCreatureValidator] ALL 9 TESTS PASSED SUCCESSFULLY!</color>");
+            ValidateTheAvenger();
+            TestLog.Log("<color=green>[NamedCreatureValidator] ALL 10 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private static void ValidateTheTitles()
@@ -229,6 +231,36 @@ namespace Simpiens.Testing.Combat
             Assert(Follows(named: true), "A named leader's mate takes its quarry, out of its own sight.");
             Assert(!Follows(named: false), "An unnamed chaser's mate rests on.");
             TestLog.Log($"[PASS] Test 9: it leads its pack: the mate in its lair's reach takes its quarry (seed {seed}).");
+        }
+
+        private static void ValidateTheAvenger()
+        {
+            var w = World();
+            var beetle = First(w.Sim, CreatureKind.StoneBeetle);
+            var ama = w.Crawler(beetle.Position, "Ama");
+            w.Down(ama, beetle.Id);
+            var corrin = w.Crawler(beetle.Position, "Corrin");
+            uint tick = (uint)w.Clock.CurrentTick;
+            w.Sim.Creatures.Slay(w.Sim, beetle.Id, tick);
+            ((ICreatureWorld)w.Sim).CreatureSlain(corrin.Node.Id, beetle, System.ReadOnlySpan<Simpiens.Simulation.Economy.ItemInstance>.Empty, tick);
+            var traits = corrin.Agent.Traits;
+            Assert(traits.Count(Simpiens.Simulation.Skills.Deed.NamedCreatureSlain) == 1 && traits.Count(Simpiens.Simulation.Skills.Deed.CreatureSlain) == 1, "Corrin's blow: a named creature slain, counted beside the kill.");
+            Assert(traits.Epithet == Simpiens.Simulation.Skills.Epithet.Avenger && traits.EpithetSubject == ama.Node.Id, "Corrin carries the avenger's epithet, for Ama.");
+            string words = Simpiens.Simulation.Skills.EpithetRules.Words(traits, w.Identity.GetFriendlyName);
+            Assert(words == "Ama's Avenger", $"\"{words}\".");
+            var told = w.Told(ChronicleEventType.NamedCreatureSlain);
+            Assert(told.Count == 1 && told[0].ActorAId == corrin.Node.Id && told[0].ActorBId == beetle.Id, "Told: Corrin slew the named beetle.");
+            w.Identity.RegisterCustomName(beetle.Id, "Ama's Bane");
+            string line = w.Line(told[0]);
+            Assert(line.Contains("Corrin slew Ama's Bane"), $"The chronicle says it: \"{line}\".");
+
+            // A plain kill: neither the deed nor the epithet
+            var rat = First(w.Sim, CreatureKind.BurrowRat);
+            var dov = w.Crawler(rat.Position, "Dov");
+            w.Sim.Creatures.Slay(w.Sim, rat.Id, tick);
+            ((ICreatureWorld)w.Sim).CreatureSlain(dov.Node.Id, rat, System.ReadOnlySpan<Simpiens.Simulation.Economy.ItemInstance>.Empty, tick);
+            Assert(dov.Agent.Traits.Count(Simpiens.Simulation.Skills.Deed.NamedCreatureSlain) == 0 && dov.Agent.Traits.Epithet != Simpiens.Simulation.Skills.Epithet.Avenger && w.Told(ChronicleEventType.NamedCreatureSlain).Count == 1, "A plain rat: neither.");
+            TestLog.Log($"[PASS] Test 10: its slayer is the avenger, \"{words}\": \"{line}\"");
         }
 
         private static bool Near(float a, float b) => System.Math.Abs(a - b) < 0.01f;
