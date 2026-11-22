@@ -82,8 +82,10 @@ namespace Simpiens.Presentation
         public EntityId CreatureTarget;
         /// <summary>A creature swung during this tick, hit or miss (Epic 10 Part 3, K2.5: its strike pose).</summary>
         public bool Striking;
-        /// <summary>A creature's health as a share of its kind's whole (Epic 10 Part 3, K10.5b: a boss's health bar); 0 for the rest.</summary>
+        /// <summary>A creature's health as a share of its whole (Epic 10 Part 3, K10.5b: a boss's health bar); 0 for the rest.</summary>
         public float CreatureHealth;
+        /// <summary>A named creature's rank (Epic 11, S7.7, D37): its mark and its name over it; 0 for the rest.</summary>
+        public byte CreatureRank;
 
         /// <summary>A creature (it has a kind), drawn as its kind (<see cref="EntityVisuals.Creature"/>).</summary>
         public readonly bool IsCreature => Creature != Simpiens.Simulation.Creatures.CreatureKind.None;
@@ -244,7 +246,8 @@ namespace Simpiens.Presentation
                     Creature = creature != null ? creature.Kind : Simpiens.Simulation.Creatures.CreatureKind.None,
                     CreatureMode = creature != null ? creature.Mode : default,
                     CreatureTarget = creature != null ? creature.Target : default,
-                    CreatureHealth = creature?.Definition != null ? (float)(creature.Health / creature.Definition.MaxHealth) : 0f,
+                    CreatureHealth = creature?.Definition != null ? (float)(creature.Health / creature.MaxHealth) : 0f,
+                    CreatureRank = creature != null ? creature.Rank : (byte)0,
                     Striking = creature != null && creature.SwungAtTick != 0 && creature.SwungAtTick == (uint)tick,
                     PileItem = entity.Pile != null ? TopItem(entity.Pile) : ItemType.None,
                     IsBody = entity.Pile != null && entity.Pile.IsBody,

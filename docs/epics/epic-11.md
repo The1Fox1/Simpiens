@@ -177,6 +177,13 @@ Proposed in plan 3 (`.agents/epic11_legend_plan.md`) as defaults, at the produce
   - **The legend line** in the dossier: the epithet and why, the earned traits, the scars, each in its tip.
   - **Scars drawn:** each shape at its place on the portrait, in scar red over skin; a fleck at each place on the body. The frames carry them (`ScarMarks`), and both keys hold them.
 
+- **D37, the client for S7** (S7.7):
+  - **On the map:** a named creature's mark (`badge/named`, a blood-red skull, in both view modes, hung where a role badge hangs) and its name over it in amber; selected, the selection names it. The frames carry its rank (`EntityView.CreatureRank`) and its health against its own whole.
+  - **The inspector:** its name, its kind and title, whom it downed first and how many since, its foe ("A burrow rat, a bane of Overgrowth. It downed Ama and one more. Its foe: Bram.").
+  - **The bounty board:** each named creature of a charted lair offered as a hunt's quarry beside its lair ("Ama's Bane, of Overgrowth"); a quarry hunt's card names it.
+  - **The dossier:** Vengeful's tip says whom it hates ("Vengeful: against Ama's Bane, it braves its foe's lair with a quarter less to spare"), or that its foe is slain.
+  - **Moments** for the patron's people: the vow when one of them takes a grudge, and the avenger's word at the killing blow (`SkillScenes.Vows`, `Avenged`). The vow is the naming scene: it plays as the creature takes its name.
+
 ## 1. Goal
 **The player promise:** watch a crawler become someone. The miner who burns for the deep seam. The Warden who holds the line. The smith whose blade carries a dead friend's name. The patron can't make a hero, but can pay for the training, sponsor the technique and post the hunt that makes one.
 
@@ -400,6 +407,8 @@ Done means crawlers grow into someone in the live outpost with nothing injected 
 - [x] **The avenger** (D35): the deed and the epithet by their recipes, counted at the killing blow, told; `NamedCreatureValidator` 10 tests, `DeedsValidator`, `DeedNamesTests`. Golden unchanged.
 
 - [x] **Re-measured** (`docs/skills-model.md` §5.12): growth and legends as §5.10 in careful play; on the bold pairs named beetles down more and are slain less; seeds 1–120 both ways; the soak 18 of 18 and 20 of 20 on each player profile. `DeathHasItsCost` re-picked twice (S7.2, S7.3), no other DoD moved.
+
+- [x] **The client** (D37): the mark and the amber name, the inspector, the board's quarry, the dossier's grudge, the vow and the avenger's word; `NamedCreaturesOnScreenTests` (3 tests). The art sheet's one new sprite (`Badge_Named`) looked at; the art pins re-recorded in their own commit.
 
 ## 5. Deferred and out of scope
 

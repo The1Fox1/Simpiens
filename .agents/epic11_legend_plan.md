@@ -165,7 +165,7 @@ Working document (AGENTS.md, Documentation Protocol 6), one of Epic 11's plans (
   - `Deed.NamedCreatureSlain` (9) counted at the killing blow; the Avenger epithet (D35); `NamedCreatureSlain` in the chronicle. `DeedNamesTests` lists the place.
 - [x] **S7.6 Re-measured** [Possibly Complex: measuring] (2026-11-22: §5.12. Seeds 1–120 both ways and the soak hold; `DeathHasItsCost` re-picked at S7.2 and S7.3 rather than once here, each in its own commit, so every step's commit stayed green.)
   - As S6.5, with named creatures (`docs/skills-model.md` §5.12). Moved DoDs re-picked once, each in its own commit.
-- [ ] **S7.7 The client: the named creature** [Possibly Complex: art, the inspector, the board, a scene]
+- [x] **S7.7 The client: the named creature** [Possibly Complex: art, the inspector, the board, a scene] (2026-11-22. The naming scene is the vow of the patron's person who takes a grudge, as the creature takes its name; the avenger's word is a second moment. Placeholder words, by kind, until the narrative work: moments are written from the event alone.)
   - The name over it and its mark on the map (a badge per view mode, art pins); the inspector's lines; the hunt board's quarry picker; the naming scene.
   - **The checks:** `NamedCreaturesOnScreenTests`; the art sheet looked at, the pins and renders re-recorded in their own commits.
 - [ ] **S7.8 DoD `TheBeetleThatRemembers`** [Possibly Complex: a live DoD on a rare trigger]

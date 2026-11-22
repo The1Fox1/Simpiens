@@ -371,6 +371,13 @@ namespace Simpiens.Presentation.Dashboard
             {
                 var trait = Simpiens.Simulation.Skills.EarnedTraitTable.Get(traits.TraitAt(i));
                 if (trait == null) continue;
+                if (trait.Act != Simpiens.Simulation.Skills.TraitAct.None) // an act's trait: whom it hates (Epic 11, S7.7, D37)
+                {
+                    Part(trait.Words, traits.Grudge != default
+                        ? $"{trait.Words}: against {_context.FriendlyName(traits.Grudge, "a named creature")}, it {trait.ActWords}"
+                        : $"{trait.Words}: its foe is slain");
+                    continue;
+                }
                 var deed = Simpiens.Simulation.Skills.DeedTable.Get(trait.Deed);
                 Part(trait.Words, $"{trait.Words}: {trait.EffectWords}{(deed != null ? ", after " + deed.CountOf(trait.Count) : string.Empty)}");
             }

@@ -4,13 +4,13 @@ namespace Simpiens.Presentation.Art
 {
     /// <summary>
     /// A guild member's role badge over its body on the map (Epic 11, S5.8, D24): a shield for the front, an arrow for the back,
-    /// a cross for a carrier, a star for a leader, each seven pixels square with a dark rim so it reads on any floor. A
-    /// generator: it reads no table and no sheet.
+    /// a cross for a carrier, a star for a leader, each seven pixels square with a dark rim so it reads on any floor; and a
+    /// named creature's mark (S7.7, D37): a blood-red skull. A generator: it reads no table and no sheet.
     /// </summary>
     public static class BadgeSprites
     {
         public const int Size = 7;
-        public const string Front = "Badge_Front", Back = "Badge_Back", Carrier = "Badge_Carrier", Leader = "Badge_Leader";
+        public const string Front = "Badge_Front", Back = "Badge_Back", Carrier = "Badge_Carrier", Leader = "Badge_Leader", Named = "Badge_Named";
 
         private static readonly List<PixelSprite> _all = new List<PixelSprite>(4);
 
@@ -25,6 +25,7 @@ namespace Simpiens.Presentation.Art
             _all.Add(Make(Back, new Rgba32(140, 200, 120, 255), "...ooo.", "....o#o", "...o##o", "..o#oo.", ".o#o...", "o#o....", ".o....."));
             _all.Add(Make(Carrier, new Rgba32(232, 96, 84, 255), "..ooo..", "..o#o..", "ooo#ooo", "o#####o", "ooo#ooo", "..o#o..", "..ooo.."));
             _all.Add(Make(Leader, new Rgba32(240, 190, 80, 255), "...o...", "..o#o..", "oo###oo", "o#####o", ".o###o.", "o#o.o#o", "oo...oo"));
+            _all.Add(Make(Named, new Rgba32(206, 52, 46, 255), ".ooooo.", "o#####o", "o#o#o#o", "o#####o", ".o###o.", ".o#o#o.", "..ooo.."));
         }
 
         private static PixelSprite Make(string name, Rgba32 colour, params string[] rows)

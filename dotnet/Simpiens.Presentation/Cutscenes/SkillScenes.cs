@@ -7,7 +7,8 @@ namespace Simpiens.Presentation.Cutscenes
     /// <summary>
     /// The skills' moments as dynamic scenes (Epic 11, S4.8, D17): a band reached and a technique picked is a scene with the
     /// crawler as its one actor, written from the chronicle's event: its vow, then the road not taken. A first kill is one too
-    /// (S6.4, D30), in the voice of its best skill. Only the patron's people
+    /// (S6.4, D30), in the voice of its best skill; so are a grudge sworn when a named creature fells a friend, and the blow that
+    /// avenges one (S7.7, D35, D37). Only the patron's people
     /// (members and artisans) get one, and at most one a game hour, so the outpost's many Apprentice bands don't drown the
     /// screen; the chronicle tells everyone's. Placeholder words until the narrative work writes them (Epic N).
     /// </summary>
@@ -50,6 +51,42 @@ namespace Simpiens.Presentation.Cutscenes
             return scene.Build();
         }
 
+        /// <summary>
+        /// The vow when a named creature fells a friend (Epic 11, S7.7, D37: the trait an act earns, told with its foe); null for a
+        /// trait a deed earns.
+        /// </summary>
+        public static CutsceneScript VowFor(ChronicleEvent e)
+        {
+            var trait = EarnedTraitTable.Get((EarnedTrait)(byte)e.ExtraData);
+            if (trait == null || trait.Act == TraitAct.None) return null;
+            return new CutsceneBuilder("vow", CutsceneKind.Dynamic)
+                .Actors(Crawler)
+                .Focus(Crawler)
+                .Say(Crawler, "It has a name now. So do I: the one who ends it.")
+                .Say(Crawler, "I won't forget.")
+                .Build();
+        }
+
+        /// <summary>The blow that slays a named creature (Epic 11, S7.7, D35): the avenger's word, then the creature it slew.</summary>
+        public static CutsceneScript AvengedFor(ChronicleEvent e)
+        {
+            var kind = Simpiens.Simulation.Creatures.CreatureCatalog.Get((Simpiens.Simulation.Creatures.CreatureKind)((int)e.ExtraData % 256));
+            var scene = new CutsceneBuilder("avenged", CutsceneKind.Dynamic)
+                .Actors(Crawler)
+                .Focus(Crawler)
+                .Say(Crawler, "That one was owed.");
+            if (kind != null) scene.Say(Crawler, $"No {kind.DisplayName.ToLowerInvariant()} will wear a friend's name again.");
+            return scene.Build();
+        }
+
+        /// <summary>The trigger for every grudge sworn by one of the patron's people, a game hour apart at the most often.</summary>
+        public static SceneTrigger Vows() =>
+            SceneTrigger.OnMoment(VowFor, whose: crawler => crawler.Ours, once: false, cooldownTicks: ChoiceCooldownTicks, ChronicleEventType.TraitEarned);
+
+        /// <summary>The trigger for every named creature slain by one of the patron's people.</summary>
+        public static SceneTrigger Avenged() =>
+            SceneTrigger.OnMoment(AvengedFor, whose: crawler => crawler.Ours, once: false, cooldownTicks: ChoiceCooldownTicks, ChronicleEventType.NamedCreatureSlain);
+
         /// <summary>The trigger for every first blood among the patron's people, a game hour apart at the most often.</summary>
         public static SceneTrigger FirstBloods() =>
             SceneTrigger.OnMoment(FirstBloodFor, whose: crawler => crawler.Ours, once: false, cooldownTicks: ChoiceCooldownTicks, ChronicleEventType.FirstBlood);
@@ -64,6 +101,8 @@ namespace Simpiens.Presentation.Cutscenes
             if (director == null) throw new ArgumentNullException(nameof(director));
             director.Add(Choices());
             director.Add(FirstBloods());
+            director.Add(Vows());
+            director.Add(Avenged());
         }
     }
 }

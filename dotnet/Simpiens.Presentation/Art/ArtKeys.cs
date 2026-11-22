@@ -72,6 +72,9 @@ namespace Simpiens.Presentation.Art
         /// <summary>A guild member's role badge over its body (Epic 11, S5.8, D24): the front, the back, a carrier, a leader.</summary>
         public const string BadgeFront = "badge/front", BadgeBack = "badge/back", BadgeCarrier = "badge/carrier", BadgeLeader = "badge/leader";
 
+        /// <summary>A named creature's mark over it (Epic 11, S7.7, D37).</summary>
+        public const string BadgeNamed = "badge/named";
+
         /// <summary>The badge's key for <paramref name="role"/>; null for none.</summary>
         public static string Badge(Simpiens.Simulation.Skills.PartyRole role) => role switch
         {

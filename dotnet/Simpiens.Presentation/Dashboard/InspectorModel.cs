@@ -96,15 +96,29 @@ namespace Simpiens.Presentation.Dashboard
             CrawlerId = node.Id;
             Following = following;
             HasPortrait = false;
-            Name = kind.DisplayName;
+            Name = creature.IsNamed ? _context.FriendlyName(creature.Id, kind.DisplayName) : kind.DisplayName; // a named one by its name (Epic 11, S7.7)
             State = StateOf(creature.Mode);
             Badge = BadgeOf(creature.Mode);
             var map = _context.Sectors?.Map;
             string room = map != null && creature.LairIndex >= 0 && creature.LairIndex < map.Lairs.Count ? map.FindSector(map.Lairs[creature.LairIndex].Position).Name : null;
-            MoodLine = room != null ? $"Wild. Its lair is in {room}." : "Wild.";
-            Health = kind.MaxHealth > 0f ? 100f * creature.Health / kind.MaxHealth : 0f;
+            MoodLine = creature.IsNamed ? NamedLine(creature, kind, room) : room != null ? $"Wild. Its lair is in {room}." : "Wild.";
+            float whole = creature.MaxHealth;
+            Health = whole > 0f ? 100f * creature.Health / whole : 0f;
             Hunger = Energy = Social = Frustration = 0f;
             Action = ActionOf(creature);
+        }
+
+        // A named creature's line (Epic 11, S7.7, D37): its kind and title, whom it downed first and how many since, its foe
+        private string NamedLine(Simpiens.Simulation.Creatures.CreatureState creature, Simpiens.Simulation.Creatures.CreatureDefinition kind, string room)
+        {
+            var line = new System.Text.StringBuilder(96);
+            line.Append("A ").Append(kind.DisplayName.ToLowerInvariant()).Append(", a ").Append(Simpiens.Simulation.Creatures.CreatureTitleTable.WordOf(creature.Rank).ToLowerInvariant());
+            if (room != null) line.Append(" of ").Append(room);
+            line.Append(". It downed ").Append(_context.GivenNameOf(creature.Victim));
+            if (creature.Downed > 1) line.Append(creature.Downed == 2 ? " and one more" : $" and {creature.Downed - 1} more");
+            line.Append('.');
+            if (creature.Foe != default) line.Append(" Its foe: ").Append(_context.GivenNameOf(creature.Foe)).Append('.');
+            return line.ToString();
         }
 
         /// <summary>A creature's badge by what it does (K2.5).</summary>
