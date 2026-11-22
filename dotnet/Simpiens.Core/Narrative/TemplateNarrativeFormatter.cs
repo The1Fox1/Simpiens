@@ -243,6 +243,18 @@ namespace Simpiens.Narrative
                     return voice != null ? $"{Voiced(voice.Blooded, actorA)}: a {kind}, in {sector}." : $"{actorA} drew first blood: a {kind}, in {sector}.";
                 }
 
+                // A creature's name (Epic 11, S7.1, D31): from the crawler it downed or killed, and its rank rising with each it downs
+                case ChronicleEventType.CreatureNamed:
+                case ChronicleEventType.CreatureRankRose:
+                {
+                    int renown = (int)evt.ExtraData;
+                    string kind = (Simpiens.Simulation.Creatures.CreatureCatalog.Get((Simpiens.Simulation.Creatures.CreatureKind)(renown % 256))?.DisplayName ?? "creature").ToLowerInvariant();
+                    string word = Simpiens.Simulation.Creatures.CreatureTitleTable.WordOf(renown / 256 % 4);
+                    if (evt.EventType == ChronicleEventType.CreatureNamed)
+                        return $"The {kind} that {((renown & 1024) != 0 ? "killed" : "downed")} {actorB} in {sector} has a name now: {Simpiens.Simulation.Creatures.CreatureTitleTable.NameOf(actorB, renown / 256 % 4)}.";
+                    return $"{actorB} fell to {actorA} in {sector}, the {Ordinal(renown / 2048)} it has downed: its name grows to {word}.";
+                }
+
                 case ChronicleEventType.CreatureSlain:
                     return $"{actorA} slew a {(Simpiens.Simulation.Creatures.CreatureCatalog.Get((Simpiens.Simulation.Creatures.CreatureKind)(byte)evt.ExtraData)?.DisplayName ?? "creature").ToLowerInvariant()} in {sector}.";
 
@@ -250,6 +262,13 @@ namespace Simpiens.Narrative
                     return $"{actorA} interacted with {actorB} in {sector}.";
             }
         }
+
+        /// <summary>"second", "third", ... "tenth", then "11th" (Epic 11, S7.1: the crawlers a named creature has downed).</summary>
+        private static string Ordinal(int n) => n switch
+        {
+            1 => "first", 2 => "second", 3 => "third", 4 => "fourth", 5 => "fifth", 6 => "sixth", 7 => "seventh", 8 => "eighth", 9 => "ninth", 10 => "tenth",
+            _ => n % 100 is 11 or 12 or 13 ? $"{n}th" : (n % 10) switch { 1 => $"{n}st", 2 => $"{n}nd", 3 => $"{n}rd", _ => $"{n}th" },
+        };
 
         /// <summary>The station an event's extra names (Epic 10 Part 2): "forge".</summary>
         private static string Station(in ChronicleEvent evt) => Simpiens.Simulation.Workshops.WorkshopRules.StationName((Simpiens.Simulation.Items.StationKind)(byte)evt.ExtraData);

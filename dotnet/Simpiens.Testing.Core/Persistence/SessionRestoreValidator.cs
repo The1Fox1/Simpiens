@@ -263,7 +263,7 @@ namespace Simpiens.Testing.Persistence
         // field comes back; a save that doesn't fit the map is refused; a save without the block fills the lairs afresh
         private void ValidateCreaturesRoundTrip()
         {
-            Assert(System.Runtime.CompilerServices.Unsafe.SizeOf<CreatureRecord>() == 80, "A creature's record is 80 bytes (the last visit to its lair since K10.3c), saved as raw memory.");
+            Assert(System.Runtime.CompilerServices.Unsafe.SizeOf<CreatureRecord>() == 112, "A creature's record is 112 bytes (its name and foe since Epic 11's S7.1, format 13), saved as raw memory.");
             Assert(System.Runtime.CompilerServices.Unsafe.SizeOf<LairSlotRecord>() == 24, "A lair's place is 24 bytes, saved as raw memory.");
             var map = Simpiens.Core.Session.Layouts.Floor1Layout.Definition;
             int warren = -1, hollow = -1;
@@ -276,7 +276,8 @@ namespace Simpiens.Testing.Persistence
             var rat = Simpiens.Simulation.Creatures.CreatureKind.BurrowRat;
             var beetle = Simpiens.Simulation.Creatures.CreatureKind.StoneBeetle;
             // A rat chasing mid-fight with its swing's timer, a hurt one resting, the slain Matriarch's place waiting for her return;
-            // a beetle roaming toward its goal; the hollow charted
+            // a beetle roaming toward its goal, named for the crawler it downed first, its rank risen and its foe kept (Epic 11,
+            // S7.1, S7.3); the hollow charted
             var packs = new byte[map.Lairs.Count];
             packs[warren] = 3;
             packs[hollow] = 1;
@@ -296,7 +297,8 @@ namespace Simpiens.Testing.Persistence
                 {
                     Record(A, rat, warren, 1, new Vec2(19.5f, 14.25f), 20f, Simpiens.Simulation.Creatures.CreatureMode.Chase, target: new EntityId(9u, 9u, 9u, 9u), nextSwingAt: 1337, restUntil: 0, goal: new Vec2(19f, 14f)),
                     Record(B, rat, warren, 2, new Vec2(20.2f, 16.4f), 7.5f, Simpiens.Simulation.Creatures.CreatureMode.Rest, target: default, nextSwingAt: 900, restUntil: 1500, goal: new Vec2(20.2f, 16.4f)),
-                    Record(C, beetle, hollow, 0, new Vec2(-19f, 15f), 60f, Simpiens.Simulation.Creatures.CreatureMode.Roam, target: default, nextSwingAt: 0, restUntil: 400, goal: new Vec2(-18.5f, 14.5f)),
+                    Named(Record(C, beetle, hollow, 0, new Vec2(-19f, 15f), 60f, Simpiens.Simulation.Creatures.CreatureMode.Roam, target: default, nextSwingAt: 0, restUntil: 400, goal: new Vec2(-18.5f, 14.5f)),
+                        rank: 2, downed: 3, victim: new EntityId(7u, 7u, 7u, 7u), foe: new EntityId(8u, 8u, 8u, 8u)),
                 },
             };
             Assert(Simpiens.Simulation.Creatures.CreatureService.Check(save, map) == null, "The save fits Floor 1.");
@@ -308,6 +310,8 @@ namespace Simpiens.Testing.Persistence
                 && chaser.Position == new Vec2(19.5f, 14.25f) && chaser.Home == Simpiens.Simulation.Creatures.CreatureService.PlaceOf(map.Lairs[warren].Position, 1), "A chase mid-fight comes back with its swing's timer.");
             Assert(creatures.TryGet(B, out var resting) && resting.Health == 7.5f && resting.RestUntil == 1500, "A hurt rat's health and rest come back.");
             Assert(creatures.Lairs[warren].MemberIn(0) == default && creatures.Lairs[warren].ReturnAt(0) == 2400u && creatures.Lairs[warren].Alive == 2, "The slain Matriarch's place waits for her return.");
+            Assert(creatures.TryGet(C, out var named) && named.IsNamed && named.Rank == 2 && named.Downed == 3 && named.Victim == new EntityId(7u, 7u, 7u, 7u) && named.Foe == new EntityId(8u, 8u, 8u, 8u)
+                && !resting.IsNamed && resting.Victim == default, "A named beetle comes back with its victim, rank, downings and foe; an unnamed rat with none (Epic 11, S7.1).");
 
             // Refused, before anything changes: another map's lairs, a kind out of its lair, a place past a pack, ids out of order
             var shortPacks = new CreatureSave { Packs = new byte[] { 3 }, Slots = save.Slots, Creatures = save.Creatures };
@@ -318,6 +322,12 @@ namespace Simpiens.Testing.Persistence
             Assert(Simpiens.Simulation.Creatures.CreatureService.Check(pastPack, map) != null, "A place past a lair's pack is refused.");
             var unordered = new CreatureSave { Packs = packs, Slots = save.Slots, Creatures = new[] { save.Creatures[1], save.Creatures[0] } };
             Assert(Simpiens.Simulation.Creatures.CreatureService.Check(unordered, map) != null, "Creatures out of id order are refused.");
+            var pastRank = new CreatureSave { Packs = packs, Slots = save.Slots, Creatures = new[] { Named(Record(C, beetle, hollow, 0, Vec2.Zero, 1f, default, default, 0, 0, Vec2.Zero), 4, 4, A, default) } };
+            Assert(Simpiens.Simulation.Creatures.CreatureService.Check(pastRank, map) != null, "A rank past the titles' table is refused.");
+            var nameless = new CreatureSave { Packs = packs, Slots = save.Slots, Creatures = new[] { Named(Record(C, beetle, hollow, 0, Vec2.Zero, 1f, default, default, 0, 0, Vec2.Zero), 1, 1, default, default) } };
+            Assert(Simpiens.Simulation.Creatures.CreatureService.Check(nameless, map) != null, "A rank with nobody it was named for is refused.");
+            var namedBoss = new CreatureSave { Packs = packs, Slots = save.Slots, Creatures = new[] { Named(Record(C, Simpiens.Simulation.Creatures.CreatureKind.Matriarch, warren, 0, Vec2.Zero, 1f, default, default, 0, 0, Vec2.Zero), 1, 1, A, default) } };
+            Assert(Simpiens.Simulation.Creatures.CreatureService.Check(namedBoss, map) != null, "A named boss is refused: a boss has a name.");
 
             creatures.Restore(null, null, 424242UL);
             Assert(creatures.IdCounter > 0 && creatures.Creatures.Count >= 4 && creatures.ChartedMask == 0UL, "A save without the block fills the lairs afresh, nothing charted.");
@@ -364,6 +374,15 @@ namespace Simpiens.Testing.Persistence
                 Id = id, Kind = kind, Lair = (byte)lair, Slot = slot, Position = position, Health = health, Mode = mode, Target = target,
                 NextSwingAt = nextSwingAt, RestUntil = restUntil, Goal = goal
             };
+
+        private static CreatureRecord Named(CreatureRecord record, byte rank, byte downed, EntityId victim, EntityId foe)
+        {
+            record.Rank = rank;
+            record.Downed = downed;
+            record.Victim = victim;
+            record.Foe = foe;
+            return record;
+        }
 
         private void ValidateChronicleRoundTrips()
         {

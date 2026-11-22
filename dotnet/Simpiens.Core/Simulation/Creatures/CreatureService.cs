@@ -286,6 +286,32 @@ namespace Simpiens.Simulation.Creatures
             return true;
         }
 
+        /// <summary>
+        /// Creature <paramref name="id"/> downed <paramref name="crawler"/>, or the crawler it struck last bled out
+        /// (<paramref name="death"/>): its renown (Epic 11, S7.1, D31). Unnamed, it takes a name from the crawler ("{the crawler}'s
+        /// Bane", rank 1); named, each further downing raises its rank, to <see cref="CreatureTitleTable.MaxRank"/>, and a death adds
+        /// nothing, its downing having counted. A boss never takes a name: it has one. Nothing for a creature slain or gone.
+        /// Main thread: the simulation calls it where the blow lands and where the fallen dies, and tells what came of it.
+        /// </summary>
+        public Renown Credit(EntityId id, EntityId crawler, bool death)
+        {
+            if (crawler == default || !TryGet(id, out var creature) || !creature.IsAlive) return Renown.None;
+            var kind = creature.Definition;
+            if (kind == null || kind.IsBoss) return Renown.None;
+            if (!creature.IsNamed)
+            {
+                creature.Rank = 1;
+                creature.Downed = 1;
+                creature.Victim = crawler;
+                return Renown.Named;
+            }
+            if (death) return Renown.None;
+            if (creature.Downed < byte.MaxValue) creature.Downed++;
+            if (creature.Rank >= CreatureTitleTable.MaxRank) return Renown.Downed;
+            creature.Rank++;
+            return Renown.RankRose;
+        }
+
         /// <summary>The pack <paramref name="kind"/>'s lair at <paramref name="lairIndex"/> holds on <paramref name="seed"/>: within its range, at most <see cref="MaxPack"/>.</summary>
         public static int PackSize(ulong seed, int lairIndex, CreatureDefinition kind)
         {
@@ -377,6 +403,7 @@ namespace Simpiens.Simulation.Creatures
                 var c = save.Creatures[i];
                 if (!CreatureCatalog.IsDefined(c.Kind)) return $"a creature of kind {(byte)c.Kind}";
                 if (c.Lair >= lairs || c.Slot >= save.Packs[c.Lair] || map.Lairs[c.Lair].KindIn(c.Slot) != c.Kind) return $"a {CreatureCatalog.NameOf(c.Kind)} out of its lair";
+                if (c.Rank > CreatureTitleTable.MaxRank || (c.Rank > 0 && (c.Victim == default || CreatureCatalog.Get(c.Kind).IsBoss))) return $"a {CreatureCatalog.NameOf(c.Kind)} with a name it can't have";
                 if (i > 0 && save.Creatures[i - 1].Id.CompareTo(c.Id) >= 0) return "creatures out of order";
             }
             return null;
@@ -420,6 +447,10 @@ namespace Simpiens.Simulation.Creatures
                     RestUntil = r.RestUntil,
                     Goal = r.Goal,
                     LastVisitAt = r.LastVisitAt,
+                    Rank = r.Rank,
+                    Downed = r.Downed,
+                    Victim = r.Victim,
+                    Foe = r.Foe,
                 };
                 _creatures.Add(creature);
                 Enter(world, creature, kind);

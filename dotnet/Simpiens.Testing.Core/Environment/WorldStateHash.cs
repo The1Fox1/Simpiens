@@ -219,6 +219,13 @@ namespace Simpiens.Testing.Environment
                     Mix(ref map, Quantize(c.Goal.X, 1000f));
                     Mix(ref map, Quantize(c.Goal.Y, 1000f));
                     if (c.LastVisitAt != 0) Mix(ref map, c.LastVisitAt); // a boss's last visitor (K10.3c), once there was one
+                    if (c.IsNamed) // its name (Epic 11, S7.1), once it has one
+                    {
+                        Mix(ref map, (int)c.Rank);
+                        Mix(ref map, (int)c.Downed);
+                        Mix(ref map, c.Victim.GetHashCode());
+                    }
+                    if (c.Foe != default) Mix(ref map, c.Foe.GetHashCode()); // its foe (S7.3), once it has one
                 }
             }
             if (sim != null && sim.WorldFlags != Simpiens.Simulation.World.WorldFlags.None) Mix(ref map, (ulong)sim.WorldFlags); // the breach (K10.4), once it happened

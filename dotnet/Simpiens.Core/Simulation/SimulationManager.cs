@@ -441,6 +441,22 @@ namespace Simpiens.Simulation
             SimLog.Drives.ZLogInformation($"{SimLog.Agent(state.AgentId)} was downed by {SimLog.Agent(attacker)} at {state.Position}");
             Chronicle?.RecordEvent(new Simpiens.Narrative.ChronicleEvent(Simpiens.Narrative.ChronicleEventType.CrawlerDowned, state.AgentId, attacker,
                 GetSectorForPosition(state.Position), tick, Simpiens.Narrative.ChronicleIntensity.Crisis));
+            TellRenown(Creatures.Credit(attacker, state.AgentId, death: false), attacker, state.AgentId, killed: false, tick); // its name (Epic 11, S7.1)
+        }
+
+        /// <summary>
+        /// What a downing or a death did for the creature's name (Epic 11, S7.1, D31; <see cref="Simpiens.Simulation.Creatures.CreatureService.Credit"/>),
+        /// told: <c>CreatureNamed</c> when it took one, <c>CreatureRankRose</c> when its rank rose.
+        /// </summary>
+        private void TellRenown(Simpiens.Simulation.Creatures.Renown renown, EntityId creatureId, EntityId crawler, bool killed, uint tick)
+        {
+            if (renown != Simpiens.Simulation.Creatures.Renown.Named && renown != Simpiens.Simulation.Creatures.Renown.RankRose) return;
+            if (!Creatures.TryGet(creatureId, out var creature)) return;
+            SimLog.Simulation.ZLogInformation($"{Simpiens.Simulation.Creatures.CreatureCatalog.NameOf(creature.Kind)} {creatureId} {(renown == Simpiens.Simulation.Creatures.Renown.Named ? "took its name from" : "rose in rank downing")} {SimLog.Agent(crawler)}: rank {creature.Rank}, {creature.Downed} downed");
+            int extra = (byte)creature.Kind + 256 * creature.Rank + (killed ? 1024 : 0) + 2048 * creature.Downed;
+            var type = renown == Simpiens.Simulation.Creatures.Renown.Named ? Simpiens.Narrative.ChronicleEventType.CreatureNamed : Simpiens.Narrative.ChronicleEventType.CreatureRankRose;
+            Chronicle?.RecordEvent(new Simpiens.Narrative.ChronicleEvent(type, creatureId, crawler, GetSectorForPosition(creature.Position), tick,
+                Simpiens.Narrative.ChronicleIntensity.Dramatic, extra));
         }
 
         void Simpiens.Simulation.Creatures.ICreatureWorld.CreatureHit(EntityId crawler, Simpiens.Simulation.Creatures.CreatureState creature, float damage)

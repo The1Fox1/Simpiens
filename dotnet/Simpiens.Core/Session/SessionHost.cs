@@ -234,6 +234,7 @@ namespace Simpiens.Core.Session
             _newcomersDue.Clear(); // K5.6
             _newcomersArrived = 0;
             _identity?.ClearCustomNames(); // ids repeat per seed: a name belongs to this session's crawlers only
+            _creatureNames.Clear();
             _registry?.Clear();
             _idAllocator?.Reset(); // same seed + same spawn order => same entity ids on every respawn
             SimLog.ClearAgentNames();
@@ -306,9 +307,32 @@ namespace Simpiens.Core.Session
             SimLog.CurrentTick = header.Tick;
             _idAllocator?.ResumeAt(header.EntityIdCounter);
 
+            NameCreatures(); // after the departed, whose names a named creature may carry
             SimLog.Bootstrap.ZLogInformation($"Session '{session.Id}' loaded at t{header.Tick}: {_crawlers.Count} agents, map '{session.Map.Name}', saved by build {header.BuildVersion}");
             SessionChanged?.Invoke(session);
             return true;
+        }
+
+        // The rank each named creature's name was registered at (Epic 11, S7.1)
+        private readonly Dictionary<EntityId, byte> _creatureNames = new Dictionary<EntityId, byte>();
+
+        /// <summary>
+        /// A named creature's name (Epic 11, S7.1, D31): "{its victim}'s {title}", registered with the identity service as a
+        /// crawler's given name is, so the chronicle and the dashboard name it. Again when its rank rises, and after a load. The
+        /// victim's name is the identity service's: the living crawler's, or the departed list's after its death. Allocates only
+        /// when a name changes.
+        /// </summary>
+        private void NameCreatures()
+        {
+            if (_identity == null || _simulationManager == null) return;
+            var creatures = _simulationManager.Creatures.Creatures;
+            for (int i = 0; i < creatures.Count; i++)
+            {
+                var creature = creatures[i];
+                if (!creature.IsNamed || (_creatureNames.TryGetValue(creature.Id, out byte rank) && rank == creature.Rank)) continue;
+                _creatureNames[creature.Id] = creature.Rank;
+                _identity.RegisterCustomName(creature.Id, Simpiens.Simulation.Creatures.CreatureTitleTable.NameOf(_identity.GetFriendlyName(creature.Victim), creature.Rank));
+            }
         }
 
         /// <summary>Why a save can't be loaded into this game (player-facing text), or null when it can.</summary>
@@ -568,6 +592,7 @@ namespace Simpiens.Core.Session
             }
             _simulationManager?.TickCreatures((uint)currentTick); // their own phase, after the crawlers' (seam A4)
             TickPopulation(currentTick);
+            NameCreatures(); // a creature named this tick (Epic 11, S7.1)
             TickCompleted?.Invoke(currentTick);
         }
 

@@ -89,7 +89,7 @@ namespace Simpiens.Core.Tests
             hunt = hunt.WithDamage(new EntityId(2, 0, 0, 0), 2f).WithDamage(new EntityId(3, 0, 0, 0), 1f);
             hunt.Split(100, shares);
             Assert.Equal(new uint[] { 0, 67, 33 }, shares.ToArray()); // 66.67 and 33.33 floored, the rest to the most
-            Assert.Equal(64, System.Runtime.CompilerServices.Unsafe.SizeOf<HuntRecord>());
+            Assert.Equal(80, System.Runtime.CompilerServices.Unsafe.SizeOf<HuntRecord>()); // its quarry since Epic 11's format 13 (S7.1); 64 before
         }
 
         [Fact]

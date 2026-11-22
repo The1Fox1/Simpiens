@@ -167,6 +167,7 @@ Proposed in plan 3 (`.agents/epic11_legend_plan.md`) as defaults, at the produce
 - **D28, scars** (S6.2; Q12): at a downing survived, the scar of what downed it (`ScarTable`: a row for each creature kind and each hazard but the flood, each with a shape), in the next of four places on the face (left cheek, brow, right cheek, chin). No effect on any number. Told (`ScarTaken`).
 - **D29, earned traits** (S6.3; A1, Q12): `EarnedTraitTable`: Battle-Hardened (two downings survived, if bold: +1 defense in a fight), Shaken (one, if cautious: 10% weaker blows, a lair judged 25% more dangerous), Monster Hunter (10 kills: 10% harder blows), Lifesaver (3 rescues: carries 15% faster, heals 10% more), Patient Teacher (10 taught: +10 points on a lesson). Three held, never lost; read through the techniques' door (`CrawlerTechniques.Get`), with one new stat, Dread, read in the lair judgement through cognition's copy. Told (`TraitEarned`).
 - **D30, first blood and the skills' voices** (S6.4; Q12): every skill row has a voice (`SkillVoice`): a band reached is told in its skill's ("Bram's pick rings truer: a journeyman miner now."), an epithet and first blood in the crawler's best skill's; plain where an event names none. A crawler's first kill is its own event (`FirstBlood`) and a moment for the patron's people.
+- **D31, a creature earns a name** (S7.1; A8, Q13): a creature whose blow downs a crawler, or that struck last a crawler who bleeds out, takes a name from it: "{the crawler}'s Bane" (`CreatureTitleTable`: Bane, Scourge, Terror). Each further downing raises its rank, to 3; a death after the downing that named it adds nothing. A boss never takes a name. The creature's record keeps the crawler it was named for, its rank, the crawlers it downed and its foe (D33); `HuntRecord` keeps a hunt's quarry (D34): format 13, the plan's one raise, both at S7.1 so the format has one layout. Slain, it doesn't return: its place refills with a plain creature. The session host registers its name with the identity service, as it does a crawler's, so the chronicle and the dashboard name it, from the departed list after its victim's death. Told: `CreatureNamed`, `CreatureRankRose`.
 - **D36, the client for S6** (S6.6, S6.7):
   - **Names:** the epithet after the name in the dossier ("Corrin Beetlebane the Warden"; after an epithet with "the", "Mara the Steadfast, Warden"), the residents' cards, the inspector, the station window and the technique tree. The guild's card shows it before the title on its second line, its name line holding two skills. The expedition tracker and the chronicle's actor names stay plain; the epithet's own line tells it.
   - **The legend line** in the dossier: the epithet and why, the earned traits, the scars, each in its tip.
@@ -364,7 +365,7 @@ Done means crawlers grow into someone in the live outpost with nothing injected 
 - [x] **The producer's look at S4,** passed on 2026-11-20 (the first look's ask, the tree, delivered).
 - [x] **The merge,** on the producer's word: PR #26, merged 2026-11-20 (`d387b05`): "This is great. PR plan 2 into main and then draft up plan3".
 
-### S6. First legends (done 2026-11-20, `feat/epic11-legend`; the producer's look next)
+### S6. First legends (done 2026-11-20, `feat/epic11-legend`; the look read as passed at the go for S7)
 - [x] **The deeds measured** (D26): `docs/skills-model.md` §5.9; F13.
 - [x] **Epithets** (D27): `EpithetTable`, the rule at each deed, the chronicle; `EpithetValidator` (5 tests), `EpithetNamesTests`. Golden unchanged.
 - [x] **Scars** (D28): `ScarTable`, at a downing survived; `ScarValidator` (3 tests), `ScarNamesTests`. Golden unchanged.
@@ -374,13 +375,17 @@ Done means crawlers grow into someone in the live outpost with nothing injected 
 - [x] **The client** (D36): epithets in names, the dossier's legend line (`LegendOnScreenTests`); scars on the portrait and the body (the people sheet's two new rows; the art pins' seven new scars, no other pin changed).
 - [x] **DoD `TheOutpostRemembers`** (gate seed 3): on the guild's clears, Kwame is carried out and stands bearing a beetle's claw at t19108, and Ellis, who carried the fallen out twice, is the Steadfast at t19116; an epithet on 19 of 23 gate seeds and a scar on 12 over ten days.
 - [x] **S6's gate:** core 325/325, client 542/542 in the pinned image, golden 3/3, the MonoGame and Android compiles clean; the seeds and the soak at S6.5, with no simulation change after them.
-- [ ] **The producer's look.** D26–D30 and D36 stand as delivered unless overturned. What to look at:
+- [x] **The producer's look,** read as passed: the producer played S6's build (asking for playtest tools in the dossier, 2026-11-20 to 21) and gave the go for S7, "Let's finish up the legend plan" (2026-11-22). D26–D30 and D36 stand as delivered unless overturned. What to look at:
   - **Start:** the desktop game (`dotnet run --project dotnet/Simpiens.Desktop -- --seed 3`), at 5× or 10×. Recruit four residents, arm them at the stall (or build the forge), form a party and send a clear against a charted lair from the guild's Expeditions tab. Falls come in the lairs (F13): a member carried out stands again with a scar.
   - **Names:** a crawler with an epithet carries it on the residents' cards, in the dossier's header with its title, in the inspector and the technique tree; on the guild's card before its title. The Teacher appears within a few days with no player; kill and clear epithets with the guild's clears.
   - **The dossier's legend line** (amber, under the techniques): hover it for why the epithet, what each trait does, and where each scar is.
   - **Scars:** on the portrait (the dossier at 2×, the inspector) in scar red by shape; on the map a fleck on the face. The people sheet (`render-output/people-sheet.png` from the client's tests) shows every shape and place.
   - **The chronicle in the skills' voices:** "Bram's pick rings truer: a journeyman miner now.", "Corrin's blade has won a name: Corrin Beetlebane, for three creatures slain.", and first blood; for one of your people, first blood is a short scene.
   - **Decided by exception:** the epithets' lines (a party wins Lairbreaker together), scars with no effect, Shaken and Battle-Hardened by nature, the voices' words, the guild card's placement, plain names in the chronicle and the tracker.
+
+### S7. Named creatures (under way, `feat/epic11-legend`)
+- [x] **Downings measured** (S7.0): `docs/skills-model.md` §5.11. The guild's clears down a member on 12 of 23 seeds within ten days and would name a creature on 10, slain by the party in the same fight; nobody falls in careful play (F13).
+- [x] **A creature earns a name; the save's one raise** (D31; supervised, for review): `CreatureTitleTable`, the rule at a downing and at a death, `CreatureNamed` and `CreatureRankRose`; format 13 (the creature's record 112 bytes, the hunt's 80); `NamedCreatureValidator` (6 tests), the round trip in `SessionRestoreValidator`, the name on the live outpost and across a load (`NamedCreatureTests`). Golden unchanged.
 
 ## 5. Deferred and out of scope
 

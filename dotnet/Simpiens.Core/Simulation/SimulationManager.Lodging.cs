@@ -107,6 +107,8 @@ namespace Simpiens.Simulation
             SimLog.Drives.ZLogInformation($"{SimLog.Agent(node.Id)} died ({cause}) at {node.Position}, leaving {stacks} stacks and {gold}g ({releasedClaims} claim(s) released; {grieving} grieve)");
             _chronicleService?.RecordEvent(new ChronicleEvent(ChronicleEventType.CrawlerDied, node.Id, by, GetSectorForPosition(node.Position), tick,
                 ChronicleIntensity.Crisis, (int)cause * 256 + detail));
+            // The creature that struck it last takes its name from it, if it hasn't one (Epic 11, S7.1, D31)
+            if (cause == Simpiens.Simulation.DeathCause.Creature && by != default) TellRenown(Creatures.Credit(by, node.Id, death: true), by, node.Id, killed: true, tick);
         }
 
         /// <summary>A friend's grief raises frustration by this much (Q4, K5.5): the portrait's frustrated face shows it.</summary>

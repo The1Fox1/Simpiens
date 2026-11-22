@@ -37,6 +37,7 @@ namespace Simpiens.Testing.Economy
             AssertSize<Simpiens.Simulation.Items.WornEquipment>(256); // Epic 10 Part 3, K1.2 (format 11): a record for each of 16 slot ids, so a new slot changes nothing here
             AssertSize<Simpiens.Simulation.Skills.CrawlerTraits>(Simpiens.Simulation.Skills.CrawlerTraits.Size); // Epic 11, S0.4 (format 12): 256 bytes, with room for every Epic 11 field
             AssertSize<Simpiens.Simulation.Skills.TeacherRecord>(20); // a skill and its first teacher's id
+            AssertSize<HuntRecord>(80); // Epic 11, S7.1 (format 13): its quarry, a named creature (S7.4, D34); 64 before
             TestLog.Log("[PASS] Test 1: ItemInstance, BountyContract and TradeStallData keep their saved sizes (16, 64, 136 bytes).");
         }
 
