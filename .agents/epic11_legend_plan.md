@@ -149,7 +149,7 @@ Working document (AGENTS.md, Documentation Protocol 6), one of Epic 11's plans (
   - **The record:** `CreatureState`'s victim, rank, count and foe; `CreatureRecord` grows; format 13; `EconomySerializationValidator` pins the new size.
   - **The rule:** at a downing by a creature and at a death it caused (D31); named creatures don't return; `CreatureNamed` and `CreatureRankRose` in the chronicle.
   - **The checks:** `NamedCreatureValidator` (named at a downing and at a death, the rank rising to 3, a boss never named, a named creature not returning, the round trip in `SessionCaptureValidator` and `SessionRestoreValidator`).
-- [ ] **S7.2 It grows and leads** [Possibly Complex: the creatures' rule; supervised]
+- [x] **S7.2 It grows and leads** [Possibly Complex: the creatures' rule; supervised] (2026-11-22, for the developer's review. The lead reuses the Matriarch's call (`Rally`), limited to mates in the lair's reach. Golden unchanged. `DeathHasItsCost` moved: gate seed 16's two fallen are now carried out alive; re-picked to seed 11 in its own commit.)
   - **The table:** D32's `CreatureTitleTable`, its bounds.
   - **Read:** `Combatant.ForCreature` and `LairReach` read the rank; the pack takes its leader's quarry.
   - **The checks:** `NamedCreatureValidator` gains the growth, the lair's danger and the pack's quarry. Golden re-recorded in its own commit if it moves.

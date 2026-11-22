@@ -59,7 +59,7 @@ namespace Simpiens.Hosting
             {
                 if ((_kind == CreatureKind.None || lairs[i].Definition.Kind == _kind) && simulation.Creatures.IsCharted(i) && lairs[i].Alive > 0) lair = i;
             }
-            if (lair < 0 || !SomeoneBraves(lairs[lair].Definition, simulation.Creatures.IsBossAlive(lair))) return;
+            if (lair < 0 || !SomeoneBraves(lairs[lair].Definition, simulation.Creatures.IsBossAlive(lair), simulation.Creatures.LeaderRank(lair))) return;
             if (simulation.ActiveStalls.Count == 0 || simulation.ActiveStalls[0].TreasuryGold < _reward + _reserve) return;
             _commands.QueueInfluence(InfluenceEvent.CreatePostBounty(SourceId, new PostBountyCommand(0, BountyType.Hunt, 0, ItemType.None, 1, _reward,
                 DayClock.Hours(simulation.Economy.Hunt.LifeHours), default, simulation.ActiveStalls[0].StallEntityId, (byte)lair)));
@@ -84,14 +84,14 @@ namespace Simpiens.Hosting
         }
 
         // A resident who would take the hunt on: bold, armed well enough to brave the lair at full health (D21), as a player
-        // reading the guild cards' gear lines would judge
-        private bool SomeoneBraves(in Simpiens.Simulation.World.LairDefinition lair, bool bossAlive)
+        // reading the guild cards' gear lines would judge, a named creature leading the lair with it (Epic 11, S7.2)
+        private bool SomeoneBraves(in Simpiens.Simulation.World.LairDefinition lair, bool bossAlive, int leaderRank)
         {
             var crawlers = _sim.Host.CrawlerStates;
             for (int i = 0; i < crawlers.Count; i++)
             {
                 var c = crawlers[i];
-                if (!c.IsDrifter && Vitality.BravesLair(lair, bossAlive, c.Skills, c.Inventory, c.Traits, Vitality.MaxHealth, c.Personality.RiskTolerancePercent, downed: false)) return true;
+                if (!c.IsDrifter && Vitality.BravesLair(lair, bossAlive, c.Skills, c.Inventory, c.Traits, Vitality.MaxHealth, c.Personality.RiskTolerancePercent, downed: false, leaderRank)) return true;
             }
             return false;
         }

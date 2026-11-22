@@ -141,6 +141,22 @@ namespace Simpiens.Simulation.Spatial
         /// <summary>True when lair <paramref name="lairIndex"/>'s boss is alive.</summary>
         public bool IsBossAlive(int lairIndex) => lairIndex >= 0 && lairIndex < 64 && (BossLairMask & (1UL << lairIndex)) != 0;
 
+        /// <summary>
+        /// The highest rank of a named creature living in each lair (Epic 11, S7.2, D32), two bits a lair in two masks
+        /// (<see cref="Simpiens.Simulation.Creatures.LairReach.LeaderRank"/>), so a lair a named creature leads is judged more
+        /// dangerous. Defaults to none.
+        /// </summary>
+        public ulong NamedLairLow { get; private set; }
+        public ulong NamedLairHigh { get; private set; }
+        public void SetNamedLairs(ulong low, ulong high)
+        {
+            NamedLairLow = low;
+            NamedLairHigh = high;
+        }
+
+        /// <summary>The rank of the named creature leading lair <paramref name="lairIndex"/>; 0 for none.</summary>
+        public int LeaderRank(int lairIndex) => Simpiens.Simulation.Creatures.LairReach.LeaderRank(NamedLairLow, NamedLairHigh, lairIndex);
+
         /// <summary>Which of the map's stations stand built (bit i = station i, Epic 11, S3.4): a drill yard to drill at.</summary>
         public ulong BuiltStationMask { get; private set; }
         public void SetBuiltStations(ulong mask) => BuiltStationMask = mask;

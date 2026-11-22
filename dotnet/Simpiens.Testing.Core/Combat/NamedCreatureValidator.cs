@@ -13,8 +13,9 @@ namespace Simpiens.Testing.Combat
     /// <summary>
     /// Named creatures (Epic 11, S7.1, A8, D31), on Floor 1's lairs through the simulation's own blow: the titles' table; a
     /// creature named at the downing its blow causes, told; its rank rising with each crawler it downs, to the most; a creature
-    /// named at a death it caused; a boss never named; a named creature slain not returning, its place refilled by a plain one.
-    /// The save's round trip is <see cref="Simpiens.Testing.Persistence.SessionRestoreValidator"/>'s. Runs as a test
+    /// named at a death it caused; a boss never named; a named creature slain not returning, its place refilled by a plain one;
+    /// growing with its rank (S7.2, D32: its health and attack); its lair judged more dangerous, so a lone crawler keeps away;
+    /// and leading its pack, the mates in its lair's reach taking its quarry. The save's round trip is <see cref="Simpiens.Testing.Persistence.SessionRestoreValidator"/>'s. Runs as a test
     /// (ValidatorTests).
     /// </summary>
     public class NamedCreatureValidator
@@ -30,7 +31,10 @@ namespace Simpiens.Testing.Combat
             ValidateNamedAtADeath();
             ValidateABossIsNeverNamed();
             ValidateANamedCreatureDoesNotReturn();
-            TestLog.Log("<color=green>[NamedCreatureValidator] ALL 6 TESTS PASSED SUCCESSFULLY!</color>");
+            ValidateItGrows();
+            ValidateTheLairsDanger();
+            ValidateItLeadsItsPack();
+            TestLog.Log("<color=green>[NamedCreatureValidator] ALL 9 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private static void ValidateTheTitles()
@@ -133,6 +137,108 @@ namespace Simpiens.Testing.Combat
             TestLog.Log("[PASS] Test 6: a named creature slain doesn't return; its place refills with a plain one.");
         }
 
+        private static void ValidateItGrows()
+        {
+            int lastHealth = 0, lastAttack = 0;
+            foreach (var row in CreatureTitleTable.All)
+            {
+                Assert(row.HealthPercent > lastHealth && row.AttackPercent > lastAttack, $"{row.Word}: grows more than the rank below.");
+                Assert(row.HealthPercent <= CreatureTitleTable.MaxHealthPercent && row.AttackPercent <= CreatureTitleTable.MaxAttackPercent, $"{row.Word}: within the bounds.");
+                lastHealth = row.HealthPercent;
+                lastAttack = row.AttackPercent;
+            }
+            Assert(CreatureTitleTable.HealthFactor(0) == 1f && CreatureTitleTable.AttackFactor(0) == 1f, "Unnamed: as its kind.");
+
+            var w = World();
+            var beetle = First(w.Sim, CreatureKind.StoneBeetle);
+            var kind = beetle.Definition;
+            Assert(beetle.MaxHealth == kind.MaxHealth && beetle.Health == kind.MaxHealth, "Unnamed, whole: its kind's health.");
+            float plainAttack = Combatant.ForCreature(kind, beetle.Id, beetle.Position, beetle.Health, beetle.Rank).Attack;
+            w.Down(w.Crawler(beetle.Position), beetle.Id);
+            Assert(Near(beetle.MaxHealth, kind.MaxHealth * 1.2f) && Near(beetle.Health, beetle.MaxHealth), $"A Bane: a fifth more health, grown at once ({beetle.Health:F1} of {beetle.MaxHealth:F1}).");
+            float baneAttack = Combatant.ForCreature(kind, beetle.Id, beetle.Position, beetle.Health, beetle.Rank).Attack;
+            Assert(Near(baneAttack, plainAttack * 1.1f), $"A tenth more attack: {plainAttack:F2} to {baneAttack:F2}.");
+            beetle.Health = 30f; // hurt, then its rank rises: its health rises by as much as its whole health
+            w.Down(w.Crawler(beetle.Position, "Bram"), beetle.Id);
+            Assert(Near(beetle.Health, 30f + kind.MaxHealth * 0.2f) && Near(beetle.MaxHealth, kind.MaxHealth * 1.4f), $"A Scourge, hurt: {beetle.Health:F1} of {beetle.MaxHealth:F1}.");
+            w.Down(w.Crawler(beetle.Position, "Cora"), beetle.Id);
+            Assert(Near(beetle.MaxHealth, kind.MaxHealth * 1.6f) && Near(Combatant.ForCreature(kind, beetle.Id, beetle.Position, beetle.Health, beetle.Rank).Attack, plainAttack * 1.3f), "A Terror: three fifths more health, three tenths more attack.");
+            TestLog.Log($"[PASS] Test 7: it grows with its rank: a beetle's health {kind.MaxHealth:F0} to {beetle.MaxHealth:F0}, its attack {plainAttack:F1} to {plainAttack * 1.3f:F1}.");
+        }
+
+        private static void ValidateTheLairsDanger()
+        {
+            var map = Floor1Layout.Definition;
+            int hollow = LairIndex(map, Floor1Layout.BeetleHollow);
+            var lair = map.Lairs[hollow];
+            float[] danger = new float[CreatureTitleTable.MaxRank + 1];
+            for (int rank = 0; rank <= CreatureTitleTable.MaxRank; rank++) danger[rank] = LairReach.Danger(lair, 0f, false, rank);
+            for (int rank = 1; rank <= CreatureTitleTable.MaxRank; rank++) Assert(danger[rank] > danger[rank - 1], $"A rank-{rank} leader makes the hollow more dangerous: {danger[rank - 1]:F3} to {danger[rank]:F3}.");
+
+            // A lone crawler that would brave the hollow as it is keeps away from it under a Terror
+            var skills = default(Simpiens.Simulation.Skills.SkillSet);
+            skills.Set(Simpiens.Simulation.Skills.Skill.Melee, 5);
+            var worn = new Simpiens.Cognition.Inventory.AgentInventory();
+            worn.TryEquip(Simpiens.Simulation.Items.Outfitting.NewPiece(Simpiens.Simulation.Economy.ItemType.IronBlade, Simpiens.Simulation.Items.Grades.Standard));
+            var traits = default(Simpiens.Simulation.Skills.CrawlerTraits);
+            float plain = Simpiens.Cognition.Vitality.HarmToClear(lair, false, skills, worn, traits);
+            float led = Simpiens.Cognition.Vitality.HarmToClear(lair, false, skills, worn, traits, CreatureTitleTable.MaxRank);
+            Assert(led > plain, $"Clearing it under a Terror costs more: {plain:F1} to {led:F1}.");
+            float health = (float)(Simpiens.Cognition.Vitality.RetreatBelow + (plain + led) / 2f);
+            Assert(Simpiens.Cognition.Vitality.BravesLair(lair, false, skills, worn, traits, health, 100, false)
+                && !Simpiens.Cognition.Vitality.BravesLair(lair, false, skills, worn, traits, health, 100, false, CreatureTitleTable.MaxRank), "Braved as it is; not under a Terror.");
+
+            // The simulation's own: the hollow's leader rank, as the snapshot carries it, until the leader is slain
+            var w = World();
+            var beetle = First(w.Sim, CreatureKind.StoneBeetle);
+            Assert(w.Sim.Creatures.LeaderRank(hollow) == 0, "No leader yet.");
+            w.Down(w.Crawler(beetle.Position), beetle.Id);
+            w.Sim.Creatures.NamedLairs(out ulong low, out ulong high);
+            Assert(w.Sim.Creatures.LeaderRank(hollow) == 1 && LairReach.LeaderRank(low, high, hollow) == 1 && LairReach.LeaderRank(low, high, LairIndex(map, Floor1Layout.RatWarren)) == 0, "The hollow led by a Bane, the warren by nobody.");
+            w.Sim.Creatures.Slay(w.Sim, beetle.Id, (uint)w.Clock.CurrentTick);
+            Assert(w.Sim.Creatures.LeaderRank(hollow) == 0, "Slain, it leads nothing.");
+            TestLog.Log($"[PASS] Test 8: its lair is judged more dangerous by its rank ({danger[0]:F3} to {danger[CreatureTitleTable.MaxRank]:F3} a second), and a lone crawler keeps away.");
+        }
+
+        private static void ValidateItLeadsItsPack()
+        {
+            var map = Floor1Layout.Definition;
+            int hollow = LairIndex(map, Floor1Layout.BeetleHollow);
+            ulong seed = 1;
+            while (CreatureService.PackOf(seed, hollow, map.Lairs[hollow]) < 2) seed++; // a hollow of two beetles
+            var heart = map.Lairs[hollow].Position;
+            var kind = CreatureCatalog.Get(CreatureKind.StoneBeetle);
+            var where = heart + new Vec2(kind.Leash - 0.5f, 0f); // within its reach, past a mate's sight
+            Assert(kind.Leash - 0.5f > kind.Sight + 1f, "Past a resting mate's sight.");
+
+            bool Follows(bool named)
+            {
+                var w = World(seed);
+                CreatureState leader = null, mate = null;
+                foreach (var c in w.Sim.Creatures.Creatures)
+                    if (c.LairIndex == hollow) { if (leader == null) leader = c; else mate = c; }
+                if (named) w.Down(w.Crawler(leader.Position), leader.Id);
+                var quarry = w.Crawler(where, "Quinn");
+                leader.Mode = CreatureMode.Chase;
+                leader.Target = quarry.Node.Id;
+                mate.Mode = CreatureMode.Rest;
+                mate.RestUntil = long.MaxValue;
+                w.Sim.TickCreatures((uint)w.Clock.CurrentTick + 1u);
+                return mate.Mode == CreatureMode.Chase && mate.Target == quarry.Node.Id;
+            }
+            Assert(Follows(named: true), "A named leader's mate takes its quarry, out of its own sight.");
+            Assert(!Follows(named: false), "An unnamed chaser's mate rests on.");
+            TestLog.Log($"[PASS] Test 9: it leads its pack: the mate in its lair's reach takes its quarry (seed {seed}).");
+        }
+
+        private static bool Near(float a, float b) => System.Math.Abs(a - b) < 0.01f;
+
+        private static int LairIndex(MapDefinition map, string key)
+        {
+            for (int i = 0; i < map.Lairs.Count; i++) if (map.Lairs[i].Key == key) return i;
+            throw new InvalidOperationException($"[NamedCreatureValidator] FAILED: Floor 1 has no {key}.");
+        }
+
         private static CreatureState First(SimulationManager sim, CreatureKind kind)
         {
             foreach (var creature in sim.Creatures.Creatures)
@@ -170,7 +276,7 @@ namespace Simpiens.Testing.Combat
             public string Line(in ChronicleEvent e) => new TemplateNarrativeFormatter(Identity).FormatEvent(e);
         }
 
-        private static Fixture World()
+        private static Fixture World(ulong seed = Seed)
         {
             var sectors = new SectorRegistry();
             sectors.Load(Floor1Layout.Definition);
@@ -179,7 +285,7 @@ namespace Simpiens.Testing.Combat
             var chronicle = new NarrativeChronicleService();
             var sim = new SimulationManager(registry, null, clock: clock, chronicleService: chronicle, sectors: sectors);
             sim.SetEconomy(Simpiens.Simulation.Economy.EconomyTuning.Default);
-            sim.PopulateLairs(Seed);
+            sim.PopulateLairs(seed);
             clock.AdvanceTicks(100);
             return new Fixture { Sim = sim, Clock = clock, Registry = registry, Chronicle = chronicle, Identity = new AgentIdentityService() };
         }

@@ -90,6 +90,12 @@ namespace Simpiens.Simulation.Creatures
         /// <summary>True once it has a name (D31).</summary>
         public bool IsNamed => Rank > 0;
 
+        /// <summary>Its health when whole: its kind's, grown by its rank (Epic 11, S7.2, D32).</summary>
+        public float MaxHealth => Rank == 0 ? (Definition?.MaxHealth ?? 0f) : (float)((Definition?.MaxHealth ?? 0f) * CreatureTitleTable.HealthFactor(Rank));
+
+        /// <summary>What it heals a tick resting at its place: its kind's, grown with its health, so it is whole in its kind's hours.</summary>
+        public float HealPerTick => Rank == 0 ? (Definition?.HealPerTick ?? 0f) : (float)((Definition?.HealPerTick ?? 0f) * CreatureTitleTable.HealthFactor(Rank));
+
         /// <summary>When it last swung, hit or miss (K2.5's strike pose); 0 for never. Unsaved, as a crawler's <c>StruckAtTick</c> is.</summary>
         public uint SwungAtTick { get; set; }
 

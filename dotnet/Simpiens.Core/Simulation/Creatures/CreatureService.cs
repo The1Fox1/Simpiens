@@ -179,6 +179,34 @@ namespace Simpiens.Simulation.Creatures
             return lair.Pack > 0;
         }
 
+        /// <summary>
+        /// The highest rank of a named creature living in each lair (Epic 11, S7.2, D32), two bits a lair: bit i of
+        /// <paramref name="low"/> and <paramref name="high"/> make lair i's (<see cref="LairReach.LeaderRank"/>). The simulation
+        /// publishes it in every snapshot. Allocates nothing.
+        /// </summary>
+        public void NamedLairs(out ulong low, out ulong high)
+        {
+            low = 0UL;
+            high = 0UL;
+            for (int i = 0; i < _creatures.Count; i++)
+            {
+                var c = _creatures[i];
+                if (!c.IsNamed || !c.IsAlive || c.LairIndex < 0 || c.LairIndex >= 64) continue;
+                int rank = SimMath.Min((int)c.Rank, CreatureTitleTable.MaxRank);
+                if (rank <= LairReach.LeaderRank(low, high, c.LairIndex)) continue;
+                ulong bit = 1UL << c.LairIndex;
+                low = (rank & 1) != 0 ? low | bit : low & ~bit;
+                high = (rank & 2) != 0 ? high | bit : high & ~bit;
+            }
+        }
+
+        /// <summary>The rank of the named creature leading lair <paramref name="lairIndex"/> (its highest); 0 for none.</summary>
+        public int LeaderRank(int lairIndex)
+        {
+            NamedLairs(out ulong low, out ulong high);
+            return LairReach.LeaderRank(low, high, lairIndex);
+        }
+
         /// <summary>True while lair <paramref name="lairIndex"/>'s boss holds its place.</summary>
         public bool IsBossAlive(int lairIndex) =>
             lairIndex >= 0 && lairIndex < _lairs.Count && _lairs[lairIndex].Definition.HasBoss && _lairs[lairIndex].Pack > 0 && _lairs[lairIndex].MemberIn(0) != default;
@@ -298,19 +326,25 @@ namespace Simpiens.Simulation.Creatures
             if (crawler == default || !TryGet(id, out var creature) || !creature.IsAlive) return Renown.None;
             var kind = creature.Definition;
             if (kind == null || kind.IsBoss) return Renown.None;
+            float whole = creature.MaxHealth;
             if (!creature.IsNamed)
             {
                 creature.Rank = 1;
                 creature.Downed = 1;
                 creature.Victim = crawler;
+                Grow(creature, whole);
                 return Renown.Named;
             }
             if (death) return Renown.None;
             if (creature.Downed < byte.MaxValue) creature.Downed++;
             if (creature.Rank >= CreatureTitleTable.MaxRank) return Renown.Downed;
             creature.Rank++;
+            Grow(creature, whole);
             return Renown.RankRose;
         }
+
+        // A rank grows it at once (S7.2, D32): its health rises by as much as its whole health did
+        private static void Grow(CreatureState creature, float wasWhole) => creature.Health = (float)(creature.Health + (creature.MaxHealth - wasWhole));
 
         /// <summary>The pack <paramref name="kind"/>'s lair at <paramref name="lairIndex"/> holds on <paramref name="seed"/>: within its range, at most <see cref="MaxPack"/>.</summary>
         public static int PackSize(ulong seed, int lairIndex, CreatureDefinition kind)

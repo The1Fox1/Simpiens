@@ -106,7 +106,7 @@ namespace Simpiens.Cognition
             {
                 if (!snapshot.IsLairCharted(i) || !Simpiens.Simulation.Creatures.LairReach.Holds(lairs[i], position)) continue;
                 if (defense < 0f) defense = Simpiens.Simulation.Items.CrawlerStats.Get(worn, Simpiens.Simulation.Items.StatKind.Defense);
-                float danger = Simpiens.Simulation.Creatures.LairReach.Danger(lairs[i], defense, snapshot.IsBossAlive(i));
+                float danger = Simpiens.Simulation.Creatures.LairReach.Danger(lairs[i], defense, snapshot.IsBossAlive(i), snapshot.LeaderRank(i));
                 if (danger > worst) worst = danger;
             }
             return worst;
@@ -143,9 +143,9 @@ namespace Simpiens.Cognition
             {
                 if (!snapshot.IsLairCharted(i) || !Simpiens.Simulation.Creatures.LairReach.Holds(lairs[i], position)) continue;
                 if (ignoreAt.HasValue && Simpiens.Simulation.Creatures.LairReach.Holds(lairs[i], ignoreAt.Value)) continue;
-                if (BravesLair(lairs[i], snapshot.IsBossAlive(i), context.Skills, context.Inventory, context.Traits, context.Health, context.Personality.RiskTolerancePercent, context.IsDowned)) continue;
+                if (BravesLair(lairs[i], snapshot.IsBossAlive(i), context.Skills, context.Inventory, context.Traits, context.Health, context.Personality.RiskTolerancePercent, context.IsDowned, snapshot.LeaderRank(i))) continue;
                 if (defense < 0f) defense = Simpiens.Simulation.Items.CrawlerStats.Get(context.Inventory, Simpiens.Simulation.Items.StatKind.Defense);
-                float danger = Simpiens.Simulation.Creatures.LairReach.Danger(lairs[i], defense, snapshot.IsBossAlive(i));
+                float danger = Simpiens.Simulation.Creatures.LairReach.Danger(lairs[i], defense, snapshot.IsBossAlive(i), snapshot.LeaderRank(i));
                 if (danger > worst) worst = danger;
             }
             return worst;
@@ -185,9 +185,11 @@ namespace Simpiens.Cognition
         /// through its defense, times what its own blows take to slay one (the combat rule's hit chance for its attack less
         /// the creature's defense, every swing), over the pack still standing: n, n - 1, ... 1 of them. Infinite for blows
         /// that can't hurt. It judges by the fighter the fight would build (<see cref="Simpiens.Simulation.Combat.Combatant.ForCrawler(EntityId, Vec2, float, float, bool, in Simpiens.Simulation.Skills.SkillSet, Simpiens.Cognition.Inventory.IAgentInventory, in Simpiens.Simulation.Skills.CrawlerTraits)"/>,
-        /// K9.8b): its skill's hit chance and damage, its techniques (Epic 11, S4.3), its swing in whole ticks.
+        /// K9.8b): its skill's hit chance and damage, its techniques (Epic 11, S4.3), its swing in whole ticks. A named creature
+        /// leading the pack at <paramref name="leaderRank"/> (Epic 11, S7.2, D32) is one of it, harder and longer to slay, so
+        /// slain last; 0, none, judges as before.
         /// </summary>
-        public static float HarmToClear(in Simpiens.Simulation.World.LairDefinition lair, bool bossAlive, in Simpiens.Simulation.Skills.SkillSet skills, Simpiens.Cognition.Inventory.IAgentInventory worn, in Simpiens.Simulation.Skills.CrawlerTraits traits)
+        public static float HarmToClear(in Simpiens.Simulation.World.LairDefinition lair, bool bossAlive, in Simpiens.Simulation.Skills.SkillSet skills, Simpiens.Cognition.Inventory.IAgentInventory worn, in Simpiens.Simulation.Skills.CrawlerTraits traits, int leaderRank = 0)
         {
             var kind = Simpiens.Simulation.Creatures.CreatureCatalog.Get(lair.Kind);
             if (kind == null || kind.PackMin == 0) return 0f;
@@ -199,6 +201,15 @@ namespace Simpiens.Cognition
             float eachTime = kind.MaxHealth / perSecond;
             int n = kind.PackMin;
             float harm = (float)(eachHarm * eachTime * (n * (n + 1) / 2f));
+            float packTime = n * eachTime;
+            if (leaderRank > 0)
+            {
+                // The leader slain last: the rest fall one by one under its blows and theirs, then it alone (Epic 11, S7.2)
+                float leaderHarm = Simpiens.Simulation.Creatures.LairReach.HarmPerSecond(kind, me.Defense, leaderRank);
+                float leaderTime = (float)(kind.MaxHealth * Simpiens.Simulation.Creatures.CreatureTitleTable.HealthFactor(leaderRank) / perSecond);
+                harm = (float)(eachHarm * eachTime * ((n - 1) * n / 2f) + leaderHarm * ((n - 1) * eachTime + leaderTime));
+                packTime = (float)((n - 1) * eachTime + leaderTime);
+            }
             // A lair judged as its dread says (Epic 11, S6.3, D29: Shaken judges it more dangerous); exactly as before with none
             float dread = Simpiens.Simulation.Skills.CrawlerTechniques.Factor(Simpiens.Simulation.Skills.CrawlerTechniques.Get(traits, skills, Simpiens.Simulation.Skills.SkillWork.Fight(ranged: false), Simpiens.Simulation.Skills.TechniqueStat.Dread));
             if (!lair.HasBoss || !bossAlive) return dread == 1f ? harm : (float)(harm * dread);
@@ -210,7 +221,7 @@ namespace Simpiens.Cognition
             float onBoss = (float)(Simpiens.Simulation.Combat.CombatRules.HitChance(me) * Simpiens.Simulation.Combat.CombatRules.Mitigated(me.Attack, boss.Defense) / SimMath.Max(0.1f, interval));
             if (onBoss <= 0f) return float.MaxValue;
             float bossHarm = Simpiens.Simulation.Creatures.LairReach.HarmPerSecond(boss, me.Defense);
-            float withBoss = (float)(harm + bossHarm * (n * eachTime + boss.MaxHealth / onBoss));
+            float withBoss = (float)(harm + bossHarm * ((leaderRank > 0 ? packTime : n * eachTime) + boss.MaxHealth / onBoss));
             return dread == 1f ? withBoss : (float)(withBoss * dread);
         }
 
@@ -219,8 +230,8 @@ namespace Simpiens.Cognition
         /// "past what it would brave alone"): bold, armed, on its feet, and expecting to slay its smallest pack before its health
         /// falls to the retreat line.
         /// </summary>
-        public static bool BravesLair(in Simpiens.Simulation.World.LairDefinition lair, bool bossAlive, in Simpiens.Simulation.Skills.SkillSet skills, Simpiens.Cognition.Inventory.IAgentInventory worn, in Simpiens.Simulation.Skills.CrawlerTraits traits, float health, int riskTolerancePercent, bool downed) =>
-            !downed && riskTolerancePercent >= VentureRiskTolerancePercent && IsArmed(worn) && HarmToClear(lair, bossAlive, skills, worn, traits) <= health - RetreatBelow;
+        public static bool BravesLair(in Simpiens.Simulation.World.LairDefinition lair, bool bossAlive, in Simpiens.Simulation.Skills.SkillSet skills, Simpiens.Cognition.Inventory.IAgentInventory worn, in Simpiens.Simulation.Skills.CrawlerTraits traits, float health, int riskTolerancePercent, bool downed, int leaderRank = 0) =>
+            !downed && riskTolerancePercent >= VentureRiskTolerancePercent && IsArmed(worn) && HarmToClear(lair, bossAlive, skills, worn, traits, leaderRank) <= health - RetreatBelow;
 
         /// <summary>The same, for a crawler already known to venture or not, wearing <paramref name="worn"/>.</summary>
         public static bool WouldEnterAt(bool venture, Simpiens.Simulation.Spatial.SharedWorldSnapshot snapshot, Vec2 position, Simpiens.Cognition.Inventory.IAgentInventory worn)

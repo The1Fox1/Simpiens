@@ -38,6 +38,9 @@ namespace Simpiens.Simulation.Spatial
         /// <summary>Which of the map's lairs have their boss alive (bit i = lair i, Epic 10 Part 3, K10.2a), published in every following snapshot. Main thread only.</summary>
         void SetBossLairs(ulong mask) { }
 
+        /// <summary>The highest rank of a named creature in each lair, two bits a lair (Epic 11, S7.2), published in every following snapshot. Main thread only.</summary>
+        void SetNamedLairs(ulong low, ulong high) { }
+
         /// <summary>Which of the map's stations stand built (bit i = station i, Epic 11, S3.4), published in every following snapshot. Main thread only.</summary>
         void SetBuiltStations(ulong mask) { }
 
@@ -83,6 +86,13 @@ namespace Simpiens.Simulation.Spatial
 
         private ulong _bossLairs;
         public void SetBossLairs(ulong mask) => _bossLairs = mask;
+
+        private ulong _namedLairLow, _namedLairHigh;
+        public void SetNamedLairs(ulong low, ulong high)
+        {
+            _namedLairLow = low;
+            _namedLairHigh = high;
+        }
 
         private ulong _builtStations;
         public void SetBuiltStations(ulong mask) => _builtStations = mask;
@@ -216,6 +226,7 @@ namespace Simpiens.Simulation.Spatial
             _currentTickSnapshot.SetExploredSectors(_exploredSectors);
             _currentTickSnapshot.SetChartedLairs(_chartedLairs);
             _currentTickSnapshot.SetBossLairs(_bossLairs); // K10.2a
+            _currentTickSnapshot.SetNamedLairs(_namedLairLow, _namedLairHigh); // Epic 11, S7.2
             _currentTickSnapshot.SetBuiltStations(_builtStations); // Epic 11, S3.4
             _currentTickSnapshot.SetPiles(_piles); // copied now, on the main thread (K4.3b)
             _currentTickSnapshot.SetHunts(_hunts); // K6.2

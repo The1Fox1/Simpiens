@@ -73,7 +73,7 @@ namespace Simpiens.Cognition.Planning.Handlers
         {
             var agent = node.Agent;
             var me = Combatant.ForCrawler(agent, node.Radius);
-            var them = Combatant.ForCreature(creature.Definition, creature.Id, creature.Position, creature.Health);
+            var them = Combatant.ForCreature(creature.Definition, creature.Id, creature.Position, creature.Health, creature.Rank);
             if (agent != null) agent.VisualState = AgentVisualState.Defiant;
             if (!CombatRules.InReach(me, them)) return false;
             context.SwingAtCreature(node, creature.Id);
@@ -88,7 +88,7 @@ namespace Simpiens.Cognition.Planning.Handlers
         public static IntentResult StepToward(WorldEntity node, CreatureState creature, IIntentExecutionContext context, bool besideOthers = false)
         {
             var me = Combatant.ForCrawler(node.Agent, node.Radius);
-            var them = Combatant.ForCreature(creature.Definition, creature.Id, creature.Position, creature.Health);
+            var them = Combatant.ForCreature(creature.Definition, creature.Id, creature.Position, creature.Health, creature.Rank);
             float step = SimMath.Min((float)(node.BaseSpeed * context.FixedTickDeltaTime), SimMath.Max(0f, (float)(CombatRules.Gap(me, them) - me.Reach * 0.5f)));
             if (step <= 0f) return IntentResult.InProgress;
             var toward = (creature.Position - node.Position).Normalized;
@@ -118,7 +118,7 @@ namespace Simpiens.Cognition.Planning.Handlers
         {
             var agent = node.Agent;
             var me = Combatant.ForCrawler(agent, node.Radius);
-            var them = Combatant.ForCreature(creature.Definition, creature.Id, creature.Position, creature.Health);
+            var them = Combatant.ForCreature(creature.Definition, creature.Id, creature.Position, creature.Health, creature.Rank);
             agent.VisualState = AgentVisualState.Defiant;
             bool clear = context.HasLineOfSight(node.Position, creature.Position);
             if (clear && CombatRules.InRange(me, them)) context.SwingAtCreature(node, creature.Id);
