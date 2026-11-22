@@ -175,7 +175,7 @@ Working document (AGENTS.md, Documentation Protocol 6), one of Epic 11's plans (
 - [ ] **The producer's look at S7:** the brief is in the epic's §4.
 
 ### C. Close-out (1 day)
-- [ ] **C.1 The Legend gate** [Basic: the gates on the final build]
+- [x] **C.1 The Legend gate** [Basic: the gates on the final build] (2026-11-22: the gates at S7.9 and S7.6 with no code change since; §5.13 over 28 days.)
   - Every gate in §4 on the final build, and growth at legend complete over 28 days (`docs/skills-model.md` §5.13: deeds, epithets, scars, traits, named creatures).
 - [ ] **C.2 The close-out** [Basic: a close-out from the lists this plan holds]
   - The roadmap, the epic, the focus file, `architecture_history.md`, `AGENTS.md` (recipes: an epithet, a scar, an earned trait, a creature title) and the skills model reconciled; findings to the epic's §7; the plan deleted. The PR into `main`, merged on the producer's word.

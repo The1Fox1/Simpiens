@@ -469,3 +469,18 @@ S7.1–S7.5's build (a name, growth and the lead, grudges, a hunt's quarry, the 
 
 - **The named creature bites:** on the bold pairs a beetle that grows and leads downs more of them (198 downings against 137 at §5.11, deaths 13 against 7, fewer creatures named because each named one downs more), and fewer are slain after (34 of 49 against 71 of 75): the lair a named creature leads is the wall D32 warns of, which the hunt and the clear answer. On the guild's clears every named creature still dies in the fight that named it.
 - **Moved DoDs:** `DeathHasItsCost`, re-picked at S7.2 (to gate seed 11) and S7.3 (to 8), each in its own commit; no other. Seeds 1–120 pass the outpost's day, 120/120 with and without the guild; the soak holds, 18 of 18, and the `guild`, `crafting` and `hunting` profiles 20 of 20 each on seeds 1–20.
+
+### 5.13 Legend complete (C.1, 2026-11-22)
+Plan 3's final build over 28 days on the 23 gate seeds: what a month makes of the legend.
+
+| At day 28 | No player | Hunting players | Plan 2's final build (§5.8): no player / hunting |
+| :--- | :--- | :--- | :--- |
+| Residents holding a Journeyman's skill | 1.83 a seed (most 4) | 3.48 a seed (most 7) | 1.83 / 3.57 |
+| Residents with an epithet | 40, on 21 seeds | 135, on all 23 | |
+| By epithet | the Teacher 40 | Lairbreaker 49, a boss's word 22, the Maker 22, a kind's word 18, the Teacher 17, the Huntsman 7 | |
+| Earned traits | Patient Teacher 40 | Patient Teacher 18, Monster Hunter 8 | |
+| Downings, scars, named creatures | none | none | |
+
+- **Growth holds:** no player's curve is §5.8's to the digit; the hunting players' is 0.09 a seed lower, past day 14, where Monster Hunter's blows and Patient Teacher's lessons begin to change who practises.
+- **A month's legend comes to the players' people:** with the hunting players every seed has a resident with an epithet by day 28, a third of the residents one in all; without a player the Teacher alone, on 21 seeds.
+- **Named creatures over a month** (`MeasureDowningsOnTheGateSeeds`, 28 days): the guild's clears down a member on 16 of 23 seeds and name 51 creatures on 13, each slain in the fight that named it (F14); the hunting players down nobody, so name nothing (F13).
