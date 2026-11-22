@@ -100,7 +100,7 @@ namespace Simpiens.Simulation.Skills
         public const int TeacherSlots = 4;
 
         /// <summary>What's left of <see cref="Size"/> after the fields.</summary>
-        public const int SpareBytes = 51;
+        public const int SpareBytes = 32;
 
         private PassionBytes _passions;     //   0: 16
         private TechniqueBytes _techniques; //  16: 48
@@ -113,7 +113,10 @@ namespace Simpiens.Simulation.Skills
         private FourBytes _scars;           // 184
         private EntityId _epithetSubject;   // 188: 16, the crawler an epithet names (S6.1)
         private byte _epithetKind;          // 204: the creature kind an epithet names (S6.1)
-        private TraitsSpare _spare;         // 205: 51
+        private byte _grudgeLair;           // 205: the lair of the creature it hates + 1; 0 for none (S7.3)
+        private ushort _room;               // 206: spare, so the id below lies on a 4-byte boundary
+        private EntityId _grudge;           // 208: 16, the named creature it hates (S7.3)
+        private TraitsSpare _spare;         // 224: 32
 
         // --- Passions (S1) ---
 
@@ -173,6 +176,24 @@ namespace Simpiens.Simulation.Skills
             _epithetKind = kind;
             _epithetSubject = subject;
         }
+
+        // --- A grudge (Epic 11, S7.3, D33) ---
+
+        /// <summary>The named creature it hates, for felling a friend; empty for none (or once that creature is slain).</summary>
+        public readonly EntityId Grudge => _grudge;
+
+        /// <summary>The lair of the creature it hates, in the map's order; -1 for none.</summary>
+        public readonly int GrudgeLair => _grudge == default ? -1 : _grudgeLair - 1;
+
+        /// <summary>Hates <paramref name="creature"/>, of lair <paramref name="lairIndex"/> (main thread, where a friend falls).</summary>
+        public void SetGrudge(EntityId creature, int lairIndex)
+        {
+            _grudge = creature;
+            _grudgeLair = creature == default || lairIndex < 0 || lairIndex > 254 ? (byte)0 : (byte)(lairIndex + 1);
+        }
+
+        /// <summary>Its grudge settled: the creature slain.</summary>
+        public void ClearGrudge() => SetGrudge(default, -1);
 
         // --- Earned traits (Epic 11, S6.3, D29) ---
 

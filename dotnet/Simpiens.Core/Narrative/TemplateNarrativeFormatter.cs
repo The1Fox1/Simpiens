@@ -225,6 +225,8 @@ namespace Simpiens.Narrative
                 {
                     var trait = Simpiens.Simulation.Skills.EarnedTraitTable.Get((Simpiens.Simulation.Skills.EarnedTrait)(byte)evt.ExtraData);
                     if (trait == null) return $"{actorA} has changed.";
+                    if (trait.Act == Simpiens.Simulation.Skills.TraitAct.FriendFelled) // a grudge (Epic 11, S7.3)
+                        return evt.ActorBId != default ? $"{actorA} is {trait.Words} now: {actorB} felled a friend." : $"{actorA} is {trait.Words} now.";
                     var deed = Simpiens.Simulation.Skills.DeedTable.Get(trait.Deed);
                     return deed == null ? $"{actorA} is {trait.Words} now." : $"{actorA} is {trait.Words} now, after {deed.CountOf(trait.Count)}.";
                 }

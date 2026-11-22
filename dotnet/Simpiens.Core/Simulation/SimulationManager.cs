@@ -442,6 +442,32 @@ namespace Simpiens.Simulation
             Chronicle?.RecordEvent(new Simpiens.Narrative.ChronicleEvent(Simpiens.Narrative.ChronicleEventType.CrawlerDowned, state.AgentId, attacker,
                 GetSectorForPosition(state.Position), tick, Simpiens.Narrative.ChronicleIntensity.Crisis));
             TellRenown(Creatures.Credit(attacker, state.AgentId, death: false), attacker, state.AgentId, killed: false, tick); // its name (Epic 11, S7.1)
+            Kindle(attacker, state.AgentId, tick); // its fallen's friends' grudges (S7.3)
+        }
+
+        /// <summary>
+        /// Grudges (Epic 11, S7.3, D33): a named creature downed or killed <paramref name="fallen"/>, so each of its friends (warmth
+        /// toward it at <see cref="Simpiens.Cognition.Vitality.GrudgeWarmth"/>) holding no grudge takes one against the creature,
+        /// with the trait the act earns (told by its runtime), or again if it holds that trait already. A crawler with every trait
+        /// slot taken has no room to hate. Main thread.
+        /// </summary>
+        private void Kindle(EntityId creatureId, EntityId fallen, uint tick)
+        {
+            if (!Creatures.TryGet(creatureId, out var creature) || !creature.IsNamed) return;
+            var entities = _worldRegistry?.ActiveEntities;
+            if (entities == null) return;
+            for (int i = 0; i < entities.Count; i++)
+            {
+                var friend = entities[i]?.Agent;
+                if (friend == null || friend.HasLeft || friend.AgentId == fallen || friend.Memory == null) continue;
+                if (friend.Traits.Grudge != default || friend.Memory.GetAffinity(fallen, tick).Warmth < Simpiens.Cognition.Vitality.GrudgeWarmth) continue;
+                var traits = friend.Traits;
+                if (!Simpiens.Simulation.Skills.EarnedTraitRules.JudgeAct(ref traits, Simpiens.Simulation.Skills.TraitAct.FriendFelled)
+                    && !Simpiens.Simulation.Skills.EarnedTraitRules.HoldsAct(traits, Simpiens.Simulation.Skills.TraitAct.FriendFelled)) continue;
+                traits.SetGrudge(creature.Id, creature.LairIndex);
+                friend.Traits = traits;
+                SimLog.Simulation.ZLogInformation($"{SimLog.Agent(friend.AgentId)} holds a grudge against {Simpiens.Simulation.Creatures.CreatureCatalog.NameOf(creature.Kind)} {creature.Id}, for {SimLog.Agent(fallen)}");
+            }
         }
 
         /// <summary>
@@ -465,6 +491,7 @@ namespace Simpiens.Simulation
         void Simpiens.Simulation.Creatures.ICreatureWorld.CreatureSlain(EntityId slayer, Simpiens.Simulation.Creatures.CreatureState creature, System.ReadOnlySpan<ItemInstance> drops, uint tick)
         {
             Piles.Drop(this, creature.Position, drops, 0, slayer, tick); // its loot, claimed for the slayer (K4.2)
+            if (creature.IsNamed) SettleGrudges(creature.Id); // the grudges against it settled (Epic 11, S7.3)
             var killer = _worldRegistry?.GetEntity(slayer)?.Agent; // the slayer's deeds (Epic 11, S0.5)
             if (killer != null)
             {
@@ -487,6 +514,21 @@ namespace Simpiens.Simulation
                 SimLog.Simulation.ZLogInformation($"{SimLog.Agent(slayer)} slew the {Simpiens.Simulation.Creatures.CreatureCatalog.NameOf(creature.Kind)}: the descent gate is breached");
                 Chronicle?.RecordEvent(new Simpiens.Narrative.ChronicleEvent(Simpiens.Narrative.ChronicleEventType.GateBreached, slayer, creature.Id,
                     GetSectorForPosition(creature.Position), tick, Simpiens.Narrative.ChronicleIntensity.Crisis, (byte)creature.Kind));
+            }
+        }
+
+        // A named creature slain (Epic 11, S7.3, D33): whoever hated it holds its trait still, and its grudge no more
+        private void SettleGrudges(EntityId creatureId)
+        {
+            var entities = _worldRegistry?.ActiveEntities;
+            if (entities == null) return;
+            for (int i = 0; i < entities.Count; i++)
+            {
+                var crawler = entities[i]?.Agent;
+                if (crawler == null || crawler.Traits.Grudge != creatureId) continue;
+                var traits = crawler.Traits;
+                traits.ClearGrudge();
+                crawler.Traits = traits;
             }
         }
 

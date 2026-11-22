@@ -185,6 +185,7 @@ namespace Simpiens.Simulation.Creatures
             world.CreatureHit(blow.Crawler.Id, creature, dealt); // a hunter's share (K6.1)
             if (creature.Health > 0f)
             {
+                if (creature.IsNamed) creature.Foe = blow.Crawler.Id; // a named creature remembers who struck it (Epic 11, S7.3, D33)
                 Provoke(creature, blow.Crawler);
                 return;
             }
@@ -333,6 +334,7 @@ namespace Simpiens.Simulation.Creatures
                 if (seen > kind.Sight) continue;
                 if (snapshot != null && !snapshot.HasLineOfSight(c.Position, e.Position)) continue;
                 float d = DrawnDistance(e.Agent.Expedition, seen); // the front draws the eye (Epic 11, S5.4, D22)
+                if (e.Id == c.Foe && c.Foe != default) d = (float)(d - FoeDraw); // and its foe (S7.3, D33)
                 if (best == null || d < bestDistance || (d == bestDistance && e.Id.CompareTo(best.Id) < 0))
                 {
                     best = e;
@@ -348,6 +350,9 @@ namespace Simpiens.Simulation.Creatures
 
         /// <summary>How far a party's front draws a creature (Epic 11, S5.4, D22), in world units.</summary>
         public const float FrontDraw = 3f;
+
+        /// <summary>How much nearer a named creature sees its foe, the last crawler that struck it and lived (Epic 11, S7.3, D33): as a front, in world units.</summary>
+        public const float FoeDraw = FrontDraw;
 
         /// <summary>
         /// How near a crawler seems to a creature choosing its quarry (Epic 11, S5.4, D22): a member holding a clear's front by

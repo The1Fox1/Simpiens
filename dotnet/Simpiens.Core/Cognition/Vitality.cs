@@ -143,7 +143,7 @@ namespace Simpiens.Cognition
             {
                 if (!snapshot.IsLairCharted(i) || !Simpiens.Simulation.Creatures.LairReach.Holds(lairs[i], position)) continue;
                 if (ignoreAt.HasValue && Simpiens.Simulation.Creatures.LairReach.Holds(lairs[i], ignoreAt.Value)) continue;
-                if (BravesLair(lairs[i], snapshot.IsBossAlive(i), context.Skills, context.Inventory, context.Traits, context.Health, context.Personality.RiskTolerancePercent, context.IsDowned, snapshot.LeaderRank(i))) continue;
+                if (BravesLair(lairs[i], snapshot.IsBossAlive(i), context.Skills, context.Inventory, context.Traits, context.Health, context.Personality.RiskTolerancePercent, context.IsDowned, snapshot.LeaderRank(i), IsGrudgeLair(context.Traits, snapshot, i))) continue;
                 if (defense < 0f) defense = Simpiens.Simulation.Items.CrawlerStats.Get(context.Inventory, Simpiens.Simulation.Items.StatKind.Defense);
                 float danger = Simpiens.Simulation.Creatures.LairReach.Danger(lairs[i], defense, snapshot.IsBossAlive(i), snapshot.LeaderRank(i));
                 if (danger > worst) worst = danger;
@@ -228,10 +228,22 @@ namespace Simpiens.Cognition
         /// <summary>
         /// True when a crawler braves <paramref name="lair"/> alone (Epic 10 Part 3, K3.3, D21; Q6: a known lair is avoided
         /// "past what it would brave alone"): bold, armed, on its feet, and expecting to slay its smallest pack before its health
-        /// falls to the retreat line.
+        /// falls to the retreat line. Its <paramref name="grudge"/>'s lair (Epic 11, S7.3, D33: a named creature that felled a
+        /// friend leads it) it braves with a quarter less to spare: the harm judged at <see cref="GrudgeEase"/>.
         /// </summary>
-        public static bool BravesLair(in Simpiens.Simulation.World.LairDefinition lair, bool bossAlive, in Simpiens.Simulation.Skills.SkillSet skills, Simpiens.Cognition.Inventory.IAgentInventory worn, in Simpiens.Simulation.Skills.CrawlerTraits traits, float health, int riskTolerancePercent, bool downed, int leaderRank = 0) =>
-            !downed && riskTolerancePercent >= VentureRiskTolerancePercent && IsArmed(worn) && HarmToClear(lair, bossAlive, skills, worn, traits, leaderRank) <= health - RetreatBelow;
+        public static bool BravesLair(in Simpiens.Simulation.World.LairDefinition lair, bool bossAlive, in Simpiens.Simulation.Skills.SkillSet skills, Simpiens.Cognition.Inventory.IAgentInventory worn, in Simpiens.Simulation.Skills.CrawlerTraits traits, float health, int riskTolerancePercent, bool downed, int leaderRank = 0, bool grudge = false) =>
+            !downed && riskTolerancePercent >= VentureRiskTolerancePercent && IsArmed(worn)
+            && (grudge ? (float)(HarmToClear(lair, bossAlive, skills, worn, traits, leaderRank) * GrudgeEase) : HarmToClear(lair, bossAlive, skills, worn, traits, leaderRank)) <= health - RetreatBelow;
+
+        /// <summary>How a crawler with a grudge judges the harm of its foe's lair (Epic 11, S7.3, D33): a quarter less, first guess.</summary>
+        public const float GrudgeEase = 0.75f;
+
+        /// <summary>The warmth toward a crawler a named creature downed or killed at which its friend takes a grudge (Epic 11, S7.3, D33; first guess).</summary>
+        public const int GrudgeWarmth = 40;
+
+        /// <summary>True when lair <paramref name="lairIndex"/> is this crawler's grudge's, its foe leading it still (D33): the snapshot's mask of lairs a named creature leads.</summary>
+        public static bool IsGrudgeLair(in Simpiens.Simulation.Skills.CrawlerTraits traits, Simpiens.Simulation.Spatial.SharedWorldSnapshot snapshot, int lairIndex) =>
+            traits.GrudgeLair == lairIndex && lairIndex >= 0 && snapshot != null && snapshot.LeaderRank(lairIndex) > 0;
 
         /// <summary>The same, for a crawler already known to venture or not, wearing <paramref name="worn"/>.</summary>
         public static bool WouldEnterAt(bool venture, Simpiens.Simulation.Spatial.SharedWorldSnapshot snapshot, Vec2 position, Simpiens.Cognition.Inventory.IAgentInventory worn)

@@ -43,7 +43,16 @@ namespace Simpiens.Testing.Skills
             {
                 Assert(row.Id != EarnedTrait.None && EarnedTraitTable.Get(row.Id) == row && EarnedTraitTable.NameOf(row.Id) == row.Name, $"{row.Name}: found by its id.");
                 Assert(!string.IsNullOrEmpty(row.Words) && words.Add(row.Words), $"{row.Name}: words of its own.");
-                foreach (char c in row.Words + row.EffectWords) Assert(c < 256, $"{row.Name}: Latin-1, as the fonts are.");
+                foreach (char c in row.Words + row.EffectWords + row.ActWords) Assert(c < 256, $"{row.Name}: Latin-1, as the fonts are.");
+                Assert((row.Kind == TraitKind.Act) == (row.Act != TraitAct.None), $"{row.Name}: an act's trait, and only it, names its act (Epic 11, S7.3).");
+                if (row.Kind == TraitKind.Act)
+                {
+                    // Its own act (S7.3): no deed counts toward it; what it does is in its words, judged where the act happens
+                    Assert(row.Deed == Deed.None && row.Count == 0 && row.Effects.Count == 0 && row.ActWords.Length > 0, $"{row.Name}: no deed, no stat, its words saying what it does.");
+                    var traits = default(CrawlerTraits);
+                    Assert(EarnedTraitRules.JudgeAct(ref traits, row.Act) && traits.HasTrait(row.Id) && EarnedTraitRules.HoldsAct(traits, row.Act) && !EarnedTraitRules.JudgeAct(ref traits, row.Act), $"{row.Name}: earned by its act, once.");
+                    continue;
+                }
                 Assert(DeedTable.Get(row.Deed) != null && row.Count >= 1, $"{row.Name}: a deed and a count.");
                 Assert(row.Effects.Count >= 1, $"{row.Name}: an effect.");
                 foreach (var effect in row.Effects)
@@ -56,7 +65,7 @@ namespace Simpiens.Testing.Skills
             }
             foreach (EarnedTrait id in Enum.GetValues(typeof(EarnedTrait))) Assert(id == EarnedTrait.None || EarnedTraitTable.Get(id) != null, $"Trait {id} has a row.");
             Assert(Has(TraitKind.Help) && Has(TraitKind.Hurt), "Traits that help and traits that hurt.");
-            TestLog.Log($"[PASS] Test 1: {EarnedTraitTable.All.Count} earned traits, each a deed and a count, its effects within bounds on work they can change.");
+            TestLog.Log($"[PASS] Test 1: {EarnedTraitTable.All.Count} earned traits, each a deed and a count (or its own act), its effects within bounds on work they can change.");
         }
 
         private static bool Has(TraitKind kind)

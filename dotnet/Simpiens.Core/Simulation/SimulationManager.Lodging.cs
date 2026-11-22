@@ -108,7 +108,11 @@ namespace Simpiens.Simulation
             _chronicleService?.RecordEvent(new ChronicleEvent(ChronicleEventType.CrawlerDied, node.Id, by, GetSectorForPosition(node.Position), tick,
                 ChronicleIntensity.Crisis, (int)cause * 256 + detail));
             // The creature that struck it last takes its name from it, if it hasn't one (Epic 11, S7.1, D31)
-            if (cause == Simpiens.Simulation.DeathCause.Creature && by != default) TellRenown(Creatures.Credit(by, node.Id, death: true), by, node.Id, killed: true, tick);
+            if (cause == Simpiens.Simulation.DeathCause.Creature && by != default)
+            {
+                TellRenown(Creatures.Credit(by, node.Id, death: true), by, node.Id, killed: true, tick);
+                Kindle(by, node.Id, tick); // its friends' grudges (S7.3)
+            }
         }
 
         /// <summary>A friend's grief raises frustration by this much (Q4, K5.5): the portrait's frustrated face shows it.</summary>

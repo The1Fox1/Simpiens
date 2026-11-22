@@ -16,7 +16,19 @@ namespace Simpiens.Simulation.Skills
         Shaken = 2,
         MonsterHunter = 3,
         Lifesaver = 4,
-        PatientTeacher = 5
+        PatientTeacher = 5,
+        Vengeful = 6
+    }
+
+    /// <summary>
+    /// What a crawler's own act earns (Epic 11, S7.3, D29's "its own act"): a trait no deed counts toward, judged where the act
+    /// happens by <see cref="EarnedTraitRules.JudgeAct"/>. Code names the act, never the trait.
+    /// </summary>
+    public enum TraitAct : byte
+    {
+        None = 0,
+        /// <summary>A friend (warmth at the grudge line) downed or killed by a named creature: a grudge against it (D33).</summary>
+        FriendFelled = 1
     }
 
     /// <summary>What a trait does for its holder (D29): helps, hurts, or acts on its own (a grudge, S7.3).</summary>
@@ -64,6 +76,12 @@ namespace Simpiens.Simulation.Skills
 
         /// <summary>Its effects, through the techniques' door (<see cref="CrawlerTechniques"/>), within the same bounds.</summary>
         public IReadOnlyList<TechniqueEffect> Effects { get; }
+
+        /// <summary>The act that earns it (S7.3), for a trait no deed counts toward; none for a deed's trait.</summary>
+        public TraitAct Act { get; init; }
+
+        /// <summary>What an act's trait does, in the player's words, where it has no stat to describe (S7.3).</summary>
+        public string ActWords { get; init; } = string.Empty;
 
         /// <summary>Whether its effects change <paramref name="use"/>.</summary>
         public bool AppliesTo(SkillUse use)
@@ -123,6 +141,9 @@ namespace Simpiens.Simulation.Skills
                 new EarnedTraitDefinition(EarnedTrait.MonsterHunter, "Monster Hunter", TraitKind.Help, Deed.CreatureSlain, 10, SkillLean.None, Fights, E(TechniqueStat.Attack, 10)),
                 new EarnedTraitDefinition(EarnedTrait.Lifesaver, "Lifesaver", TraitKind.Help, Deed.Rescue, 3, SkillLean.None, Tending, E(TechniqueStat.Pace, 15), E(TechniqueStat.Heal, 10)),
                 new EarnedTraitDefinition(EarnedTrait.PatientTeacher, "Patient Teacher", TraitKind.Help, Deed.Taught, 10, SkillLean.None, null, E(TechniqueStat.Teach, 10)),
+                // A grudge (S7.3, D33): earned by a friend's fall, its effect the lair judgement's, not a stat's
+                new EarnedTraitDefinition(EarnedTrait.Vengeful, "Vengeful", TraitKind.Act, Deed.None, 0, SkillLean.None, Fights)
+                    { Act = TraitAct.FriendFelled, ActWords = "braves its foe's lair with a quarter less to spare" },
             };
             foreach (var row in rows)
             {
@@ -146,6 +167,29 @@ namespace Simpiens.Simulation.Skills
     /// <summary>Earned traits' rule (Epic 11, S6.3, D29): judged where a deed is counted, on the main thread; once earned, never lost.</summary>
     public static class EarnedTraitRules
     {
+        /// <summary>
+        /// The trait <paramref name="act"/> earns, held with news if it has room (Epic 11, S7.3); false for none earned (no row,
+        /// held already, or every slot taken).
+        /// </summary>
+        public static bool JudgeAct(ref CrawlerTraits traits, TraitAct act)
+        {
+            if (act == TraitAct.None) return false;
+            bool earned = false;
+            var all = EarnedTraitTable.All;
+            for (int i = 0; i < all.Count; i++)
+                if (all[i].Act == act && !traits.HasTrait(all[i].Id)) earned |= traits.AddTrait(all[i].Id);
+            return earned;
+        }
+
+        /// <summary>True when <paramref name="traits"/> holds the trait <paramref name="act"/> earns.</summary>
+        public static bool HoldsAct(in CrawlerTraits traits, TraitAct act)
+        {
+            if (act == TraitAct.None) return false;
+            var all = EarnedTraitTable.All;
+            for (int i = 0; i < all.Count; i++) if (all[i].Act == act && traits.HasTrait(all[i].Id)) return true;
+            return false;
+        }
+
         /// <summary>
         /// After <paramref name="deed"/> is counted in <paramref name="traits"/>: each trait whose count it has just reached and
         /// whose nature <paramref name="personality"/> has is held, while a slot is free, with news to tell. True when one was.

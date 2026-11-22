@@ -153,7 +153,7 @@ Working document (AGENTS.md, Documentation Protocol 6), one of Epic 11's plans (
   - **The table:** D32's `CreatureTitleTable`, its bounds.
   - **Read:** `Combatant.ForCreature` and `LairReach` read the rank; the pack takes its leader's quarry.
   - **The checks:** `NamedCreatureValidator` gains the growth, the lair's danger and the pack's quarry. Golden re-recorded in its own commit if it moves.
-- [ ] **S7.3 Grudges both ways** [Possibly Complex: cognition reads a grudge; supervised]
+- [x] **S7.3 Grudges both ways** [Possibly Complex: cognition reads a grudge; supervised] (2026-11-22, for the developer's review. **Readings:** only a named creature keeps a foe, so plain fights and golden don't move; Vengeful is an earned trait's first "act" row (`TraitAct`), so code names the act, never the trait. The grudge lives in the traits record's spare bytes, aligned. `DeathHasItsCost` moved again; re-picked to seed 8 in its own commit, ahead of S7.6, so each commit stays green.)
   - **The creature's:** its foe seen 3 units nearer (D33).
   - **The crawlers':** Vengeful earned by a fallen's friend, the grudge in the traits record, the grudge's lair braved with less to spare (the snapshot's mask of lairs a named creature leads).
   - **The checks:** `GrudgeValidator` (the foe's draw, Vengeful earned by warmth, the eased bar only for the grudge's lair and only for the bold and armed).
