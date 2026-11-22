@@ -209,6 +209,26 @@ The techniques (first guesses, to tune):
   - **Carrier:** the guild sends a Carrier to a fallen mate before the healthiest.
   - **Leader:** the party's captain (§3.7).
 
+### 3.9 Legend (Epic 11, S6–S7)
+- **Deeds** (nine, `DeedTable`) are counted where they happen: creatures slain, bosses slain, rescues, makes, downings survived, hunts paid, clears won, crawlers taught, named creatures slain.
+- **An epithet** is earned at the deed's count exactly, and a higher rank replaces a lower:
+
+| Epithet | Earned by | Rank |
+| :--- | :--- | :--- |
+| A kind's word (Ratcatcher, Beetlebane, Spinnerbane) | the 3rd creature slain, that kill's kind | 2 |
+| A boss's word (Broodbane, Gatebreaker) | the first boss slain | 5 |
+| the Steadfast | 2 rescues | 3 |
+| the Unbroken | 2 downings survived | 3 |
+| Lairbreaker | 5 clears won | 3 |
+| the Huntsman | 3 hunts paid | 2 |
+| the Teacher | 10 crawlers taught | 2 |
+| the Maker | 40 makes | 1 |
+| {the victim}'s Avenger | a named creature slain | 6 |
+
+- **A scar** comes with a downing survived: what downed it (a creature kind's mark, a hazard's), in the next of four places on the face. It changes nothing but the picture.
+- **Earned traits** (three at most), through the techniques' door: Battle-Hardened (+1 defense in a fight, the bold at their 2nd downing survived), Shaken (−10% attack, a lair judged 25% more dangerous; the cautious at their first), Monster Hunter (+10% attack at 10 kills), Lifesaver (15% faster carrying, +10% healing at 3 rescues), Patient Teacher (+10% teaching at 10 taught), and Vengeful, by an act: a friend (warmth 40) downed or killed by a named creature, its foe's lair braved with the harm judged at 75% while a named creature leads it.
+- **A named creature** takes its name from the first crawler it downs (or kills): "{the crawler}'s Bane". Each further downing raises its rank, to 3: Bane, Scourge, Terror, each +20% health and +10% attack over its kind (to +60% and +30%). While it chases, its mates in the lair's reach take its quarry; its lair is judged more dangerous by its rank. It remembers the last crawler that struck it and lived, and sees that foe 3 units nearer. A boss never takes a name; a named creature slain doesn't return. Its slayer is the avenger (above).
+
 ## 4. What a level does
 How good a crawler is at a work is its **effective level**, `CrawlerSkills.Level(skills, worn, work)`, the one number every effect and choice reads. Today it equals the learned level. Gear, techniques or callings that change how good a crawler is enter there (`SkillReadsTests` guards it). A technique doesn't raise a level: it changes the work's numbers below through its own door (§3.6).
 

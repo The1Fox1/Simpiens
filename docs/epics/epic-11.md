@@ -426,6 +426,9 @@ Done means crawlers grow into someone in the live outpost with nothing injected 
 
 - [x] **The Legend gate** (C.1), on the final build: core 335/335 (every live scenario among them, the 23 gate seeds' day, `TheOutpostRemembers` and `TheBeetleThatRemembers`), client 549/549 in the pinned image, golden 3/3, the MonoGame and Android compiles with 0 warnings (all at S7.9, no code changed since); seeds 1–120 120/120 with and without the guild and the soak (18 of 18; `guild`, `crafting`, `hunting` 20 of 20 each) at S7.6, with no simulation change after. Legend complete over 28 days: `docs/skills-model.md` §5.13.
 
+- [x] **The close-out** (C.2, 2026-11-22): the roadmap, this epic, the focus file, `architecture_history.md`, `AGENTS.md` (recipes: an epithet, a scar, an earned trait, a creature title) and the skills model (§3.9, the legend's rules; §5.11–§5.13) reconciled; findings F13–F17 here; the plan deleted.
+- [ ] **The merge,** on the producer's word, after S7's look and the review of S7.1–S7.3.
+
 ## 5. Deferred and out of scope
 
 | Left out | Owner |

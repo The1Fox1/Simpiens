@@ -246,6 +246,30 @@ CI (`.github/workflows/dotnet.yml`) runs the tests (the client's in the pinned i
   - Prove it in the live scenario that brings the deed about (`OutpostWatch.DeedTotal`).
 - **A 17th deed** changes the save format.
 
+### Adding an epithet
+- **An epithet is a row** (Epic 11, S6.1, D27; the avenger S7.5, D35):
+  1. An `Epithet` value (a `ushort`). Never reuse one: the id is what a crawler's traits record holds, and its save.
+  2. Its row in `EpithetTable`: its words, the deed and the count that earn it (exactly that count), its rank (a higher rank replaces a lower; ties keep the first) and its form: plain ("the Steadfast"), a creature kind's word (from `CreatureDefinition.SlayerEpithet`: a new kind brings its word) or a crawler's name (`"{0}'s Avenger"`, the deed counted with the crawler it names).
+- **Nothing else:** the rule (`EpithetRules.Judge`, in practice's one entry, `AgentState.AddDeed`), the news and its line (`EpithetEarned`, in the best skill's voice), the save, and the epithet in every name the dashboard shows (`DashboardContext.EpithetOf`) follow.
+- **The checks:** `EpithetValidator`; `EpithetNamesTests` (code names an epithet only in the table).
+
+### Adding a scar
+- **A scar is a row** (Epic 11, S6.2, D28): a `Scar` value (never reused) and its row in `ScarTable`: its words, what leaves it (a `DeathCause` and its detail: a creature kind, a hazard kind) and its shape (`ScarShape`). A new shape is a `ScarShape` value and its drawing in `BodyKit` and `PortraitKit`; look at the people sheet and re-record the art pins.
+- **Nothing else:** the scar taken at a downing survived (`ScarTable.For`, `AgentState.TakeScar`), its place on the face (the next free of four), the news, the dossier's words and the marks on body and portrait (`ScarMarks`, in both keys) follow.
+- **The checks:** `ScarValidator`; `ScarNamesTests`.
+
+### Adding an earned trait
+- **An earned trait is a row** (Epic 11, S6.3, D29; an act's, S7.3, D33):
+  1. An `EarnedTrait` value (a byte, never reused) and its row in `EarnedTraitTable`: its words, its kind (help, hurt, act), the work it changes (`SkillUse`s, or null for any) and its effects as `TechniqueEffect`s within each stat's bounds.
+  2. Earned by a deed: the deed, the count and, if it asks, the nature (`SkillLean`): `EarnedTraitRules.Judge` in practice's one entry. Earned by an act: a `TraitAct` value with its `ActWords`, judged where the act happens (`EarnedTraitRules.JudgeAct`, called by the simulation by the act, never by the trait).
+- **Nothing else:** its effects through the techniques' door (`CrawlerTechniques.Get`), three at most, the news, the dossier's tip and the save follow.
+- **The checks:** `EarnedTraitValidator`; `EarnedTraitNamesTests` (code names a trait only in the table: name the act).
+
+### Adding a creature title
+- **A title is a row** (Epic 11, S7.1–S7.2, D31–D32): a rank in `CreatureTitleTable` (its word, "Bane", and its health and attack in percent over its kind's, within `MaxHealthPercent` and `MaxAttackPercent`); raise `MaxRank` with it.
+- **Nothing else:** a creature's rank from the crawlers it downs (`CreatureService.Credit`), its growth (`Combatant.ForCreature`, `CreatureState.MaxHealth`), its lair's danger (`LairReach.Danger`, `Vitality.HarmToClear`, the snapshot's `LeaderRank`, two bits a lair: a fourth rank needs a third mask), its name ("{its victim}'s {word}", registered by the session host), the chronicle and the map's mark follow.
+- **The checks:** `NamedCreatureValidator`. A rank in a saved creature past the table is refused on load.
+
 ### Adding art
 - **Art for a known kind of thing** (a tile, a prop, a node, a crawler state) is a sprite and a table row:
   1. The sprite, by name, in a generator (`ProceduralSprites`, `IsometricSprites`; an item's come from `ItemArt`, above). A new generator's sprites go into their sheet in `SpriteSheets`. Generators never read a table or a sheet: an initialisation cycle crashes depending on which class loads first (`ArtInitialisationTests`).
