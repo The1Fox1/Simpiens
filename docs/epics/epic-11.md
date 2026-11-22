@@ -410,6 +410,8 @@ Done means crawlers grow into someone in the live outpost with nothing injected 
 
 - [x] **The client** (D37): the mark and the amber name, the inspector, the board's quarry, the dossier's grudge, the vow and the avenger's word; `NamedCreaturesOnScreenTests` (3 tests). The art sheet's one new sprite (`Badge_Named`) looked at; the art pins re-recorded in their own commit.
 
+- [x] **DoD `TheBeetleThatRemembers`** (gate seed 3): on the guild's clears, the beetle that downs Kwame is Kwame's Bane at t19052, the party's focus at once, and Lane slays it at t19218, Kwame's Avenger; a creature named, focused and avenged on 10 of 23 gate seeds over ten days, the days holding on all 10.
+
 ## 5. Deferred and out of scope
 
 | Left out | Owner |

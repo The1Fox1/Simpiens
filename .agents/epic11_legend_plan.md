@@ -168,7 +168,7 @@ Working document (AGENTS.md, Documentation Protocol 6), one of Epic 11's plans (
 - [x] **S7.7 The client: the named creature** [Possibly Complex: art, the inspector, the board, a scene] (2026-11-22. The naming scene is the vow of the patron's person who takes a grudge, as the creature takes its name; the avenger's word is a second moment. Placeholder words, by kind, until the narrative work: moments are written from the event alone.)
   - The name over it and its mark on the map (a badge per view mode, art pins); the inspector's lines; the hunt board's quarry picker; the naming scene.
   - **The checks:** `NamedCreaturesOnScreenTests`; the art sheet looked at, the pins and renders re-recorded in their own commits.
-- [ ] **S7.8 DoD `TheBeetleThatRemembers`** [Possibly Complex: a live DoD on a rare trigger]
+- [x] **S7.8 DoD `TheBeetleThatRemembers`** [Possibly Complex: a live DoD on a rare trigger] (2026-11-22: gate seed 3; 10 of 23 gate seeds. On the guild's clears the party that was downed in focuses the named creature and slays it, so the clear is the hunt that names it; a hunt bounty naming its quarry is proven by `HuntBountyTests` and the board's test.)
   - On the real outpost, within a bounded run: a creature downs or kills a crawler and earns a name; the guild's player posts a hunt naming it (or orders a clear that focuses it); it is slain; its slayer holds the Avenger epithet. The scripted players act only through commands.
   - Its seed from a measurement across the gate seeds.
 - [ ] **S7.9 S7's gate** [Basic: the gates (§4)]
