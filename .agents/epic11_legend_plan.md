@@ -142,7 +142,7 @@ Working document (AGENTS.md, Documentation Protocol 6), one of Epic 11's plans (
 
 ### S7. Named creatures (4–5 days), then the producer's look
 **Complexity:** Very Complex as the epic stamps it (a new mechanism in the creatures' rule and save; supervised). Split so the name and the save, the growth, the grudges and the hunt land alone. **S7.1–S7.3 are supervised by the developer** (the creatures' rule and save); if the producer is away, they are listed for review on return and nothing in them goes in unflagged.
-- [ ] **S7.0 Downings measured** [Possibly Complex: measuring]
+- [x] **S7.0 Downings measured** [Possibly Complex: measuring] (2026-11-22: `docs/skills-model.md` §5.11. The guild's clears down a member on 12 of 23 seeds within ten days and would name a creature on 10, which the party slays in the same fight; no player and the hunting players down nobody. The DoD runs the guild's clears.)
   - How often a creature downs or kills a crawler over 14 days on the gate seeds, by lair and scenario: no player, the hunting players, the guild's clears, `DeathHasItsCost`'s pairs under the Bold rule. Written to `docs/skills-model.md` §5.11.
   - **Sets the DoD's shape:** downings are rare (Part 3's F6, plan 1's F4). If no scenario downs a crawler on most seeds within ten days, the DoD runs the Bold rule's pairs.
 - [ ] **S7.1 A creature earns a name; the save's one raise** [Possibly Complex: saved state, format 13; supervised]

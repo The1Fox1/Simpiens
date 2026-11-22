@@ -439,3 +439,18 @@ S6.1–S6.4's build, the 23 gate seeds over 14 days. Growth is §5.7's to the di
 | Scars | none | none (no downings, F13) |
 
 Seeds 1–120 pass the outpost's day with and without the guild; the soak holds, 18 of 18 and 20 of 20 on each player profile. No DoD moved. A party's members win their clears together, so Lairbreaker comes to a party at once; the lines are first guesses for the producer.
+
+### 5.11 Downings, the trigger of a named creature (S7.0, 2026-11-22)
+S6's final build, the 23 gate seeds over 14 days (`MeasureDowningsOnTheGateSeeds`). Each downing is credited to the creature whose blow took the crawler to nothing (its `StruckBy`); a creature that downs a crawler and isn't a boss is one that would earn a name (D31), and each further crawler it downs raises its rank.
+
+| Play | Seeds with a downing by a creature | Downings (by bosses) | Deaths | Would be named | Rank 2 / 3 | Slain after |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| No player | 0 | 0 | 0 | none | | |
+| Hunting players | 0 | 0 | 0 | none | | |
+| The guild's clears (four, armed from the stall, Steady) | 12, all within ten days (the first on day 2–9) | 47 (18) | 0 | 29 on 10 seeds | 0 / 0 | 29 |
+| `DeathHasItsCost`'s pairs (two unarmed, the beetles, Bold) | 20 (19 within ten days) | 137 (0) | 7 | 75 on 20 seeds | 30 / 20 | 71 |
+
+- **Where:** the beetles' hollow, almost alone (the clears: 28 of 29 named; the pairs: all). The Matriarch's warren downs members too, but by its boss, who has a name already.
+- **Nobody falls in careful play** (F13 stands): with no player or the hunting players no creature downs anyone in two weeks, so no creature is named there.
+- **A clear's named creature dies in the same fight:** the party that was downed in finishes the lair, so the beetle named for a fallen member is slain by its mates the same hour (29 of 29), and its slayer is the avenger (D35). A named creature outlives its naming only where the attackers break off: the pairs under the Bold rule, where the lair keeps its named beetles: of 75, 30 reach rank 2 and 20 rank 3.
+- **The DoD's shape** (S7.8): the guild's clears name a creature on 10 of 23 seeds within ten days, so `TheBeetleThatRemembers` runs them, as `TheOutpostRemembers` does; the Bold rule's pairs aren't needed. A hunt naming its quarry (D34) gets its proof in the validators and the client, since in live play the clear that names a creature also kills it.
