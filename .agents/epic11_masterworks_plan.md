@@ -117,7 +117,7 @@ Working document (AGENTS.md, Documentation Protocol 6), the last of Epic 11's pl
 **Complexity:** Possibly Complex, as the epic stamps it.
 - [x] **S9.1 DoD `EpicElevenTogether`, with a save mid-scene** (done 2026-11-22: gate seed 5, every layer by day 7, the only one of 23; F19) [Possibly Complex: a live scenario across every system]: D46, as `PartThreeTogetherTests` does for Part 3.
 - [x] **S9.2 The soak's bands and the seeds** (done 2026-11-22: S8.4's run on the final simulation code, every profile within its band; §5.15, economy-model §7) [Possibly Complex: measuring; a band moves only by the producer's word]: D47, written to `docs/skills-model.md` §5.15 and `docs/economy-model.md` §7. Seeds 1–120 both ways.
-- [ ] **S9.3 The epic's gate and the play session's brief** [Basic]: the gates on the final build; D48's brief in the epic's §4.
+- [x] **S9.3 The epic's gate and the play session's brief** (done 2026-11-22: core 340, client 553 pinned, golden 3/3, compiles clean, seeds 1–120 both ways; the brief in the epic's §4) [Basic]: the gates on the final build; D48's brief in the epic's §4.
 
 ### C. The close-out
 - [ ] **C.1 Epic 11's numbers at the close** [Basic: a measurement already written]: 28 days on the gate seeds with every layer (§5.16).

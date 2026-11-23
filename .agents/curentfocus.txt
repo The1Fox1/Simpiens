@@ -7,7 +7,7 @@
 # "Done" = emerges in the live simulation: a live scenario on the real session with
 # nothing injected, headless in dotnet test since 2026-10-23 (ROADMAP §1B).
 # Keep this file short: history lives in the epic docs, .agents/architecture_history.md and git.
-# Last reconciled: 2026-11-22 (Epic 11's plan 3 Legend done and closed out on feat/epic11-legend: "Let's finish up the legend plan"; S6's look read as passed; its PR waits for S7's look, the review of S7.1-S7.3 and the merge). 2026-11-20 (Epic 11's plan 3: S6 first legends done on feat/epic11-legend, its look next). 2026-11-20 (Epic 11's plan 2 merged as PR #26 after the S4 look and its technique tree: "This is great. PR plan 2 into main and then draft up plan3"; plan 3 Legend drafted on feat/epic11-legend, waiting for the go). 2026-11-19 (Epic 11's plan 2 Technique and Calling done and closed out on feat/epic11-technique, the producer away; its PR and S4's look wait for their return. Earlier the same day plan 1 Craft merged as PR #25). 2026-11-18 (Epic 11's plan 1 Craft closed out: the review passed, "This looks good. Let's wrap it up with C.1 and C.2"; its PR into main waits for the producer's merge). 2026-11-17 (Epic 11's plan 1 Craft: S0-S3 done on feat/epic11-craft, unpushed; the producer's review next). 2026-11-16 (Epic 11 ACTIVE, plan 1 Craft under way; Epic 10 COMPLETED: "Part 3 passes. Close out Epic 10"; Parts 2 and 3 closed out together, Milestones 3 and 4 COMPLETED, Epics UI-4 and UI-5 delivered; the close-out merged as PR #24; Epic 11 next, QUEUED until the producer's go)
+# Last reconciled: 2026-11-22 (Epic 11's plan 4 Masterworks and the gate done on feat/epic11-masterworks, drafted before plan 3 merged: "Write up the implementation plan for Masterworks and proceed on work once it's ready"; the play session and the merges next). 2026-11-22 (Epic 11's plan 3 Legend done and closed out on feat/epic11-legend: "Let's finish up the legend plan"; S6's look read as passed; its PR waits for S7's look, the review of S7.1-S7.3 and the merge). 2026-11-20 (Epic 11's plan 3: S6 first legends done on feat/epic11-legend, its look next). 2026-11-20 (Epic 11's plan 2 merged as PR #26 after the S4 look and its technique tree: "This is great. PR plan 2 into main and then draft up plan3"; plan 3 Legend drafted on feat/epic11-legend, waiting for the go). 2026-11-19 (Epic 11's plan 2 Technique and Calling done and closed out on feat/epic11-technique, the producer away; its PR and S4's look wait for their return. Earlier the same day plan 1 Craft merged as PR #25). 2026-11-18 (Epic 11's plan 1 Craft closed out: the review passed, "This looks good. Let's wrap it up with C.1 and C.2"; its PR into main waits for the producer's merge). 2026-11-17 (Epic 11's plan 1 Craft: S0-S3 done on feat/epic11-craft, unpushed; the producer's review next). 2026-11-16 (Epic 11 ACTIVE, plan 1 Craft under way; Epic 10 COMPLETED: "Part 3 passes. Close out Epic 10"; Parts 2 and 3 closed out together, Milestones 3 and 4 COMPLETED, Epics UI-4 and UI-5 delivered; the close-out merged as PR #24; Epic 11 next, QUEUED until the producer's go)
 # ------------------------------------------------------------------------------
 
 CURRENT FOCUS
@@ -50,8 +50,14 @@ CURRENT FOCUS
   - Plan 3, Legend (S6-S7) [done and closed out 2026-11-22, feat/epic11-legend; the plan is deleted]: epithets, scars,
     earned traits, the skills' voices (S6: D26-D30, D36; F13); named creatures, growth and the lead, grudges, a hunt's
     quarry, the avenger (S7: D31-D35, D37; F14-F17; save format 13). DoDs TheOutpostRemembers, TheBeetleThatRemembers.
-    "Let's finish up the legend plan" read S6's look as passed. NEXT: the producer's look at S7 (the epic's 4), the
-    developer's review of the supervised S7.1-S7.3, and the merge of its PR. Then plan 4, Masterworks and the gate.
+    "Let's finish up the legend plan" read S6's look as passed. Its look at S7, the developer's review of the supervised
+    S7.1-S7.3 and the merge of its PR wait.
+  - Plan 4, Masterworks and the gate (S8-S9) [done 2026-11-22, feat/epic11-masterworks, cut from feat/epic11-legend;
+    .agents/epic11_masterworks_plan.md]: masterpieces (an inspired Journeyman's named piece, a grade above Masterwork, with
+    its maker, owners and kills; ItemInstance's old id retired for its mark; save format 14), every layer together and
+    saved mid-scene, the soak's bands held (D38-D48; F18-F19; F16 fixed). DoDs AMasterpieceHasAMaker, EpicElevenTogether.
+    NEXT: the producer's play session (the epic's 4; S7's and S8's looks within it), the developer's review of the
+    supervised S8.1 and S8.3, the merges (plan 3's PR first, then plan 4's), then C.1-C.2, the epic's close-out.
   - Epic UI-Beta's B6 waits as before. The descent is Epic 12; the MCP narrative is Epic N.
 
 - Epic UI-Beta, Crawler Identity and the Interface Pass [ACTIVE 2026-11-02] (docs/epics/epic-ui-beta.md): B0 and B1
