@@ -79,6 +79,27 @@ namespace Simpiens.Presentation.Cutscenes
             return scene.Build();
         }
 
+        /// <summary>
+        /// A masterpiece made by one of the patron's people (Epic 11, S8.5, D45): the maker's word at the anvil, and in grief the
+        /// friend's name it gives the piece. Placeholder words, as every scene's.
+        /// </summary>
+        public static CutsceneScript InspiredFor(ChronicleEvent e)
+        {
+            Simpiens.Simulation.Workshops.MasterpieceNames.Unpack((int)e.ExtraData, out _, out var form, out _, out _);
+            var scene = new CutsceneBuilder("inspired", CutsceneKind.Dynamic)
+                .Actors(Crawler)
+                .Focus(Crawler);
+            if (form == Simpiens.Simulation.Workshops.MasterpieceForm.Grief)
+                scene.Say(Crawler, "I couldn't save them. I can make something that remembers.");
+            else
+                scene.Say(Crawler, "There. That one came out right.");
+            return scene.Say(Crawler, "It'll outlast me.").Build();
+        }
+
+        /// <summary>The trigger for every masterpiece made by one of the patron's people.</summary>
+        public static SceneTrigger Inspirations() =>
+            SceneTrigger.OnMoment(InspiredFor, whose: crawler => crawler.Ours, once: false, cooldownTicks: ChoiceCooldownTicks, ChronicleEventType.MasterpieceMade);
+
         /// <summary>The trigger for every grudge sworn by one of the patron's people, a game hour apart at the most often.</summary>
         public static SceneTrigger Vows() =>
             SceneTrigger.OnMoment(VowFor, whose: crawler => crawler.Ours, once: false, cooldownTicks: ChoiceCooldownTicks, ChronicleEventType.TraitEarned);
@@ -103,6 +124,7 @@ namespace Simpiens.Presentation.Cutscenes
             director.Add(FirstBloods());
             director.Add(Vows());
             director.Add(Avenged());
+            director.Add(Inspirations());
         }
     }
 }

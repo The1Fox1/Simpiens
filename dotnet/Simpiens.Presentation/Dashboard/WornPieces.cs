@@ -35,25 +35,36 @@ namespace Simpiens.Presentation.Dashboard
         /// <summary>Its rarity as its icon's rim shows it, raised by its grade (Epic 10 Part 3, K4.5b): what colours its name; common with none.</summary>
         public ItemRarity Rarity { get; private set; }
 
-        // Words are rebuilt only when the piece, its grade or what's left of it changes
-        internal void Show(in ItemInstance piece)
+        /// <summary>The masterpiece it is (Epic 11, S8.5, D45), or 0.</summary>
+        public ushort Masterpiece { get; private set; }
+
+        /// <summary>A masterpiece's story, for its tip (<see cref="MasterpieceTexts.StoryOf"/>); empty for any other piece.</summary>
+        public string Story { get; private set; } = string.Empty;
+
+        // Words are rebuilt only when the piece, its grade or what's left of it changes; a masterpiece's story each time, as
+        // its owners and kills move
+        internal void Show(in ItemInstance piece, DashboardContext context = null)
         {
             IsWorn = !piece.IsEmpty;
             if (!IsWorn)
             {
                 _item = ItemType.None;
                 _left = -1;
-                Text = Short = Left = string.Empty;
+                Text = Short = Left = Story = string.Empty;
                 Icon = null;
                 Rarity = ItemRarity.Common;
+                Masterpiece = 0;
                 return;
             }
+            Story = piece.IsMasterpiece ? MasterpieceTexts.StoryOf(context, piece.Masterpiece) : string.Empty;
             int left = DossierModel.LifeLeft(piece);
-            if (piece.Type == _item && piece.Quality == _grade && left == _left) return;
+            if (piece.Type == _item && piece.Quality == _grade && left == _left && piece.Masterpiece == Masterpiece) return;
             _item = piece.Type;
             _grade = piece.Quality;
             _left = left;
-            string name = DossierModel.PieceName(piece);
+            Masterpiece = piece.Masterpiece;
+            string masterpiece = piece.IsMasterpiece ? MasterpieceTexts.NameOf(context, piece.Masterpiece) : string.Empty;
+            string name = masterpiece.Length > 0 ? masterpiece : DossierModel.PieceName(piece);
             Text = Invariant($"{name}, {left}% left");
             Short = Invariant($"{name} {left}%");
             Left = Invariant($"{left}%");
@@ -78,6 +89,9 @@ namespace Simpiens.Presentation.Dashboard
 
         public bool NoneWorn => Count == 0;
 
+        /// <summary>The stories of the masterpieces worn, a blank line between (Epic 11, S8.5): the gear line's tip; empty for none.</summary>
+        public string Stories { get; private set; } = string.Empty;
+
         /// <summary>The pieces worn, in display order, in short: "Respirator 100%, Hazard Gear 80%"; <see cref="DossierModel.NoGear"/> with none. Allocates.</summary>
         public string Summary
         {
@@ -94,8 +108,11 @@ namespace Simpiens.Presentation.Dashboard
             }
         }
 
-        /// <summary>Reads what <paramref name="inventory"/>'s wearer wears; nothing for none. The rows follow the table, a test's extended one included.</summary>
-        public void Refresh(IAgentInventory inventory)
+        /// <summary>
+        /// Reads what <paramref name="inventory"/>'s wearer wears; nothing for none. The rows follow the table, a test's extended
+        /// one included. With <paramref name="context"/>, a masterpiece shows by its name, with its story (Epic 11, S8.5).
+        /// </summary>
+        public void Refresh(IAgentInventory inventory, DashboardContext context = null)
         {
             var shown = EquipmentSlots.InDisplayOrder;
             if (_slots.Count != shown.Count || (_slots.Count > 0 && _slots[0].Slot != shown[0]))
@@ -107,9 +124,16 @@ namespace Simpiens.Presentation.Dashboard
             for (int i = 0; i < _slots.Count; i++)
             {
                 var piece = inventory != null ? inventory.GetEquipped(_slots[i].Slot.Id) : ItemInstance.Empty;
-                _slots[i].Show(piece);
+                _slots[i].Show(piece, context);
                 if (_slots[i].IsWorn) Count++;
             }
+            string stories = string.Empty;
+            for (int i = 0; i < _slots.Count; i++)
+            {
+                if (_slots[i].Story.Length == 0) continue;
+                stories = stories.Length == 0 ? _slots[i].Story : stories + "\n\n" + _slots[i].Story;
+            }
+            if (!string.Equals(stories, Stories, System.StringComparison.Ordinal)) Stories = stories;
         }
 
         /// <summary>The <see cref="Summary"/> of what <paramref name="inventory"/>'s wearer wears, at once (allocates).</summary>

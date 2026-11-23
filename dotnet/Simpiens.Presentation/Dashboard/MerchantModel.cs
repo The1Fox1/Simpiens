@@ -120,6 +120,8 @@ namespace Simpiens.Presentation.Dashboard
                 {
                     parts[i] = Invariant($"{stall.StockOf(rows[i].Item)} {ItemTexts.Of(rows[i].Item).StockWord}");
                     rows[i].Stock = StockText(stall, rows[i].Item);
+                    string shelf = MasterpieceTexts.OnShelf(_context, rows[i].Item); // a masterpiece waiting (Epic 11, S8.5, D45)
+                    if (shelf.Length > 0) rows[i].Stock += ", " + shelf;
                     rows[i].Grade = stall.BestGradeOf(rows[i].Item);
                 }
             }

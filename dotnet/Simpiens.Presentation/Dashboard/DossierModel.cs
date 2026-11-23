@@ -150,6 +150,9 @@ namespace Simpiens.Presentation.Dashboard
         /// <summary>The legend line's tip, a line each: "Beetlebane: for three creatures slain", "Battle-Hardened: +1 defense, after two downings survived", "A beetle's claw across the left cheek".</summary>
         public string LegendTip { get; private set; } = string.Empty;
 
+        /// <summary>The gear line's tip: the stories of the masterpieces it wears (Epic 11, S8.5, D45); empty for none.</summary>
+        public string GearTip => Equipment.Stories;
+
         /// <summary>A guild member's calling's part in a party (Epic 11, S5.8): its badge at the portrait's corner; none for the rest.</summary>
         public Simpiens.Simulation.Skills.PartyRole Role { get; private set; }
 
@@ -261,14 +264,14 @@ namespace Simpiens.Presentation.Dashboard
             Badge = agent.IsDowned ? DownedBadge : State.ToString().ToUpperInvariant();
             Health = agent.Health;
             Describe(node.Id, agent);
-            Equipment.Refresh(agent.Inventory);
+            Equipment.Refresh(agent.Inventory, _context); // a masterpiece by its name, its story in the gear line's tip (Epic 11, S8.5)
             Skills = SkillTexts.Best(agent.Skills, 4);
             SkillTexts.BestShown(agent.Skills, agent.Traits, 4, keepPassions: true, _skillsShown);
             SkillHeld = SkillTexts.Held(agent.Skills);
             Taught = TaughtBy(agent.Traits);
             Asks = AsksOf(agent);
             DescribeTechniques(agent);
-            DescribeLegend(agent.Traits);
+            DescribeLegend(agent.Traits, agent.AgentId);
             Hunger = agent.Hunger;
             Energy = agent.Energy;
             Social = agent.Social;
@@ -348,7 +351,7 @@ namespace Simpiens.Presentation.Dashboard
         }
 
         // Its legend (Epic 11, S6.6, D36): the epithet and the deeds that earned it, the earned traits and what they do, the scars
-        private void DescribeLegend(in Simpiens.Simulation.Skills.CrawlerTraits traits)
+        private void DescribeLegend(in Simpiens.Simulation.Skills.CrawlerTraits traits, EntityId crawler)
         {
             var line = new System.Text.StringBuilder();
             var tip = new System.Text.StringBuilder();
@@ -394,6 +397,9 @@ namespace Simpiens.Presentation.Dashboard
                 }
                 Part(scars == 1 ? "a scar" : Invariant($"{scars} scars"), described.ToString());
             }
+            // What it made (Epic 11, S8.5, D45): its masterpieces by name, from their records
+            string made = MasterpieceTexts.MadeBy(_context, crawler);
+            if (made.Length > 0) Part(made, char.ToUpperInvariant(made[0]) + made.Substring(1) + ", inspired.");
             Legend = line.ToString();
             LegendTip = tip.ToString();
         }

@@ -40,10 +40,14 @@ namespace Simpiens.Client.Ui
         private string _techniquesTip;
         private readonly TextRuntime _legend; // Epic 11, S6.6: its epithet, earned traits and scars, their words in the line's tip
         private readonly ContainerRuntime _legendLine;
+        private readonly ContainerRuntime _gearLine; // its tip: the masterpieces' stories (Epic 11, S8.5)
+        private string _gearTip;
         private string _legendTip;
         private readonly GraphicalUiElement _affinitiesViewer;
         private const float PlaytestRowHeight = 24f, PlaytestLabelWidth = 62f; // the playtest tools' row under the sway, and its label
-        private const float AffinitiesHeight = 70f, HeldLineHeight = 14f; // the held line takes its 11-point line from the feelings
+        // The feelings' list's height at 720 rows, and what each optional line (the skill notes, the techniques, the legend)
+        // takes from it: its 14-pixel line and the column's 4 of spacing (Epic 11, F16: 70 and 14 until S8.5 overran the frame)
+        private const float AffinitiesHeight = 68f, HeldLineHeight = 18f;
         private readonly SkillLine _skills; // Epic 10 Part 3, K9.5; with passions' flames since Epic 11, S1.6
         private readonly TextRuntime _description, _moodLine; // Epic UI-Beta B3
         private readonly PortraitAtlas _portraits;
@@ -162,7 +166,7 @@ namespace Simpiens.Client.Ui
             _frustration = new DriveBar(_dossierDetails, "Frustration:", UiStyle.Danger);
             // What it wears (Epic 10 G3's gear, W1.6b's tool; every slot from the table since Epic 10 Part 3, K1.5): each piece's
             // icon at 1x (graphics V4) and its words, on one line: the dossier has no height to spare at 720 rows
-            var gearLine = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = IconAtlas.SmallSize };
+            var gearLine = _gearLine = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = IconAtlas.SmallSize, HasEvents = true };
             Equipment = new WornLine(icons);
             gearLine.Children.Add(Equipment.Visual);
             _dossierDetails.Children.Add(gearLine);
@@ -353,6 +357,9 @@ namespace Simpiens.Client.Ui
         /// <summary>The element whose tip says what each technique does.</summary>
         public GraphicalUiElement TechniquesLine => _techniquesLine;
 
+        /// <summary>The feelings' list's height as fitted (Epic 11, F16).</summary>
+        public float AffinitiesShownHeight => _affinitiesViewer.Height;
+
         /// <summary>The legend line as shown (Epic 11, S6.6); empty when hidden.</summary>
         public string LegendShown => _legendLine.Visible ? _legend.Text : string.Empty;
 
@@ -509,6 +516,11 @@ namespace Simpiens.Client.Ui
             _dossierBadgeFill.FillColor = UiStyle.StateColor(dossier.State);
             _health.Set(dossier.Health);
             Equipment.Show(dossier.Equipment);
+            if (!string.Equals(_gearTip, dossier.GearTip, System.StringComparison.Ordinal))
+            {
+                _gearTip = dossier.GearTip;
+                Tips?.Register(_gearLine, _gearTip.Length > 0 ? _gearTip : null); // a masterpiece's story (Epic 11, S8.5, D45)
+            }
             _hunger.Set(dossier.Hunger);
             _energy.Set(dossier.Energy);
             _social.Set(dossier.Social);

@@ -148,7 +148,7 @@ namespace Simpiens.Presentation.Dashboard
                 row.Doing = CallingTexts.Before(CallingTexts.Before(_context.EpithetOf(agent.Traits), CallingTexts.TitleWithRole(agent.Skills, agent.Traits)), PlanText.Action(agent.HasActivePlan ? agent.ActivePlan.CurrentAction : null));
                 row.Health = agent.Health;
                 row.Downed = agent.IsDowned;
-                row.Equipment.Refresh(agent.Inventory);
+                row.Equipment.Refresh(agent.Inventory, _context); // a masterpiece by its name (Epic 11, S8.5)
                 var (trust, warmth) = GuildRules.Standing(agent, (uint)(_context.Clock?.CurrentTick ?? 0));
                 row.Standing = Invariant($"Trust {trust} · Warmth {warmth}");
                 row.Skills = SkillTexts.Best(agent.Skills, 2);

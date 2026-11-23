@@ -61,8 +61,9 @@ Working document (AGENTS.md, Documentation Protocol 6), the last of Epic 11's pl
 - **D44, its deeds:** a kill by a crawler wearing a masterpiece counts on the piece (every masterpiece it wears: a slot's kind is named only in the slot table), and a named creature slain with it is kept by whom it was named for and its rank. Its story reads them. No epithet: the Maker (40 makes) stays.
 - **D45, the client:**
   - **Its story** in the tooltip wherever a worn piece shows (the dossier's gear line, the guild's card): "The Quiet Fang, a masterpiece. Made by Tamsin at the forge on day 6, for Ama. Worn by Bram, its second owner. 4 kills, Ama's Bane among them."
-  - **On the shelf:** the stall's row for its good names the masterpieces in its tooltip.
-  - **Its rim:** the Legendary rim on its icon.
+  - **On the shelf:** the stall's row for its good names the masterpiece in its stock words ("masterpiece the Quiet Fang by Tamsin"; the rows' words carry no tip).
+  - **Its colour:** its name in Legendary's colour; its icon is the Masterwork's (a masterpiece icon would be new art, for a later look).
+  - **The guild's card** shows it by its name.
   - **The maker:** the dossier's legend line names what it made ("made the Quiet Fang").
   - **The chronicle and a moment:** the line, and the inspiration scene for the patron's people (`SkillScenes`).
   - **F16 fixed** with it: the dossier's 6-pixel overrun at 720 rows, since S8 touches the dossier.
@@ -101,7 +102,7 @@ Working document (AGENTS.md, Documentation Protocol 6), the last of Epic 11's pl
 - [x] **S8.4 Re-measured** (done 2026-11-22: `docs/skills-model.md` §5.14; no DoD moved) [Possibly Complex: measuring]
   - The 23 gate seeds' day, seeds 1–120 both ways, the soak, and the S8.0 measurement again with masterpieces (§5.14).
   - A moved DoD is re-picked in its own commit.
-- [ ] **S8.5 The client** [Possibly Complex: Gum UI and renders, a look]
+- [x] **S8.5 The client** (done 2026-11-22; F16 fixed: the four 720-row dossier renders looked at and re-recorded) [Possibly Complex: Gum UI and renders, a look]
   - **What is built:** D45: the story's tooltip, the shelf's, the rim, the legend line, the chronicle, the moment, and F16's fix.
   - **The checks:** `MasterpiecesOnScreenTests`; the art sheet looked at (the rim is the kit's), the renders looked at and re-recorded in the pinned image, in their own commit.
 - [ ] **S8.6 DoD `AMasterpieceHasAMaker`** [Possibly Complex: a live scenario]
