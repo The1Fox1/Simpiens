@@ -348,9 +348,9 @@ namespace Simpiens.Testing.Persistence
                 },
                 Stacks = new[]
                 {
-                    new ItemInstance(1, ItemType.IronOre, 2, 0),
-                    new ItemInstance(1, ItemType.MedicinalHerb, 1, 0),
-                    new ItemInstance(1, ItemType.Cudgel, 1, 0, durability: 33),
+                    new ItemInstance(ItemType.IronOre, 2, 0),
+                    new ItemInstance(ItemType.MedicinalHerb, 1, 0),
+                    new ItemInstance(ItemType.Cudgel, 1, 0, durability: 33),
                 },
             };
             Assert(Simpiens.Simulation.Loot.PileService.Check(save) == null, "The save adds up.");

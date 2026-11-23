@@ -43,7 +43,7 @@ namespace Simpiens.Testing.Economy
 
         private void ValidateRecordsRoundTrip()
         {
-            var item = new ItemInstance(7, ItemType.MedicinalHerb, 3, 12, quality: 2, durability: 61);
+            var item = new ItemInstance(ItemType.MedicinalHerb, 3, 12, quality: 2, durability: 61);
             var itemBack = SaveSerializer.Deserialize<ItemInstance>(SaveSerializer.Serialize(item));
             Assert(itemBack.Equals(item), $"An item round-trips ({itemBack} vs {item}).");
 
@@ -69,9 +69,9 @@ namespace Simpiens.Testing.Economy
         private void ValidateInventoryRoundTrips()
         {
             var inventory = new AgentInventory(4, startingGold: 37);
-            inventory.TryAddItem(new ItemInstance(1, ItemType.Ration, 3, 15), out _);
-            inventory.TryAddItem(new ItemInstance(2, ItemType.IronOre, 2, 8, quality: 1, durability: 70), out _);
-            inventory.TryAddItem(new ItemInstance(3, ItemType.MedicinalHerb, 1, 12), out _);
+            inventory.TryAddItem(new ItemInstance(ItemType.Ration, 3, 15), out _);
+            inventory.TryAddItem(new ItemInstance(ItemType.IronOre, 2, 8, quality: 1, durability: 70), out _);
+            inventory.TryAddItem(new ItemInstance(ItemType.MedicinalHerb, 1, 12), out _);
             inventory.TryRemoveItem(ItemType.IronOre, 2); // leaves an empty slot between two full ones
 
             var save = new InventorySave();
@@ -80,7 +80,7 @@ namespace Simpiens.Testing.Economy
 
             // Restore over a pack holding something else: everything is replaced, empty slots included
             var restored = new AgentInventory(4, startingGold: 999);
-            restored.TryAddItem(new ItemInstance(9, ItemType.IronOre, 50, 8), out _);
+            restored.TryAddItem(new ItemInstance(ItemType.IronOre, 50, 8), out _);
             restored.RestoreFrom(back);
 
             Assert(restored.Gold == 37, $"The purse round-trips ({restored.Gold}g, expected 37g).");
@@ -112,9 +112,9 @@ namespace Simpiens.Testing.Economy
         {
             var bounties = SampleBounties();
             var stalls = SampleStalls();
-            var items = new[] { new ItemInstance(1, ItemType.Ration, 2, 15), new ItemInstance(2, ItemType.IronOre, 5, 8) };
+            var items = new[] { new ItemInstance(ItemType.Ration, 2, 15), new ItemInstance(ItemType.IronOre, 5, 8) };
             var inventory = new AgentInventory(4, startingGold: 120);
-            inventory.TryAddItem(new ItemInstance(1, ItemType.Ration, 4, 15), out _);
+            inventory.TryAddItem(new ItemInstance(ItemType.Ration, 4, 15), out _);
             var target = new AgentInventory(4);
 
             var buffer = new ArrayBufferWriter<byte>(4096);

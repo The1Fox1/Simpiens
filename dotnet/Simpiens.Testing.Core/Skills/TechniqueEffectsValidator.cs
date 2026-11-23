@@ -130,7 +130,7 @@ namespace Simpiens.Testing.Skills
             Assert(none.Attack == before.Attack && none.Defense == before.Defense && none.SwingInterval == before.SwingInterval && none.Proficiency == before.Proficiency,
                 "With no technique held, the fighter is the one K9 built.");
             var blade = new AgentInventory();
-            blade.TryEquip(new ItemInstance(1, ItemType.IronBlade, 1, 12, durability: 100));
+            blade.TryEquip(new ItemInstance(ItemType.IronBlade, 1, 12, durability: 100));
             var nest = Simpiens.Core.Session.Layouts.Floor1Layout.Definition.Lairs[0];
             float furyHarm = Vitality.HarmToClear(nest, true, Fighter, blade, Holding(Skill.Melee, SkillBand.Apprentice, Technique.RecklessFury));
             float plainHarm = Vitality.HarmToClear(nest, true, Fighter, blade, default);
@@ -226,7 +226,7 @@ namespace Simpiens.Testing.Skills
         {
             var cautious = new Simpiens.Cognition.Contracts.AgentPersonality(0f, -0.5f, 0f, 0f, 0f);
             var blade = new AgentInventory();
-            blade.TryEquip(new ItemInstance(1, ItemType.IronBlade, 1, 12, durability: 100));
+            blade.TryEquip(new ItemInstance(ItemType.IronBlade, 1, 12, durability: 100));
             var unyielding = Holding(Skill.Melee, SkillBand.Master, Technique.Unyielding);
             Assert(!Vitality.FightsBack(Context(cautious, blade, default)), "Struck, the cautious flee, armed or not.");
             Assert(Vitality.FightsBack(Context(cautious, blade, unyielding)), "Unyielding and armed, the cautious stand and fight.");
@@ -308,7 +308,7 @@ namespace Simpiens.Testing.Skills
         private static AgentInventory Sling()
         {
             var inventory = new AgentInventory();
-            inventory.TryEquip(new ItemInstance(1, ItemType.Sling, 1, 12, durability: 100));
+            inventory.TryEquip(new ItemInstance(ItemType.Sling, 1, 12, durability: 100));
             return inventory;
         }
 

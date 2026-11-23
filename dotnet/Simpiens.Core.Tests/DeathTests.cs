@@ -30,7 +30,7 @@ namespace Simpiens.Core.Tests
             using var sim = Outpost();
             var dead = sim.Host.CrawlerStates.First(s => !s.IsDrifter);
             Assert.True(dead.Inventory.TryEquip(Outfitting.NewPiece(ItemType.IronBlade, Grades.Standard)));
-            Assert.True(dead.Inventory.TryAddItem(new ItemInstance(1, ItemType.Hide, 2, 0), out _));
+            Assert.True(dead.Inventory.TryAddItem(new ItemInstance(ItemType.Hide, 2, 0), out _));
             int gold = dead.Inventory.Gold;
             Assert.True(gold > 0);
             var at = dead.Position;

@@ -50,7 +50,7 @@ namespace Simpiens.Core.Tests
             using var sim = Outpost();
             var crawler = Resident(sim);
             Empty(crawler);
-            Assert.True(crawler.Inventory.TryAddItem(new ItemInstance(1, ItemType.HealingDraught, 1, 0), out _));
+            Assert.True(crawler.Inventory.TryAddItem(new ItemInstance(ItemType.HealingDraught, 1, 0), out _));
             DownedAt(sim, crawler, InTheSump);
             sim.Step(1);
             Assert.True(crawler.IsCollapsed);

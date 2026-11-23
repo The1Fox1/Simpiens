@@ -215,7 +215,7 @@ namespace Simpiens.Testing.Economy
             var agent = goCrawler.Agent;
             agent.Inventory.Gold = 10;
             // Agent holds 2 IronOre in inventory
-            agent.Inventory.TryAddItem(new ItemInstance(1, ItemType.IronOre, 2, 8), out _);
+            agent.Inventory.TryAddItem(new ItemInstance(ItemType.IronOre, 2, 8), out _);
             registry.Register(node);
 
             // Register and claim bounty
@@ -261,7 +261,7 @@ namespace Simpiens.Testing.Economy
             var goCrawler = HeadlessEntities.Crawler(null, simManager, clock, Vec2.Zero, id: EntityId.Generate(), name: "[Test_Affinity_Deliverer]", register: false);
             var node = goCrawler.Node;
             var agent = goCrawler.Agent;
-            agent.Inventory.TryAddItem(new ItemInstance(1, ItemType.MedicinalHerb, 1, 10), out _);
+            agent.Inventory.TryAddItem(new ItemInstance(ItemType.MedicinalHerb, 1, 10), out _);
             registry.Register(node);
 
             var contract = new BountyContract(4, BountyType.GatherResource, 0, ItemType.MedicinalHerb, 1, 40, 0, 1000, claimantId: node.Id, creatorStallId: stallId, status: BountyStatus.Claimed);
@@ -326,7 +326,7 @@ namespace Simpiens.Testing.Economy
             crawler.Agent.Personality = personality;
             const ushort bountyId = 9;
             if (type == BountyType.ScoutSector) crawler.Agent.ScoutReportBountyId = bountyId;
-            else crawler.Agent.Inventory.TryAddItem(new ItemInstance(1, ItemType.IronOre, 1, 10), out _);
+            else crawler.Agent.Inventory.TryAddItem(new ItemInstance(ItemType.IronOre, 1, 10), out _);
             registry.Register(crawler.Node);
 
             simManager.RegisterBounty(new BountyContract(bountyId, type, 0, type == BountyType.ScoutSector ? ItemType.None : ItemType.IronOre, 1, (ushort)reward, 0, 1000,

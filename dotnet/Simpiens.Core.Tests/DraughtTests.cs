@@ -109,8 +109,8 @@ namespace Simpiens.Core.Tests
             sim.Respawn(OutpostSession.SessionId);
             var crawler = sim.Host.CrawlerStates.First(s => !s.IsDrifter);
             var node = sim.Registry.GetEntity(crawler.AgentId);
-            crawler.Inventory.TryAddItem(new ItemInstance(7, ItemType.HealingDraught, 1, 20), out _);
-            crawler.Inventory.TryAddItem(new ItemInstance(3, ItemType.MedicinalHerb, 1, 6), out _);
+            crawler.Inventory.TryAddItem(new ItemInstance(ItemType.HealingDraught, 1, 20), out _);
+            crawler.Inventory.TryAddItem(new ItemInstance(ItemType.MedicinalHerb, 1, 6), out _);
             crawler.Health = 15f; // by hand: hurt
             var sm = (SimulationManager)sim.Simulation;
 

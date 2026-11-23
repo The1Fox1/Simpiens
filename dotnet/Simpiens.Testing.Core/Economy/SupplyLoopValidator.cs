@@ -90,10 +90,10 @@ namespace Simpiens.Testing.Economy
             var agentGo = CreateAgent(registry, sim, new Vec2(0.5f, 0f), out var node, out var agent);
 
             // Fill all slots with item types that cannot stack with MedicinalHerb
-            agent.Inventory.TryAddItem(new ItemInstance(1, ItemType.Ration, 1, 5), out _);
-            agent.Inventory.TryAddItem(new ItemInstance(2, ItemType.IronOre, 1, 8), out _);
-            agent.Inventory.TryAddItem(new ItemInstance(4, ItemType.ToolPickaxe, 1, 30), out _);
-            agent.Inventory.TryAddItem(new ItemInstance(5, ItemType.HazardGear, 1, 40), out _);
+            agent.Inventory.TryAddItem(new ItemInstance(ItemType.Ration, 1, 5), out _);
+            agent.Inventory.TryAddItem(new ItemInstance(ItemType.IronOre, 1, 8), out _);
+            agent.Inventory.TryAddItem(new ItemInstance(ItemType.ToolPickaxe, 1, 30), out _);
+            agent.Inventory.TryAddItem(new ItemInstance(ItemType.HazardGear, 1, 40), out _);
             Assert(agent.Inventory.OccupiedSlots == agent.Inventory.Capacity, "Inventory is full before harvest.");
 
             var result = RunIntent(sim, new HarvestResourceIntent(node.Id, herbId, null));
@@ -505,7 +505,7 @@ namespace Simpiens.Testing.Economy
             Assert(empty.Cycles == 0 && empty.Meals == 0 && empty.FirstCycleTick == -1 && empty.FirstMealTick == -1, "A new crawler starts with an empty tally.");
 
             // A sale of salvage the crawler did not harvest counts as a sale, not a cycle
-            agent.Inventory.TryAddItem(new ItemInstance((ushort)ItemType.IronOre, ItemType.IronOre, 1, EconomyTuning.Default.BaseValue(ItemType.IronOre)), out _);
+            agent.Inventory.TryAddItem(new ItemInstance(ItemType.IronOre, 1, EconomyTuning.Default.BaseValue(ItemType.IronOre)), out _);
             var result = RunIntent(sim, new TradeIntent(node.Id, stallId, TradeActionType.SellItem, ItemType.IronOre));
             Assert(result == IntentResult.Success, $"Sale returned {result}.");
             Assert(agent.Activity.SalvageSales == 1 && agent.Activity.Cycles == 0, $"A sale without a harvest closes no cycle ({agent.Activity}).");
@@ -546,7 +546,7 @@ namespace Simpiens.Testing.Economy
         {
             var id = NextGuid();
             var carrying = new AgentInventory();
-            carrying.TryAddItem(new ItemInstance((ushort)ItemType.Ration, ItemType.Ration, 1, EconomyTuning.Default.BaseValue(ItemType.Ration)), out _);
+            carrying.TryAddItem(new ItemInstance(ItemType.Ration, 1, EconomyTuning.Default.BaseValue(ItemType.Ration)), out _);
             var starving = new AgentContext(id, Vec2.Zero, new AgentNeeds(90f, 60f, 60f), 0f, null, null, 1, inventory: carrying);
             var empty = new AgentContext(id, Vec2.Zero, new AgentNeeds(90f, 60f, 60f), 0f, null, null, 1, inventory: new AgentInventory());
 

@@ -295,7 +295,7 @@ namespace Simpiens.Simulation.Guild
             }
             // The best grade on the shelf first (Epic 10 Part 2, D57), its life the grade's
             stall = stall.TakeBest(item, out byte grade);
-            crawler.Inventory.TryEquip(new ItemInstance(1, item, 1, (ushort)stall.SellPriceOf(item), quality: grade, durability: equipment.DurabilityAt(grade)));
+            crawler.Inventory.TryEquip(new ItemInstance(item, 1, (ushort)stall.SellPriceOf(item), quality: grade, durability: equipment.DurabilityAt(grade)));
             host.UpdateStall(stall);
             SimLog.Economy.ZLogInformation($"{SimLog.Agent(crawlerId)} was given {item} from the stall's stock{(worn.IsEmpty ? string.Empty : $" in place of {worn.Type}")}");
             return GuildRules.Check.Ok;
@@ -532,7 +532,7 @@ namespace Simpiens.Simulation.Guild
                 if (!member.IsWithParty || !host.TryGetCrawler(member.CrawlerId, out var crawler) || crawler.Inventory == null) continue;
                 if (Vec2.Distance(crawler.Position, home) > tuning.MusterRadius) continue;
                 int given = Math.Min(count - crawler.Inventory.GetItemCount(item), stall.SellStockOf(item));
-                if (given <= 0 || !crawler.Inventory.TryAddItem(new ItemInstance((ushort)item, item, (ushort)given, (ushort)stall.SellPriceOf(item)), out _)) continue;
+                if (given <= 0 || !crawler.Inventory.TryAddItem(new ItemInstance(item, (ushort)given, (ushort)stall.SellPriceOf(item)), out _)) continue;
                 stall = stall.WithStock(item, (ushort)(stall.StockOf(item) - given));
                 changed = true;
                 SimLog.Economy.ZLogInformation($"{SimLog.Agent(member.CrawlerId)} was given {given} {item} from the stall's stock for the trip");

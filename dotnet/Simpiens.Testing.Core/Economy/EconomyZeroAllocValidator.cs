@@ -89,7 +89,7 @@ namespace Simpiens.Testing.Economy
                 var sell = Active(new TradeIntent(node.Id, stallId, TradeActionType.SellItem, ItemType.IronOre, 1), node);
                 var claim = Active(new ClaimBountyIntent(node.Id, DeliveredId), node);
                 var deliver = Active(new DeliverBountyIntent(node.Id, DeliveredId, stallId), node);
-                var ore = new ItemInstance((ushort)ItemType.IronOre, ItemType.IronOre, 1, 8);
+                var ore = new ItemInstance(ItemType.IronOre, 1, 8);
                 int failures = 0;
 
                 for (int i = 0; i < 20; i++) PlayOneTick(); // warm up: dictionary entries, chronicle sector buffers
@@ -188,8 +188,8 @@ namespace Simpiens.Testing.Economy
 
             var state = new AgentState(agentId) { Position = new Vec2(1f, 0f), Hunger = 65f, Personality = new AgentPersonality(0.4f, 0f, -0.2f, 0f, 0.3f) };
             state.Inventory.Gold = 40;
-            state.Inventory.TryAddItem(new ItemInstance((ushort)ItemType.IronOre, ItemType.IronOre, 2, 8), out _);
-            state.Inventory.TryAddItem(new ItemInstance((ushort)ItemType.MedicinalHerb, ItemType.MedicinalHerb, 1, 12), out _);
+            state.Inventory.TryAddItem(new ItemInstance(ItemType.IronOre, 2, 8), out _);
+            state.Inventory.TryAddItem(new ItemInstance(ItemType.MedicinalHerb, 1, 12), out _);
             var context = state.CreateContext(snapshot, 500); // main thread, as in production
 
             var goals = new List<GoapGoal> { new PurchaseProvisionsGoal(), new LiquidateSalvageGoal(), new FulfillBountyGoal(), new EarnIncomeGoal() };

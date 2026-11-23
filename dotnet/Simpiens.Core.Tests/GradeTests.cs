@@ -34,10 +34,10 @@ namespace Simpiens.Core.Tests
             Assert.Equal(0.825f, respirator.ValueAt(respirator.GetModifier(0), Grades.Fine), 4); // an Add a tenth more
 
             var inventory = new Simpiens.Cognition.Inventory.AgentInventory();
-            inventory.TryEquip(new ItemInstance(1, ItemType.ToolPickaxe, 1, 30, quality: Grades.Fine, durability: 50));
+            inventory.TryEquip(new ItemInstance(ItemType.ToolPickaxe, 1, 30, quality: Grades.Fine, durability: 50));
             Assert.Equal(1.55f, CrawlerStats.MiningSpeed(inventory, ItemType.IronOre), 4);
             var masked = new Simpiens.Cognition.Inventory.AgentInventory();
-            masked.TryEquip(new ItemInstance(1, ItemType.Respirator, 1, 60, quality: Grades.Masterwork, durability: 2250));
+            masked.TryEquip(new ItemInstance(ItemType.Respirator, 1, 60, quality: Grades.Masterwork, durability: 2250));
             Assert.Equal(0.9f, CrawlerStats.HazardResistance(masked, Simpiens.Simulation.World.HazardKind.Flooding), 4); // capped
         }
 

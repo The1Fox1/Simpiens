@@ -42,7 +42,7 @@ namespace Simpiens.Testing.Economy
         }
 
         private static ItemInstance Pickaxe(ushort durability)
-            => new ItemInstance(1, ItemType.ToolPickaxe, 1, 30, durability: durability);
+            => new ItemInstance(ItemType.ToolPickaxe, 1, 30, durability: durability);
 
         private void ValidateMiningSpeedIsThePickaxesForMineralsOnly()
         {

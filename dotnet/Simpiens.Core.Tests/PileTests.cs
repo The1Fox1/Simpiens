@@ -26,7 +26,7 @@ namespace Simpiens.Core.Tests
             var victor = sim.Host.CrawlerStates[0];
             var other = sim.Host.CrawlerStates[1];
             uint tick = (uint)sim.Clock.CurrentTick;
-            var pile = piles.Drop(world, new Vec2(1f, 1f), new[] { new ItemInstance(1, ItemType.IronOre, 3, 0), new ItemInstance(1, ItemType.MedicinalHerb, 1, 0) }, 5, victor.AgentId, tick);
+            var pile = piles.Drop(world, new Vec2(1f, 1f), new[] { new ItemInstance(ItemType.IronOre, 3, 0), new ItemInstance(ItemType.MedicinalHerb, 1, 0) }, 5, victor.AgentId, tick);
             Assert.NotNull(pile);
             Assert.Contains(sim.Registry.ActiveEntities, e => e.Type == EntityType.Pile && e.Id == pile.Id && e.Pile == pile);
 
@@ -48,7 +48,7 @@ namespace Simpiens.Core.Tests
         public void APileFadesAGameDayOn()
         {
             using var sim = Outpost();
-            var pile = sim.Simulation.Piles.Drop((IPileWorld)sim.Simulation, new Vec2(1f, 1f), new[] { new ItemInstance(1, ItemType.IronOre, 1, 0) }, 0, default, (uint)sim.Clock.CurrentTick);
+            var pile = sim.Simulation.Piles.Drop((IPileWorld)sim.Simulation, new Vec2(1f, 1f), new[] { new ItemInstance(ItemType.IronOre, 1, 0) }, 0, default, (uint)sim.Clock.CurrentTick);
             uint fades = pile.FadesAt;
             Assert.Equal((uint)sim.Clock.CurrentTick + DayClock.Hours(PileService.FadeHours), fades);
             // The piles' own tick, by hand: crawlers would pick it over first (K4.3)
@@ -66,13 +66,13 @@ namespace Simpiens.Core.Tests
             using var sim = Outpost();
             var world = (IPileWorld)sim.Simulation;
             uint tick = (uint)sim.Clock.CurrentTick;
-            sim.Simulation.Piles.Drop(world, new Vec2(1f, 1f), new[] { new ItemInstance(1, ItemType.IronOre, 2, 0) }, 0, sim.Host.CrawlerStates[0].AgentId, tick);
-            sim.Simulation.Piles.Drop(world, new Vec2(-3f, 2f), new[] { new ItemInstance(1, ItemType.Cudgel, 1, 0, durability: 40) }, 9, default, tick);
+            sim.Simulation.Piles.Drop(world, new Vec2(1f, 1f), new[] { new ItemInstance(ItemType.IronOre, 2, 0) }, 0, sim.Host.CrawlerStates[0].AgentId, tick);
+            sim.Simulation.Piles.Drop(world, new Vec2(-3f, 2f), new[] { new ItemInstance(ItemType.Cudgel, 1, 0, durability: 40) }, 9, default, tick);
             sim.Step(5);
             long at = sim.Clock.CurrentTick;
             byte[] saved = SaveSerializer.Serialize(sim.Host.Capture());
             var savedHash = Simpiens.Testing.Environment.WorldStateHash.Capture(at, sim.Host, sim.Simulation, sim.Sectors, includeWork: false);
-            sim.Simulation.Piles.Drop(world, new Vec2(5f, 5f), new[] { new ItemInstance(1, ItemType.Ration, 1, 0) }, 0, default, (uint)sim.Clock.CurrentTick);
+            sim.Simulation.Piles.Drop(world, new Vec2(5f, 5f), new[] { new ItemInstance(ItemType.Ration, 1, 0) }, 0, default, (uint)sim.Clock.CurrentTick);
             Assert.True(sim.Host.TryRestore(SaveSerializer.Deserialize<SessionSave>(saved), out string refusal), refusal);
             Assert.Equal(2, sim.Simulation.Piles.Piles.Count);
             Assert.Equal(2, sim.Registry.ActiveEntities.Count(e => e.Type == EntityType.Pile));

@@ -86,13 +86,13 @@ namespace Simpiens.Cognition.Planning.Handlers
                     // New equipment comes at the best grade on the shelf (Epic 10 Part 2, D57), its life the grade's (hazard
                     // gear: ticks of hazard exposure)
                     byte grade = stall.BestGradeOf(trade.ItemType);
-                    if (!agent.Inventory.TryEquip(new ItemInstance(1, trade.ItemType, 1, (ushort)unitPrice, quality: grade, durability: equipment.DurabilityAt(grade)), out wornIn))
+                    if (!agent.Inventory.TryEquip(new ItemInstance(trade.ItemType, 1, (ushort)unitPrice, quality: grade, durability: equipment.DurabilityAt(grade)), out wornIn))
                     {
                         if (!tradedIn.IsEmpty) agent.Inventory.TryEquip(tradedIn);
                         return Reject(node, trade, "a crawler wears one piece a slot");
                     }
                 }
-                else if (!agent.Inventory.TryAddItem(new ItemInstance(1, trade.ItemType, trade.Quantity, (ushort)unitPrice), out _))
+                else if (!agent.Inventory.TryAddItem(new ItemInstance(trade.ItemType, trade.Quantity, (ushort)unitPrice), out _))
                 {
                     return Reject(node, trade, "inventory full");
                 }
@@ -183,7 +183,7 @@ namespace Simpiens.Cognition.Planning.Handlers
                 {
                     if (!context.EconomyLedger.TryExecuteStallSale(stall.StallEntityId, ref stall, agent.Inventory, totalPayout))
                     {
-                        agent.Inventory.TryAddItem(new ItemInstance((ushort)trade.ItemType, trade.ItemType, trade.Quantity, economy.BaseValue(trade.ItemType)), out _); // roll back
+                        agent.Inventory.TryAddItem(new ItemInstance(trade.ItemType, trade.Quantity, economy.BaseValue(trade.ItemType)), out _); // roll back
                         return Reject(node, trade, "ledger refused the sale");
                     }
                 }

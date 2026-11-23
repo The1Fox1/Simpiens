@@ -33,8 +33,8 @@ namespace Simpiens.Core.Tests
         {
             using var extended = TestCatalogs.FeetAndBoots();
             var inventory = new AgentInventory(4, startingGold: 0);
-            Assert.True(inventory.TryEquip(new ItemInstance(1, TestCatalogs.Boots, 1, 15, durability: 2), out var slot) && slot == TestCatalogs.Feet, "The boots go on the feet.");
-            Assert.True(inventory.TryEquip(new ItemInstance(2, ItemType.HazardGear, 1, 30, durability: 1500)), "Hazard gear goes on beside them.");
+            Assert.True(inventory.TryEquip(new ItemInstance(TestCatalogs.Boots, 1, 15, durability: 2), out var slot) && slot == TestCatalogs.Feet, "The boots go on the feet.");
+            Assert.True(inventory.TryEquip(new ItemInstance(ItemType.HazardGear, 1, 30, durability: 1500)), "Hazard gear goes on beside them.");
             Assert.Equal(0.7f, CrawlerStats.Get(inventory, StatKind.HazardResistance), 4); // 0.5 and 0.2, stacked (K1.3)
             Assert.Equal(TestCatalogs.Feet, WornGear.TryReplacing(inventory, TestCatalogs.Boots, out var replacing) ? replacing : default);
 
@@ -103,7 +103,7 @@ namespace Simpiens.Core.Tests
             using var played = LocalSimulation.Create(SimulationSettings.DefaultSeed);
             played.Host.Respawn(new OutpostSession(OutpostSession.DefaultCrawlerCount, WithBoots()));
             var crawler = played.Host.CrawlerStates[2];
-            Assert.True(crawler.Inventory.TryEquip(new ItemInstance(1, TestCatalogs.Boots, 1, 15, durability: 444)), "Boots, by hand.");
+            Assert.True(crawler.Inventory.TryEquip(new ItemInstance(TestCatalogs.Boots, 1, 15, durability: 444)), "Boots, by hand.");
             played.Step(10);
             byte[] saved = SaveSerializer.Serialize(played.Host.Capture());
 

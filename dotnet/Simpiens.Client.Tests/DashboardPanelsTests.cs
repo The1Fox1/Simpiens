@@ -112,7 +112,7 @@ namespace Simpiens.Client.Tests
             game.Session.DashboardModel.SelectCrawler(crawler.Id);
             ui.Frame();
             Assert.Equal("Gear: None", game.Play.Dashboard.Panels.GearShown);
-            crawler.Agent.Inventory.TryEquip(new Simpiens.Simulation.Economy.ItemInstance(1, Simpiens.Simulation.Economy.ItemType.ToolPickaxe, 1, 30, durability: 32)); // by hand
+            crawler.Agent.Inventory.TryEquip(new Simpiens.Simulation.Economy.ItemInstance(Simpiens.Simulation.Economy.ItemType.ToolPickaxe, 1, 30, durability: 32)); // by hand
             game.Play.Dashboard.Refresh();
             ui.Frame();
             Assert.Equal("Gear: Pickaxe 80%", game.Play.Dashboard.Panels.GearShown);

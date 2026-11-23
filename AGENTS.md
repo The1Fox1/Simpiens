@@ -177,7 +177,7 @@ CI (`.github/workflows/dotnet.yml`) runs the tests (the client's in the pinned i
   1. A ration takes 40 off hunger from the pack, but 50 when eaten at a Garden plot (a node rule).
   2. Setting `AgentState.HasFoodInInventory` true packs a ration.
   3. A node yielding `ItemType.None` counts as food.
-  4. `ItemInstance.ItemId` is stamped 1 everywhere.
+  - Retired: `ItemInstance.ItemId`, once stamped 1 everywhere, is a masterpiece's mark since Epic 11's S8.1 (0 on an ordinary piece; format 14).
 
 ### Adding an equipment slot
 - **A slot is a row** (Epic 10 Part 3, K1; the producer's "appendable equipment system"):

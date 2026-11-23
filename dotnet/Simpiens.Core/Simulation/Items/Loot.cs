@@ -185,7 +185,7 @@ namespace Simpiens.Simulation.Items
                         {
                             drops[count++] = ItemCatalog.Get(entry.Item)?.Equipment != null
                                 ? Outfitting.NewPiece(entry.Item, Grades.Standard)
-                                : new ItemInstance(1, entry.Item, quantity, 0);
+                                : new ItemInstance(entry.Item, quantity, 0);
                         }
                         break;
                     case LootEntryKind.Table:

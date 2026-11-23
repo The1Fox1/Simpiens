@@ -41,7 +41,7 @@ namespace Simpiens.Testing.Economy
             Assert(ItemInstance.Empty.Type == ItemType.None, "ItemInstance.Empty has Type == ItemType.None.");
 
             // Verify constructor and WithQuantity
-            var ration = new ItemInstance(1, ItemType.Ration, 5, 10, quality: 1, durability: 95);
+            var ration = new ItemInstance(ItemType.Ration, 5, 10, quality: 1, durability: 95);
             Assert(!ration.IsEmpty, "Created ration is not empty.");
             Assert(ration.Type == ItemType.Ration, "Ration Type is ItemType.Ration.");
             Assert(ration.Quantity == 5, "Ration Quantity is 5.");
@@ -54,7 +54,7 @@ namespace Simpiens.Testing.Economy
             Assert(updatedRation.BaseValue == 10, "BaseValue preserved after WithQuantity.");
 
             // Equality
-            var rationCopy = new ItemInstance(1, ItemType.Ration, 5, 10, quality: 1, durability: 95);
+            var rationCopy = new ItemInstance(ItemType.Ration, 5, 10, quality: 1, durability: 95);
             Assert(ration == rationCopy, "ItemInstance equality operator functions properly.");
 
             TestLog.Log("[PASS] Test 1: Unmanaged ItemInstance 16-byte layout and semantics verified.");
@@ -68,7 +68,7 @@ namespace Simpiens.Testing.Economy
             Assert(inv.OccupiedSlots == 0, "Initial occupied slots is 0.");
 
             // 1. Add first stack
-            var ration1 = new ItemInstance(1, ItemType.Ration, 5, 5);
+            var ration1 = new ItemInstance(ItemType.Ration, 5, 5);
             bool added1 = inv.TryAddItem(ration1, out var remainder1);
             Assert(added1, "First ration added successfully.");
             Assert(remainder1.IsEmpty, "No remainder on first add.");
@@ -76,7 +76,7 @@ namespace Simpiens.Testing.Economy
             Assert(inv.GetItemCount(ItemType.Ration) == 5, "Ration count is 5.");
 
             // 2. Add second stack of same type & quality -> should stack-merge
-            var ration2 = new ItemInstance(1, ItemType.Ration, 8, 5);
+            var ration2 = new ItemInstance(ItemType.Ration, 8, 5);
             bool added2 = inv.TryAddItem(ration2, out var remainder2);
             Assert(added2, "Second ration added successfully.");
             Assert(remainder2.IsEmpty, "No remainder on second add.");
@@ -84,7 +84,7 @@ namespace Simpiens.Testing.Economy
             Assert(inv.GetItemCount(ItemType.Ration) == 13, "Ration count is 13.");
 
             // 3. Add second item type
-            var ore = new ItemInstance(2, ItemType.IronOre, 3, 20);
+            var ore = new ItemInstance(ItemType.IronOre, 3, 20);
             bool added3 = inv.TryAddItem(ore, out var remainder3);
             Assert(added3, "IronOre added successfully.");
             Assert(remainder3.IsEmpty, "No remainder on ore add.");
@@ -101,13 +101,13 @@ namespace Simpiens.Testing.Economy
             var inv = new AgentInventory(capacity: 3, startingGold: 0);
 
             // Fill all 3 slots
-            inv.TryAddItem(new ItemInstance(1, ItemType.Ration, 10, 5), out _);
-            inv.TryAddItem(new ItemInstance(2, ItemType.IronOre, 5, 15), out _);
-            inv.TryAddItem(new ItemInstance(3, ItemType.MedicinalHerb, 4, 10), out _);
+            inv.TryAddItem(new ItemInstance(ItemType.Ration, 10, 5), out _);
+            inv.TryAddItem(new ItemInstance(ItemType.IronOre, 5, 15), out _);
+            inv.TryAddItem(new ItemInstance(ItemType.MedicinalHerb, 4, 10), out _);
             Assert(inv.OccupiedSlots == 3, "All 3 slots occupied.");
 
             // Attempt to add a 4th distinct item type (ToolPickaxe)
-            var pickaxe = new ItemInstance(4, ItemType.ToolPickaxe, 1, 50);
+            var pickaxe = new ItemInstance(ItemType.ToolPickaxe, 1, 50);
             bool added = inv.TryAddItem(pickaxe, out var remainder);
             Assert(!added, "Adding item beyond capacity returns false.");
             Assert(!remainder.IsEmpty, "Remainder is not empty on overflow.");
@@ -121,7 +121,7 @@ namespace Simpiens.Testing.Economy
         private void ValidatePartialAndTotalItemRemoval()
         {
             var inv = new AgentInventory(capacity: 4, startingGold: 0);
-            inv.TryAddItem(new ItemInstance(1, ItemType.Ration, 10, 5), out _);
+            inv.TryAddItem(new ItemInstance(ItemType.Ration, 10, 5), out _);
 
             // Partial removal
             bool removedPartial = inv.TryRemoveItem(ItemType.Ration, 4);
@@ -196,8 +196,8 @@ namespace Simpiens.Testing.Economy
         private void ValidateZeroAllocationQueries()
         {
             var inv = new AgentInventory(capacity: 4, startingGold: 100);
-            inv.TryAddItem(new ItemInstance(1, ItemType.Ration, 10, 5), out _);
-            inv.TryAddItem(new ItemInstance(2, ItemType.IronOre, 5, 20), out _);
+            inv.TryAddItem(new ItemInstance(ItemType.Ration, 10, 5), out _);
+            inv.TryAddItem(new ItemInstance(ItemType.IronOre, 5, 20), out _);
 
             // 1,000 queries in hot loop
             for (int i = 0; i < 1000; i++)
@@ -227,20 +227,20 @@ namespace Simpiens.Testing.Economy
             var protection = Simpiens.Simulation.Items.EquipmentSlot.Body;
             var tool = Simpiens.Simulation.Items.EquipmentSlot.Tool;
             var inv = new AgentInventory(4, startingGold: 0);
-            inv.TryAddItem(new ItemInstance(1, ItemType.Ration, 1, 5), out _);
-            inv.TryAddItem(new ItemInstance(2, ItemType.IronOre, 1, 8), out _);
-            inv.TryAddItem(new ItemInstance(3, ItemType.MedicinalHerb, 1, 12), out _);
-            inv.TryAddItem(new ItemInstance(4, ItemType.Glowstone, 1, 30), out _);
+            inv.TryAddItem(new ItemInstance(ItemType.Ration, 1, 5), out _);
+            inv.TryAddItem(new ItemInstance(ItemType.IronOre, 1, 8), out _);
+            inv.TryAddItem(new ItemInstance(ItemType.MedicinalHerb, 1, 12), out _);
+            inv.TryAddItem(new ItemInstance(ItemType.Glowstone, 1, 30), out _);
             Assert(inv.OccupiedSlots == 4, "The pack is full.");
 
-            Assert(!inv.TryEquip(new ItemInstance(5, ItemType.Ration, 1, 5)), "A ration is not equipment.");
-            Assert(inv.TryEquip(new ItemInstance(6, ItemType.HazardGear, 1, 40, durability: 3)), "Gear goes on although the pack is full.");
+            Assert(!inv.TryEquip(new ItemInstance(ItemType.Ration, 1, 5)), "A ration is not equipment.");
+            Assert(inv.TryEquip(new ItemInstance(ItemType.HazardGear, 1, 40, durability: 3)), "Gear goes on although the pack is full.");
             Assert(inv.OccupiedSlots == 4 && !inv.HasItem(ItemType.HazardGear), "Equipment takes no pack slot and isn't in the pack.");
             Assert(inv.GetEquipped(protection).Type == ItemType.HazardGear, "Hazard gear goes in the body slot.");
-            Assert(!inv.TryEquip(new ItemInstance(7, ItemType.HazardGear, 1, 40)), "A second piece for the body is refused while one is worn.");
-            Assert(!inv.TryEquip(new ItemInstance(7, ItemType.HardHat, 1, 40), protection), "A hard hat doesn't fit the body slot.");
-            Assert(!inv.TryEquip(new ItemInstance(7, ItemType.HardHat, 1, 40), (Simpiens.Simulation.Items.EquipmentSlot)0), "Nor the retired slot 0 (protection, K1.1).");
-            Assert(inv.TryEquip(new ItemInstance(8, ItemType.ToolPickaxe, 1, 30, durability: 100)) && inv.GetEquipped(tool).Type == ItemType.ToolPickaxe,
+            Assert(!inv.TryEquip(new ItemInstance(ItemType.HazardGear, 1, 40)), "A second piece for the body is refused while one is worn.");
+            Assert(!inv.TryEquip(new ItemInstance(ItemType.HardHat, 1, 40), protection), "A hard hat doesn't fit the body slot.");
+            Assert(!inv.TryEquip(new ItemInstance(ItemType.HardHat, 1, 40), (Simpiens.Simulation.Items.EquipmentSlot)0), "Nor the retired slot 0 (protection, K1.1).");
+            Assert(inv.TryEquip(new ItemInstance(ItemType.ToolPickaxe, 1, 30, durability: 100)) && inv.GetEquipped(tool).Type == ItemType.ToolPickaxe,
                 "A pickaxe goes in the tool slot beside the body's gear.");
 
             var snapshot = (AgentInventorySnapshot)inv.GetSnapshot();
@@ -257,9 +257,9 @@ namespace Simpiens.Testing.Economy
             Assert(inv.Wear(protection) && inv.GetEquipped(protection).IsEmpty, "At 0 the gear breaks and is gone.");
             Assert(!inv.Wear(protection), "Nothing worn, nothing breaks.");
             Assert(inv.GetEquipped(tool).Durability == 100, "Wearing one slot leaves the others.");
-            Assert(inv.TryEquip(new ItemInstance(9, ItemType.HazardGear, 1, 40)) && inv.Unequip(protection).ItemId == 9 && inv.GetEquipped(protection).IsEmpty, "Gear comes off again (a rolled-back purchase).");
+            Assert(inv.TryEquip(new ItemInstance(ItemType.HazardGear, 1, 40)) && inv.Unequip(protection).Type == ItemType.HazardGear && inv.GetEquipped(protection).IsEmpty, "Gear comes off again (a rolled-back purchase).");
 
-            inv.TryEquip(new ItemInstance(10, ItemType.HazardGear, 1, 40));
+            inv.TryEquip(new ItemInstance(ItemType.HazardGear, 1, 40));
             inv.Clear();
             Assert(inv.GetEquipped(protection).IsEmpty && inv.GetEquipped(tool).IsEmpty && inv.OccupiedSlots == 0, "Clear empties the pack and every slot.");
 

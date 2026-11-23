@@ -141,17 +141,17 @@ namespace Simpiens.Client.Tests
             Assert.True(model.Dossier.Equipment.NoneWorn);
             Assert.Equal(DossierModel.NoGear, model.Dossier.Equipment.Summary);
             ushort life = Simpiens.Simulation.Items.ItemCatalog.Get(ItemType.HazardGear).Equipment.Durability;
-            crawler.Inventory.TryEquip(new ItemInstance(1, ItemType.HazardGear, 1, 30, durability: (ushort)(life * 64 / 100)));
+            crawler.Inventory.TryEquip(new ItemInstance(ItemType.HazardGear, 1, 30, durability: (ushort)(life * 64 / 100)));
             model.SelectCrawler(crawler.AgentId);
             var body = model.Dossier.Equipment.Slots.Single(s => s.Slot.Id == Simpiens.Simulation.Items.EquipmentSlot.Body);
             Assert.Equal(("Hazard Gear, 64% left", "Hazard Gear 64%", "64%"), (body.Text, body.Short, body.Left)); // by its catalog name
             Assert.Equal("item/hazard-gear/icon", body.Icon);
-            Assert.Equal("Hazard Gear, 1% left", DossierModel.GearText(new ItemInstance(1, ItemType.HazardGear, 1, 30, durability: 1)));
+            Assert.Equal("Hazard Gear, 1% left", DossierModel.GearText(new ItemInstance(ItemType.HazardGear, 1, 30, durability: 1)));
 
             // Every slot has its row, in the table's display order (Epic 10 Part 3, K1.5): the head's first, the tool's last
             Assert.Equal(Simpiens.Simulation.Items.EquipmentSlots.InDisplayOrder.Select(d => d.Id), model.Dossier.Equipment.Slots.Select(s => s.Slot.Id));
-            crawler.Inventory.TryEquip(new ItemInstance(1, ItemType.ToolPickaxe, 1, 30, durability: 32));
-            crawler.Inventory.TryEquip(new ItemInstance(1, ItemType.HardHat, 1, 60, quality: Simpiens.Simulation.Items.Grades.Fine, durability: 1875));
+            crawler.Inventory.TryEquip(new ItemInstance(ItemType.ToolPickaxe, 1, 30, durability: 32));
+            crawler.Inventory.TryEquip(new ItemInstance(ItemType.HardHat, 1, 60, quality: Simpiens.Simulation.Items.Grades.Fine, durability: 1875));
             model.SelectCrawler(crawler.AgentId);
             Assert.Equal("Fine Hard Hat 100%, Hazard Gear 64%, Pickaxe 80%", model.Dossier.Equipment.Summary); // 32 of its 40
             Assert.Equal("item/pickaxe/icon", model.Dossier.Equipment.Slots[^1].Icon);

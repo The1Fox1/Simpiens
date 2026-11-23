@@ -190,8 +190,8 @@ namespace Simpiens.Testing.Economy
             var eater = new Simpiens.Cognition.AgentState(new EntityId(2, 0, 0, 0));
             eater.Inventory.Clear();
             Assert(!Simpiens.Cognition.ItemUse.Consume(eater, ItemType.Ration), "Nothing to eat: refused.");
-            eater.Inventory.TryAddItem(new ItemInstance(1, ItemType.Ration, 2, 5), out _);
-            eater.Inventory.TryAddItem(new ItemInstance(2, ItemType.IronOre, 1, 8), out _);
+            eater.Inventory.TryAddItem(new ItemInstance(ItemType.Ration, 2, 5), out _);
+            eater.Inventory.TryAddItem(new ItemInstance(ItemType.IronOre, 1, 8), out _);
             eater.Hunger = 70f;
             Assert(!Simpiens.Cognition.ItemUse.Consume(eater, ItemType.IronOre) && eater.Inventory.GetItemCount(ItemType.IronOre) == 1, "Ore isn't consumed.");
             Assert(Simpiens.Cognition.ItemUse.Consume(eater, ItemType.Ration) && eater.Hunger == 30f && eater.Inventory.GetItemCount(ItemType.Ration) == 1, "A ration: hunger 70 -> 30, one left.");
@@ -207,9 +207,9 @@ namespace Simpiens.Testing.Economy
         {
             var inv = new AgentInventory(4, startingGold: 0);
             Assert(CrawlerStats.Get(inv, StatKind.HazardResistance) == 0f && CrawlerStats.Get(inv, StatKind.HarvestSpeed, 1f) == 1f, "Nothing equipped: the base.");
-            inv.TryEquip(new ItemInstance(1, ItemType.HazardGear, 1, 30, durability: 500));
+            inv.TryEquip(new ItemInstance(ItemType.HazardGear, 1, 30, durability: 500));
             Assert(BitConverter.SingleToInt32Bits(CrawlerStats.Get(inv, StatKind.HazardResistance)) == BitConverter.SingleToInt32Bits(0.5f), "Hazard gear: resistance exactly 0.5.");
-            inv.TryEquip(new ItemInstance(2, ItemType.ToolPickaxe, 1, 30, durability: 100));
+            inv.TryEquip(new ItemInstance(ItemType.ToolPickaxe, 1, 30, durability: 100));
             Assert(CrawlerStats.Get(inv, StatKind.HarvestSpeed, 1f) == 1.5f, "A pickaxe: harvest speed x1.5 on a base of 1.");
             Assert(CrawlerStats.Get(inv, StatKind.HarvestSpeed, 2f) == 3f && CrawlerStats.Get(inv, StatKind.HazardResistance) == 0.5f, "Each stat reads only its own modifiers.");
             Assert(CrawlerStats.Get(null, StatKind.Attack, 4f) == 4f, "No inventory: the base.");

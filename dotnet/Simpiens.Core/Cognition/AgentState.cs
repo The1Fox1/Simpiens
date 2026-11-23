@@ -67,7 +67,7 @@ namespace Simpiens.Cognition
                 {
                     if (!Inventory.HasAny(Simpiens.Simulation.Items.ItemCategory.Food))
                     {
-                        Inventory.TryAddItem(new ItemInstance(1, ItemType.Ration, 1, 5), out _);
+                        Inventory.TryAddItem(new ItemInstance(ItemType.Ration, 1, 5), out _);
                     }
                 }
                 else

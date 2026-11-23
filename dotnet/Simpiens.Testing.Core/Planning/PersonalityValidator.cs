@@ -110,7 +110,7 @@ namespace Simpiens.Testing.Planning
             Assert(Considerations.MinimumSalePrice(greedy, ItemType.IronOre) > EconomyTuning.Default.BaseValue(ItemType.IronOre), "Greedy agents ask more.");
 
             var inventory = new AgentInventory();
-            inventory.TryAddItem(new ItemInstance((ushort)ItemType.IronOre, ItemType.IronOre, 1, EconomyTuning.Default.BaseValue(ItemType.IronOre)), out _);
+            inventory.TryAddItem(new ItemInstance(ItemType.IronOre, 1, EconomyTuning.Default.BaseValue(ItemType.IronOre)), out _);
             var holder = CreateContext(new AgentPersonality(1f, 0f, 0f, 0f, 0f), hunger: 20f, gold: 10, snapshot: null, inventory: inventory);
             ushort greedyMinimum = Considerations.MinimumSalePrice(holder, ItemType.IronOre);
             ushort fairPrice = EconomyTuning.Default.Terms(ItemType.IronOre).StallPrice;

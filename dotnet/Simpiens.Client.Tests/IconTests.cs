@@ -82,7 +82,7 @@ namespace Simpiens.Client.Tests
             var game = Offscreen.Start(new ClientOptions { TicksPerUpdate = 10 }, frames: 3, width: 1280, height: 720);
             game.Options.DashboardRefreshSeconds = 0f;
             var crawler = game.Session.Simulation.Host.CrawlerStates[0];
-            crawler.Inventory.TryEquip(new Simpiens.Simulation.Economy.ItemInstance(1, Simpiens.Simulation.Economy.ItemType.HazardGear, 1, 30, durability: 100));
+            crawler.Inventory.TryEquip(new Simpiens.Simulation.Economy.ItemInstance(Simpiens.Simulation.Economy.ItemType.HazardGear, 1, 30, durability: 100));
             var model = game.Session.DashboardModel;
             model.SelectCrawler(crawler.AgentId);
             model.OpenMerchant();

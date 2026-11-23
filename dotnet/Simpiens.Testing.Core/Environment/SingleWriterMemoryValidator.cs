@@ -175,8 +175,8 @@ namespace Simpiens.Testing.Environment
         private void ValidateInventorySnapshotIsolation()
         {
             var liveInventory = new AgentInventory(capacity: 4, startingGold: 50);
-            var ration = new ItemInstance(itemId: 1, type: ItemType.Ration, quantity: 3, baseValue: 10, quality: 0, durability: 100);
-            var ore = new ItemInstance(itemId: 2, type: ItemType.IronOre, quantity: 5, baseValue: 20, quality: 0, durability: 100);
+            var ration = new ItemInstance(type: ItemType.Ration, quantity: 3, baseValue: 10, quality: 0, durability: 100);
+            var ore = new ItemInstance(type: ItemType.IronOre, quantity: 5, baseValue: 20, quality: 0, durability: 100);
 
             liveInventory.TryAddItem(ration, out _);
             liveInventory.TryAddItem(ore, out _);
@@ -191,7 +191,7 @@ namespace Simpiens.Testing.Environment
             // Mutate live inventory on main thread
             liveInventory.TryDeductGold(30);
             liveInventory.TryRemoveItem(ItemType.Ration, 3);
-            var herb = new ItemInstance(itemId: 3, type: ItemType.MedicinalHerb, quantity: 10, baseValue: 15, quality: 0, durability: 100);
+            var herb = new ItemInstance(type: ItemType.MedicinalHerb, quantity: 10, baseValue: 15, quality: 0, durability: 100);
             liveInventory.TryAddItem(herb, out _);
 
             // Assert snapshot remains completely untouched and isolated

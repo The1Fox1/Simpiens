@@ -23,8 +23,8 @@ namespace Simpiens.Client.Tests
             var ui = UiDriver.Start(width: 1280, height: 720);
             var game = ui.Game;
             var crawler = game.Session.Simulation.Registry.ActiveEntities.First(e => e.Type == EntityType.Pawn);
-            crawler.Agent.Inventory.TryEquip(new ItemInstance(1, TestCatalogs.Boots, 1, 15, durability: 300)); // by hand
-            crawler.Agent.Inventory.TryEquip(new ItemInstance(2, ItemType.HardHat, 1, 60, durability: 1500));
+            crawler.Agent.Inventory.TryEquip(new ItemInstance(TestCatalogs.Boots, 1, 15, durability: 300)); // by hand
+            crawler.Agent.Inventory.TryEquip(new ItemInstance(ItemType.HardHat, 1, 60, durability: 1500));
             game.Session.DashboardModel.SelectCrawler(crawler.Id);
             game.Play.Dashboard.Refresh();
             ui.Frame();

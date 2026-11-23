@@ -110,7 +110,7 @@ namespace Simpiens.Core.Tests
             Empty(fallen);
             Empty(friend);
             Assert.True(friend.Inventory.TryEquip(Outfitting.NewPiece(ItemType.HazardGear, Grades.Standard)));
-            if (draught) Assert.True(friend.Inventory.TryAddItem(new ItemInstance(1, ItemType.HealingDraught, 1, 0), out _));
+            if (draught) Assert.True(friend.Inventory.TryAddItem(new ItemInstance(ItemType.HealingDraught, 1, 0), out _));
             uint tick = (uint)sim.Clock.CurrentTick;
             friend.Memory.RecordInteraction(fallen.AgentId, deltaWarmth: 60, deltaTrust: 40, deltaFear: 0, deltaRespect: 0, tick);
             fallen.Health = 1f;

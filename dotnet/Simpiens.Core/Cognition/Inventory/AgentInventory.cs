@@ -90,10 +90,10 @@ namespace Simpiens.Cognition.Inventory
             ushort remainingQty = item.Quantity;
             ushort maxStack = Simpiens.Simulation.Items.ItemCatalog.Get(item.Type)?.MaxStack ?? MaxStackSize;
 
-            // 1. Stack into existing slots of the same Type and Quality
+            // 1. Stack into existing slots of the same Type and Quality (a masterpiece only with itself: Epic 11, S8.1)
             for (int i = 0; i < _capacity; i++)
             {
-                if (!_slots[i].IsEmpty && _slots[i].Type == item.Type && _slots[i].Quality == item.Quality)
+                if (!_slots[i].IsEmpty && _slots[i].Type == item.Type && _slots[i].Quality == item.Quality && _slots[i].Masterpiece == item.Masterpiece)
                 {
                     ushort currentQty = _slots[i].Quantity;
                     ushort spaceInSlot = (ushort)Math.Max(0, maxStack - currentQty);
