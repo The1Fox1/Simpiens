@@ -27,7 +27,7 @@ namespace Simpiens.Testing.Skills
         private void ValidateTheTable()
         {
             var all = DeedTable.All;
-            Assert(all.Count == 8, $"Eight deeds (Epic 11, S3.1 added the taught), {all.Count} in the table.");
+            Assert(all.Count == 10, $"Ten deeds (Epic 11, S3.1 added the taught, S7.5 a named creature slain, S8.2 a masterpiece made), {all.Count} in the table.");
             var names = new HashSet<string>();
             byte last = 0;
             foreach (var deed in all)

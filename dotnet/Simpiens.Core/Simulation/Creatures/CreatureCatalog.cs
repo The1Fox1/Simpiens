@@ -50,7 +50,8 @@ namespace Simpiens.Simulation.Creatures
                 MaxHealth = 20f, Attack = 3f, Defense = 0f, Reach = 0.3f, SwingIntervalSeconds = 1f,
                 Speed = 2.2f, BodyRadius = 0.25f, Sight = 5f, Leash = 6f, FleeBelow = 0.4f,
                 PackMin = 3, PackMax = 4, HealHours = 12, RespawnHours = 48, LootTableId = CreatureLoot.Rat,
-                Challenge = 2 // a Novice learns fully from a rat; a Journeyman a quarter (Epic 11, D5)
+                Challenge = 2, // a Novice learns fully from a rat; a Journeyman a quarter (Epic 11, D5)
+                SlayerEpithet = "Ratcatcher" // Epic 11, S6.1 (D27)
             },
             // Armoured and slow: a bare hand barely scratches one (defense 8 stops 44% of a blow), a crawler can walk away
             // from one, and a weapon decides the fight
@@ -59,7 +60,8 @@ namespace Simpiens.Simulation.Creatures
                 MaxHealth = 60f, Attack = 7f, Defense = 8f, Reach = 0.4f, SwingIntervalSeconds = 2f,
                 Speed = 1.2f, BodyRadius = 0.4f, Sight = 4f, Leash = 6f,
                 PackMin = 1, PackMax = 2, HealHours = 12, RespawnHours = 48, LootTableId = CreatureLoot.Beetle,
-                Challenge = 7 // a Journeyman learns fully from a beetle
+                Challenge = 7, // a Journeyman learns fully from a beetle
+                SlayerEpithet = "Beetlebane"
             },
             // Spits from range on the gate's approach (shots came with K8, the approach with K10); runs under 30%. Sight and leash 6
             // (from 7 and 9, K10.1b): the Old Stair is a sector of the upper block's size, so its web holds the way to the gate and
@@ -69,7 +71,8 @@ namespace Simpiens.Simulation.Creatures
                 MaxHealth = 30f, Attack = 4f, Defense = 2f, Reach = 0.4f, SwingIntervalSeconds = 1.5f, Range = 5f,
                 Speed = 1.6f, BodyRadius = 0.35f, Sight = 6f, Leash = 6f, FleeBelow = 0.3f,
                 PackMin = 2, PackMax = 3, HealHours = 12, RespawnHours = 48, LootTableId = CreatureLoot.Spinner,
-                Challenge = 5
+                Challenge = 5,
+                SlayerEpithet = "Spinnerbane"
             },
             // The bosses (Epic 10 Part 3, K10, Q13; placeholder numbers, tuned by K10.6's measurement). The Matriarch heads the
             // warren (its lair's boss): four rats' worth of health, a rat's quickness and a harder bite; she never flees, calls
@@ -79,7 +82,8 @@ namespace Simpiens.Simulation.Creatures
                 MaxHealth = 80f, Attack = 6f, Defense = 2f, Reach = 0.4f, SwingIntervalSeconds = 1.2f,
                 Speed = 2.1f, BodyRadius = 0.35f, Sight = 5f, Leash = 6f,
                 PackMin = 1, PackMax = 1, HealHours = 12, RespawnHours = 7 * 24, LootTableId = CreatureLoot.Matriarch,
-                IsBoss = true, CallsBroodBelow = 0.5f, Challenge = 9
+                IsBoss = true, CallsBroodBelow = 0.5f, Challenge = 9,
+                SlayerEpithet = "Broodbane"
             },
             // The Gatekeeper holds the sealed gate: a stone warden, slow and heavily armoured, whose slam strikes everyone in
             // its reach and who fights in fury under a quarter of its health. It heals nothing by resting, but stands whole again
@@ -89,7 +93,8 @@ namespace Simpiens.Simulation.Creatures
                 MaxHealth = 320f, Attack = 12f, Defense = 8f, Reach = 1f, SwingIntervalSeconds = 2.5f,
                 Speed = 1f, BodyRadius = 0.9f, Sight = 4f, Leash = 4f,
                 PackMin = 1, PackMax = 1, HealHours = 0, RespawnHours = 0, LootTableId = CreatureLoot.Gatekeeper,
-                IsBoss = true, Slam = true, FuryBelow = 0.25f, FuryAttack = 1.5f, FuryInterval = 0.6f, WholeAfterHours = 1, Challenge = 10
+                IsBoss = true, Slam = true, FuryBelow = 0.25f, FuryAttack = 1.5f, FuryInterval = 0.6f, WholeAfterHours = 1, Challenge = 10,
+                SlayerEpithet = "Gatebreaker"
             }
         };
 

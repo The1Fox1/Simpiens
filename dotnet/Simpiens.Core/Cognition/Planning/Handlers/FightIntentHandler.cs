@@ -73,7 +73,7 @@ namespace Simpiens.Cognition.Planning.Handlers
         {
             var agent = node.Agent;
             var me = Combatant.ForCrawler(agent, node.Radius);
-            var them = Combatant.ForCreature(creature.Definition, creature.Id, creature.Position, creature.Health);
+            var them = Combatant.ForCreature(creature.Definition, creature.Id, creature.Position, creature.Health, creature.Rank);
             if (agent != null) agent.VisualState = AgentVisualState.Defiant;
             if (!CombatRules.InReach(me, them)) return false;
             context.SwingAtCreature(node, creature.Id);
@@ -88,7 +88,7 @@ namespace Simpiens.Cognition.Planning.Handlers
         public static IntentResult StepToward(WorldEntity node, CreatureState creature, IIntentExecutionContext context, bool besideOthers = false)
         {
             var me = Combatant.ForCrawler(node.Agent, node.Radius);
-            var them = Combatant.ForCreature(creature.Definition, creature.Id, creature.Position, creature.Health);
+            var them = Combatant.ForCreature(creature.Definition, creature.Id, creature.Position, creature.Health, creature.Rank);
             float step = SimMath.Min((float)(node.BaseSpeed * context.FixedTickDeltaTime), SimMath.Max(0f, (float)(CombatRules.Gap(me, them) - me.Reach * 0.5f)));
             if (step <= 0f) return IntentResult.InProgress;
             var toward = (creature.Position - node.Position).Normalized;
@@ -118,7 +118,7 @@ namespace Simpiens.Cognition.Planning.Handlers
         {
             var agent = node.Agent;
             var me = Combatant.ForCrawler(agent, node.Radius);
-            var them = Combatant.ForCreature(creature.Definition, creature.Id, creature.Position, creature.Health);
+            var them = Combatant.ForCreature(creature.Definition, creature.Id, creature.Position, creature.Health, creature.Rank);
             agent.VisualState = AgentVisualState.Defiant;
             bool clear = context.HasLineOfSight(node.Position, creature.Position);
             if (clear && CombatRules.InRange(me, them)) context.SwingAtCreature(node, creature.Id);
@@ -176,6 +176,12 @@ namespace Simpiens.Cognition.Planning.Handlers
             var agent = node.Agent;
             if (agent == null || agent.IsDowned || agent.Health < Vitality.FightLine(agent.Expedition)) return IntentResult.Failed;
             if (!context.TryGetNearestLairCreature(hunt.LairIndex, node.Position, out var creature)) return IntentResult.Success; // the lair is empty
+            // A hunt naming its quarry (Epic 11, S7.4, D34): it first, and done once it is dead
+            if (context.TryGetHunt(hunt.BountyId, out var record) && record.Quarry != default)
+            {
+                if (!context.TryGetCreature(record.Quarry, out var quarry) || !quarry.IsAlive) return IntentResult.Success;
+                creature = quarry;
+            }
             // Under a clear's orders, the party's focus while it lives (Epic 10 Part 3, K7.2a)
             var order = agent.Expedition;
             if (order.IsFighting && order.LairIndex == hunt.LairIndex && order.Focus != default && context.TryGetCreature(order.Focus, out var focus) && focus.IsAlive) creature = focus;

@@ -128,6 +128,31 @@ namespace Simpiens.Presentation.Dashboard
         }
 
         public string FriendlyName(EntityId id, string fallback) => Identity != null ? Identity.GetFriendlyName(id) : fallback;
+
+        /// <summary>
+        /// The name the dashboard shows for a crawler (Epic 11, S6.6, D36): its friendly name with its epithet, "Corrin
+        /// Beetlebane"; the friendly name alone for one with none or not in the world.
+        /// </summary>
+        public string LegendName(EntityId id, string fallback)
+        {
+            string name = FriendlyName(id, fallback);
+            var agent = id != default ? Registry?.GetEntity(id)?.Agent : null;
+            return agent == null ? name : Simpiens.Simulation.Skills.EpithetRules.NameWith(name, EpithetOf(agent.Traits));
+        }
+
+        /// <summary>The words of the epithet <paramref name="traits"/> holds ("Beetlebane", "Ama's Avenger"); empty for none.</summary>
+        public string EpithetOf(in Simpiens.Simulation.Skills.CrawlerTraits traits) => Simpiens.Simulation.Skills.EpithetRules.Words(traits, GivenNameOf);
+
+        /// <summary>A crawler's given name by id: the living's, else the departed roll's (an avenger's epithet names the dead); "someone" for neither.</summary>
+        public string GivenNameOf(EntityId id)
+        {
+            var agent = id != default ? Registry?.GetEntity(id)?.Agent : null;
+            if (agent != null) return agent.GivenName ?? FriendlyName(id, "someone");
+            var departed = Departed?.Departed;
+            for (int i = departed != null ? departed.Count - 1 : -1; i >= 0; i--)
+                if (departed[i].Id == id && !string.IsNullOrEmpty(departed[i].GivenName)) return departed[i].GivenName;
+            return "someone";
+        }
     }
 
     /// <summary>How a message to the player reads: Unity's green, red and amber.</summary>

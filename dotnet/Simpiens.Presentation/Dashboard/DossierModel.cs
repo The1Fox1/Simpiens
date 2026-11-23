@@ -141,6 +141,18 @@ namespace Simpiens.Presentation.Dashboard
         /// <summary>Each technique with its skill and what it does, a line each, for the line's tooltip: "Shield Wall (Melee): +3 defense, 15% less damage".</summary>
         public string TechniquesTip { get; private set; } = string.Empty;
 
+        /// <summary>
+        /// Its legend in a line (Epic 11, S6.6, D36): the epithet and why, the earned traits, the scars, joined by " · ":
+        /// "Beetlebane, 3 creatures slain · Battle-Hardened · a scar"; empty for none.
+        /// </summary>
+        public string Legend { get; private set; } = string.Empty;
+
+        /// <summary>The legend line's tip, a line each: "Beetlebane: for three creatures slain", "Battle-Hardened: +1 defense, after two downings survived", "A beetle's claw across the left cheek".</summary>
+        public string LegendTip { get; private set; } = string.Empty;
+
+        /// <summary>The gear line's tip: the stories of the masterpieces it wears (Epic 11, S8.5, D45); empty for none.</summary>
+        public string GearTip => Equipment.Stories;
+
         /// <summary>A guild member's calling's part in a party (Epic 11, S5.8): its badge at the portrait's corner; none for the rest.</summary>
         public Simpiens.Simulation.Skills.PartyRole Role { get; private set; }
 
@@ -188,6 +200,24 @@ namespace Simpiens.Presentation.Dashboard
 
         public static string Percent(float value) => Invariant($"{value:F0}%");
 
+        /// <summary>The playtest tools work on a living crawler shown, with a queue to send to (development builds show them).</summary>
+        public bool CanPlaytest => HasCrawler && !IsDead && _context.Intervention != null;
+
+        /// <summary>Down works on one on its feet.</summary>
+        public bool CanDown => CanPlaytest && Badge != DownedBadge;
+
+        /// <summary>Playtest: its warmth and trust toward the player at their most, on the next tick.</summary>
+        public void MaxStanding()
+        {
+            if (CanPlaytest) _context.Intervention.QueueInfluence(InfluenceEvent.CreatePlaytest("Player", CrawlerId, PlaytestAction.MaxStanding));
+        }
+
+        /// <summary>Playtest: downed where it stands, on the next tick.</summary>
+        public void Down()
+        {
+            if (CanDown) _context.Intervention.QueueInfluence(InfluenceEvent.CreatePlaytest("Player", CrawlerId, PlaytestAction.Down));
+        }
+
         /// <summary>The Calm Frustration button works only with a crawler shown and a queue to send to.</summary>
         public bool CanCalm => HasCrawler && !IsDead && _context.Intervention != null;
 
@@ -213,7 +243,7 @@ namespace Simpiens.Presentation.Dashboard
             SkillHeld = string.Empty;
             Asks = string.Empty;
             Taught = string.Empty;
-            Techniques = TechniquesTip = SponsorText = string.Empty;
+            Techniques = TechniquesTip = SponsorText = Legend = LegendTip = string.Empty;
             IsOurs = false;
             Role = Simpiens.Simulation.Skills.PartyRole.None;
             if (!HasCrawler)
@@ -226,7 +256,7 @@ namespace Simpiens.Presentation.Dashboard
             // Its calling's title (Epic 11, S5.7, D24: "Bram the Warden"), else the identity's placeholder title
             string title = CallingTexts.Title(agent.Skills, agent.Traits);
             if (title.Length == 0) title = _context.Identity != null ? _context.Identity.GetFriendlyTitle(node.Id) : string.Empty;
-            Name = (string.IsNullOrEmpty(title) ? friendly : $"{friendly} the {title}") + _context.DebugSuffix(node.Name);
+            Name = Simpiens.Simulation.Skills.EpithetRules.NameWith(friendly, _context.EpithetOf(agent.Traits), title) + _context.DebugSuffix(node.Name); // its epithet (Epic 11, S6.6, D36)
             Residency = Stay(agent.DepartsAtTick, _context.Clock?.CurrentTick ?? 0);
             if (Residency.Length > 0) Name += " · " + Residency;
 
@@ -234,13 +264,14 @@ namespace Simpiens.Presentation.Dashboard
             Badge = agent.IsDowned ? DownedBadge : State.ToString().ToUpperInvariant();
             Health = agent.Health;
             Describe(node.Id, agent);
-            Equipment.Refresh(agent.Inventory);
+            Equipment.Refresh(agent.Inventory, _context); // a masterpiece by its name, its story in the gear line's tip (Epic 11, S8.5)
             Skills = SkillTexts.Best(agent.Skills, 4);
             SkillTexts.BestShown(agent.Skills, agent.Traits, 4, keepPassions: true, _skillsShown);
             SkillHeld = SkillTexts.Held(agent.Skills);
             Taught = TaughtBy(agent.Traits);
             Asks = AsksOf(agent);
             DescribeTechniques(agent);
+            DescribeLegend(agent.Traits, agent.AgentId);
             Hunger = agent.Hunger;
             Energy = agent.Energy;
             Social = agent.Social;
@@ -317,6 +348,60 @@ namespace Simpiens.Presentation.Dashboard
             // None open: why the dossier's offer is refused
             var check = Simpiens.Simulation.Guild.SponsorRules.CheckSponsor(sim.Guild, sim.Workshops, host, agent.AgentId, offer, tick, out ushort price);
             SponsorText = Invariant($"Sponsor {Simpiens.Simulation.Skills.TechniqueTable.Get(offer).DisplayName}? ") + Simpiens.Simulation.Guild.SponsorRules.Describe(check, agent, offer, price, sim.Economy.Guild, tick);
+        }
+
+        // Its legend (Epic 11, S6.6, D36): the epithet and the deeds that earned it, the earned traits and what they do, the scars
+        private void DescribeLegend(in Simpiens.Simulation.Skills.CrawlerTraits traits, EntityId crawler)
+        {
+            var line = new System.Text.StringBuilder();
+            var tip = new System.Text.StringBuilder();
+            void Part(string shown, string tipped)
+            {
+                if (line.Length > 0) line.Append(" · ");
+                if (tip.Length > 0) tip.Append('\n');
+                line.Append(shown);
+                tip.Append(tipped);
+            }
+            var epithet = Simpiens.Simulation.Skills.EpithetTable.Get(traits.Epithet);
+            string words = _context.EpithetOf(traits);
+            if (epithet != null && words.Length > 0)
+            {
+                var deed = Simpiens.Simulation.Skills.DeedTable.Get(epithet.Deed);
+                Part(deed != null ? Invariant($"{words}, {epithet.Count} {(epithet.Count == 1 ? deed.One.Substring(deed.One.IndexOf(' ') + 1) : deed.DisplayName)}") : words,
+                    deed != null ? $"{words}: for {deed.CountOf(epithet.Count)}" : words);
+            }
+            for (int i = 0; i < Simpiens.Simulation.Skills.CrawlerTraits.EarnedTraitSlots; i++)
+            {
+                var trait = Simpiens.Simulation.Skills.EarnedTraitTable.Get(traits.TraitAt(i));
+                if (trait == null) continue;
+                if (trait.Act != Simpiens.Simulation.Skills.TraitAct.None) // an act's trait: whom it hates (Epic 11, S7.7, D37)
+                {
+                    Part(trait.Words, traits.Grudge != default
+                        ? $"{trait.Words}: against {_context.FriendlyName(traits.Grudge, "a named creature")}, it {trait.ActWords}"
+                        : $"{trait.Words}: its foe is slain");
+                    continue;
+                }
+                var deed = Simpiens.Simulation.Skills.DeedTable.Get(trait.Deed);
+                Part(trait.Words, $"{trait.Words}: {trait.EffectWords}{(deed != null ? ", after " + deed.CountOf(trait.Count) : string.Empty)}");
+            }
+            int scars = traits.ScarCount;
+            if (scars > 0)
+            {
+                var described = new System.Text.StringBuilder();
+                for (int i = 0; i < scars; i++)
+                {
+                    string scar = Simpiens.Simulation.Skills.ScarTable.Describe(traits.ScarAt(i), i);
+                    if (scar.Length == 0) continue;
+                    if (described.Length > 0) described.Append('\n');
+                    described.Append(char.ToUpperInvariant(scar[0])).Append(scar, 1, scar.Length - 1);
+                }
+                Part(scars == 1 ? "a scar" : Invariant($"{scars} scars"), described.ToString());
+            }
+            // What it made (Epic 11, S8.5, D45): its masterpieces by name, from their records
+            string made = MasterpieceTexts.MadeBy(_context, crawler);
+            if (made.Length > 0) Part(made, char.ToUpperInvariant(made[0]) + made.Substring(1) + ", inspired.");
+            Legend = line.ToString();
+            LegendTip = tip.ToString();
         }
 
         // Each skill's first teacher (Epic 11, S3.5): a living teacher by its name here, the departed by the roll's

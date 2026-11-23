@@ -111,7 +111,7 @@ namespace Simpiens.Core.Tests
         }
 
         private static void Carry(AgentState crawler, ItemType item, int count) =>
-            Assert.True(crawler.Inventory.TryAddItem(new ItemInstance(90, item, (ushort)count, 0), out _), "The haul fits in the pack.");
+            Assert.True(crawler.Inventory.TryAddItem(new ItemInstance(item, (ushort)count, 0), out _), "The haul fits in the pack.");
 
         private static int Trust(AgentState crawler, uint tick) => crawler.Memory.GetAffinity(WorldRegistry.PlayerEntityId, tick).Trust;
 
@@ -652,7 +652,7 @@ namespace Simpiens.Core.Tests
             var member = o.Members[0];
             var sm = (SimulationManager)o.Sim.Simulation;
             sm.UpdateStall(sm.ActiveStalls[0].WithStock(ItemType.Respirator, 1)); // by hand
-            Assert.True(member.Inventory.TryEquip(new ItemInstance(1, ItemType.Respirator, 1, 60, durability: 500)), "A respirator worn under half its life.");
+            Assert.True(member.Inventory.TryEquip(new ItemInstance(ItemType.Respirator, 1, 60, durability: 500)), "A respirator worn under half its life.");
             var commands = (IPlayerInterventionService)o.Sim.Services.GetService(typeof(IPlayerInterventionService));
             commands.QueueInfluence(InfluenceEvent.CreateGiveGear("Test", member.AgentId, ItemType.Respirator));
             o.Sim.Step(1);

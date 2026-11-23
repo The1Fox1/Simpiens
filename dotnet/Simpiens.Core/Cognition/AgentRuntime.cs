@@ -110,6 +110,8 @@ namespace Simpiens.Cognition
             // Equipment's resistance stops part of the damage: hazard gear's against any hazard (G3), a respirator's or a hard
             // hat's against its kind (Epic 10 Part 2, W3, D47); equipment that wears per hazard tick
             // loses a unit for every tick in danger, and at 0 it is gone
+            TellLegend(currentTick);
+
             bool wasDowned = State.IsDowned;
             var hazard = Vitality.HazardAt(_spatialPartition?.GetActiveSnapshot()?.Map, State.Position);
             State.HurtThisTick = 0f;
@@ -280,6 +282,32 @@ namespace Simpiens.Cognition
         {
             State.CollapseFromExhaustion();
             RecordStory(ChronicleEventType.ExhaustionCollapsed, ChronicleIntensity.Crisis);
+        }
+
+        // What its traits record has changed that the chronicle hasn't been told (Epic 11, S6.1): told once, here, on the main thread
+        private void TellLegend(long currentTick)
+        {
+            var traits = State.Traits;
+            if (traits.News == Simpiens.Simulation.Skills.LegendNews.None) return;
+            if ((traits.News & Simpiens.Simulation.Skills.LegendNews.Epithet) != 0 && traits.Epithet != Simpiens.Simulation.Skills.Epithet.None)
+                _simulationManager?.RecordStoryEvent(new ChronicleEvent(ChronicleEventType.EpithetEarned, State.AgentId, traits.EpithetSubject, 0, (uint)currentTick,
+                    ChronicleIntensity.Dramatic, (byte)Simpiens.Simulation.Skills.CallingRules.BestSkill(State.Skills) * 65536 + (byte)traits.Epithet * 256 + traits.EpithetKind)); // its best skill's voice (S6.4)
+            if ((traits.News & Simpiens.Simulation.Skills.LegendNews.Scar) != 0 && traits.ScarCount > 0)
+            {
+                int slot = traits.ScarCount - 1;
+                _simulationManager?.RecordStoryEvent(new ChronicleEvent(ChronicleEventType.ScarTaken, State.AgentId, default, 0, (uint)currentTick,
+                    ChronicleIntensity.Notable, (int)traits.ScarAt(slot) * 256 + slot));
+            }
+            // The trait last earned (one deed earns one; two in a tick is told as the later), with whom it hates for an act's (S7.3)
+            if ((traits.News & Simpiens.Simulation.Skills.LegendNews.Trait) != 0 && traits.TraitCount > 0)
+            {
+                var trait = traits.TraitAt(traits.TraitCount - 1);
+                bool act = Simpiens.Simulation.Skills.EarnedTraitTable.Get(trait)?.Act != Simpiens.Simulation.Skills.TraitAct.None;
+                _simulationManager?.RecordStoryEvent(new ChronicleEvent(ChronicleEventType.TraitEarned, State.AgentId, act ? traits.Grudge : default, 0, (uint)currentTick,
+                    ChronicleIntensity.Notable, (byte)trait));
+            }
+            traits.ClearNews(Simpiens.Simulation.Skills.LegendNews.Epithet | Simpiens.Simulation.Skills.LegendNews.Scar | Simpiens.Simulation.Skills.LegendNews.Trait);
+            State.Traits = traits;
         }
 
         private void RecordStory(ChronicleEventType type, ChronicleIntensity intensity)

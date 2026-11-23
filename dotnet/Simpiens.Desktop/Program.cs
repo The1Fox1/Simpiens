@@ -18,6 +18,7 @@ namespace Simpiens.Desktop
   --width W --height H window size (default: the size, or full screen, picked in the game's menu, or 1920 x 1080)
   --no-vsync           don't wait for the display's refresh
   --ticks-per-frame N  run N ticks every frame instead of following real time (fast-forward)
+  --playtest           the playtest tools in a crawler's dossier, Max Trust and Down (always on in Debug builds)
   --help               this text
 
 Logging: warnings and errors go to standard error. SIMPIENS_LOG, SIMPIENS_LOG_FILE and SIMPIENS_LOG_FOCUS choose
@@ -39,6 +40,7 @@ more (AGENTS.md, Logging).";
                     case "--height": options.Height = int.Parse(Next(args, ref i), CultureInfo.InvariantCulture); sized = true; break;
                     case "--no-vsync": options.VSync = false; break;
                     case "--ticks-per-frame": options.TicksPerUpdate = int.Parse(Next(args, ref i), CultureInfo.InvariantCulture); break;
+                    case "--playtest": options.PlaytestTools = true; break; // in any build: the producer playtests in Release (2026-11-21)
                     case "--help":
                         Console.WriteLine(Usage);
                         return 0;
@@ -57,6 +59,7 @@ more (AGENTS.md, Logging).";
             options.DemoScenes = true;
             options.TimingsOverlay = true;
             options.ShowDebugIds = true;
+            options.PlaytestTools = true; // Max trust and Down in the dossier
             options.ConfigureServices = services => Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<Simpiens.Core.Session.ISessionDefinition>(services, new Simpiens.Testing.Sessions.CanaryPenSession());
 #endif
             ConsoleSimLogSink.Install();

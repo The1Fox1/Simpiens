@@ -6,8 +6,9 @@ namespace Simpiens.Simulation.Economy
     /// <summary>
     /// A hunt bounty's party (Epic 10 Part 3, K6.1, Q7), beside its contract: the lair it is posted on, and up to
     /// <see cref="MaxClaimants"/> claimants with the damage each has dealt to the lair's creatures, which shares the reward.
-    /// The contract stays open with no claimant of its own, so the single-claim bounty chain leaves hunts alone. Saved in the
-    /// market's block as raw memory: 64 bytes, no padding.
+    /// The contract stays open with no claimant of its own, so the single-claim bounty chain leaves hunts alone. Since Epic 11's
+    /// format 13 it may name its quarry, a named creature in the lair (S7.4, D34). Saved in the market's block as raw memory: 80
+    /// bytes (64 before), no padding.
     /// </summary>
     [StructLayout(LayoutKind.Sequential)]
     public struct HuntRecord
@@ -19,6 +20,8 @@ namespace Simpiens.Simulation.Economy
         public ushort BountyId;
         public byte LairIndex;
         public byte Count;
+        /// <summary>The named creature it is posted on (Epic 11, S7.4, D34); empty for a hunt of the whole lair.</summary>
+        public EntityId Quarry;
 
         public HuntRecord(ushort bountyId, byte lairIndex)
         {

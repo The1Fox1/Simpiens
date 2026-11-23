@@ -30,8 +30,8 @@ namespace Simpiens.Client.Tests
             sim.Respawn(OutpostSession.SessionId);
             var world = (IPileWorld)sim.Simulation;
             uint tick = (uint)sim.Clock.CurrentTick;
-            var seen = sim.Simulation.Piles.Drop(world, InTheHub, new[] { new ItemInstance(1, ItemType.Hide, 2, 0), Outfitting.NewPiece(ItemType.FangKnife, Grades.Standard), new ItemInstance(1, ItemType.Chitin, 1, 0) }, 0, default, tick);
-            var hidden = sim.Simulation.Piles.Drop(world, InTheWarren, new[] { new ItemInstance(1, ItemType.Hide, 1, 0) }, 0, default, tick);
+            var seen = sim.Simulation.Piles.Drop(world, InTheHub, new[] { new ItemInstance(ItemType.Hide, 2, 0), Outfitting.NewPiece(ItemType.FangKnife, Grades.Standard), new ItemInstance(ItemType.Chitin, 1, 0) }, 0, default, tick);
+            var hidden = sim.Simulation.Piles.Drop(world, InTheWarren, new[] { new ItemInstance(ItemType.Hide, 1, 0) }, 0, default, tick);
 
             var frames = TestFrames.Of(sim);
             Assert.True(frames.Current.TryGetIndex(seen.Id, out int index));

@@ -18,11 +18,13 @@ namespace Simpiens.Core.Tests
         private static readonly Dictionary<string, string> Allowed = new Dictionary<string, string>
         {
             ["Simpiens.Core/Simulation/Skills/DeedTable.cs"] = "the table: the deeds' rows",
-            ["Simpiens.Core/Simulation/SimulationManager.cs"] = "a kill and a boss's (the creatures' world), a downing survived (the bleeding clock stopped), a crawler taught (a mentor's first lesson)",
+            ["Simpiens.Core/Simulation/SimulationManager.cs"] = "a kill, a boss's and a named creature's (the creatures' world), a downing survived (the bleeding clock stopped), a crawler taught (a mentor's first lesson)",
             ["Simpiens.Core/Cognition/Planning/Handlers/CarryIntentHandler.cs"] = "a rescue: carried out, or stood up with a medicine",
-            ["Simpiens.Core/Simulation/Workshops/WorkshopService.cs"] = "a make finished",
+            ["Simpiens.Core/Simulation/Workshops/WorkshopService.cs"] = "a make finished, and a masterpiece made (Epic 11, S8.2)",
             ["Simpiens.Core/Simulation/Economy/Market.cs"] = "a hunt's share paid",
             ["Simpiens.Core/Simulation/Guild/GuildService.Expeditions.cs"] = "home from a won clear",
+            ["Simpiens.Core/Simulation/Skills/EpithetTable.cs"] = "the epithets' table (Epic 11, S6.1): each row names the deed whose count earns it; it counts none",
+            ["Simpiens.Core/Simulation/Skills/EarnedTraitTable.cs"] = "the earned traits' table (Epic 11, S6.3): each row names the deed whose count earns it; it counts none",
         };
 
         private static readonly string[] Projects = { "Simpiens.Core", "Simpiens.Presentation", "Simpiens.Client", "Simpiens.Hosting" };
@@ -48,7 +50,7 @@ namespace Simpiens.Core.Tests
 
             var offenders = naming.Keys.Where(f => !Allowed.ContainsKey(f)).OrderBy(f => f).Select(f => $"{f} ({string.Join(", ", naming[f])})").ToList();
             var stale = Allowed.Keys.Where(f => !naming.ContainsKey(f)).OrderBy(f => f).ToList();
-            var counted = naming.Where(kv => kv.Key != "Simpiens.Core/Simulation/Skills/DeedTable.cs").SelectMany(kv => kv.Value).ToHashSet();
+            var counted = naming.Where(kv => kv.Key != "Simpiens.Core/Simulation/Skills/DeedTable.cs" && kv.Key != "Simpiens.Core/Simulation/Skills/EpithetTable.cs" && kv.Key != "Simpiens.Core/Simulation/Skills/EarnedTraitTable.cs").SelectMany(kv => kv.Value).ToHashSet(); // the tables name deeds; they count none
             var uncounted = Simpiens.Simulation.Skills.DeedTable.All.Select(d => d.Id.ToString()).Where(n => !counted.Contains(n)).ToList();
             Assert.True(offenders.Count == 0, "Count a deed where it happens, and list the place here: " + string.Join("; ", offenders));
             Assert.True(stale.Count == 0, "These files no longer name deeds; take them off the list: " + string.Join("; ", stale));

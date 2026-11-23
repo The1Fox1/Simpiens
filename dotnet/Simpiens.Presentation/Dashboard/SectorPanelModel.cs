@@ -142,7 +142,7 @@ namespace Simpiens.Presentation.Dashboard
                 var state = agent != null ? agent.VisualState : AgentVisualState.Idle;
                 bool face = agent.Look.IsComplete;
                 var portrait = face ? Simpiens.Presentation.Art.People.PortraitKey.Of(node.Id, agent, _moods, _context.Clock?.CurrentTick ?? 0) : default;
-                _residents.Add(new ResidentRow(node.Id, _context.FriendlyName(node.Id, node.Name) + _context.DebugSuffix(node.Name),
+                _residents.Add(new ResidentRow(node.Id, _context.LegendName(node.Id, node.Name) + _context.DebugSuffix(node.Name), // with its epithet (Epic 11, S6.6)
                     CallingTexts.Before(CallingTexts.Title(agent.Skills, agent.Traits), ActivityOf(agent)), state, node.Id == selectedCrawler, agent.IsDowned, face, portrait)); // its calling first (Epic 11, S5.7)
             }
 

@@ -146,7 +146,7 @@ namespace Simpiens.Simulation.Creatures
                 if (agent == null || agent.IsDowned || agent.Health <= 0f || agent.HasLeft) continue;
                 if (!TryGet(ask.Target, out var creature) || !creature.IsAlive || creature.Definition == null) continue;
                 var me = Combatant.ForCrawler(agent, ask.Crawler.Radius);
-                var them = Combatant.ForCreature(creature.Definition, creature.Id, creature.Position, creature.Health);
+                var them = Combatant.ForCreature(creature.Definition, creature.Id, creature.Position, creature.Health, creature.Rank);
                 if (!CombatRules.CanStrike(me, them, tick, agent.NextSwingAt)) continue;
                 if (!CombatRules.InReach(me, them) && snapshot != null && !snapshot.HasLineOfSight(me.Position, them.Position)) continue; // a shot needs a clear line (K8.2a)
                 ask.Outcome = CombatRules.Swing(_seed, tick, me, them);
@@ -185,6 +185,7 @@ namespace Simpiens.Simulation.Creatures
             world.CreatureHit(blow.Crawler.Id, creature, dealt); // a hunter's share (K6.1)
             if (creature.Health > 0f)
             {
+                if (creature.IsNamed) creature.Foe = blow.Crawler.Id; // a named creature remembers who struck it (Epic 11, S7.3, D33)
                 Provoke(creature, blow.Crawler);
                 return;
             }
@@ -278,7 +279,8 @@ namespace Simpiens.Simulation.Creatures
                         c.ForgetPath();
                     }
                     if (kind.CallsBrood(c.Health)) CallBrood(c, quarry); // a boss calls her brood to her quarry (K10.2b, Q13)
-                    var me = Combatant.ForCreature(kind, c.Id, c.Position, c.Health);
+                    else if (c.IsNamed) Lead(c, quarry); // a named creature leads its pack (Epic 11, S7.2, D32)
+                    var me = Combatant.ForCreature(kind, c.Id, c.Position, c.Health, c.Rank);
                     var them = Combatant.ForCrawler(quarry.Agent, quarry.Radius);
                     if (me.IsRanged && Keep(c, kind, me, them, heart, snapshot)) break; // a spitter keeps its distance (K8.3)
                     if (CombatRules.Gap(me, them) <= kind.Reach) break; // in reach: it stands and strikes
@@ -296,8 +298,8 @@ namespace Simpiens.Simulation.Creatures
                     break;
 
                 default: // Rest: heal at its place; rested and not wounded, it roams
-                    if (Vec2.Distance(c.Position, c.Home) <= Arrived && c.Health < kind.MaxHealth)
-                        c.Health = SimMath.Min(kind.MaxHealth, (float)(c.Health + kind.HealPerTick));
+                    if (Vec2.Distance(c.Position, c.Home) <= Arrived && c.Health < c.MaxHealth)
+                        c.Health = SimMath.Min(c.MaxHealth, (float)(c.Health + c.HealPerTick)); // a named one's grown health (Epic 11, S7.2)
                     if (Notice(c, kind, heart, snapshot, entities)) break;
                     if (tick >= c.RestUntil && !Wounded(c, kind) && TryRoamPoint(c, kind, heart, snapshot, tick, out var point))
                     {
@@ -332,6 +334,7 @@ namespace Simpiens.Simulation.Creatures
                 if (seen > kind.Sight) continue;
                 if (snapshot != null && !snapshot.HasLineOfSight(c.Position, e.Position)) continue;
                 float d = DrawnDistance(e.Agent.Expedition, seen); // the front draws the eye (Epic 11, S5.4, D22)
+                if (e.Id == c.Foe && c.Foe != default) d = (float)(d - FoeDraw); // and its foe (S7.3, D33)
                 if (best == null || d < bestDistance || (d == bestDistance && e.Id.CompareTo(best.Id) < 0))
                 {
                     best = e;
@@ -347,6 +350,9 @@ namespace Simpiens.Simulation.Creatures
 
         /// <summary>How far a party's front draws a creature (Epic 11, S5.4, D22), in world units.</summary>
         public const float FrontDraw = 3f;
+
+        /// <summary>How much nearer a named creature sees its foe, the last crawler that struck it and lived (Epic 11, S7.3, D33): as a front, in world units.</summary>
+        public const float FoeDraw = FrontDraw;
 
         /// <summary>
         /// How near a crawler seems to a creature choosing its quarry (Epic 11, S5.4, D22): a member holding a clear's front by
@@ -388,17 +394,28 @@ namespace Simpiens.Simulation.Creatures
         // its call's line, every one of its lair's brood that rests, roams or goes home, and isn't wounded past its own line,
         // turns on the boss's quarry within its leash. Stateless: it holds while she is under the line, so a load changes nothing.
         // The brood after her in id order answer this tick, those before her the next
-        private void CallBrood(CreatureState boss, WorldEntity quarry)
+        private void CallBrood(CreatureState boss, WorldEntity quarry) => Rally(boss, quarry, inReach: false);
+
+        // The lead (Epic 11, S7.2, D32: "while it chases, the pack mates in its lair's reach take the same quarry"): as a boss's call,
+        // for a named creature, at any health, and only the mates standing in its lair's reach. The rule reads the rank, never a
+        // name. Stateless, as the call is
+        private void Lead(CreatureState leader, WorldEntity quarry) => Rally(leader, quarry, inReach: true);
+
+        // A lair's mates that rest, roam or go home, and aren't wounded past their own line, turn on the leader's quarry within
+        // their leash; with inReach, only those standing in the lair's reach
+        private void Rally(CreatureState leader, WorldEntity quarry, bool inReach)
         {
-            if (boss.LairIndex < 0 || boss.LairIndex >= _lairs.Count) return;
-            var heart = _lairs[boss.LairIndex].Definition.Position;
+            if (leader.LairIndex < 0 || leader.LairIndex >= _lairs.Count) return;
+            var lair = _lairs[leader.LairIndex].Definition;
+            var heart = lair.Position;
             for (int i = 0; i < _creatures.Count; i++)
             {
                 var mate = _creatures[i];
-                if (mate == boss || mate.LairIndex != boss.LairIndex || !mate.IsAlive) continue;
+                if (mate == leader || mate.LairIndex != leader.LairIndex || !mate.IsAlive) continue;
                 if (mate.Mode == CreatureMode.Chase || mate.Mode == CreatureMode.Flee) continue;
                 var kind = mate.Definition;
                 if (kind == null || Wounded(mate, kind) || !IsQuarry(quarry, kind, heart)) continue;
+                if (inReach && !LairReach.Holds(lair, mate.Position)) continue;
                 mate.Mode = CreatureMode.Chase;
                 mate.Target = quarry.Id;
                 mate.ForgetPath();
@@ -418,7 +435,7 @@ namespace Simpiens.Simulation.Creatures
             var kind = c.Definition;
             var quarry = FindCrawler(entities, c.Target);
             if (kind == null || quarry?.Agent == null) return;
-            var me = Combatant.ForCreature(kind, c.Id, c.Position, c.Health);
+            var me = Combatant.ForCreature(kind, c.Id, c.Position, c.Health, c.Rank);
             var them = Combatant.ForCrawler(quarry.Agent, quarry.Radius);
             if (!CombatRules.CanStrike(me, them, tick, c.NextSwingAt)) return;
             if (kind.Slam && CombatRules.InReach(me, them))
@@ -627,7 +644,7 @@ namespace Simpiens.Simulation.Creatures
             c.ForgetPath();
         }
 
-        private static bool Wounded(CreatureState c, CreatureDefinition kind) => kind.Flees && c.Health < (float)(kind.FleeBelow * kind.MaxHealth);
+        private static bool Wounded(CreatureState c, CreatureDefinition kind) => kind.Flees && c.Health < (float)(kind.FleeBelow * c.MaxHealth); // of its own whole health (Epic 11, S7.2)
 
         // How long a rest lasts: RestSeconds to twice it, drawn from (seed, creature, tick)
         private uint RestTicks(EntityId id, uint tick)

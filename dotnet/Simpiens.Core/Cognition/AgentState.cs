@@ -67,7 +67,7 @@ namespace Simpiens.Cognition
                 {
                     if (!Inventory.HasAny(Simpiens.Simulation.Items.ItemCategory.Food))
                     {
-                        Inventory.TryAddItem(new ItemInstance(1, ItemType.Ration, 1, 5), out _);
+                        Inventory.TryAddItem(new ItemInstance(ItemType.Ration, 1, 5), out _);
                     }
                 }
                 else
@@ -155,12 +155,28 @@ namespace Simpiens.Cognition
         /// </summary>
         public Simpiens.Simulation.Skills.CrawlerTraits Traits { get; set; }
 
-        /// <summary>Counts one <paramref name="deed"/> in its traits record (Epic 11, S0.5, A7): where the deed happens, on the main thread.</summary>
-        internal void AddDeed(Simpiens.Simulation.Skills.Deed deed)
+        /// <summary>
+        /// Counts one <paramref name="deed"/> in its traits record (Epic 11, S0.5, A7): where the deed happens, on the main thread;
+        /// then judges its legend: an epithet the count earns (S6.1, D27), naming <paramref name="kind"/> (a creature slain) or
+        /// <paramref name="subject"/> (a crawler) where its form does, and a trait (S6.3, D29). The runtime tells the chronicle.
+        /// </summary>
+        internal void AddDeed(Simpiens.Simulation.Skills.Deed deed, byte kind = 0, EntityId subject = default)
         {
             var traits = Traits;
             traits.Add(deed);
+            Simpiens.Simulation.Skills.EpithetRules.Judge(ref traits, deed, kind, subject);
+            Simpiens.Simulation.Skills.EarnedTraitRules.Judge(ref traits, deed, Personality); // and a trait it earns (S6.3, D29)
             Traits = traits;
+        }
+
+        /// <summary>
+        /// A downing survived marks it (Epic 11, S6.2, D28): the scar what downed it leaves (<see cref="DownedBy"/>, with
+        /// <see cref="DownedDetail"/> its kind), in the next free place on its face. The runtime tells the chronicle.
+        /// </summary>
+        internal void TakeScar()
+        {
+            var traits = Traits;
+            if (traits.AddScar(Simpiens.Simulation.Skills.ScarTable.For(DownedBy, DownedDetail))) Traits = traits;
         }
 
         /// <summary>The crawler's given name (Epic UI-Beta B1): drawn at spawn to fit its body frame, never shared, saved. Null for a crawler built by hand.</summary>

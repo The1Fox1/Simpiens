@@ -104,6 +104,45 @@ namespace Simpiens.Simulation.Persistence
             return null;
         }
 
+        /// <summary>
+        /// Why the save's masterpieces can't be loaded (Epic 11, S8.1, D39–D40): records out of order or of a piece that isn't
+        /// worn, or a piece marked as a masterpiece with no record ("masterpiece 3 in SwarmAgent_3's equipment, with no
+        /// record"); or null. Read after <see cref="FirstUnknown"/>.
+        /// </summary>
+        public static string FirstUnknownMasterpiece(SessionSave save)
+        {
+            var records = save?.Workshops?.Masterpieces;
+            string check = Simpiens.Simulation.Workshops.MasterpieceService.Check(records);
+            if (check != null) return check;
+            int known = records?.Length ?? 0;
+            if (save?.Crawlers != null)
+            {
+                for (int c = 0; c < save.Crawlers.Length; c++)
+                {
+                    var inventory = save.Crawlers[c]?.Inventory;
+                    if (inventory == null) continue;
+                    var slots = inventory.Slots;
+                    for (int i = 0; slots != null && i < slots.Length; i++)
+                    {
+                        if (slots[i].Masterpiece > known) return Unrecorded(slots[i].Masterpiece, $"{save.Crawlers[c].Name}'s pack");
+                    }
+                    var equipped = inventory.Equipped;
+                    for (int i = 0; i < Simpiens.Simulation.Items.EquipmentSlots.Capacity; i++)
+                    {
+                        if (equipped[i].Masterpiece > known) return Unrecorded(equipped[i].Masterpiece, $"{save.Crawlers[c].Name}'s equipment");
+                    }
+                }
+            }
+            var stacks = save?.World?.Piles?.Stacks;
+            for (int i = 0; stacks != null && i < stacks.Length; i++)
+            {
+                if (stacks[i].Masterpiece > known) return Unrecorded(stacks[i].Masterpiece, "a pile on the ground");
+            }
+            return null;
+        }
+
+        private static string Unrecorded(ushort masterpiece, string place) => $"masterpiece {masterpiece} in {place}, with no record";
+
         // None is "no item" (an untyped node yields food), never unknown
         private static bool Unknown(ItemType item) => item != ItemType.None && !ItemCatalog.IsDefined(item);
 

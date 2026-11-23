@@ -57,6 +57,16 @@ namespace Simpiens.Simulation.Skills
         private byte _first;
     }
 
+    /// <summary>What the record has changed that the crawler's runtime has yet to tell the chronicle (Epic 11, S6.1): told once, on the main thread.</summary>
+    [System.Flags]
+    public enum LegendNews : byte
+    {
+        None = 0,
+        Epithet = 1,
+        Trait = 2,
+        Scar = 4
+    }
+
     /// <summary>The record's unused room, so later fields fit without changing its size.</summary>
     [InlineArray(CrawlerTraits.SpareBytes)]
     public struct TraitsSpare
@@ -72,7 +82,7 @@ namespace Simpiens.Simulation.Skills
     /// <item><b>Techniques</b> (plan 2): one id for each band above Novice of each skill, reserved.</item>
     /// <item><b>Teachers</b> (S3): who first taught each of up to four skills.</item>
     /// <item><b>Deeds</b> (S0.5): a count for each deed id, where the deed happens (A7).</item>
-    /// <item><b>A calling, an epithet, earned traits and scars</b> (plans 2 and 3), reserved.</item>
+    /// <item><b>A calling</b> (plan 2), <b>an epithet</b> with the kind or crawler it names (plan 3, S6.1), earned traits and scars (plan 3), and what is yet to be told.</item>
     /// </list>
     /// The room left over (<see cref="SpareBytes"/>) takes later fields without changing its size or the save's format. Its
     /// size is pinned (<c>EconomySerializationValidator</c>).
@@ -90,18 +100,23 @@ namespace Simpiens.Simulation.Skills
         public const int TeacherSlots = 4;
 
         /// <summary>What's left of <see cref="Size"/> after the fields.</summary>
-        public const int SpareBytes = 68;
+        public const int SpareBytes = 32;
 
         private PassionBytes _passions;     //   0: 16
         private TechniqueBytes _techniques; //  16: 48
         private TeacherRecords _teachers;   //  64: 80
         private DeedCounts _deeds;          // 144: 32
         private byte _calling;              // 176
-        private byte _reserved;             // 177
+        private byte _news;                 // 177: what is yet to be told (S6.1)
         private ushort _epithet;            // 178
         private FourBytes _earnedTraits;    // 180
         private FourBytes _scars;           // 184
-        private TraitsSpare _spare;         // 188: 68
+        private EntityId _epithetSubject;   // 188: 16, the crawler an epithet names (S6.1)
+        private byte _epithetKind;          // 204: the creature kind an epithet names (S6.1)
+        private byte _grudgeLair;           // 205: the lair of the creature it hates + 1; 0 for none (S7.3)
+        private ushort _room;               // 206: spare, so the id below lies on a 4-byte boundary
+        private EntityId _grudge;           // 208: 16, the named creature it hates (S7.3)
+        private TraitsSpare _spare;         // 224: 32
 
         // --- Passions (S1) ---
 
@@ -142,6 +157,117 @@ namespace Simpiens.Simulation.Skills
         public readonly Calling Calling => (Calling)_calling;
 
         public void SetCalling(Calling calling) => _calling = (byte)calling;
+
+        // --- The epithet (Epic 11, S6.1, D27) ---
+
+        /// <summary>The epithet it holds (the highest rank earned, <see cref="EpithetRules.Judge"/>); none until it earns one.</summary>
+        public readonly Epithet Epithet => (Epithet)_epithet;
+
+        /// <summary>The creature kind its epithet names ("Beetlebane": the kind of the kill that earned it); 0 for none.</summary>
+        public readonly byte EpithetKind => _epithetKind;
+
+        /// <summary>The crawler its epithet names ("Ama's Avenger"); none for an epithet that names nobody.</summary>
+        public readonly EntityId EpithetSubject => _epithetSubject;
+
+        /// <summary>Holds <paramref name="epithet"/>, naming <paramref name="kind"/> and <paramref name="subject"/> where its form does.</summary>
+        public void SetEpithet(Epithet epithet, byte kind, EntityId subject)
+        {
+            _epithet = (ushort)epithet;
+            _epithetKind = kind;
+            _epithetSubject = subject;
+        }
+
+        // --- A grudge (Epic 11, S7.3, D33) ---
+
+        /// <summary>The named creature it hates, for felling a friend; empty for none (or once that creature is slain).</summary>
+        public readonly EntityId Grudge => _grudge;
+
+        /// <summary>The lair of the creature it hates, in the map's order; -1 for none.</summary>
+        public readonly int GrudgeLair => _grudge == default ? -1 : _grudgeLair - 1;
+
+        /// <summary>Hates <paramref name="creature"/>, of lair <paramref name="lairIndex"/> (main thread, where a friend falls).</summary>
+        public void SetGrudge(EntityId creature, int lairIndex)
+        {
+            _grudge = creature;
+            _grudgeLair = creature == default || lairIndex < 0 || lairIndex > 254 ? (byte)0 : (byte)(lairIndex + 1);
+        }
+
+        /// <summary>Its grudge settled: the creature slain.</summary>
+        public void ClearGrudge() => SetGrudge(default, -1);
+
+        // --- Earned traits (Epic 11, S6.3, D29) ---
+
+        /// <summary>A crawler holds at most this many earned traits (Q12: three); the record's fourth byte stays spare.</summary>
+        public const int EarnedTraitSlots = 3;
+
+        /// <summary>The earned trait in <paramref name="slot"/>, in the order earned; none for a slot not filled.</summary>
+        public readonly EarnedTrait TraitAt(int slot) => (uint)slot < EarnedTraitSlots ? (EarnedTrait)_earnedTraits[slot] : EarnedTrait.None;
+
+        /// <summary>How many earned traits it holds.</summary>
+        public readonly int TraitCount
+        {
+            get
+            {
+                int n = 0;
+                while (n < EarnedTraitSlots && _earnedTraits[n] != 0) n++;
+                return n;
+            }
+        }
+
+        public readonly bool HasTrait(EarnedTrait trait)
+        {
+            if (trait == EarnedTrait.None) return false;
+            for (int i = 0; i < EarnedTraitSlots; i++) if (_earnedTraits[i] == (byte)trait) return true;
+            return false;
+        }
+
+        /// <summary>Holds <paramref name="trait"/> in the next free slot, with news to tell; false for none, one held already, or every slot taken.</summary>
+        public bool AddTrait(EarnedTrait trait)
+        {
+            int slot = TraitCount;
+            if (trait == EarnedTrait.None || HasTrait(trait) || slot >= EarnedTraitSlots) return false;
+            _earnedTraits[slot] = (byte)trait;
+            _news |= (byte)LegendNews.Trait;
+            return true;
+        }
+
+        // --- Scars (Epic 11, S6.2, D28) ---
+
+        /// <summary>A crawler bears at most this many scars: four places on the face.</summary>
+        public const int ScarSlots = 4;
+
+        /// <summary>The scar in <paramref name="slot"/> (its place on the face, <see cref="ScarPlace"/>); none for a slot not filled.</summary>
+        public readonly Scar ScarAt(int slot) => (uint)slot < ScarSlots ? (Scar)_scars[slot] : Scar.None;
+
+        /// <summary>How many scars it bears.</summary>
+        public readonly int ScarCount
+        {
+            get
+            {
+                int n = 0;
+                while (n < ScarSlots && _scars[n] != 0) n++;
+                return n;
+            }
+        }
+
+        /// <summary>Takes <paramref name="scar"/> in the next free place, with news to tell; false for none or with every place taken.</summary>
+        public bool AddScar(Scar scar)
+        {
+            int slot = ScarCount;
+            if (scar == Scar.None || slot >= ScarSlots) return false;
+            _scars[slot] = (byte)scar;
+            _news |= (byte)LegendNews.Scar;
+            return true;
+        }
+
+        // --- What is yet to be told (Epic 11, S6.1) ---
+
+        /// <summary>What the record has changed that the chronicle hasn't been told: the crawler's runtime tells it and clears it.</summary>
+        public readonly LegendNews News => (LegendNews)_news;
+
+        public void AddNews(LegendNews news) => _news |= (byte)news;
+
+        public void ClearNews(LegendNews news) => _news &= (byte)~news;
 
         // --- Teachers (S3) ---
 

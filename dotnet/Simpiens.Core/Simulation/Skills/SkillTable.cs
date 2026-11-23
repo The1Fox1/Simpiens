@@ -109,7 +109,37 @@ namespace Simpiens.Simulation.Skills
         /// <summary>Its place in lists; ties by id.</summary>
         public int Order { get; init; }
 
+        /// <summary>How the chronicle speaks of a crawler in it (Epic 11, S6.4, D30); null speaks plainly.</summary>
+        public SkillVoice Voice { get; init; }
+
         public override string ToString() => Name;
+    }
+
+    /// <summary>
+    /// A skill's voice (Epic 11, S6.4, D30; Q12: "the chronicle speaks in a crawler's strongest skill"): a few authored words
+    /// for the events that are a crawler's own. {0} is the crawler's name. Latin-1, as the fonts are.
+    /// </summary>
+    public sealed class SkillVoice
+    {
+        public SkillVoice(string rising, string named, string blooded, string firstKill)
+        {
+            Rising = rising;
+            Named = named;
+            Blooded = blooded;
+            FirstKill = firstKill;
+        }
+
+        /// <summary>A band reached in this skill: "{0}'s pick rings truer", before ": a journeyman miner now."</summary>
+        public string Rising { get; }
+
+        /// <summary>An epithet earned by one whose best skill this is: "{0}'s pick has won a name", before ": Bram Beetlebane, ...".</summary>
+        public string Named { get; }
+
+        /// <summary>First blood for one whose best skill this is: "{0}'s blade drew first blood", before ": a stone beetle, in ...".</summary>
+        public string Blooded { get; }
+
+        /// <summary>What the crawler says in its first blood's scene.</summary>
+        public string FirstKill { get; }
     }
 
     /// <summary>
@@ -155,14 +185,22 @@ namespace Simpiens.Simulation.Skills
         /// <summary>The game's skills (Q17): two for a fight, two for the harvest, two for the stations, one for the fallen, and leading a party (Epic 11, S5.1).</summary>
         private static SkillDefinition[] Definitions() => new[]
         {
-            new SkillDefinition(Skill.Melee, "Melee", "Melee", SkillUse.MeleeFight) { Lean = SkillLean.Bold, Practitioner = "fighter", Order = 0 },
-            new SkillDefinition(Skill.Ranged, "Ranged", "Ranged", SkillUse.RangedFight) { Lean = SkillLean.Cautious, Practitioner = "marksman", Order = 1 },
-            new SkillDefinition(Skill.Mining, "Mining", "Mining", SkillUse.Harvest) { Harvests = ItemCategory.Mineral, Lean = SkillLean.Diligent, Practitioner = "miner", Order = 2 },
-            new SkillDefinition(Skill.Foraging, "Foraging", "Foraging", SkillUse.Harvest) { Harvests = ItemCategory.Botanical, Practitioner = "forager", Order = 3 },
-            new SkillDefinition(Skill.Smithing, "Smithing", "Smithing", SkillUse.Make) { Station = StationKind.Forge, Lean = SkillLean.Diligent, Practitioner = "smith", Order = 4 },
-            new SkillDefinition(Skill.Alchemy, "Alchemy", "Alchemy", SkillUse.Make) { Station = StationKind.Still, Practitioner = "alchemist", Order = 5 },
-            new SkillDefinition(Skill.Medicine, "Medicine", "Medicine", SkillUse.Tend) { Lean = SkillLean.Sociable, Practitioner = "medic", Order = 6 },
-            new SkillDefinition(Skill.Leadership, "Leadership", "Leadership", SkillUse.Lead) { Lean = SkillLean.Loyal, Practitioner = "captain", Order = 7 }
+            new SkillDefinition(Skill.Melee, "Melee", "Melee", SkillUse.MeleeFight) { Lean = SkillLean.Bold, Practitioner = "fighter", Order = 0,
+                Voice = new SkillVoice("{0}'s blade is surer", "{0}'s blade has won a name", "{0}'s blade drew first blood", "First blood. It won't be the last.") },
+            new SkillDefinition(Skill.Ranged, "Ranged", "Ranged", SkillUse.RangedFight) { Lean = SkillLean.Cautious, Practitioner = "marksman", Order = 1,
+                Voice = new SkillVoice("{0}'s aim is truer", "{0}'s aim has won a name", "{0}'s first shot to kill flew true", "One shot. Down it went.") },
+            new SkillDefinition(Skill.Mining, "Mining", "Mining", SkillUse.Harvest) { Harvests = ItemCategory.Mineral, Lean = SkillLean.Diligent, Practitioner = "miner", Order = 2,
+                Voice = new SkillVoice("{0}'s pick rings truer", "{0}'s pick has won a name", "{0} struck as at the rock, and drew first blood", "Tougher than rock. Not by much.") },
+            new SkillDefinition(Skill.Foraging, "Foraging", "Foraging", SkillUse.Harvest) { Harvests = ItemCategory.Botanical, Practitioner = "forager", Order = 3,
+                Voice = new SkillVoice("{0}'s hands know the caves better", "{0}'s wandering has won a name", "{0}, used to gentler work, drew first blood", "I only came for herbs.") },
+            new SkillDefinition(Skill.Smithing, "Smithing", "Smithing", SkillUse.Make) { Station = StationKind.Forge, Lean = SkillLean.Diligent, Practitioner = "smith", Order = 4,
+                Voice = new SkillVoice("{0}'s hammer rings truer", "{0}'s hammer has won a name", "{0} tried a blade from the forge, and drew first blood", "So that's what they're for.") },
+            new SkillDefinition(Skill.Alchemy, "Alchemy", "Alchemy", SkillUse.Make) { Station = StationKind.Still, Practitioner = "alchemist", Order = 5,
+                Voice = new SkillVoice("{0}'s still runs clearer", "{0}'s brews have won a name", "{0}, steadier with a flask than a blade, drew first blood", "Steady. Steady. There.") },
+            new SkillDefinition(Skill.Medicine, "Medicine", "Medicine", SkillUse.Tend) { Lean = SkillLean.Sociable, Practitioner = "medic", Order = 6,
+                Voice = new SkillVoice("{0}'s hands are steadier", "{0}'s mending has won a name", "{0}, who mends wounds, made one: first blood", "I'd rather mend than make wounds.") },
+            new SkillDefinition(Skill.Leadership, "Leadership", "Leadership", SkillUse.Lead) { Lean = SkillLean.Loyal, Practitioner = "captain", Order = 7,
+                Voice = new SkillVoice("{0}'s voice carries further", "{0}'s command has won a name", "{0} led from the front, and drew first blood", "Stay behind me. All of you.") }
         };
 
         /// <summary>

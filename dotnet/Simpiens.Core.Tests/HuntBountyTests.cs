@@ -79,6 +79,108 @@ namespace Simpiens.Core.Tests
             Assert.True(Balanced(sim), "The escrow went to the hunters.");
         }
 
+        /// <summary>
+        /// A hunt naming its quarry (Epic 11, S7.4, D34): refused for a creature not named, or not of the lair, or in a lair not
+        /// charted; posted for a named rat of the charted warren, its record keeping the quarry.
+        /// </summary>
+        [Fact]
+        public void ANamedHuntNamesANamedCreatureOfTheChartedLair()
+        {
+            using var sim = Outpost();
+            int warren = WarrenIndex(sim), hollow = HollowIndex(sim);
+            var rat = sim.Simulation.Creatures.Creatures.First(c => c.LairIndex == warren && !c.Definition.IsBoss);
+            var beetle = sim.Simulation.Creatures.Creatures.First(c => c.LairIndex == hollow);
+            Name(sim, beetle);
+            Post(sim, hollow, 60, beetle.Id);
+            Assert.Empty(sim.Simulation.Hunts); // the hollow isn't charted
+
+            ChartTheWarren(sim);
+            Post(sim, warren, 60, rat.Id);
+            Assert.Empty(sim.Simulation.Hunts); // the rat has no name
+            Name(sim, rat);
+            Post(sim, hollow, 60, rat.Id);
+            Assert.Empty(sim.Simulation.Hunts); // not the hollow's
+            Post(sim, warren, 60, rat.Id);
+            var hunt = Assert.Single(sim.Simulation.Hunts);
+            Assert.Equal(rat.Id, hunt.Quarry);
+            Assert.Equal(warren, hunt.LairIndex);
+        }
+
+        /// <summary>
+        /// A hunt naming its quarry is paid when the quarry dies, by the damage each hunter dealt it (D34): a blow on another of the
+        /// lair's creatures counts for nothing, and the lair's others slain leave it open.
+        /// </summary>
+        [Fact]
+        public void ANamedHuntPaysOnItsQuarrysDeathByDamageToIt()
+        {
+            using var sim = Outpost();
+            int warren = WarrenIndex(sim);
+            ChartTheWarren(sim);
+            var rats = sim.Simulation.Creatures.Creatures.Where(c => c.LairIndex == warren && !c.Definition.IsBoss).ToList();
+            Assert.True(rats.Count >= 2, "The warren holds two rats besides its Matriarch.");
+            var (quarry, other) = (rats[0], rats[1]);
+            Name(sim, quarry);
+            Post(sim, warren, 60, quarry.Id);
+            var hunt = sim.Simulation.Hunts[0];
+            var residents = sim.Host.CrawlerStates.Where(s => !s.IsDrifter && s.AgentId != quarry.Victim).Take(2).ToList();
+            foreach (var r in residents) Assert.True(sim.Simulation.TryJoinHunt(hunt.BountyId, r.AgentId));
+            var world = (ICreatureWorld)sim.Simulation;
+            world.CreatureHit(residents[0].AgentId, quarry, 20f);
+            world.CreatureHit(residents[1].AgentId, quarry, 20f);
+            world.CreatureHit(residents[1].AgentId, other, 40f); // not its quarry: nothing
+            Assert.Equal(20f, sim.Simulation.Hunts[0].Damage0);
+            Assert.Equal(20f, sim.Simulation.Hunts[0].Damage1);
+            int[] purses = residents.Select(r => r.Inventory.Gold).ToArray();
+
+            uint tick = (uint)sim.Clock.CurrentTick;
+            sim.Simulation.Creatures.Slay(world, other.Id, tick);
+            sim.Step(1);
+            Assert.Single(sim.Simulation.Hunts); // another slain: still open
+            sim.Simulation.Creatures.Slay(world, quarry.Id, (uint)sim.Clock.CurrentTick);
+            sim.Step(1);
+            Assert.Empty(sim.Simulation.Hunts);
+            Assert.True(sim.Simulation.Creatures.Lairs[warren].Alive > 0, "Paid with the warren not empty.");
+            Assert.Equal(30, residents[0].Inventory.Gold - purses[0]);
+            Assert.Equal(30, residents[1].Inventory.Gold - purses[1]);
+            Assert.True(Balanced(sim), "The escrow went to the hunters.");
+        }
+
+        /// <summary>
+        /// A hunter on a hunt naming its quarry goes for the quarry, though another of the lair's creatures is nearer, and is done
+        /// once the quarry is dead, the lair not empty (Epic 11, S7.4, D34; <c>HuntIntentHandler</c>).
+        /// </summary>
+        [Fact]
+        public void AHunterGoesForTheQuarry()
+        {
+            using var sim = Outpost();
+            int warren = WarrenIndex(sim);
+            ChartTheWarren(sim);
+            var rats = sim.Simulation.Creatures.Creatures.Where(c => c.LairIndex == warren && !c.Definition.IsBoss).ToList();
+            var (quarry, other) = (rats[0], rats[1]);
+            Name(sim, quarry);
+            Post(sim, warren, 60, quarry.Id);
+            var hunt = sim.Simulation.Hunts[0];
+            var hunter = sim.Host.CrawlerStates.First(s => !s.IsDrifter && !s.IsDowned);
+            Assert.True(sim.Simulation.TryJoinHunt(hunt.BountyId, hunter.AgentId));
+            var node = sim.Registry.GetEntity(hunter.AgentId);
+            // By hand, on either side of the hunter at the warren's heart: the other rat nearer to the west, the quarry to the east,
+            // both out of reach, so the way it steps says which it goes for
+            var heart = sim.Simulation.Creatures.Lairs[warren].Definition.Position;
+            node.SetPosition(heart);
+            other.Position = heart + new Vec2(-1.5f, 0f);
+            quarry.Position = heart + new Vec2(2.5f, 0f);
+            hunter.Health = 100f;
+            var handler = new Simpiens.Cognition.Planning.Handlers.HuntIntentHandler();
+            var state = new ActiveIntentState { Intent = new Simpiens.Cognition.Contracts.HuntIntent(hunter.AgentId, hunt.BountyId, (byte)warren, null) };
+            var sm = (SimulationManager)sim.Simulation;
+            Assert.Equal(Simpiens.Cognition.Contracts.IntentResult.InProgress, handler.Execute(node, state, sm));
+            Assert.True(node.Position.X > heart.X, $"It stepped east, toward its quarry, not west to the nearer rat: {heart} to {node.Position}.");
+
+            sim.Simulation.Creatures.Slay((ICreatureWorld)sim.Simulation, quarry.Id, (uint)sim.Clock.CurrentTick);
+            Assert.True(sim.Simulation.Creatures.Lairs[warren].Alive > 0);
+            Assert.Equal(Simpiens.Cognition.Contracts.IntentResult.Success, handler.Execute(node, state, sm));
+        }
+
         [Fact]
         public void TheSplitGivesTheRestToTheMostDamageAndSharesEquallyWithNone()
         {
@@ -89,7 +191,7 @@ namespace Simpiens.Core.Tests
             hunt = hunt.WithDamage(new EntityId(2, 0, 0, 0), 2f).WithDamage(new EntityId(3, 0, 0, 0), 1f);
             hunt.Split(100, shares);
             Assert.Equal(new uint[] { 0, 67, 33 }, shares.ToArray()); // 66.67 and 33.33 floored, the rest to the most
-            Assert.Equal(64, System.Runtime.CompilerServices.Unsafe.SizeOf<HuntRecord>());
+            Assert.Equal(80, System.Runtime.CompilerServices.Unsafe.SizeOf<HuntRecord>()); // its quarry since Epic 11's format 13 (S7.1); 64 before
         }
 
         [Fact]
@@ -110,6 +212,23 @@ namespace Simpiens.Core.Tests
             var loaded = Assert.Single(sim.Simulation.Hunts);
             Assert.True(loaded.HasClaimant(hunter.AgentId));
             Assert.Equal(12f, loaded.Damage0);
+        }
+
+        /// <summary>A load keeps a hunt's quarry (Epic 11, S7.4), byte for byte.</summary>
+        [Fact]
+        public void ALoadKeepsTheHuntsQuarry()
+        {
+            using var sim = Outpost();
+            int warren = WarrenIndex(sim);
+            ChartTheWarren(sim);
+            var rat = sim.Simulation.Creatures.Creatures.First(c => c.LairIndex == warren && !c.Definition.IsBoss);
+            Name(sim, rat);
+            Post(sim, warren, 60, rat.Id);
+            byte[] saved = Simpiens.Simulation.Persistence.SaveSerializer.Serialize(sim.Host.Capture());
+            sim.Step(10);
+            Assert.True(sim.Host.TryRestore(Simpiens.Simulation.Persistence.SaveSerializer.Deserialize<Simpiens.Simulation.Persistence.SessionSave>(saved), out string refusal), refusal);
+            Assert.Equal(saved, Simpiens.Simulation.Persistence.SaveSerializer.Serialize(sim.Host.Capture()));
+            Assert.Equal(rat.Id, Assert.Single(sim.Simulation.Hunts).Quarry);
         }
 
         [Fact]
@@ -215,12 +334,28 @@ namespace Simpiens.Core.Tests
             Assert.True(creatures.Slay((Simpiens.Simulation.Creatures.ICreatureWorld)sim.Simulation, creatures.Lairs[warren].MemberIn(0), (uint)sim.Clock.CurrentTick), "The Matriarch is slain by hand.");
         }
 
-        private static void Post(LocalSimulation sim, int lair, ushort reward)
+        private static void Post(LocalSimulation sim, int lair, ushort reward, EntityId quarry = default)
         {
             var commands = (IPlayerInterventionService)sim.Services.GetService(typeof(IPlayerInterventionService));
             commands.QueueInfluence(InfluenceEvent.CreatePostBounty("Test", new PostBountyCommand(0, BountyType.Hunt, 0, ItemType.None, 1, reward,
-                durationTicks: DayClock.Hours(48), lairIndex: (byte)lair)));
+                durationTicks: DayClock.Hours(48), lairIndex: (byte)lair, quarry: quarry)));
             sim.Step(1);
+        }
+
+        // A creature named by hand (Epic 11, S7.1): its blow downs the first resident still standing, through the simulation's
+        // landing (the last is the warren's watcher)
+        private static void Name(LocalSimulation sim, CreatureState creature)
+        {
+            var fallen = sim.Host.CrawlerStates.First(s => !s.IsDrifter && !s.IsDowned);
+            ((ICreatureWorld)sim.Simulation).Strike(sim.Registry.GetEntity(fallen.AgentId), creature.Id, new Simpiens.Simulation.Combat.SwingOutcome(true, 1f, 1000f), (uint)sim.Clock.CurrentTick);
+            Assert.True(creature.IsNamed);
+        }
+
+        private static int HollowIndex(LocalSimulation sim)
+        {
+            var lairs = sim.Simulation.Creatures.Lairs;
+            for (int i = 0; i < lairs.Count; i++) if (lairs[i].Definition.Key == Floor1Layout.BeetleHollow) return i;
+            return -1;
         }
 
         private static int WarrenIndex(LocalSimulation sim)

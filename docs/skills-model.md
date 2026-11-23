@@ -209,6 +209,26 @@ The techniques (first guesses, to tune):
   - **Carrier:** the guild sends a Carrier to a fallen mate before the healthiest.
   - **Leader:** the party's captain (§3.7).
 
+### 3.9 Legend (Epic 11, S6–S7)
+- **Deeds** (nine, `DeedTable`) are counted where they happen: creatures slain, bosses slain, rescues, makes, downings survived, hunts paid, clears won, crawlers taught, named creatures slain.
+- **An epithet** is earned at the deed's count exactly, and a higher rank replaces a lower:
+
+| Epithet | Earned by | Rank |
+| :--- | :--- | :--- |
+| A kind's word (Ratcatcher, Beetlebane, Spinnerbane) | the 3rd creature slain, that kill's kind | 2 |
+| A boss's word (Broodbane, Gatebreaker) | the first boss slain | 5 |
+| the Steadfast | 2 rescues | 3 |
+| the Unbroken | 2 downings survived | 3 |
+| Lairbreaker | 5 clears won | 3 |
+| the Huntsman | 3 hunts paid | 2 |
+| the Teacher | 10 crawlers taught | 2 |
+| the Maker | 40 makes | 1 |
+| {the victim}'s Avenger | a named creature slain | 6 |
+
+- **A scar** comes with a downing survived: what downed it (a creature kind's mark, a hazard's), in the next of four places on the face. It changes nothing but the picture.
+- **Earned traits** (three at most), through the techniques' door: Battle-Hardened (+1 defense in a fight, the bold at their 2nd downing survived), Shaken (−10% attack, a lair judged 25% more dangerous; the cautious at their first), Monster Hunter (+10% attack at 10 kills), Lifesaver (15% faster carrying, +10% healing at 3 rescues), Patient Teacher (+10% teaching at 10 taught), and Vengeful, by an act: a friend (warmth 40) downed or killed by a named creature, its foe's lair braved with the harm judged at 75% while a named creature leads it.
+- **A named creature** takes its name from the first crawler it downs (or kills): "{the crawler}'s Bane". Each further downing raises its rank, to 3: Bane, Scourge, Terror, each +20% health and +10% attack over its kind (to +60% and +30%). While it chases, its mates in the lair's reach take its quarry; its lair is judged more dangerous by its rank. It remembers the last crawler that struck it and lived, and sees that foe 3 units nearer. A boss never takes a name; a named creature slain doesn't return. Its slayer is the avenger (above).
+
 ## 4. What a level does
 How good a crawler is at a work is its **effective level**, `CrawlerSkills.Level(skills, worn, work)`, the one number every effect and choice reads. Today it equals the learned level. Gear, techniques or callings that change how good a crawler is enter there (`SkillReadsTests` guards it). A technique doesn't raise a level: it changes the work's numbers below through its own door (§3.6).
 
@@ -407,3 +427,130 @@ Plan 2's final build. Its fourteen days are §5.7's: no code that runs in the si
 - **Journeymen and their techniques grow with time:** 82 Journeyman picks in 28 days against 32 in 14, mostly the artisans' and the miners'. Legend's deeds will meet Journeymen on most seeds in a month.
 - **Callings move with the work:** 59 changed in four weeks with the players; a calling is a living label, not a birth one.
 
+
+### 5.9 Deeds (S6.0, 2026-11-20)
+Plan 2's final build, on the 23 gate seeds (`MeasureGrowthOnTheGateSeeds`, which since S6.0 also counts each deed per resident and each downing by its cause). Of 276 residents, how many gained at least 1 / 2 / 3 / 5 / 10 / 20 / 40 of each deed in the run, and on how many seeds someone reached 3 and 5:
+
+| Deed | No player, 14 days | Hunting players, 14 days | Hunting players, 28 days |
+| :--- | :--- | :--- | :--- |
+| Creatures slain | none | 79 / 46 / 27 / 9 / 0 / 0 / 0; most 8; seeds 18, 8 | 120 / 87 / 69 / 38 / 11 / 0 / 0; most 16; seeds 23, 19 |
+| Bosses slain | none | 5 / 1; most 2 | 23 / 2; most 2 |
+| Rescues | none | none | none |
+| Makes | none (no stations) | 85 / 82 / 76 / 66 / 57 / 34 / 8; most 59 | 115 / 113 / 106 / 102 / 93 / 74 / 26; most 94 |
+| Downings survived | none | none | none |
+| Hunts paid | none | 39 / 25 / 16 / 1 / 0; most 5; seeds 9, 1 | 40 / 33 / 20 / 3 / 0; most 5; seeds 13, 3 |
+| Clears won | none | 97 / 68 / 45 / 17 / 0; most 6; seeds 12, 7 | 134 / 118 / 100 / 64 / 21 / 0; most 15; seeds 20, 16 |
+| Crawlers taught | 140 / 96 / 77 / 55 / 12 / 1 / 0; most 21 | 123 / 85 / 58 / 34 / 8 / 0 / 0; most 16 | 186 / 144 / 108 / 65 / 18 / 3 / 0; most 27 |
+
+**Downings: none.** Over 14 and 28 days, with no player or with the hunting players, no crawler on any gate seed is downed, by a creature or a hazard, and so nobody is rescued and nobody dies. Careful crawlers retreat before anything takes them to nothing (finding F13).
+
+**The lines set from it** (D27, D29), so that a legend is earned on most seeds in two weeks and by few on each:
+- **Epithets:** a creature kind's word at the 3rd kill (18 of 23 seeds in two weeks, 27 residents); a boss's word at the first boss slain; Lairbreaker at 5 clears won (7 seeds, 17 residents; 16 seeds by day 28); the Huntsman at 3 hunts paid (9 seeds, 16 residents); the Teacher at 10 crawlers taught (8 with the players, 12 without, in two weeks); the Maker at 40 makes (8 residents in two weeks). The Steadfast (2 rescues) and the Unbroken (2 downings survived) are earned only where crawlers fall (F13).
+- **Earned traits:** Monster Hunter at 10 kills (none in two weeks, 11 residents by day 28: a month's story); Patient Teacher at 10 taught; Lifesaver at 3 rescues, Battle-Hardened and Shaken at a downing survived: where crawlers fall.
+
+### 5.10 With epithets, scars and earned traits (S6.5, 2026-11-20)
+S6.1–S6.4's build, the 23 gate seeds over 14 days. Growth is §5.7's to the digit (a Journeyman on 18 of 23 seeds with the hunting players, 1.43 a seed; 4 of 23 with no player), and so are the deeds (§5.9): epithets change no number, scars come only with downings, and of the earned traits only Patient Teacher is earned in two weeks.
+
+| Held at day 14 | No player | Hunting players |
+| :--- | :--- | :--- |
+| Residents with an epithet | 12, on 10 seeds | 61, on 20 seeds |
+| By epithet | the Teacher 12 | a kind's word 14 (27 earned it; a higher rank replaced the rest), a boss's word 5, Lairbreaker 15, the Huntsman 11, the Teacher 8, the Maker 8 |
+| Earned traits | Patient Teacher 12 | Patient Teacher 8 |
+| Scars | none | none (no downings, F13) |
+
+Seeds 1–120 pass the outpost's day with and without the guild; the soak holds, 18 of 18 and 20 of 20 on each player profile. No DoD moved. A party's members win their clears together, so Lairbreaker comes to a party at once; the lines are first guesses for the producer.
+
+### 5.11 Downings, the trigger of a named creature (S7.0, 2026-11-22)
+S6's final build, the 23 gate seeds over 14 days (`MeasureDowningsOnTheGateSeeds`). Each downing is credited to the creature whose blow took the crawler to nothing (its `StruckBy`); a creature that downs a crawler and isn't a boss is one that would earn a name (D31), and each further crawler it downs raises its rank.
+
+| Play | Seeds with a downing by a creature | Downings (by bosses) | Deaths | Would be named | Rank 2 / 3 | Slain after |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| No player | 0 | 0 | 0 | none | | |
+| Hunting players | 0 | 0 | 0 | none | | |
+| The guild's clears (four, armed from the stall, Steady) | 12, all within ten days (the first on day 2–9) | 47 (18) | 0 | 29 on 10 seeds | 0 / 0 | 29 |
+| `DeathHasItsCost`'s pairs (two unarmed, the beetles, Bold) | 20 (19 within ten days) | 137 (0) | 7 | 75 on 20 seeds | 30 / 20 | 71 |
+
+- **Where:** the beetles' hollow, almost alone (the clears: 28 of 29 named; the pairs: all). The Matriarch's warren downs members too, but by its boss, who has a name already.
+- **Nobody falls in careful play** (F13 stands): with no player or the hunting players no creature downs anyone in two weeks, so no creature is named there.
+- **A clear's named creature dies in the same fight:** the party that was downed in finishes the lair, so the beetle named for a fallen member is slain by its mates the same hour (29 of 29), and its slayer is the avenger (D35). A named creature outlives its naming only where the attackers break off: the pairs under the Bold rule, where the lair keeps its named beetles: of 75, 30 reach rank 2 and 20 rank 3.
+- **The DoD's shape** (S7.8): the guild's clears name a creature on 10 of 23 seeds within ten days, so `TheBeetleThatRemembers` runs them, as `TheOutpostRemembers` does; the Bold rule's pairs aren't needed. A hunt naming its quarry (D34) gets its proof in the validators and the client, since in live play the clear that names a creature also kills it.
+
+### 5.12 With named creatures (S7.6, 2026-11-22)
+S7.1–S7.5's build (a name, growth and the lead, grudges, a hunt's quarry, the avenger), the 23 gate seeds over 14 days.
+
+- **Growth and legends as before:** §5.10 to the digit. A Journeyman's skill at day 14 held by 1.43 residents a seed with the hunting players and 0.17 with none; epithets held by 61 residents on 20 seeds with the hunting players and 12 on 10 with none, the same rows. Nobody falls in careful play (F13), so no creature is named there.
+- **Downings** (`MeasureDowningsOnTheGateSeeds`):
+
+| Play | Seeds with a downing | Downings (by bosses) | Deaths | Named | Rank 2 / 3 | Slain after |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| No player, hunting players | 0 | 0 | 0 | none | | |
+| The guild's clears | 12, all within ten days | 50 (18) | 0 | 32 on 10 seeds | 0 / 0 | 32 |
+| `DeathHasItsCost`'s pairs | 20 (19 within ten days) | 198 (0) | 13 | 49 on 20 seeds | 23 / 18 | 34 |
+
+- **The named creature bites:** on the bold pairs a beetle that grows and leads downs more of them (198 downings against 137 at §5.11, deaths 13 against 7, fewer creatures named because each named one downs more), and fewer are slain after (34 of 49 against 71 of 75): the lair a named creature leads is the wall D32 warns of, which the hunt and the clear answer. On the guild's clears every named creature still dies in the fight that named it.
+- **Moved DoDs:** `DeathHasItsCost`, re-picked at S7.2 (to gate seed 11) and S7.3 (to 8), each in its own commit; no other. Seeds 1–120 pass the outpost's day, 120/120 with and without the guild; the soak holds, 18 of 18, and the `guild`, `crafting` and `hunting` profiles 20 of 20 each on seeds 1–20.
+
+### 5.13 Legend complete (C.1, 2026-11-22)
+Plan 3's final build over 28 days on the 23 gate seeds: what a month makes of the legend.
+
+| At day 28 | No player | Hunting players | Plan 2's final build (§5.8): no player / hunting |
+| :--- | :--- | :--- | :--- |
+| Residents holding a Journeyman's skill | 1.83 a seed (most 4) | 3.48 a seed (most 7) | 1.83 / 3.57 |
+| Residents with an epithet | 40, on 21 seeds | 135, on all 23 | |
+| By epithet | the Teacher 40 | Lairbreaker 49, a boss's word 22, the Maker 22, a kind's word 18, the Teacher 17, the Huntsman 7 | |
+| Earned traits | Patient Teacher 40 | Patient Teacher 18, Monster Hunter 8 | |
+| Downings, scars, named creatures | none | none | |
+
+- **Growth holds:** no player's curve is §5.8's to the digit; the hunting players' is 0.09 a seed lower, past day 14, where Monster Hunter's blows and Patient Teacher's lessons begin to change who practises.
+- **A month's legend comes to the players' people:** with the hunting players every seed has a resident with an epithet by day 28, a third of the residents one in all; without a player the Teacher alone, on 21 seeds.
+- **Named creatures over a month** (`MeasureDowningsOnTheGateSeeds`, 28 days): the guild's clears down a member on 16 of 23 seeds and name 51 creatures on 13, each slain in the fight that named it (F14); the hunting players down nobody, so name nothing (F13).
+
+### 5.14 What the forge makes, by grade (S8.0, 2026-11-22)
+Plan 3's final build, the 23 gate seeds (`MasterworkMeasurementTests.MeasureMasterworkMakesOnTheGateSeeds`): every finished make of a worn piece by the grade it came out at, with the soak's `crafting` and `hunting` players. Both players build the forge and the still; only the forge makes worn pieces.
+
+| Play, horizon | Seeds with a Masterwork piece | Worn makes: Standard / Fine / Masterwork | Masterwork makes a seed where any (most) | Smiths making Masterwork, a smith's | By the smith's passion: none / keen / burning |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| Crafting, 14 days | 4 | 96 / 57 / 25 | 6.2 (11) | 5, 5.0 | 19 / 1 / 5 |
+| Crafting, 28 days | 8 | 154 / 92 / 73 | 9.1 (26) | 9, 8.1 | 57 / 11 / 5 |
+| Hunting, 14 days | 14 | 286 / 190 / 193 | 13.8 (33) | 18, 10.7 | 116 / 59 / 18 |
+| Hunting, 28 days | 21 | 404 / 374 / 509 | 24.2 (69) | 29, 17.6 | 339 / 124 / 46 |
+
+- **The forge's Journeymen are the hunting players':** their guild buys arms and armour, so the forge works all day. The crafting player orders few worn pieces (its stations make mostly draughts, 748 unworn makes in two weeks), so Masterwork comes on few of its seeds.
+- **Masterwork from the first days** on a few seeds (424242 and 17 from day 2.3): a smith hired at Apprentice 5 with Fine Temper's grade counts as a Journeyman at the forge.
+- **Inspiration's chance, set from it** (plan 4's D41): 8% a Masterwork make. With the passions' multipliers (keen ×1.5, burning ×2; a smith's makes are about 1.25 on average), that is a masterpiece on about two thirds of the seeds where the forge makes Masterwork in two weeks with the hunting players (about 9 of 14, near 19 in all, about one a smith), and on most of them in a month (about 16 of 21). Grief doubles it when it comes.
+
+**With masterpieces** (S8.4, 2026-11-22; inspiration at 8% a Masterwork make, the forge's makes unchanged):
+
+| Play, horizon | Masterpieces (seeds) | Seeds with Masterwork | First made | Makers | Handed out / worn at the end | Kills on them |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| Crafting, 14 days | 0 | 4 | never | 0 | 0 / 0 | 0 |
+| Crafting, 28 days | 7 (4) | 8 | day 17.3 | 4 | 6 / 5 | 0 |
+| Hunting, 14 days | 16 (11) | 14 | day 5.3 | 11 | 12 / 12 | 11 |
+| Hunting, 28 days | 37 (16) | 21 | day 5.3 | 20 | 24 / 24 | 50 |
+
+- **As set:** with the hunting players a masterpiece is made on 11 of the 14 seeds whose forge makes Masterwork in two weeks, about one a smith, and on 16 of 21 in a month. Three in four are bought or given and worn; the rest wait on the shelf. None came in grief: nobody died near a Journeyman smith (F13).
+- **The gate seed for the DoD:** on 424242 the forge's smith makes one on day 5.3 and a resident wears it by day 14.
+- **Nothing else moved:** seeds 1–120 pass the outpost's day, 120/120 with and without the guild; the soak 18 of 18, and the `guild`, `crafting` and `hunting` profiles 20 of 20 each; no DoD's seed moved.
+
+### 5.15 The soak at the epic's end (S9.2, 2026-11-22)
+Epic 11's final build (every layer, masterpieces included) against the soak's bands, seeds 1–20 for each player profile: every run within its band (`docs/economy-model.md` §7). The regular soak 18 of 18; `guild`, `crafting` and `hunting` 20 of 20 each. At three days nobody under contract stands past Apprentice, so the asking wage costs nothing yet; the bands are unchanged.
+
+**Every layer together** (S9.1, `MeasureEpicElevenTogetherOnTheGateSeeds`: the forge's and the still's players and the guild's armed clears, 14 days): a passion's band and a technique on 21 of 23 gate seeds (from day 1 to 3), an epithet on 16, a scar on 9, a named creature on 8, a calling earned during the run on 4, a masterpiece on 4; all seven on gate seed 5 alone (by day 7), the DoD's. The days hold on 7 of the 23: the outpost's day fails its trust check on 15 with these players (F19), and 424242 once on a lone entry into a known lair.
+
+### 5.16 Epic 11 complete (C.1, 2026-11-22)
+Plan 4's final build over 28 days on the 23 gate seeds: every layer, masterpieces included.
+
+| At day 28 | No player | Hunting players | Plan 3's final build (§5.13): no player / hunting |
+| :--- | :--- | :--- | :--- |
+| Seeds with a Journeyman made | 19 (from day 12.3) | 22 (from day 4.0) | |
+| Residents holding a Journeyman's skill | 1.83 a seed (most 4) | 3.65 a seed (most 7) | 1.83 / 3.48 |
+| Masters | none | none | none / none |
+| Residents with an epithet | 40, on 21 seeds | 132, on all 23 | 40 / 135 |
+| By epithet | the Teacher 40 | Lairbreaker 45, the Maker 24, a boss's word 22, a kind's word 18, the Teacher 16, the Huntsman 7 | |
+| Earned traits | Patient Teacher 40 | Patient Teacher 18, Monster Hunter 6 | |
+| Masterpieces (S8.4) | none (no forge) | 37 on 16 seeds, 24 worn at the end, 50 kills on them | |
+| Downings, scars, named creatures | none | none | none / none |
+
+- **Growth holds without a player** to the digit: masterpieces touch only what the forge makes and who wears it.
+- **With the hunting players** a little more grows past Journeyman (3.65 a seed against 3.48) and a few epithets move (Lairbreaker 45 against 49, the Maker 24 against 22): a masterpiece's grade arms its wearer a tenth better, which moves who fights and who practises. Nobody reaches Master in a month, as at every close since plan 1.
+- **Every layer reaches the players' people in a month:** passions and techniques from the first days, callings, epithets on every seed, and masterpieces on two thirds; downings, scars and named creatures where the player sends parties into lairs (§5.12, F13).

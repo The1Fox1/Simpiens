@@ -65,6 +65,7 @@ namespace Simpiens.Presentation.Art
                .Add(ArtKeys.BadgeBack, Sheet, new[] { BadgeSprites.Back }, BadgeSprites.Size, BadgeSprites.Size)
                .Add(ArtKeys.BadgeCarrier, Sheet, new[] { BadgeSprites.Carrier }, BadgeSprites.Size, BadgeSprites.Size)
                .Add(ArtKeys.BadgeLeader, Sheet, new[] { BadgeSprites.Leader }, BadgeSprites.Size, BadgeSprites.Size)
+               .Add(ArtKeys.BadgeNamed, Sheet, new[] { BadgeSprites.Named }, BadgeSprites.Size, BadgeSprites.Size) // a named creature's mark (Epic 11, S7.7)
                .Add(ArtKeys.PropGate, Sheet, new[] { GateSprites.Sealed }, 2f * Standing, 2f * Standing, pivotY: FeetPivot) // the descent gate (K10.5c), standing
                .Add(ArtKeys.PropGateOpen, Sheet, new[] { GateSprites.Open }, 2f * Standing, 2f * Standing, pivotY: FeetPivot)
                .Add(ArtKeys.Missing, Sheet, new[] { MissingArt.Name }, Standing, Standing, pivotY: FeetPivot);

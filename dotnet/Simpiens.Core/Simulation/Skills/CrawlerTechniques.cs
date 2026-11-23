@@ -26,7 +26,7 @@ namespace Simpiens.Simulation.Skills
         /// <summary>As <see cref="Get(in CrawlerTraits, in SkillSet, in SkillWork, TechniqueStat)"/>, for a crawler's state on the main thread; 0 for none.</summary>
         public static int Get(AgentState crawler, in SkillWork work, TechniqueStat stat) => crawler == null ? 0 : Get(crawler.Traits, crawler.Skills, work, stat);
 
-        /// <summary><paramref name="stat"/> over the techniques held in <paramref name="skill"/>, within its bounds.</summary>
+        /// <summary><paramref name="stat"/> over the techniques held in <paramref name="skill"/>, its calling's capstone and the earned traits that change its work, within its bounds.</summary>
         public static int Get(in CrawlerTraits traits, in SkillSet skills, Skill skill, TechniqueStat stat)
         {
             if (skill == Skill.None || stat == TechniqueStat.None) return 0;
@@ -41,6 +41,13 @@ namespace Simpiens.Simulation.Skills
             // Its calling's capstone at Master in the calling's skill (Epic 11, S5.5, D23)
             var calling = CallingTable.Get(traits.Calling);
             if (calling != null && calling.Skill == skill && calling.Capstone.Stat == stat && skills.Band(skill) >= SkillBand.Master) sum += calling.Capstone.Value;
+            // Its earned traits that change the skill's kind of work (Epic 11, S6.3, D29)
+            var use = SkillTable.Get(skill)?.Use ?? SkillUse.None;
+            for (int i = 0; i < CrawlerTraits.EarnedTraitSlots; i++)
+            {
+                var trait = EarnedTraitTable.Get(traits.TraitAt(i));
+                if (trait != null && trait.AppliesTo(use)) sum += trait.ValueOf(stat);
+            }
             return TechniqueRules.Clamp(stat, sum);
         }
 

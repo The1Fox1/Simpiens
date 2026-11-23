@@ -137,7 +137,7 @@ namespace Simpiens.Simulation.Items
         public static ItemInstance NewPiece(ItemType item, byte grade, ushort price = 0)
         {
             var equipment = item != ItemType.None ? ItemCatalog.Get(item)?.Equipment : null;
-            return equipment == null ? ItemInstance.Empty : new ItemInstance(1, item, 1, price, quality: grade, durability: equipment.DurabilityAt(grade));
+            return equipment == null ? ItemInstance.Empty : new ItemInstance(item, 1, price, quality: grade, durability: equipment.DurabilityAt(grade));
         }
 
         /// <summary>

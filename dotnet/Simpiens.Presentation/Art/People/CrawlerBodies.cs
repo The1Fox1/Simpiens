@@ -41,7 +41,7 @@ namespace Simpiens.Presentation.Art.People
 
         /// <summary>The body <paramref name="crawler"/> is drawn with: its look, its helm if it wears one, its tabard if it's in a guild.</summary>
         public BodyKey KeyOf(in EntityView crawler)
-            => new BodyKey(crawler.Look, crawler.Worn, crawler.Standing == CrawlerStanding.GuildMember);
+            => new BodyKey(crawler.Look, crawler.Worn, crawler.Standing == CrawlerStanding.GuildMember, crawler.Scars);
 
         /// <summary>
         /// Moves the table on to <paramref name="frame"/>: bodies its crawlers show keep their slots, new ones take the
@@ -124,7 +124,7 @@ namespace Simpiens.Presentation.Art.People
         public void BakeSlot(int slot, Span<Rgba32> into)
         {
             var key = _keyIn[slot];
-            BodyKit.Bake(key.Look, key.Worn, key.Tabard, into);
+            BodyKit.Bake(key.Look, key.Worn, key.Tabard, into, key.Scars);
         }
 
         /// <summary>The world sheet's sprite of <paramref name="slot"/>'s frame <paramref name="frameIndex"/>: where its bake goes.</summary>
@@ -149,15 +149,19 @@ namespace Simpiens.Presentation.Art.People
         }
     }
 
-    /// <summary>A body: a look with what shows of a crawler's gear, slot by slot (a helm, a coat; Epic 10 Part 3, K1.5), and its standing (the guild's tabard).</summary>
+    /// <summary>A body: a look with what shows of a crawler's gear, slot by slot (a helm, a coat; Epic 10 Part 3, K1.5), its standing (the guild's tabard) and its scars (Epic 11, S6.7).</summary>
     public readonly struct BodyKey : IEquatable<BodyKey>
     {
-        public BodyKey(in CrawlerLook look, in WornLook worn, bool tabard)
+        public BodyKey(in CrawlerLook look, in WornLook worn, bool tabard, in ScarMarks scars = default)
         {
             Look = look;
             Worn = worn;
             Tabard = tabard;
+            Scars = scars;
         }
+
+        /// <summary>The scars it bears; none for none.</summary>
+        public ScarMarks Scars { get; }
 
         public CrawlerLook Look { get; }
 
@@ -166,10 +170,10 @@ namespace Simpiens.Presentation.Art.People
 
         public bool Tabard { get; }
 
-        public bool Equals(BodyKey other) => Look.Equals(other.Look) && Worn.Equals(other.Worn) && Tabard == other.Tabard;
+        public bool Equals(BodyKey other) => Look.Equals(other.Look) && Worn.Equals(other.Worn) && Tabard == other.Tabard && Scars.Equals(other.Scars);
 
         public override bool Equals(object obj) => obj is BodyKey other && Equals(other);
 
-        public override int GetHashCode() => HashCode.Combine(Look.GetHashCode(), Worn.GetHashCode(), Tabard);
+        public override int GetHashCode() => HashCode.Combine(Look.GetHashCode(), Worn.GetHashCode(), Tabard, Scars.GetHashCode());
     }
 }

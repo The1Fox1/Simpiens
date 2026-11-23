@@ -105,6 +105,7 @@ namespace Simpiens.Testing.Environment
                     var protective = !inv.GetEquipped(body).IsEmpty ? body : head;
                     var protection = inv.GetEquipped(protective);
                     Mix(ref h, protection.IsEmpty ? -1 : protection.Durability);
+                    if (protection.IsMasterpiece) Mix(ref h, protection.Masterpiece); // a masterpiece's mark (Epic 11, S8.1), once one is worn
                     var slots = Simpiens.Simulation.Items.EquipmentSlots.All;
                     for (int e = 0; e < slots.Count; e++)
                     {
@@ -114,6 +115,7 @@ namespace Simpiens.Testing.Environment
                         Mix(ref h, (int)slot);
                         Mix(ref h, (int)equipped.Type);
                         Mix(ref h, equipped.Durability);
+                        if (equipped.IsMasterpiece) Mix(ref h, equipped.Masterpiece);
                     }
                 }
                 Mix(ref h, Quantize(s.Health, 100f)); // health (G2)
@@ -167,6 +169,25 @@ namespace Simpiens.Testing.Environment
                     Mix(ref economy, ledger.TotalFaucetedGold);
                     Mix(ref economy, ledger.TotalSinkedGold);
                 }
+                // The masterpieces' records (Epic 11, S8.1), once any is made
+                var masterpieces = sim.Workshops?.Masterpieces;
+                for (int i = 0; masterpieces != null && i < masterpieces.Count; i++)
+                {
+                    var m = masterpieces[i];
+                    Mix(ref economy, m.Id);
+                    Mix(ref economy, (int)m.Item);
+                    Mix(ref economy, (int)m.Place);
+                    Mix(ref economy, (int)m.Form);
+                    Mix(ref economy, m.Adjective);
+                    Mix(ref economy, m.Noun);
+                    Mix(ref economy, m.MadeAt);
+                    Mix(ref economy, m.Maker.GetHashCode());
+                    Mix(ref economy, m.NamedFor.GetHashCode());
+                    Mix(ref economy, m.OwnerCount);
+                    Mix(ref economy, m.LastOwner.GetHashCode());
+                    Mix(ref economy, m.Kills);
+                    Mix(ref economy, m.NamedSlain);
+                }
             }
 
             // Bounties (the manager keeps them sorted by id)
@@ -219,6 +240,13 @@ namespace Simpiens.Testing.Environment
                     Mix(ref map, Quantize(c.Goal.X, 1000f));
                     Mix(ref map, Quantize(c.Goal.Y, 1000f));
                     if (c.LastVisitAt != 0) Mix(ref map, c.LastVisitAt); // a boss's last visitor (K10.3c), once there was one
+                    if (c.IsNamed) // its name (Epic 11, S7.1), once it has one
+                    {
+                        Mix(ref map, (int)c.Rank);
+                        Mix(ref map, (int)c.Downed);
+                        Mix(ref map, c.Victim.GetHashCode());
+                    }
+                    if (c.Foe != default) Mix(ref map, c.Foe.GetHashCode()); // its foe (S7.3), once it has one
                 }
             }
             if (sim != null && sim.WorldFlags != Simpiens.Simulation.World.WorldFlags.None) Mix(ref map, (ulong)sim.WorldFlags); // the breach (K10.4), once it happened

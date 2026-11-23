@@ -72,6 +72,30 @@ namespace Simpiens.Simulation.Creatures
         /// </summary>
         public uint LastVisitAt { get; set; }
 
+        /// <summary>
+        /// The crawler whose downing named it (Epic 11, S7.1, D31): "{its name}'s Bane", by its id while it lives and the departed
+        /// list's name after. Empty for an unnamed creature. Saved.
+        /// </summary>
+        public EntityId Victim { get; set; }
+
+        /// <summary>Its rank (D31): 0 unnamed, then 1 to <see cref="CreatureTitleTable.MaxRank"/> by the crawlers it has downed. Saved.</summary>
+        public byte Rank { get; set; }
+
+        /// <summary>How many crawlers it has downed since it was named, the first among them (D31). Saved.</summary>
+        public byte Downed { get; set; }
+
+        /// <summary>The last crawler that struck it and lived (Epic 11, S7.3, D33): it sees its foe nearer. Empty for none. Saved.</summary>
+        public EntityId Foe { get; set; }
+
+        /// <summary>True once it has a name (D31).</summary>
+        public bool IsNamed => Rank > 0;
+
+        /// <summary>Its health when whole: its kind's, grown by its rank (Epic 11, S7.2, D32).</summary>
+        public float MaxHealth => Rank == 0 ? (Definition?.MaxHealth ?? 0f) : (float)((Definition?.MaxHealth ?? 0f) * CreatureTitleTable.HealthFactor(Rank));
+
+        /// <summary>What it heals a tick resting at its place: its kind's, grown with its health, so it is whole in its kind's hours.</summary>
+        public float HealPerTick => Rank == 0 ? (Definition?.HealPerTick ?? 0f) : (float)((Definition?.HealPerTick ?? 0f) * CreatureTitleTable.HealthFactor(Rank));
+
         /// <summary>When it last swung, hit or miss (K2.5's strike pose); 0 for never. Unsaved, as a crawler's <c>StruckAtTick</c> is.</summary>
         public uint SwungAtTick { get; set; }
 

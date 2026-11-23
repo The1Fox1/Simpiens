@@ -38,7 +38,7 @@ namespace Simpiens.Core.Tests
             Assert.True(sim.Simulation.ActiveStalls[0].BuyPriceOf(Shard) == 26, "The stall opens buying the shard at its terms.");
 
             var seller = sim.Host.CrawlerStates[0];
-            Assert.True(seller.Inventory.TryAddItem(new ItemInstance(1, Shard, 3, 10), out _), "The crawler holds three shards.");
+            Assert.True(seller.Inventory.TryAddItem(new ItemInstance(Shard, 3, 10), out _), "The crawler holds three shards.");
             int mostHeld = 0;
             bool exported = false;
             long soldAt = -1;

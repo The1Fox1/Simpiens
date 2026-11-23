@@ -216,12 +216,16 @@ namespace Simpiens.Presentation
             return _identity.GetFriendlyName(SelectedCrawler);
         }
 
-        /// <summary>The name over the selection: the crawler's, or the creature kind's (K2.5).</summary>
+        /// <summary>The name over the selection: the crawler's, or the creature kind's (K2.5), a named creature's own (Epic 11, S7.7).</summary>
         public string SelectedName()
         {
             if (SelectedCrawler != default) return CrawlerName();
             if (SelectedCreature == default || _frames == null || !_frames.Current.TryGetIndex(SelectedCreature, out int index)) return string.Empty;
+            if (_frames.Current[index].CreatureRank > 0) return NameOf(SelectedCreature);
             return Simpiens.Simulation.Creatures.CreatureCatalog.Get(_frames.Current[index].Creature)?.DisplayName ?? string.Empty;
         }
+
+        /// <summary>An entity's name as the identity service gives it (Epic 11, S7.7: a named creature's); empty without one.</summary>
+        public string NameOf(EntityId id) => id == default || _identity == null ? string.Empty : _identity.GetFriendlyName(id);
     }
 }

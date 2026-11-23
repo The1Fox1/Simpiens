@@ -71,6 +71,34 @@ namespace Simpiens.Client.Tests
             Assert.Equal("Something's bound to hit.", director.Current.Script.Steps.First(s => s.Kind == CutsceneStepKind.Say).Text);
         }
 
+        /// <summary>First blood (Epic 11, S6.4, D30): one of ours slaying its first creature is a scene in the voice of its best skill; a resident's is the chronicle's only.</summary>
+        [Fact]
+        public void FirstBloodIsASceneInTheVoiceOfItsBestSkill()
+        {
+            using var sim = LocalSimulation.Create(SimulationSettings.DefaultSeed);
+            sim.Respawn(OutpostSession.SessionId);
+            var frames = new WorldViewFrames();
+            frames.Follow(sim.Host, sim.Registry, sim.Sectors, sim.Clock, Chronicle(sim));
+            var director = new SceneDirector(frames);
+            SkillScenes.AddTo(director);
+            var residents = sim.Host.CrawlerStates.Where(c => !c.IsDrifter).Take(2).ToList();
+            var member = Recruit(sim, residents[0]);
+            void Blooded(EntityId who, Skill best, long tick) => Chronicle(sim).RecordEvent(new ChronicleEvent(ChronicleEventType.FirstBlood, who, default, Floor1Layout.HubSectorId, (uint)tick,
+                ChronicleIntensity.Dramatic, (byte)Simpiens.Simulation.Creatures.CreatureKind.StoneBeetle + 256 * (byte)best));
+
+            Blooded(residents[1].AgentId, Skill.Melee, 2);
+            frames.Capture(sim.Registry.ActiveEntities, sim.Sectors, 2);
+            Assert.Null(director.Current);
+            Blooded(member.AgentId, Skill.Mining, 3);
+            frames.Capture(sim.Registry.ActiveEntities, sim.Sectors, 3);
+            Assert.NotNull(director.Current);
+            Assert.Equal(member.AgentId, director.Current.ActorOf(SkillScenes.Crawler));
+            var lines = director.Current.Script.Steps.Where(s => s.Kind == CutsceneStepKind.Say).Select(s => s.Text).ToList();
+            Assert.Equal(new[] { SkillTable.Get(Skill.Mining).Voice.FirstKill, "A stone beetle. My first." }, lines);
+            foreach (var skill in SkillTable.All)
+                Assert.NotNull(SkillScenes.FirstBloodFor(new ChronicleEvent(ChronicleEventType.FirstBlood, member.AgentId, default, 0, 0, ChronicleIntensity.Dramatic, 1 + 256 * (byte)skill.Id)));
+        }
+
         [Fact]
         public void EveryTechniqueWritesAScene()
         {

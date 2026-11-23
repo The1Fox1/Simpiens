@@ -125,15 +125,17 @@ namespace Simpiens.Simulation.Combat
 
         /// <summary>
         /// A creature as a fighter (K0.4): what it brings from its kind, its health from its own record (K2). On its feet while
-        /// it has health; practice is a crawler's alone.
+        /// it has health; practice is a crawler's alone. A named creature's <paramref name="rank"/> grows its attack (Epic 11,
+        /// S7.2, D32: <see cref="Simpiens.Simulation.Creatures.CreatureTitleTable.AttackFactor"/>); 0, unnamed, changes nothing.
         /// </summary>
-        public static Combatant ForCreature(Simpiens.Simulation.Creatures.CreatureDefinition kind, EntityId id, Vec2 position, float health)
+        public static Combatant ForCreature(Simpiens.Simulation.Creatures.CreatureDefinition kind, EntityId id, Vec2 position, float health, int rank = 0)
         {
             // Fury (Epic 10 Part 3, K10.3b, Q13): below its line a kind strikes harder and faster; it follows health, so no state
             if (kind.InFury(health))
                 return new Combatant(id, position, kind.BodyRadius, health, standing: true, (float)(kind.Attack * kind.FuryAttack), kind.Defense, kind.Reach,
                     CombatRules.SecondsToTicks((float)(kind.SwingIntervalSeconds * kind.FuryInterval)), kind.Range);
-            return new Combatant(id, position, kind.BodyRadius, health, standing: health > 0f, kind.Attack, kind.Defense, kind.Reach, kind.SwingIntervalTicks, kind.Range);
+            float attack = rank == 0 ? kind.Attack : (float)(kind.Attack * Simpiens.Simulation.Creatures.CreatureTitleTable.AttackFactor(rank));
+            return new Combatant(id, position, kind.BodyRadius, health, standing: health > 0f, attack, kind.Defense, kind.Reach, kind.SwingIntervalTicks, kind.Range);
         }
 
         public override string ToString() =>

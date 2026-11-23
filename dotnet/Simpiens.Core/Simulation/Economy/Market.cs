@@ -236,7 +236,7 @@ namespace Simpiens.Simulation.Economy
                 cmd.CreatorStallId,
                 currentTick);
             if (!posted) return 0;
-            if (cmd.Type == BountyType.Hunt) InsertHunt(new HuntRecord(bountyId, cmd.LairIndex));
+            if (cmd.Type == BountyType.Hunt) InsertHunt(new HuntRecord(bountyId, cmd.LairIndex) { Quarry = cmd.Quarry }); // its quarry, if any (Epic 11, S7.4)
             return bountyId;
         }
 
@@ -517,27 +517,35 @@ namespace Simpiens.Simulation.Economy
             return true;
         }
 
-        /// <summary>A crawler's blow on a creature of lair <paramref name="lairIndex"/> adds to its share of every hunt on it it joined (K6.1).</summary>
-        public void RecordHuntDamage(EntityId crawler, int lairIndex, float damage)
+        /// <summary>
+        /// A crawler's blow on creature <paramref name="creature"/> of lair <paramref name="lairIndex"/> adds to its share of every
+        /// hunt on it it joined (K6.1): a hunt of the lair counts a blow on any of its creatures, a hunt naming its quarry only a
+        /// blow on the quarry (Epic 11, S7.4, D34).
+        /// </summary>
+        public void RecordHuntDamage(EntityId crawler, int lairIndex, EntityId creature, float damage)
         {
             for (int i = 0; i < _hunts.Count; i++)
             {
                 if (_hunts[i].LairIndex != lairIndex || !_hunts[i].HasClaimant(crawler)) continue;
+                if (_hunts[i].Quarry != default && _hunts[i].Quarry != creature) continue;
                 _hunts[i] = _hunts[i].WithDamage(crawler, damage);
             }
         }
 
         /// <summary>
-        /// Pays every joined hunt whose lair is empty (K6.1, Q7): the escrow by damage dealt, the bounty completed, the
-        /// chronicle told. A hunt on an emptied lair with nobody in it waits for a claimant, or its expiry. In id order.
+        /// Pays every joined hunt whose lair is empty (K6.1, Q7), or, naming its quarry, whose quarry is dead (Epic 11, S7.4, D34):
+        /// the escrow by damage dealt, the bounty completed, the chronicle told. A done hunt with nobody in it waits for a
+        /// claimant, or its expiry. In id order.
         /// </summary>
-        public void SettleHunts(IReadOnlyList<Simpiens.Simulation.Creatures.LairState> lairs, IAgentRegistry agents, uint currentTick)
+        public void SettleHunts(Simpiens.Simulation.Creatures.CreatureService creatures, IAgentRegistry agents, uint currentTick)
         {
             bool settled = false;
             for (int i = _hunts.Count - 1; i >= 0; i--)
             {
                 var hunt = _hunts[i];
-                if (hunt.Count == 0 || lairs == null || hunt.LairIndex >= lairs.Count || lairs[hunt.LairIndex].Alive > 0) continue;
+                var lairs = creatures?.Lairs;
+                if (hunt.Count == 0 || lairs == null || hunt.LairIndex >= lairs.Count) continue;
+                if (hunt.Quarry != default ? creatures.TryGet(hunt.Quarry, out var quarry) && quarry.IsAlive : lairs[hunt.LairIndex].Alive > 0) continue;
                 if (!_bounties.TryGetValue(hunt.BountyId, out var bounty) || bounty.Status != BountyStatus.Open) continue;
                 uint reward = _economyLedger != null ? _economyLedger.GetEscrowAmount(hunt.BountyId) : bounty.RewardGold;
                 var claimants = new Span<EntityId>(_shareClaimants, 0, hunt.Count);
@@ -548,7 +556,7 @@ namespace Simpiens.Simulation.Economy
                 _bounties[hunt.BountyId] = bounty.WithClaimant(hunt.Claimant0, BountyStatus.Completed);
                 _hunts.RemoveAt(i);
                 settled = true;
-                SimLog.Economy.ZLogInformation($"Hunt #{hunt.BountyId} done: lair {hunt.LairIndex} emptied; {reward}g paid to {hunt.Count} hunter(s) by damage dealt");
+                SimLog.Economy.ZLogInformation($"Hunt #{hunt.BountyId} done: {(hunt.Quarry != default ? "its quarry slain" : $"lair {hunt.LairIndex} emptied")}; {reward}g paid to {hunt.Count} hunter(s) by damage dealt");
                 for (int c = 0; c < hunt.Count; c++)
                 {
                     if (agents != null && agents.TryGetAgent(hunt.ClaimantAt(c), out var hunter)) hunter.AddDeed(Simpiens.Simulation.Skills.Deed.HuntPaid); // a deed (Epic 11, S0.5)

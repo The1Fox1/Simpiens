@@ -56,7 +56,7 @@ namespace Simpiens.Testing.Skills
             Assert(reader.Skills.Level(Skill.Ranged) == ManualBlock.PrimerCeiling && reader.Skills.Experience(Skill.Ranged) == SkillRules.ExperienceFor(ManualBlock.PrimerCeiling),
                 $"Keen, 450 from Ranged 2 would pass 3: held to the primer's ceiling ({reader.Skills.Experience(Skill.Ranged)}).");
             // Past the ceiling, the book is used up for nothing
-            reader.Inventory.TryAddItem(new ItemInstance(1, ItemType.RangedPrimer, 1, 30), out _);
+            reader.Inventory.TryAddItem(new ItemInstance(ItemType.RangedPrimer, 1, 30), out _);
             int had = reader.Skills.Experience(Skill.Ranged);
             Assert(_sim.RunToCompletion(node, Read(node), Ticks() + 5) == IntentResult.Success && reader.Skills.Experience(Skill.Ranged) == had
                 && reader.Inventory.GetItemCount(ItemType.RangedPrimer) == 0, "A reader at the ceiling uses the book up and gains nothing.");
@@ -92,7 +92,7 @@ namespace Simpiens.Testing.Skills
             var traits = default(CrawlerTraits);
             traits.SetPassion(Skill.Ranged, passion);
             reader.Traits = traits;
-            reader.Inventory.TryAddItem(new ItemInstance(1, ItemType.RangedPrimer, 1, 30), out _);
+            reader.Inventory.TryAddItem(new ItemInstance(ItemType.RangedPrimer, 1, 30), out _);
             return (crawler.Node, reader);
         }
 

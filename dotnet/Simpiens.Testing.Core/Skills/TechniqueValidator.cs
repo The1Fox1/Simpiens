@@ -103,9 +103,10 @@ namespace Simpiens.Testing.Skills
                 Assert(TechniqueRules.Clamp(stat, max + 1000) == max && TechniqueRules.Clamp(stat, min - 1000) == min && TechniqueRules.Clamp(stat, 0) == 0, $"{stat}: held within its bounds.");
                 bool used = false;
                 foreach (var row in TechniqueTable.All) used |= row.ValueOf(stat) != 0;
-                Assert(used, $"{stat}: some technique uses it.");
+                foreach (var trait in EarnedTraitTable.All) used |= trait.ValueOf(stat) != 0; // or an earned trait (Epic 11, S6.3: Dread is Shaken's)
+                Assert(used, $"{stat}: some technique or earned trait uses it.");
             }
-            TestLog.Log("[PASS] Test 3: every stat has bounds around nothing, holds within them, and some technique uses it.");
+            TestLog.Log("[PASS] Test 3: every stat has bounds around nothing, holds within them, and some technique or earned trait uses it.");
         }
 
         private static void ValidateTheRecord()

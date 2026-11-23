@@ -81,18 +81,21 @@ namespace Simpiens.Cognition.Planning.Handlers
 
                 var tradedIn = tradeIn ? agent.Inventory.Unequip(replacing) : ItemInstance.Empty;
                 var wornIn = default(Simpiens.Simulation.Items.EquipmentSlot);
+                ushort masterpiece = 0;
                 if (gear)
                 {
                     // New equipment comes at the best grade on the shelf (Epic 10 Part 2, D57), its life the grade's (hazard
-                    // gear: ticks of hazard exposure)
+                    // gear: ticks of hazard exposure); a masterpiece on the shelf first (Epic 11, S8.3, D43)
                     byte grade = stall.BestGradeOf(trade.ItemType);
-                    if (!agent.Inventory.TryEquip(new ItemInstance(1, trade.ItemType, 1, (ushort)unitPrice, quality: grade, durability: equipment.DurabilityAt(grade)), out wornIn))
+                    var piece = context.Masterpieces != null ? context.Masterpieces.PieceFor(trade.ItemType, grade, (ushort)unitPrice, out masterpiece)
+                        : new ItemInstance(trade.ItemType, 1, (ushort)unitPrice, quality: grade, durability: equipment.DurabilityAt(grade));
+                    if (!agent.Inventory.TryEquip(piece, out wornIn))
                     {
                         if (!tradedIn.IsEmpty) agent.Inventory.TryEquip(tradedIn);
                         return Reject(node, trade, "a crawler wears one piece a slot");
                     }
                 }
-                else if (!agent.Inventory.TryAddItem(new ItemInstance(1, trade.ItemType, trade.Quantity, (ushort)unitPrice), out _))
+                else if (!agent.Inventory.TryAddItem(new ItemInstance(trade.ItemType, trade.Quantity, (ushort)unitPrice), out _))
                 {
                     return Reject(node, trade, "inventory full");
                 }
@@ -115,9 +118,10 @@ namespace Simpiens.Cognition.Planning.Handlers
                     stall = stall.WithTreasury(stall.TreasuryGold + totalCost);
                 }
                 stall = gear ? stall.TakeBest(trade.ItemType, out _) : stall.WithStock(trade.ItemType, (ushort)(stall.SellStockOf(trade.ItemType) - trade.Quantity));
+                if (masterpiece != 0) context.Masterpieces.HandOut(masterpiece, node.Id); // its new owner (Epic 11, S8.3)
                 // The old piece stays at the stall, no gold back (D53): on its shelf of worn pieces if the forge can mend it (D58),
-                // back in stock while sound if not
-                if (!tradedIn.IsEmpty) stall = Simpiens.Simulation.Workshops.Crafting.HandBack(stall, tradedIn);
+                // back in stock while sound if not; a masterpiece back on the shelf whole (Epic 11, S8.3)
+                if (!tradedIn.IsEmpty) stall = context.Masterpieces != null ? context.Masterpieces.HandBack(stall, tradedIn) : Simpiens.Simulation.Workshops.Crafting.HandBack(stall, tradedIn);
                 context.UpdateStall(stall);
 
                 // Trade-to-Affinity: the buyer judges the price by its own calm valuation (review §3.3 D3)
@@ -183,7 +187,7 @@ namespace Simpiens.Cognition.Planning.Handlers
                 {
                     if (!context.EconomyLedger.TryExecuteStallSale(stall.StallEntityId, ref stall, agent.Inventory, totalPayout))
                     {
-                        agent.Inventory.TryAddItem(new ItemInstance((ushort)trade.ItemType, trade.ItemType, trade.Quantity, economy.BaseValue(trade.ItemType)), out _); // roll back
+                        agent.Inventory.TryAddItem(new ItemInstance(trade.ItemType, trade.Quantity, economy.BaseValue(trade.ItemType)), out _); // roll back
                         return Reject(node, trade, "ledger refused the sale");
                     }
                 }

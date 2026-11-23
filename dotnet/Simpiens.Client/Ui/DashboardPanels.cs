@@ -38,8 +38,16 @@ namespace Simpiens.Client.Ui
         private readonly SpriteRuntime _portraitBadge; // Epic 11, S5.8: a guild member's role at its portrait's corner
         private readonly ContainerRuntime _techniquesLine;
         private string _techniquesTip;
+        private readonly TextRuntime _legend; // Epic 11, S6.6: its epithet, earned traits and scars, their words in the line's tip
+        private readonly ContainerRuntime _legendLine;
+        private readonly ContainerRuntime _gearLine; // its tip: the masterpieces' stories (Epic 11, S8.5)
+        private string _gearTip;
+        private string _legendTip;
         private readonly GraphicalUiElement _affinitiesViewer;
-        private const float AffinitiesHeight = 70f, HeldLineHeight = 14f; // the held line takes its 11-point line from the feelings
+        private const float PlaytestRowHeight = 24f, PlaytestLabelWidth = 62f; // the playtest tools' row under the sway, and its label
+        // The feelings' list's height at 720 rows, and what each optional line (the skill notes, the techniques, the legend)
+        // takes from it: its 14-pixel line and the column's 4 of spacing (Epic 11, F16: 70 and 14 until S8.5 overran the frame)
+        private const float AffinitiesHeight = 68f, HeldLineHeight = 18f;
         private readonly SkillLine _skills; // Epic 10 Part 3, K9.5; with passions' flames since Epic 11, S1.6
         private readonly TextRuntime _description, _moodLine; // Epic UI-Beta B3
         private readonly PortraitAtlas _portraits;
@@ -56,7 +64,7 @@ namespace Simpiens.Client.Ui
         private readonly List<(ContainerRuntime Row, ContainerRuntime FaceBox, SpriteRuntime Face)> _affinityFaces = new List<(ContainerRuntime, ContainerRuntime, SpriteRuntime)>(16);
         private readonly DriveBar _health, _hunger, _energy, _social, _frustration;
 
-        public DashboardPanels(DashboardModel model, IconAtlas icons, PortraitAtlas portraits = null)
+        public DashboardPanels(DashboardModel model, IconAtlas icons, PortraitAtlas portraits = null, bool playtest = false)
         {
             _icons = icons;
             _portraits = portraits;
@@ -158,7 +166,7 @@ namespace Simpiens.Client.Ui
             _frustration = new DriveBar(_dossierDetails, "Frustration:", UiStyle.Danger);
             // What it wears (Epic 10 G3's gear, W1.6b's tool; every slot from the table since Epic 10 Part 3, K1.5): each piece's
             // icon at 1x (graphics V4) and its words, on one line: the dossier has no height to spare at 720 rows
-            var gearLine = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = IconAtlas.SmallSize };
+            var gearLine = _gearLine = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = IconAtlas.SmallSize, HasEvents = true };
             Equipment = new WornLine(icons);
             gearLine.Children.Add(Equipment.Visual);
             _dossierDetails.Children.Add(gearLine);
@@ -177,6 +185,12 @@ namespace Simpiens.Client.Ui
             _techniques = UiParts.Text(string.Empty, UiStyle.TextSecondary, UiText.Small);
             _techniquesLine.Children.Add(_techniques);
             _dossierDetails.Children.Add(_techniquesLine);
+            // Its legend (Epic 11, S6.6, D36): "Beetlebane, 3 creatures slain · Battle-Hardened · a scar", what each is in the tip;
+            // shown only when it has any, its line from the feelings' list as the techniques' is
+            _legendLine = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, HeightUnits = DimensionUnitType.RelativeToChildren, Height = 0f, HasEvents = true, Visible = false };
+            _legend = UiParts.Text(string.Empty, UiStyle.Accent, UiText.Small);
+            _legendLine.Children.Add(_legend);
+            _dossierDetails.Children.Add(_legendLine);
             _held = UiParts.Text(string.Empty, UiStyle.TextMuted, UiText.Small);
             _held.Visible = false;
             _dossierDetails.Children.Add(_held);
@@ -206,7 +220,8 @@ namespace Simpiens.Client.Ui
             _affinitiesList = Scroll(_dossierDetails, AffinitiesHeight, 2f, out _affinitiesViewer); // two rows with faces (UI-Beta B4); it scrolls. Unity's max-height was 120: the guild's lines and the portrait's header took the rest
             _dossierDetails.Children.Add(Window.Gap(0f));
             _dossierDetails.Children.Add(Window.SubHeader("YOUR SWAY"));
-            // Whether it would sign on with the guild, then Calm and Recruit side by side (Epic 10 G4, D6)
+            // Whether it would sign on with the guild, then Recruit (Epic 10 G4, D6). Calm Frustration stood beside it until the
+            // producer named it a debug action (2026-11-21): it is one of the playtest tools now
             _recruitText = UiParts.Text(string.Empty, UiStyle.TextLight, UiText.Small);
             _dossierDetails.Children.Add(_recruitText);
             // In the dossier's stack, so not UiParts.Row, which centres itself in its parent
@@ -218,8 +233,6 @@ namespace Simpiens.Client.Ui
                 Width = 0f,
                 Height = 32f,
             };
-            CalmButton = UiParts.Button("Calm Frustration", 0f, 32f, UiText.BodyBold);
-            CalmButton.Click += (_, _) => { _model.Dossier.Calm(); };
             RecruitButton = UiParts.Button("Recruit", 0f, 32f, UiText.BodyBold);
             // One of the patron's people is sponsored, not recruited (Epic 11, S4.9, D18): the same button, by who is shown,
             // opens its technique tree (S4.11, D25)
@@ -228,9 +241,38 @@ namespace Simpiens.Client.Ui
                 if (_model.Dossier.IsOurs) OpenTechniques?.Invoke(_model.Dossier.CrawlerId);
                 else _model.Dossier.Recruit();
             };
-            actions.Children.Add(CalmButton.Visual);
             actions.Children.Add(RecruitButton.Visual);
             _dossierDetails.Children.Add(actions);
+            // The playtest tools (ClientOptions.PlaytestTools: development builds, or --playtest), a row under the sway marked as
+            // such; built only when asked for, so the dossier tests and renders see nothing of them
+            if (playtest)
+            {
+                var tools = new ContainerRuntime
+                {
+                    ChildrenLayout = ChildrenLayout.LeftToRightStack,
+                    StackSpacing = 8f,
+                    WidthUnits = DimensionUnitType.RelativeToParent,
+                    Width = 0f,
+                    Height = PlaytestRowHeight,
+                };
+                var label = UiParts.Text("PLAYTEST", UiStyle.TextMuted, UiText.SmallBold);
+                label.WidthUnits = DimensionUnitType.Absolute;
+                label.Width = PlaytestLabelWidth;
+                label.YUnits = GeneralUnitType.PixelsFromMiddle;
+                label.YOrigin = VerticalAlignment.Center;
+                label.Y = 0f;
+                tools.Children.Add(label);
+                CalmButton = UiParts.Button("Calm", 0f, PlaytestRowHeight, UiText.SmallBold);
+                MaxTrustButton = UiParts.Button("Max Trust", 0f, PlaytestRowHeight, UiText.SmallBold);
+                DownButton = UiParts.Button("Down", 0f, PlaytestRowHeight, UiText.SmallBold);
+                CalmButton.Click += (_, _) => { _model.Dossier.Calm(); };
+                MaxTrustButton.Click += (_, _) => { _model.Dossier.MaxStanding(); };
+                DownButton.Click += (_, _) => { _model.Dossier.Down(); };
+                tools.Children.Add(CalmButton.Visual);
+                tools.Children.Add(MaxTrustButton.Visual);
+                tools.Children.Add(DownButton.Visual);
+                _dossierDetails.Children.Add(tools);
+            }
             dossierBody.Children.Add(_dossierDetails);
             dossier.Children.Add(dossierBody);
             Root.Children.Add(dossier);
@@ -268,13 +310,38 @@ namespace Simpiens.Client.Ui
             float words = _portraits != null ? size + 10f : 0f;
             _who.X = words;
             _who.Width = -words;
-            float half = (dossier - 2f * Inner - 8f) / 2f;
-            CalmButton.Width = half;
-            RecruitButton.Width = half;
+            float full = dossier - 2f * Inner;
+            RecruitButton.Width = full;
+            if (MaxTrustButton != null)
+            {
+                float third = (float)System.Math.Floor((full - PlaytestLabelWidth - 3f * 8f) / 3f);
+                CalmButton.Width = third;
+                MaxTrustButton.Width = third;
+                DownButton.Width = third;
+                // At the smallest portrait (a window of 720 rows) the dossier has no height to spare: the tools' row takes its
+                // height from the feelings' list, as the held line does; a larger window has the room below
+                _playtestTakes = size <= PortraitAtlas.FramedSize * PortraitAtlas.BaseScale ? PlaytestRowHeight + 4f : 0f;
+                FitAffinities();
+            }
+        }
+
+        /// <summary>The feelings' list gives a line to each of the held, techniques' and legend's lines shown, and the playtest tools' row its room at 720 rows.</summary>
+        private void FitAffinities()
+        {
+            float height = AffinitiesHeight - (_held.Visible ? HeldLineHeight : 0f) - (_techniquesLine.Visible ? HeldLineHeight : 0f) - (_legendLine.Visible ? HeldLineHeight : 0f) - _playtestTakes;
+            _affinitiesViewer.Height = System.Math.Max(0f, height);
         }
 
         public ContainerRuntime Root { get; }
+        /// <summary>
+        /// The playtest tools (development builds, or --playtest): its frustration calmed; its warmth and trust toward the player at
+        /// their most; downed where it stands. Null without them.
+        /// </summary>
         public Button CalmButton { get; }
+        public Button MaxTrustButton { get; }
+        public Button DownButton { get; }
+        private bool _playtestTipped;
+        private float _playtestTakes; // what the playtest tools' row takes from the feelings' list
         public Button RecruitButton { get; }
         public string GroupsShown => _groups.Text;
 
@@ -289,6 +356,15 @@ namespace Simpiens.Client.Ui
 
         /// <summary>The element whose tip says what each technique does.</summary>
         public GraphicalUiElement TechniquesLine => _techniquesLine;
+
+        /// <summary>The feelings' list's height as fitted (Epic 11, F16).</summary>
+        public float AffinitiesShownHeight => _affinitiesViewer.Height;
+
+        /// <summary>The legend line as shown (Epic 11, S6.6); empty when hidden.</summary>
+        public string LegendShown => _legendLine.Visible ? _legend.Text : string.Empty;
+
+        /// <summary>The element whose tip says what the epithet, each trait and each scar are.</summary>
+        public GraphicalUiElement LegendLine => _legendLine;
 
         /// <summary>The sway's second button as shown (its words are <see cref="RecruitShown"/>): "Recruit" for a resident, "Sponsor" for one of the patron's people.</summary>
         public string SwayButtonShown => RecruitButton.Text;
@@ -440,6 +516,11 @@ namespace Simpiens.Client.Ui
             _dossierBadgeFill.FillColor = UiStyle.StateColor(dossier.State);
             _health.Set(dossier.Health);
             Equipment.Show(dossier.Equipment);
+            if (!string.Equals(_gearTip, dossier.GearTip, System.StringComparison.Ordinal))
+            {
+                _gearTip = dossier.GearTip;
+                Tips?.Register(_gearLine, _gearTip.Length > 0 ? _gearTip : null); // a masterpiece's story (Epic 11, S8.5, D45)
+            }
             _hunger.Set(dossier.Hunger);
             _energy.Set(dossier.Energy);
             _social.Set(dossier.Social);
@@ -477,16 +558,35 @@ namespace Simpiens.Client.Ui
             }
             for (int i = affinities.Count; i < _affinityRows.Count; i++) _affinityFaces[i].Row.Visible = false;
             _affinitiesEmpty.Visible = affinities.Count == 0;
-            CalmButton.IsEnabled = dossier.CanCalm;
+            if (MaxTrustButton != null)
+            {
+                CalmButton.IsEnabled = dossier.CanCalm;
+                MaxTrustButton.IsEnabled = dossier.CanPlaytest;
+                DownButton.IsEnabled = dossier.CanDown;
+                if (!_playtestTipped && Tips != null)
+                {
+                    _playtestTipped = true;
+                    Tips.Register(CalmButton.Visual, "Playtest: its frustration calmed to nothing.");
+                    Tips.Register(MaxTrustButton.Visual, "Playtest: its warmth and trust toward you at their most (100).");
+                    Tips.Register(DownButton.Visual, "Playtest: downed where it stands, as by a beetle. In a lair or a hazard it bleeds out unless carried out; elsewhere it counts as a downing survived, and lies until it heals.");
+                }
+            }
             UiParts.SetText(_groups, dossier.Groups);
             _skills.Show(dossier.SkillsShown);
             string notes = dossier.SkillNotes;
-            bool held = notes.Length > 0, techniques = dossier.Techniques.Length > 0;
-            if (_held.Visible != held || _techniquesLine.Visible != techniques)
+            bool held = notes.Length > 0, techniques = dossier.Techniques.Length > 0, legend = dossier.Legend.Length > 0;
+            if (_held.Visible != held || _techniquesLine.Visible != techniques || _legendLine.Visible != legend)
             {
                 _held.Visible = held;
                 _techniquesLine.Visible = techniques;
-                _affinitiesViewer.Height = AffinitiesHeight - (held ? HeldLineHeight : 0f) - (techniques ? HeldLineHeight : 0f);
+                _legendLine.Visible = legend;
+                FitAffinities();
+            }
+            if (legend) UiParts.SetText(_legend, dossier.Legend);
+            if (!string.Equals(_legendTip, dossier.LegendTip, System.StringComparison.Ordinal))
+            {
+                _legendTip = dossier.LegendTip;
+                Tips?.Register(_legendLine, _legendTip.Length > 0 ? _legendTip : null);
             }
             if (held) UiParts.SetText(_held, notes);
             if (techniques) UiParts.SetText(_techniques, dossier.Techniques);

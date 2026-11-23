@@ -64,9 +64,9 @@ namespace Simpiens.Testing.Persistence
         {
             var items = new[]
             {
-                new ItemInstance(1, ItemType.Ration, 3, 5),
-                new ItemInstance(2, ItemType.IronOre, 1, 8, quality: 1, durability: 60),
-                new ItemInstance(3, ItemType.MedicinalHerb, 2, 12, quality: 2, durability: 99),
+                new ItemInstance(ItemType.Ration, 3, 5),
+                new ItemInstance(ItemType.IronOre, 1, 8, quality: 1, durability: 60),
+                new ItemInstance(ItemType.MedicinalHerb, 2, 12, quality: 2, durability: 99),
             };
 
             byte[] bytes = SaveSerializer.Serialize(items);

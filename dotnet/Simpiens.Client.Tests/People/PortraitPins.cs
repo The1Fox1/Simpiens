@@ -42,6 +42,10 @@ namespace Simpiens.Client.Tests.People
             // A suit on the shoulders (Epic 10 Part 3, K1.5), and with a hard hat
             yield return Portrait("Portrait/suit", new PortraitKey(Basis, Mood.Content, CrawlerStanding.Resident, WornLook.Wearing(ItemType.HazardGear)));
             yield return Portrait("Portrait/hat-and-suit", new PortraitKey(Basis, Mood.Content, CrawlerStanding.Resident, WornLook.Wearing(ItemType.HardHat).And(Simpiens.Simulation.Items.EquipmentSlot.Body, ItemType.HazardGear)));
+            // Scars (Epic 11, S6.7): each shape at all four places
+            var everywhere = new[] { Simpiens.Simulation.Skills.ScarPlace.LeftCheek, Simpiens.Simulation.Skills.ScarPlace.Brow, Simpiens.Simulation.Skills.ScarPlace.RightCheek, Simpiens.Simulation.Skills.ScarPlace.Chin };
+            foreach (var shape in Enum.GetValues<Simpiens.Simulation.Skills.ScarShape>())
+                yield return Portrait($"Portrait/scar/{shape}", new PortraitKey(Basis, Mood.Content, CrawlerStanding.Resident, default, scars: ScarMarks.With(shape, everywhere)));
             for (uint i = 0; i < PeopleSheetTests.CrowdSize; i++)
                 yield return Portrait($"Portrait/crowd/{i:D2}", new PortraitKey(CrawlerLook.Generate(PeopleSheetTests.CrowdSeed, new EntityId(i + 1u, 0u, 0u, 0u)), Mood.Content, CrawlerStanding.Resident, default));
         }

@@ -109,7 +109,7 @@ namespace Simpiens.Testing.Economy
             Assert(Outfitting.BestInStock(noRespirators, bare, OutfitNeed.Against(HazardKind.FoulAir), EquipmentSlot.Head, false, out _) == ItemType.None, "Out of respirators, nothing on the head cuts foul air.");
 
             var hatted = new AgentInventory(4, startingGold: 0);
-            hatted.TryEquip(new ItemInstance(1, ItemType.HardHat, 1, 60, durability: 500));
+            hatted.TryEquip(new ItemInstance(ItemType.HardHat, 1, 60, durability: 500));
             Assert(Outfitting.BestInStock(stall, hatted, rock, EquipmentSlot.Head, overBare: false, out _) == ItemType.None, "A hard hat worn: no other piece gains against falling rock.");
             Assert(Outfitting.BestInStock(stall, hatted, rock, EquipmentSlot.Head, overBare: true, out gain) == ItemType.HardHat && Near(gain, 0.75f), "Worn down, it is refreshed: the best over the head bare.");
 

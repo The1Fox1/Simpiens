@@ -194,10 +194,10 @@ namespace Simpiens.Testing.Economy
             agent.Inventory.Gold = 25;
 
             // Fill all 4 slots with distinct items
-            agent.Inventory.TryAddItem(new ItemInstance(1, ItemType.IronOre, 1, 8), out _);
-            agent.Inventory.TryAddItem(new ItemInstance(2, ItemType.MedicinalHerb, 1, 12), out _);
-            agent.Inventory.TryAddItem(new ItemInstance(3, ItemType.ToolPickaxe, 1, 15), out _);
-            agent.Inventory.TryAddItem(new ItemInstance(4, ItemType.HazardGear, 1, 20), out _);
+            agent.Inventory.TryAddItem(new ItemInstance(ItemType.IronOre, 1, 8), out _);
+            agent.Inventory.TryAddItem(new ItemInstance(ItemType.MedicinalHerb, 1, 12), out _);
+            agent.Inventory.TryAddItem(new ItemInstance(ItemType.ToolPickaxe, 1, 15), out _);
+            agent.Inventory.TryAddItem(new ItemInstance(ItemType.HazardGear, 1, 20), out _);
             registry.Register(node);
 
             var intentState = new ActiveIntentState
@@ -232,7 +232,7 @@ namespace Simpiens.Testing.Economy
             var node = goCrawler.Node;
             var agent = goCrawler.Agent;
             agent.Inventory.Gold = 0;
-            agent.Inventory.TryAddItem(new ItemInstance(10, ItemType.IronOre, 2, 8), out _);
+            agent.Inventory.TryAddItem(new ItemInstance(ItemType.IronOre, 2, 8), out _);
             registry.Register(node);
 
             var intentState = new ActiveIntentState
@@ -505,7 +505,7 @@ namespace Simpiens.Testing.Economy
             var goCrawler = HeadlessEntities.Crawler(null, simManager, clock, new Vec2(0f, 0.5f), id: EntityId.Generate(), name: "[Test_Affinity_StingySale]", register: false);
             var node = goCrawler.Node;
             var agent = goCrawler.Agent;
-            agent.Inventory.TryAddItem(new ItemInstance((ushort)ItemType.IronOre, ItemType.IronOre, 1, EconomyTuning.Default.BaseValue(ItemType.IronOre)), out _);
+            agent.Inventory.TryAddItem(new ItemInstance(ItemType.IronOre, 1, EconomyTuning.Default.BaseValue(ItemType.IronOre)), out _);
             registry.Register(node);
 
             var intentState = new ActiveIntentState
@@ -539,7 +539,7 @@ namespace Simpiens.Testing.Economy
             var goCrawler = HeadlessEntities.Crawler(null, simManager, clock, new Vec2(0f, 0.5f), id: EntityId.Generate(), name: "[Test_FullStall]", register: false);
             var node = goCrawler.Node;
             var agent = goCrawler.Agent;
-            agent.Inventory.TryAddItem(new ItemInstance((ushort)ItemType.IronOre, ItemType.IronOre, 1, EconomyTuning.Default.BaseValue(ItemType.IronOre)), out _);
+            agent.Inventory.TryAddItem(new ItemInstance(ItemType.IronOre, 1, EconomyTuning.Default.BaseValue(ItemType.IronOre)), out _);
             registry.Register(node);
             int goldBefore = agent.Inventory.Gold;
 
@@ -574,7 +574,7 @@ namespace Simpiens.Testing.Economy
             var node = goCrawler.Node;
             var agent = goCrawler.Agent;
             agent.Inventory.Gold = 30;
-            agent.Inventory.TryAddItem(new ItemInstance((ushort)ItemType.IronOre, ItemType.IronOre, 1, EconomyTuning.Default.BaseValue(ItemType.IronOre)), out _);
+            agent.Inventory.TryAddItem(new ItemInstance(ItemType.IronOre, 1, EconomyTuning.Default.BaseValue(ItemType.IronOre)), out _);
             registry.Register(node);
 
             simManager.RunToCompletion(node, new ActiveIntentState
@@ -619,8 +619,8 @@ namespace Simpiens.Testing.Economy
                 snapshot.SetStalls(new[] { stall }, 1);
                 if (withClaim) snapshot.SetBounties(new[] { claimed }, 1);
                 var inventory = new AgentInventory(AgentInventory.DefaultCapacity, startingGold: 10);
-                for (int i = 0; i < ore; i++) inventory.TryAddItem(new ItemInstance((ushort)(100 + i), ItemType.IronOre, 1, 8), out _);
-                for (int i = 0; i < herb; i++) inventory.TryAddItem(new ItemInstance((ushort)(200 + i), ItemType.MedicinalHerb, 1, 12), out _);
+                for (int i = 0; i < ore; i++) inventory.TryAddItem(new ItemInstance(ItemType.IronOre, 1, 8), out _);
+                for (int i = 0; i < herb; i++) inventory.TryAddItem(new ItemInstance(ItemType.MedicinalHerb, 1, 12), out _);
                 return new AgentContext(agentId, new Vec2(1f, 0f), new AgentNeeds(20f, 80f, 60f), 0f, snapshot,
                     new Simpiens.Cognition.Memory.AgentMemory(), 10, inventory: inventory.GetSnapshot());
             }

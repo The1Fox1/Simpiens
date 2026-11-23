@@ -61,6 +61,7 @@ namespace Simpiens.Presentation
                     string badge = ArtKeys.Badge((Simpiens.Simulation.Skills.PartyRole)r);
                     _badges[r] = badge != null && value.TryId(badge, out var id) ? id : ArtId.None;
                 }
+                _namedBadge = value.TryId(ArtKeys.BadgeNamed, out var named) ? named : ArtId.None;
                 _gate = value.TryId(ArtKeys.PropGate, out var gate) ? gate : ArtId.None;
                 _gateOpen = value.TryId(ArtKeys.PropGateOpen, out var open) ? open : ArtId.None;
                 _caravan = value.TryId(ArtKeys.PropCaravan, out var caravan) ? caravan : ArtId.None;
@@ -87,6 +88,7 @@ namespace Simpiens.Presentation
         private ArtCatalog _catalog;
         private ArtId _floor, _rock, _wall, _lowWall, _ring, _shadow, _caravan, _bar, _gate, _gateOpen;
         private readonly ArtId[] _badges = new ArtId[5]; // by PartyRole (Epic 11, S5.8)
+        private ArtId _namedBadge; // a named creature's mark (Epic 11, S7.7)
         private readonly ArtId[] _hazards = new ArtId[4]; // by HazardKind
 
         /// <summary>Where and when the hazards' animations play (Epic 10 Part 2, the stretch, D69).</summary>
@@ -186,7 +188,7 @@ namespace Simpiens.Presentation
                 {
                     ref readonly var entity = ref frame[i];
                     if (entity.IsCrawler) AddCrawler(entity, frames.DrawnPosition(i), viewSeconds);
-                    else if (entity.IsCreature) AddCreature(entity, frames.DrawnPosition(i), viewSeconds, frames);
+                    else if (entity.IsCreature) AddCreature(entity, frames.DrawnPosition(i), viewSeconds, frames, selection);
                     else AddProp(entity, viewSeconds);
                 }
                 for (int i = 0; i < frame.StallCount; i++) AddStall(frame.Stall(i), viewSeconds);
@@ -281,7 +283,7 @@ namespace Simpiens.Presentation
         /// sector, as it hides a crawler (D1 = C). Striking, it lunges at its quarry, facing it (<see cref="LungeDistance"/>,
         /// the strike pose); its shadow stays where it stands. A click on it selects it, and the inspector shows it.
         /// </summary>
-        private void AddCreature(in EntityView entity, Vec2 position, float viewSeconds, WorldViewFrames frames)
+        private void AddCreature(in EntityView entity, Vec2 position, float viewSeconds, WorldViewFrames frames, WorldSelection selection)
         {
             var art = Visuals.Creature(entity.Creature);
             if (art.IsNone) return;
@@ -308,7 +310,28 @@ namespace Simpiens.Presentation
             item.Pick = Items.Pickable(entity.Id); // a click selects it, and the inspector shows it
             var kind = Simpiens.Simulation.Creatures.CreatureCatalog.Get(entity.Creature);
             if (kind != null && kind.IsBoss) AddBossBar(kind, entity.CreatureHealth, position, shown, viewSeconds);
+            if (entity.CreatureRank > 0) AddNamed(entity, position, shown, viewSeconds, selection);
         }
+
+        /// <summary>
+        /// A named creature (Epic 11, S7.7, D37): its mark where a role badge hangs, and its name over it in amber, as a crawler's
+        /// over the selection; the selection names it itself when it is the one selected. Faded with the fog, as it is.
+        /// </summary>
+        private void AddNamed(in EntityView entity, Vec2 position, float shown, float viewSeconds, WorldSelection selection)
+        {
+            if (!_namedBadge.IsNone)
+            {
+                ref var mark = ref Add(DrawRole.Crawler, Projection.Depth(position), _catalog.Piece(_namedBadge, viewSeconds), position + _catalog.BadgeOffset, Shown(White, shown));
+                mark.Z = _catalog.BadgeHeight;
+                mark.Pick = Items.Pickable(entity.Id);
+            }
+            if (selection == null || selection.SelectedCreature == entity.Id) return;
+            string name = selection.NameOf(entity.Id);
+            if (name.Length > 0) Labels.Add(new WorldLabel(name, position + _catalog.NameOffset, LabelKind.Name, Shown(NamedColor, shown), _catalog.NameHeight));
+        }
+
+        /// <summary>A named creature's name (Epic 11, S7.7, D37): the interface's amber.</summary>
+        private static readonly Rgba32 NamedColor = new Rgba32(232, 160, 64, 255);
 
         /// <summary>
         /// The descent gate (Epic 10 Part 3, K10.5c, Q13), a prop at each of the map's gates: sealed, or once the world's flag

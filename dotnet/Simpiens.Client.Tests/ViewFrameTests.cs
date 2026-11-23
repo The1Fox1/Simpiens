@@ -70,8 +70,8 @@ namespace Simpiens.Client.Tests
             sim.Respawn(Simpiens.Core.Session.OutpostSession.SessionId);
             var wearer = sim.Host.CrawlerStates[0];
             var carrier = sim.Host.CrawlerStates[1];
-            wearer.Inventory.TryEquip(new Simpiens.Simulation.Economy.ItemInstance(1, Simpiens.Simulation.Economy.ItemType.HazardGear, 1, 30, durability: 100));
-            Assert.True(carrier.Inventory.TryAddItem(new Simpiens.Simulation.Economy.ItemInstance(2, Simpiens.Simulation.Economy.ItemType.IronOre, 2, 8), out _));
+            wearer.Inventory.TryEquip(new Simpiens.Simulation.Economy.ItemInstance(Simpiens.Simulation.Economy.ItemType.HazardGear, 1, 30, durability: 100));
+            Assert.True(carrier.Inventory.TryAddItem(new Simpiens.Simulation.Economy.ItemInstance(Simpiens.Simulation.Economy.ItemType.IronOre, 2, 8), out _));
             using var frames = new Simpiens.Presentation.WorldViewFrames();
             frames.Follow(sim.Host, sim.Registry, sim.Sectors, sim.Clock, null, sim.Simulation);
 

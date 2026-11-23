@@ -28,7 +28,10 @@ namespace Simpiens.Presentation.Art.People
         public static readonly Rgba32 TabardColour = new Rgba32(30, 58, 138), TabardDevice = new Rgba32(250, 204, 21);
 
         // The keys the kit adds to a pattern's: hair in shade, the helm and its brim, the helm's lamp, the tabard and its device
-        private const char HairShade = 'h', Helm = 'M', Brim = 'm', Lamp = 'L', Tabard = 'G', Device = 'g', Mask = 'Q', Filter = 'q', Blade = 'X', Hilt = 'x';
+        private const char HairShade = 'h', Helm = 'M', Brim = 'm', Lamp = 'L', Tabard = 'G', Device = 'g', Mask = 'Q', Filter = 'q', Blade = 'X', Hilt = 'x', Scar = 'z';
+
+        /// <summary>A scar's colour (Epic 11, S6.7), the portraits' too: a healed wound's red, dark enough to read on pale skin, warm enough on dark.</summary>
+        public static readonly Rgba32 ScarColour = new Rgba32(170, 72, 72);
 
         // What a pose holds besides the body: the tool, the bubbles' white and the marks over the head
         private const string Carried = "TW!?Z";
@@ -43,7 +46,7 @@ namespace Simpiens.Presentation.Art.People
         /// two show in one place, the higher draw layer's); <paramref name="tabard"/>, whether it wears the guild's tabard,
         /// which goes over a coat. The look must be complete: every gene an option the palettes colour.
         /// </summary>
-        public static void Bake(in CrawlerLook look, in WornLook worn, bool tabard, Span<Rgba32> into)
+        public static void Bake(in CrawlerLook look, in WornLook worn, bool tabard, Span<Rgba32> into, in ScarMarks scars = default)
         {
             if (into.Length < PixelsPerBody) throw new ArgumentException($"A body needs {PixelsPerBody} pixels.", nameof(into));
             var colours = new Colours(look, worn);
@@ -52,14 +55,14 @@ namespace Simpiens.Presentation.Art.People
                 for (int f = 0; f < 2; f++)
                 {
                     var state = (AgentVisualState)s;
-                    BakeFrame(look, colours, tabard, state, f, into.Slice(FrameIndex(state, f) * PixelsPerFrame, PixelsPerFrame));
+                    BakeFrame(look, colours, tabard, state, f, into.Slice(FrameIndex(state, f) * PixelsPerFrame, PixelsPerFrame), scars);
                 }
             }
         }
 
         /// <summary>One frame of a body (<see cref="PixelsPerFrame"/> pixels): see <see cref="Bake"/>.</summary>
-        public static void BakeFrame(in CrawlerLook look, in WornLook worn, bool tabard, AgentVisualState state, int frame, Span<Rgba32> into)
-            => BakeFrame(look, new Colours(look, worn), tabard, state, frame, into);
+        public static void BakeFrame(in CrawlerLook look, in WornLook worn, bool tabard, AgentVisualState state, int frame, Span<Rgba32> into, in ScarMarks scars = default)
+            => BakeFrame(look, new Colours(look, worn), tabard, state, frame, into, scars);
 
         /// <summary>A body's frames as sprites named "<paramref name="name"/>_Agent_Walk_0" (review sheets and pins).</summary>
         public static PixelSprite[] Sprites(in CrawlerLook look, in WornLook worn, bool tabard, string name)
@@ -81,7 +84,7 @@ namespace Simpiens.Presentation.Art.People
         /// <summary>The hair styles that hang below the brow, and so show under a helm.</summary>
         public static bool HangsBelowTheBrow(string hairStyle) => hairStyle is "long" or "ponytail" or "braids";
 
-        private static void BakeFrame(in CrawlerLook look, in Colours colours, bool tabard, AgentVisualState state, int frame, Span<Rgba32> into)
+        private static void BakeFrame(in CrawlerLook look, in Colours colours, bool tabard, AgentVisualState state, int frame, Span<Rgba32> into, in ScarMarks scars)
         {
             Span<char> keys = stackalloc char[PixelsPerFrame];
             var pattern = ProceduralSprites.CrawlerKeys(state, frame);
@@ -94,6 +97,7 @@ namespace Simpiens.Presentation.Art.People
             if (colours.HasHelm && !HangsBelowTheBrow(style)) style = "crop"; // what rises above the crown is under the helm
             Hair(keys, head, style);
             FacialHair(keys, head, LookCatalog.KeyOf(LookGene.FacialHair, look.FacialHair));
+            if (!scars.IsEmpty) ScarsOn(keys, head, scars);
             if (colours.HasHelm) HelmOn(keys, head);
             if (colours.HasMask) MaskOn(keys, head);
 
@@ -195,6 +199,17 @@ namespace Simpiens.Presentation.Art.People
             Set(keys, HeadAnchor.Right + 1, y, hair, over);
             Set(keys, HeadAnchor.Left - 2, y, '#', ".");
             Set(keys, HeadAnchor.Right + 2, y, '#', ".");
+        }
+
+        // Scars (Epic 11, S6.7, D28): a pixel of scar at each place borne, over skin only: a cheek beside each eye, the brow above
+        // them, the chin; at a body's size the shape doesn't show, the fleck does
+        private static void ScarsOn(Span<char> keys, in HeadAnchor head, in ScarMarks scars)
+        {
+            int mid = (HeadAnchor.Left + HeadAnchor.Right) / 2;
+            if (scars.At(Simpiens.Simulation.Skills.ScarPlace.LeftCheek, out _)) Set(keys, HeadAnchor.Left, head.Eyes, Scar, "K");
+            if (scars.At(Simpiens.Simulation.Skills.ScarPlace.Brow, out _)) Set(keys, mid, head.Eyes - 1, Scar, "K");
+            if (scars.At(Simpiens.Simulation.Skills.ScarPlace.RightCheek, out _)) Set(keys, HeadAnchor.Right, head.Eyes, Scar, "K");
+            if (scars.At(Simpiens.Simulation.Skills.ScarPlace.Chin, out _)) Set(keys, mid + 1, head.Chin, Scar, "K");
         }
 
         private static void FacialHair(Span<char> keys, in HeadAnchor head, string kind)
@@ -400,6 +415,7 @@ namespace Simpiens.Presentation.Art.People
                 Hilt => _hilt,
                 Tabard => TabardColour,
                 Device => TabardDevice,
+                Scar => ScarColour,
                 _ => ProceduralSprites.CrawlerKeyColour(key),
             };
         }

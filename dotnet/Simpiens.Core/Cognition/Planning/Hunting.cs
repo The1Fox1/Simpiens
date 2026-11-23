@@ -59,7 +59,7 @@ namespace Simpiens.Cognition.Planning
         {
             var map = context.Snapshot?.Map;
             if (map == null || lairIndex < 0 || lairIndex >= map.Lairs.Count) return false;
-            return Vitality.BravesLair(map.Lairs[lairIndex], context.Snapshot.IsBossAlive(lairIndex), context.Skills, context.Inventory, context.Traits, context.Health, context.Personality.RiskTolerancePercent, context.IsDowned);
+            return Vitality.BravesLair(map.Lairs[lairIndex], context.Snapshot.IsBossAlive(lairIndex), context.Skills, context.Inventory, context.Traits, context.Health, context.Personality.RiskTolerancePercent, context.IsDowned, context.Snapshot.LeaderRank(lairIndex), Vitality.IsGrudgeLair(context.Traits, context.Snapshot, lairIndex));
         }
     }
 }

@@ -11,6 +11,9 @@ namespace Simpiens.Simulation.Loot
     /// <summary>The world as the pile service sees it (the simulation): where a pile's entity enters and leaves, and where a fading pile's gold goes.</summary>
     public interface IPileWorld
     {
+        /// <summary>A masterpiece was taken up from a pile and worn by <paramref name="taker"/> (Epic 11, S8.3, D43): its new owner.</summary>
+        void MasterpieceTakenUp(ushort masterpiece, EntityId taker) { }
+
         void AddPile(WorldEntity entity);
         void RemovePile(EntityId id);
 
@@ -141,6 +144,7 @@ namespace Simpiens.Simulation.Loot
                     {
                         units++;
                         worn++;
+                        if (stack.IsMasterpiece) world?.MasterpieceTakenUp(stack.Masterpiece, taker); // its new owner (Epic 11, S8.3)
                     }
                     continue;
                 }

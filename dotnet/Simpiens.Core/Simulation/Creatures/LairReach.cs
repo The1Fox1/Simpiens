@@ -62,23 +62,34 @@ namespace Simpiens.Simulation.Creatures
 
         /// <summary>
         /// One of <paramref name="kind"/>'s expected harm a second on a crawler of <paramref name="defense"/> (K10: a boss's
-        /// share of its lair's danger). 0 for no kind.
+        /// share of its lair's danger), grown by its <paramref name="rank"/> if it has a name (Epic 11, S7.2, D32). 0 for no kind.
         /// </summary>
-        public static float HarmPerSecond(CreatureDefinition kind, float defense)
+        public static float HarmPerSecond(CreatureDefinition kind, float defense, int rank = 0)
         {
             if (kind == null || kind.SwingIntervalSeconds <= 0f) return 0f;
-            var fighter = Combatant.ForCreature(kind, default, default, kind.MaxHealth);
-            return (float)(CombatRules.HitChance(fighter) * CombatRules.Mitigated(kind.Attack, defense) / kind.SwingIntervalSeconds);
+            var fighter = Combatant.ForCreature(kind, default, default, kind.MaxHealth, rank);
+            return (float)(CombatRules.HitChance(fighter) * CombatRules.Mitigated(fighter.Attack, defense) / kind.SwingIntervalSeconds);
         }
 
         /// <summary>
         /// The danger of <paramref name="lair"/>'s pack on a crawler of <paramref name="defense"/>, its boss's harm with it while
         /// <paramref name="bossAlive"/> (K10, D63: a slain Matriarch is gone for a week, and her warren is judged as her brood).
+        /// A named creature leading the pack, at <paramref name="leaderRank"/> (Epic 11, S7.2, D32), strikes harder than the
+        /// mate it stands for, so a lone crawler keeps away from a lair a named creature leads; 0, none, changes nothing.
         /// </summary>
-        public static float Danger(in LairDefinition lair, float defense, bool bossAlive)
+        public static float Danger(in LairDefinition lair, float defense, bool bossAlive, int leaderRank = 0)
         {
-            float pack = Danger(CreatureCatalog.Get(lair.Kind), defense);
+            var kind = CreatureCatalog.Get(lair.Kind);
+            float pack = Danger(kind, defense);
+            if (leaderRank > 0) pack = (float)(pack + (HarmPerSecond(kind, defense, leaderRank) - HarmPerSecond(kind, defense)));
             return lair.HasBoss && bossAlive ? (float)(pack + HarmPerSecond(CreatureCatalog.Get(lair.Boss), defense)) : pack;
         }
+
+        /// <summary>
+        /// The highest rank of a named creature living in each lair (Epic 11, S7.2, D32), two bits a lair in two masks, as the
+        /// snapshot carries it for cognition: bit i of <paramref name="low"/> and of <paramref name="high"/> make lair i's rank.
+        /// </summary>
+        public static int LeaderRank(ulong low, ulong high, int lairIndex) =>
+            lairIndex < 0 || lairIndex >= 64 ? 0 : (int)((low >> lairIndex) & 1UL) + 2 * (int)((high >> lairIndex) & 1UL);
     }
 }

@@ -25,7 +25,7 @@ namespace Simpiens.Core.Tests
         private static AgentInventory Wearing(ItemType item)
         {
             var inventory = new AgentInventory();
-            if (item != ItemType.None) inventory.TryEquip(new ItemInstance(1, item, 1, 60, durability: 1500));
+            if (item != ItemType.None) inventory.TryEquip(new ItemInstance(item, 1, 60, durability: 1500));
             return inventory;
         }
 
@@ -58,8 +58,8 @@ namespace Simpiens.Core.Tests
             Assert.True(sim.Sectors.IsExplored(Floor1Layout.DrownedGallerySectorId), "The Gallery is charted from the start: its plan is known.");
 
             // By hand: it wears sound hazard gear and a hard hat, the stall has a respirator, and only this crawler can pay for protection
-            Assert.True(bold.Inventory.TryEquip(new ItemInstance(1, ItemType.HazardGear, 1, 30, durability: 1500)));
-            Assert.True(bold.Inventory.TryEquip(new ItemInstance(1, ItemType.HardHat, 1, 60, durability: 1500)));
+            Assert.True(bold.Inventory.TryEquip(new ItemInstance(ItemType.HazardGear, 1, 30, durability: 1500)));
+            Assert.True(bold.Inventory.TryEquip(new ItemInstance(ItemType.HardHat, 1, 60, durability: 1500)));
             var sm = (SimulationManager)sim.Simulation;
             sm.UpdateStall(sm.ActiveStalls[0].WithStock(ItemType.Respirator, 1));
             int gearStock = sm.ActiveStalls[0].StockOf(ItemType.HazardGear);

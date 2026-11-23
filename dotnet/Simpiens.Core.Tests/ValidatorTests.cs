@@ -87,6 +87,15 @@ namespace Simpiens.Core.Tests
         public void PartyRoles() => new Simpiens.Testing.Skills.PartyRoleValidator().RunAllValidationTests();
 
         [Fact]
+        public void Epithets() => new Simpiens.Testing.Skills.EpithetValidator().RunAllValidationTests();
+
+        [Fact]
+        public void Scars() => new Simpiens.Testing.Skills.ScarValidator().RunAllValidationTests();
+
+        [Fact]
+        public void EarnedTraits() => new Simpiens.Testing.Skills.EarnedTraitValidator().RunAllValidationTests();
+
+        [Fact]
         public void GivenNames() => new Simpiens.Testing.People.GivenNamesValidator().RunAllValidationTests();
 
         [Fact]
@@ -214,6 +223,18 @@ namespace Simpiens.Core.Tests
 
         [Fact]
         public void Lairs() => new Simpiens.Testing.Combat.LairValidator().RunAllValidationTests();
+
+        [Fact]
+        public void NamedCreatures() => new Simpiens.Testing.Combat.NamedCreatureValidator().RunAllValidationTests();
+
+        [Fact]
+        public void Grudges() => new Simpiens.Testing.Combat.GrudgeValidator().RunAllValidationTests();
+
+        [Fact]
+        public void Masterpieces() => new Simpiens.Testing.Economy.MasterpieceValidator().RunAllValidationTests();
+
+        [Fact]
+        public void Inspiration() => new Simpiens.Testing.Economy.InspirationValidator().RunAllValidationTests();
 
         [Fact]
         public void Recipes() => new Simpiens.Testing.Economy.RecipeValidator().RunAllValidationTests();

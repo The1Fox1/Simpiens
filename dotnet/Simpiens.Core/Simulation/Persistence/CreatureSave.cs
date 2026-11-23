@@ -52,8 +52,9 @@ namespace Simpiens.Simulation.Persistence
     /// <summary>
     /// A creature as saved: who it is, of what kind, its lair and place; where it is and its health; what it is doing (its
     /// mode, its quarry, its goal, until when it rests) and when it may swing again (the combat rule's D8: saved, so a save
-    /// mid-fight loads byte for byte, K11.1), and the last tick a crawler stood in its lair (K10.3c). 80 bytes, with no implicit
-    /// padding: saved as raw memory.
+    /// mid-fight loads byte for byte, K11.1), the last tick a crawler stood in its lair (K10.3c), and its name (Epic 11, S7.1,
+    /// D31: the crawler whose downing named it, its rank, the crawlers it downed) and its foe (D33). 112 bytes since format 13
+    /// (80 before), with no implicit padding: saved as raw memory.
     /// </summary>
     [StructLayout(LayoutKind.Sequential)]
     public struct CreatureRecord
@@ -71,7 +72,15 @@ namespace Simpiens.Simulation.Persistence
         public byte Slot;
         /// <summary>The last tick a living crawler stood in its lair's reach (Epic 10 Part 3, K10.3c); 0 for never.</summary>
         public uint LastVisitAt;
-        private uint _pad;
+        /// <summary>Its rank (Epic 11, S7.1, D31): 0 unnamed.</summary>
+        public byte Rank;
+        /// <summary>The crawlers it has downed since it was named (D31).</summary>
+        public byte Downed;
+        private ushort _pad;
+        /// <summary>The crawler whose downing named it (D31); empty for none.</summary>
+        public EntityId Victim;
+        /// <summary>The last crawler that struck it and lived (Epic 11, S7.3, D33); empty for none.</summary>
+        public EntityId Foe;
 
         public CreatureRecord(CreatureState creature)
         {
@@ -87,7 +96,11 @@ namespace Simpiens.Simulation.Persistence
             Lair = (byte)creature.LairIndex;
             Slot = creature.Slot;
             LastVisitAt = creature.LastVisitAt;
+            Rank = creature.Rank;
+            Downed = creature.Downed;
             _pad = 0;
+            Victim = creature.Victim;
+            Foe = creature.Foe;
         }
     }
 }

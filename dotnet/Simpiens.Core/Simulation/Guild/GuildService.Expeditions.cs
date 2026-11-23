@@ -288,14 +288,19 @@ namespace Simpiens.Simulation.Guild
             var stall = host.ActiveStalls[0];
             WornGear.TryReplacing(crawler.Inventory, item, out var replacing);
             var worn = crawler.Inventory.GetEquipped(replacing);
+            var masterpieces = host.Masterpieces;
             if (!worn.IsEmpty)
             {
                 crawler.Inventory.Unequip(replacing);
-                stall = Simpiens.Simulation.Workshops.Crafting.HandBack(stall, worn);
+                stall = masterpieces != null ? masterpieces.HandBack(stall, worn) : Simpiens.Simulation.Workshops.Crafting.HandBack(stall, worn); // a masterpiece back on the shelf whole (Epic 11, S8.3)
             }
-            // The best grade on the shelf first (Epic 10 Part 2, D57), its life the grade's
+            // The best grade on the shelf first (Epic 10 Part 2, D57), its life the grade's; a masterpiece first (Epic 11, S8.3, D43)
             stall = stall.TakeBest(item, out byte grade);
-            crawler.Inventory.TryEquip(new ItemInstance(1, item, 1, (ushort)stall.SellPriceOf(item), quality: grade, durability: equipment.DurabilityAt(grade)));
+            ushort masterpiece = 0;
+            var piece = masterpieces != null ? masterpieces.PieceFor(item, grade, (ushort)stall.SellPriceOf(item), out masterpiece)
+                : new ItemInstance(item, 1, (ushort)stall.SellPriceOf(item), quality: grade, durability: equipment.DurabilityAt(grade));
+            crawler.Inventory.TryEquip(piece);
+            if (masterpiece != 0) masterpieces.HandOut(masterpiece, crawlerId);
             host.UpdateStall(stall);
             SimLog.Economy.ZLogInformation($"{SimLog.Agent(crawlerId)} was given {item} from the stall's stock{(worn.IsEmpty ? string.Empty : $" in place of {worn.Type}")}");
             return GuildRules.Check.Ok;
@@ -532,7 +537,7 @@ namespace Simpiens.Simulation.Guild
                 if (!member.IsWithParty || !host.TryGetCrawler(member.CrawlerId, out var crawler) || crawler.Inventory == null) continue;
                 if (Vec2.Distance(crawler.Position, home) > tuning.MusterRadius) continue;
                 int given = Math.Min(count - crawler.Inventory.GetItemCount(item), stall.SellStockOf(item));
-                if (given <= 0 || !crawler.Inventory.TryAddItem(new ItemInstance((ushort)item, item, (ushort)given, (ushort)stall.SellPriceOf(item)), out _)) continue;
+                if (given <= 0 || !crawler.Inventory.TryAddItem(new ItemInstance(item, (ushort)given, (ushort)stall.SellPriceOf(item)), out _)) continue;
                 stall = stall.WithStock(item, (ushort)(stall.StockOf(item) - given));
                 changed = true;
                 SimLog.Economy.ZLogInformation($"{SimLog.Agent(member.CrawlerId)} was given {given} {item} from the stall's stock for the trip");
@@ -749,9 +754,9 @@ namespace Simpiens.Simulation.Guild
         }
 
         /// <summary>
-        /// Focus fire (K7.2a, Q8): the party fights one creature at a time, the leader's choice: the lair's living creature
-        /// nearest its captain (Epic 11, S5.4, D22; the first member with the party until then), then the weakest, then the
-        /// lowest id. Kept while it lives.
+        /// Focus fire (K7.2a, Q8): the party fights one creature at a time, the leader's choice: a named creature first, the
+        /// highest rank (Epic 11, S7.4, D34); then the lair's living creature nearest its captain (Epic 11, S5.4, D22; the first
+        /// member with the party until then), then the weakest, then the lowest id. Kept while it lives.
         /// </summary>
         private void ChooseFocus(IGuildHost host, GuildParty party)
         {
@@ -762,13 +767,16 @@ namespace Simpiens.Simulation.Guild
             if (lairs == null || party.Record.LairIndex >= lairs.Count || leader == null) return;
             var lair = lairs[party.Record.LairIndex];
             float bestDistance = float.MaxValue, bestHealth = float.MaxValue;
+            int bestRank = 0;
             for (int slot = 0; slot < lair.Pack; slot++)
             {
                 var id = lair.MemberIn(slot);
                 if (id == default || !host.TryGetCreature(id, out var c) || !c.IsAlive) continue;
+                if (c.Rank < bestRank) continue; // the named first (S7.4)
                 float d = (c.Position - leader.Position).SqrMagnitude;
-                bool better = d < bestDistance || (d == bestDistance && (c.Health < bestHealth || (c.Health == bestHealth && c.Id.CompareTo(party.Focus) < 0)));
+                bool better = c.Rank > bestRank || d < bestDistance || (d == bestDistance && (c.Health < bestHealth || (c.Health == bestHealth && c.Id.CompareTo(party.Focus) < 0)));
                 if (!better) continue;
+                bestRank = c.Rank;
                 bestDistance = d;
                 bestHealth = c.Health;
                 party.Focus = c.Id;

@@ -66,7 +66,7 @@ namespace Simpiens.Core.Tests
                     if (crawler.IsDrifter) continue;
                     crawler.Memory.SetAffinity(Simpiens.Simulation.WorldRegistry.PlayerEntityId, new Simpiens.Cognition.Social.AffinityRecord(60, 80, 0, 0, 1, 300));
                     guild.Recruit(host, crawler.AgentId, Simpiens.Simulation.Guild.GuildRules.ReservationWage(crawler, sim.Simulation.Economy.Guild), 300);
-                    crawler.Inventory.TryEquip(new ItemInstance(1, ItemType.HazardGear, 1, 30, durability: 500));
+                    crawler.Inventory.TryEquip(new ItemInstance(ItemType.HazardGear, 1, 30, durability: 500));
                     members.Add(crawler.AgentId);
                 }
                 if (send)

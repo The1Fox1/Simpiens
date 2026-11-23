@@ -34,8 +34,8 @@ namespace Simpiens.Core.Tests
             bare.Position = sump + new Vec2(-2f, 0f);
             geared.Position = sump;
             breaking.Position = sump + new Vec2(2f, 0f);
-            Assert.True(geared.Inventory.TryEquip(new ItemInstance(1, ItemType.HazardGear, 1, 40, durability: 1000)), "Gear goes on.");
-            Assert.True(breaking.Inventory.TryEquip(new ItemInstance(2, ItemType.HazardGear, 1, 40, durability: 5)), "Worn-down gear goes on.");
+            Assert.True(geared.Inventory.TryEquip(new ItemInstance(ItemType.HazardGear, 1, 40, durability: 1000)), "Gear goes on.");
+            Assert.True(breaking.Inventory.TryEquip(new ItemInstance(ItemType.HazardGear, 1, 40, durability: 5)), "Worn-down gear goes on.");
 
             sim.Step(20);
 
@@ -75,7 +75,7 @@ namespace Simpiens.Core.Tests
             var sump = new Vec2(-16f, -12f);
             bare.Position = sump + new Vec2(-1f, 0f);
             masked.Position = sump + new Vec2(1f, 0f);
-            Assert.True(masked.Inventory.TryEquip(new ItemInstance(1, ItemType.Respirator, 1, 60, durability: 1500)), "The respirator goes on.");
+            Assert.True(masked.Inventory.TryEquip(new ItemInstance(ItemType.Respirator, 1, 60, durability: 1500)), "The respirator goes on.");
             float perTick = (float)(Floor1Layout.SumpHazard.DamagePerSecond * 0.1f);
 
             int bareHurt = 0, maskedHurt = 0, elsewhere = 0;
@@ -109,7 +109,7 @@ namespace Simpiens.Core.Tests
             float Resistance(ItemType worn, Simpiens.Simulation.World.HazardKind kind)
             {
                 var inventory = new Simpiens.Cognition.Inventory.AgentInventory();
-                if (worn != ItemType.None) inventory.TryEquip(new ItemInstance(1, worn, 1, 60, durability: 1500));
+                if (worn != ItemType.None) inventory.TryEquip(new ItemInstance(worn, 1, 60, durability: 1500));
                 return Simpiens.Simulation.Items.CrawlerStats.HazardResistance(inventory, kind);
             }
             Assert.Equal(0.75f, Resistance(ItemType.Respirator, air), 3);
@@ -133,8 +133,8 @@ namespace Simpiens.Core.Tests
                 states[i].Position = sump.TargetPoint + new Vec2(i * 0.6f - 1f, 0f);
                 states[4 + i].Position = caves.TargetPoint + new Vec2(i * 0.6f - 1f, 0f);
                 if (worn[i] == ItemType.None) continue;
-                Assert.True(states[i].Inventory.TryEquip(new ItemInstance(1, worn[i], 1, 60, durability: 1500)));
-                Assert.True(states[4 + i].Inventory.TryEquip(new ItemInstance(1, worn[i], 1, 60, durability: 1500)));
+                Assert.True(states[i].Inventory.TryEquip(new ItemInstance(worn[i], 1, 60, durability: 1500)));
+                Assert.True(states[4 + i].Inventory.TryEquip(new ItemInstance(worn[i], 1, 60, durability: 1500)));
             }
             sim.Step(20);
             float Rate(Simpiens.Cognition.AgentState crawler) => crawler.Activity.HazardDamage / crawler.Activity.HazardTicks;

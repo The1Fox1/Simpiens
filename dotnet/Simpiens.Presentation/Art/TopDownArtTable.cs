@@ -70,6 +70,7 @@ namespace Simpiens.Presentation.Art
                .Add(ArtKeys.BadgeBack, Sheet, new[] { BadgeSprites.Back }, BadgeSprites.Size / 16f, BadgeSprites.Size / 16f, Art)
                .Add(ArtKeys.BadgeCarrier, Sheet, new[] { BadgeSprites.Carrier }, BadgeSprites.Size / 16f, BadgeSprites.Size / 16f, Art)
                .Add(ArtKeys.BadgeLeader, Sheet, new[] { BadgeSprites.Leader }, BadgeSprites.Size / 16f, BadgeSprites.Size / 16f, Art)
+               .Add(ArtKeys.BadgeNamed, Sheet, new[] { BadgeSprites.Named }, BadgeSprites.Size / 16f, BadgeSprites.Size / 16f, Art) // a named creature's mark (Epic 11, S7.7)
                // The descent gate (Epic 10 Part 3, K10.5c): two cells, sealed or breached
                .Add(ArtKeys.PropGate, Sheet, new[] { GateSprites.Sealed }, 2f, 2f, Art)
                .Add(ArtKeys.PropGateOpen, Sheet, new[] { GateSprites.Open }, 2f, 2f, Art)

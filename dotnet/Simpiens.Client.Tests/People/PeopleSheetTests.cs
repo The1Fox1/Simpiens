@@ -80,6 +80,20 @@ namespace Simpiens.Client.Tests.People
                 Make("guild, respirator", delver, standing: CrawlerStanding.GuildMember, gear: ItemType.Respirator),
             });
 
+            // Scars (Epic 11, S6.7, D28): each shape at 2x, at all four places; a scar at each place alone; on light and dark skin
+            var everywhere = new[] { Simpiens.Simulation.Skills.ScarPlace.LeftCheek, Simpiens.Simulation.Skills.ScarPlace.Brow, Simpiens.Simulation.Skills.ScarPlace.RightCheek, Simpiens.Simulation.Skills.ScarPlace.Chin };
+            Section("Scars at 2x: each shape at all four places", Enum.GetValues<Simpiens.Simulation.Skills.ScarShape>().Select(shape =>
+                Make(shape.ToString().ToLowerInvariant(), basis, scale: 2, scars: ScarMarks.With(shape, everywhere))));
+            Section("A scar at each place (a claw), then on light and dark skin, a beard, a helm", everywhere.Select(place =>
+                Make(place.ToString().ToLowerInvariant(), basis, scale: 2, scars: ScarMarks.With(Simpiens.Simulation.Skills.ScarShape.Claw, place)))
+                .Concat(new[]
+                {
+                    Make("tone-1, all", Set(basis, LookGene.SkinTone, "tone-1"), scale: 2, scars: ScarMarks.With(Simpiens.Simulation.Skills.ScarShape.Cut, everywhere)),
+                    Make("tone-10, all", Set(basis, LookGene.SkinTone, "tone-10"), scale: 2, scars: ScarMarks.With(Simpiens.Simulation.Skills.ScarShape.Cut, everywhere)),
+                    Make("beard, bite", Set(basis, LookGene.FacialHair, "beard"), scale: 2, scars: ScarMarks.With(Simpiens.Simulation.Skills.ScarShape.Bite, everywhere)),
+                    Make("helm, burn", basis, scale: 2, gear: ItemType.HardHat, scars: ScarMarks.With(Simpiens.Simulation.Skills.ScarShape.Burn, everywhere)),
+                }));
+
             // Faces for the lists (B4, D1): the head cropped from the portrait, at 2x
             Section("Faces for the lists at 2x (B4)", Enumerable.Range(1, 12).Select(i =>
             {
@@ -140,19 +154,19 @@ namespace Simpiens.Client.Tests.People
         // A hard hat on the head and hazard gear's suit on the body, worn together (Epic 10 Part 3, K1.3, K1.5)
         private static readonly WornLook HatAndSuit = WornLook.Wearing(ItemType.HardHat).And(Simpiens.Simulation.Items.EquipmentSlot.Body, ItemType.HazardGear);
 
-        private Cell Make(string label, CrawlerLook look, int scale = 1, Mood mood = Mood.Content, CrawlerStanding standing = CrawlerStanding.Resident, ItemType gear = ItemType.None, WornLook worn = default)
+        private Cell Make(string label, CrawlerLook look, int scale = 1, Mood mood = Mood.Content, CrawlerStanding standing = CrawlerStanding.Resident, ItemType gear = ItemType.None, WornLook worn = default, ScarMarks scars = default)
         {
             Assert.True(LookCatalog.IsValid(look), $"{label}: {look} is not a valid look.");
             if (gear != ItemType.None) worn = WornLook.Wearing(gear);
             var portrait = new Rgba32[PortraitKit.FramedSize * PortraitKit.FramedSize];
-            PortraitKit.BakeFramed(new PortraitKey(look, mood, standing, worn), portrait);
+            PortraitKit.BakeFramed(new PortraitKey(look, mood, standing, worn, scars: scars), portrait);
             bool tabard = standing == CrawlerStanding.GuildMember;
             return new Cell
             {
                 Label = label,
                 Portrait = portrait,
                 PortraitScale = scale,
-                Body = Body(label, look, mood == Mood.Asleep ? AgentVisualState.Sleeping : AgentVisualState.Idle, 0, worn, tabard),
+                Body = Body(label, look, mood == Mood.Asleep ? AgentVisualState.Sleeping : AgentVisualState.Idle, 0, worn, tabard, scars),
             };
         }
 
@@ -162,10 +176,10 @@ namespace Simpiens.Client.Tests.People
         private static Cell BodyOnly(string label, CrawlerLook look, AgentVisualState state, int frame, WornLook worn, bool tabard)
             => new Cell { Label = label, Body = Body(label, look, state, frame, worn, tabard) };
 
-        private static PixelSprite Body(string label, CrawlerLook look, AgentVisualState state, int frame, WornLook worn, bool tabard)
+        private static PixelSprite Body(string label, CrawlerLook look, AgentVisualState state, int frame, WornLook worn, bool tabard, ScarMarks scars = default)
         {
             var pixels = new Rgba32[BodyKit.PixelsPerFrame];
-            BodyKit.BakeFrame(look, worn, tabard, state, frame, pixels);
+            BodyKit.BakeFrame(look, worn, tabard, state, frame, pixels, scars);
             return new PixelSprite(label, BodyKit.Size, BodyKit.Size, pixels);
         }
 

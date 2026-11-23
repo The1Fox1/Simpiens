@@ -47,6 +47,9 @@ namespace Simpiens.Simulation.Workshops
         private readonly Dictionary<EntityId, uint> _cooldowns = new Dictionary<EntityId, uint>();
         private readonly List<ArtisanContract> _quitting = new List<ArtisanContract>(4);
 
+        /// <summary>The masterpieces made at the stations, and their provenance (Epic 11, S8.1, D40), saved in this block.</summary>
+        public MasterpieceService Masterpieces { get; } = new MasterpieceService();
+
         /// <summary>The loaded map's stations.</summary>
         public int Count => _stations.Length;
 
@@ -85,6 +88,7 @@ namespace Simpiens.Simulation.Workshops
             _stations = Array.Empty<StationState>();
             _artisans.Clear();
             _cooldowns.Clear();
+            Masterpieces.Reset();
         }
 
         /// <summary>Every artisan's contract, in hire order.</summary>
@@ -541,8 +545,12 @@ namespace Simpiens.Simulation.Workshops
         public static int LevelOf(AgentState artisan, StationKind kind) =>
             Simpiens.Simulation.Skills.CrawlerSkills.Level(artisan, Simpiens.Simulation.Skills.SkillWork.Make(kind));
 
-        /// <summary>One tick of an artisan's work at the station, on the session's stall (<see cref="Crafting.Work"/>).</summary>
-        public CraftStep Work(IWorkshopHost host, int index)
+        /// <summary>
+        /// One tick of an artisan's work at the station, on the session's stall (<see cref="Crafting.Work"/>). At
+        /// <paramref name="tick"/>, on the session's <paramref name="seed"/>, a finished make at Masterwork may be inspired
+        /// (Epic 11, S8.2).
+        /// </summary>
+        public CraftStep Work(IWorkshopHost host, int index, uint tick = 0, ulong seed = 0)
         {
             if ((uint)index >= (uint)_stations.Length || host?.ActiveStalls == null || host.ActiveStalls.Count == 0) return CraftStep.Idle;
             var stall = host.ActiveStalls[0]; // the session's one stall: what the stations draw on and stock (Q7)
@@ -556,16 +564,48 @@ namespace Simpiens.Simulation.Workshops
                 if (_artisans[i].StationIndex == index) host.TryGetCrawler(_artisans[i].CrawlerId, out hand);
             }
             uint made = station.Made;
-            var step = Crafting.Work(ref station, ref stall, out bool stallChanged, GradeOf(hand, station.Kind), PaceOf(hand, station.Kind));
+            bool holding = station.HeldOutput > 0;
+            byte grade = GradeOf(hand, station.Kind);
+            var step = Crafting.Work(ref station, ref stall, out bool stallChanged, grade, PaceOf(hand, station.Kind));
             if (station.Made > made && hand != null)
             {
                 host.Practise(hand, Simpiens.Simulation.Skills.SkillWork.Make(station.Kind), Simpiens.Simulation.Skills.SkillRules.MakeExperience,
                     Simpiens.Simulation.Skills.PracticeSource.WorkAt(RecipeBook.For(item)?.Challenge ?? Simpiens.Simulation.Skills.SkillRules.MaxLevel)); // by the recipe's challenge (Epic 11, S1.3)
                 hand.AddDeed(Simpiens.Simulation.Skills.Deed.Make); // a make is a deed (Epic 11, S0.5)
+                Inspire(host, hand, index, item, grade, held: step == CraftStep.Holding, tick, seed);
             }
+            else if (holding && step == CraftStep.Made) Masterpieces.Shelve(index); // a held make stocked: its masterpiece on the shelf
             if (stallChanged) host.UpdateStall(stall);
             if (step == CraftStep.Made) SimLog.Economy.ZLogInformation($"The {station.Kind} made {ItemCatalog.NameOf(item)} ({station.Remaining} left in the order)");
             return step;
+        }
+
+        /// <summary>
+        /// Inspiration (Epic 11, S8.2, D41): a finished make of a worn piece at Masterwork may come out a masterpiece, by
+        /// <see cref="InspirationRules"/>: its record (on the shelf, or held here while the stall has no room), its maker's
+        /// deed and the chronicle's line. The piece itself is stocked among its good's Masterwork pieces; a sale or a gift
+        /// hands it out first.
+        /// </summary>
+        private void Inspire(IWorkshopHost host, AgentState maker, int index, ItemType item, byte grade, bool held, uint tick, ulong seed)
+        {
+            if (grade < Grades.Masterwork || !Grades.Graded(item) || InspirationRules.InspiredLately(Masterpieces, maker.AgentId, tick)) return;
+            var kind = _stations[index].Kind;
+            var skill = Simpiens.Simulation.Skills.SkillTable.SkillFor(Simpiens.Simulation.Skills.SkillWork.Make(kind));
+            bool grieving = InspirationRules.TryGrief(maker, tick, out var fallen);
+            float chance = InspirationRules.ChanceFor(grade, maker.Traits.PassionFor(skill), grieving);
+            if (!InspirationRules.Roll(seed, maker.AgentId, tick, chance, item, out byte adjective, out byte noun)) return;
+            var record = new MasterpieceRecord
+            {
+                Item = item, Station = kind, StationIndex = (byte)index, Place = held ? MasterpiecePlace.Held : MasterpiecePlace.Shelf,
+                Form = grieving ? MasterpieceForm.Grief : MasterpieceForm.Plain, Adjective = adjective, Noun = noun, MadeAt = tick,
+                Maker = maker.AgentId, NamedFor = grieving ? fallen : default
+            };
+            ushort id = Masterpieces.Add(record);
+            if (id == 0) return;
+            maker.AddDeed(Simpiens.Simulation.Skills.Deed.MasterpieceMade);
+            SimLog.Economy.ZLogInformation($"{SimLog.Agent(maker.AgentId)}, inspired{(grieving ? " in grief" : "")}, made masterpiece {id} at the {kind}: {ItemCatalog.NameOf(item)}");
+            host.ChronicleService?.RecordEvent(new ChronicleEvent(ChronicleEventType.MasterpieceMade, maker.AgentId, record.NamedFor,
+                host.GetSectorForPosition(_map.Stations[index].Position), tick, ChronicleIntensity.Dramatic, MasterpieceNames.Pack(record)));
         }
 
         public void CaptureTo(WorkshopSave save)
@@ -578,6 +618,7 @@ namespace Simpiens.Simulation.Workshops
             foreach (var kvp in _cooldowns) cooldowns[n++] = new IdTickRecord { Id = kvp.Key, Tick = kvp.Value };
             Array.Sort(cooldowns, (a, b) => a.Id.CompareTo(b.Id));
             save.Cooldowns = cooldowns;
+            save.Masterpieces = Masterpieces.Capture();
         }
 
         /// <summary>
@@ -590,6 +631,7 @@ namespace Simpiens.Simulation.Workshops
             for (int i = 0; i < _stations.Length; i++) _stations[i] = StationState.Unbuilt(_stations[i].Kind);
             _artisans.Clear();
             _cooldowns.Clear();
+            Masterpieces.Restore(save?.Masterpieces);
             var saved = save?.Stations;
             if (saved == null) return;
             for (int i = 0; i < _stations.Length && i < saved.Length; i++)

@@ -47,6 +47,8 @@ namespace Simpiens.Presentation.Dashboard
         private readonly DashboardContext _context;
         private readonly List<int> _sectorIds = new List<int>(16);
         private readonly List<string> _sectorLabels = new List<string>(16);
+        private readonly List<EntityId> _quarries = new List<EntityId>(16); // a hunt's choice's quarry (Epic 11, S7.7); empty for a lair's
+        private long _choicesNamed;
         private readonly List<BountyRow> _rows = new List<BountyRow>(16);
         private BountyType _choicesType = BountyType.None;
         private ulong _choicesMask;
@@ -203,12 +205,28 @@ namespace Simpiens.Presentation.Dashboard
                 {
                     if (hunts[i].BountyId != bounty.BountyId) continue;
                     hunters = hunts[i].Count;
-                    kind = LairWords.Pack(_context.Simulation?.Creatures?.Lairs, hunts[i].LairIndex);
+                    kind = hunts[i].Quarry != default ? _context.FriendlyName(hunts[i].Quarry, "a named creature") // its quarry by name (Epic 11, S7.7)
+                        : LairWords.Pack(_context.Simulation?.Creatures?.Lairs, hunts[i].LairIndex);
                 }
             }
             return Invariant($"Hunt {kind} of {sectorName} · {hunters} of {HuntRecord.MaxClaimants} hunters");
         }
 
+
+        // Which named creatures live in the charted lairs, and at what rank: the hunt's choices change with them (Epic 11, S7.7)
+        private static long NamedSignature(Simpiens.Simulation.Creatures.CreatureService creatures, ulong lairs)
+        {
+            long signature = 0;
+            if (creatures == null) return signature;
+            var list = creatures.Creatures;
+            for (int i = 0; i < list.Count; i++)
+            {
+                var c = list[i];
+                if (!c.IsNamed || !c.IsAlive || c.LairIndex < 0 || c.LairIndex >= 64 || (lairs & (1UL << c.LairIndex)) == 0) continue;
+                signature = signature * 31 + c.Id.GetHashCode() * 4 + c.Rank;
+            }
+            return signature;
+        }
 
         /// <summary>
         /// Fills the sector picker from the loaded map, only when the map, the type or the charted sectors changed,
@@ -229,23 +247,37 @@ namespace Simpiens.Presentation.Dashboard
             {
                 for (int i = 0; i < creatures.Lairs.Count && i < 64; i++) if (creatures.IsCharted(i) && creatures.Lairs[i].Alive > 0) lairs |= 1UL << i;
             }
-            if (!force && _type == _choicesType && mask == _choicesMask && zones.Count == _choicesZoneCount && lairs == _choicesLairs) return;
+            long named = NamedSignature(creatures, lairs); // and its named quarries (Epic 11, S7.7)
+            if (!force && _type == _choicesType && mask == _choicesMask && zones.Count == _choicesZoneCount && lairs == _choicesLairs && named == _choicesNamed) return;
             _choicesType = _type;
             _choicesMask = mask;
             _choicesZoneCount = zones.Count;
             _choicesLairs = lairs;
+            _choicesNamed = named;
 
             int previous = SelectedSectorIndex >= 0 && SelectedSectorIndex < _sectorIds.Count ? _sectorIds[SelectedSectorIndex] : -1;
+            var previousQuarry = SelectedSectorIndex >= 0 && SelectedSectorIndex < _quarries.Count ? _quarries[SelectedSectorIndex] : default;
             _sectorIds.Clear();
             _sectorLabels.Clear();
+            _quarries.Clear();
             for (int i = 0; TargetsLairs && creatures != null && i < creatures.Lairs.Count; i++)
             {
                 if ((lairs & (1UL << i)) == 0) continue;
                 var heart = creatures.Lairs[i].Definition.Position;
                 string where = _context.Sectors != null && _context.Zones.TryGetZone(_context.Sectors.GetSectorAt(heart).Id, out var lairZone) ? lairZone.Name : "the floor";
                 _sectorIds.Add(i);
+                _quarries.Add(default);
                 string pack = LairWords.Pack(creatures.Lairs, i); // K10.5d: a boss by its name
                 _sectorLabels.Add(Invariant($"{char.ToUpperInvariant(pack[0])}{pack.Substring(1)} of {where}"));
+                // Each named creature living there, as a hunt's quarry beside its lair (Epic 11, S7.7, D37)
+                var list = creatures.Creatures;
+                for (int c = 0; c < list.Count; c++)
+                {
+                    if (!list[c].IsNamed || !list[c].IsAlive || list[c].LairIndex != i) continue;
+                    _sectorIds.Add(i);
+                    _quarries.Add(list[c].Id);
+                    _sectorLabels.Add(Invariant($"{_context.FriendlyName(list[c].Id, "A named creature")}, of {where}"));
+                }
             }
             for (int i = 0; !TargetsLairs && i < zones.Count; i++)
             {
@@ -253,9 +285,11 @@ namespace Simpiens.Presentation.Dashboard
                 if (zone.IsFacility) continue; // the player's own (BountyRules.TargetCheck.Facility)
                 if (_type == BountyType.ScoutSector && zone.IsExplored) continue;
                 _sectorIds.Add(zone.ZoneId);
+                _quarries.Add(default);
                 _sectorLabels.Add(zone.IsExplored || _type == BountyType.ScoutSector ? zone.Name : zone.Name + AwaitsChartSuffix);
             }
-            int keep = previous >= 0 ? _sectorIds.IndexOf(previous) : -1;
+            int keep = -1;
+            for (int i = 0; previous >= 0 && i < _sectorIds.Count && keep < 0; i++) if (_sectorIds[i] == previous && _quarries[i] == previousQuarry) keep = i;
             SelectedSectorIndex = _sectorIds.Count == 0 ? -1 : keep >= 0 ? keep : 0;
             if (!CanPost && _type == BountyType.ScoutSector) Feedback = new Feedback(AllChartedText, FeedbackTone.Error);
             if (!CanPost && TargetsLairs) Feedback = new Feedback(NoLairText, FeedbackTone.Error);
@@ -273,6 +307,7 @@ namespace Simpiens.Presentation.Dashboard
             }
             byte sectorId = TargetsLairs ? (byte)0 : (byte)_sectorIds[choice];
             byte lairIndex = TargetsLairs ? (byte)_sectorIds[choice] : PostBountyCommand.NoLair;
+            var quarry = TargetsLairs ? _quarries[choice] : default; // a named creature, if the choice names one (Epic 11, S7.7)
 
             // The simulation enforces the same rule; checking here gives the player the reason
             var target = TargetsLairs ? BountyRules.TargetCheck.Ok : BountyRules.CheckTarget(_type, sectorId, _context.Sectors);
@@ -303,7 +338,7 @@ namespace Simpiens.Presentation.Dashboard
                 Feedback = new Feedback("No intervention queue available.", FeedbackTone.Error);
                 return;
             }
-            var command = new PostBountyCommand(0, _type, sectorId, item, quantity, reward, duration, Vec2.Zero, stallId, lairIndex);
+            var command = new PostBountyCommand(0, _type, sectorId, item, quantity, reward, duration, Vec2.Zero, stallId, lairIndex, quarry);
             _context.Intervention.QueueInfluence(InfluenceEvent.CreatePostBounty("Player", command));
             Feedback = new Feedback(Invariant($"Posted {FormatType(_type)} contract for {reward}g reward."), FeedbackTone.Ok);
         }

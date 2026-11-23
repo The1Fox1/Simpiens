@@ -67,8 +67,8 @@ namespace Simpiens.Client.Tests
             using var sim = LocalSimulation.Create(SimulationSettings.DefaultSeed);
             sim.Respawn(OutpostSession.SessionId);
             var crawler = sim.Host.CrawlerStates.First(c => sim.Sectors.IsExplored(sim.Sectors.GetSectorAt(sim.Registry.GetEntity(c.AgentId).Position).Id));
-            crawler.Inventory.TryEquip(new ItemInstance(1, ItemType.HazardGear, 1, 30, durability: 100));
-            Assert.True(crawler.Inventory.TryAddItem(new ItemInstance(2, ItemType.IronOre, 1, 8), out _));
+            crawler.Inventory.TryEquip(new ItemInstance(ItemType.HazardGear, 1, 30, durability: 100));
+            Assert.True(crawler.Inventory.TryAddItem(new ItemInstance(ItemType.IronOre, 1, 8), out _));
             var frames = TestFrames.Of(sim);
             var scene = new WorldScene { Mode = mode };
             scene.Build(sim.Host.Current.Map, frames, 0f);

@@ -134,7 +134,7 @@ namespace Simpiens.Simulation
             Creatures.Tick(this, tick);
             Piles.Tick(this, tick);
             TickTheFallen(tick);
-            _market.SettleHunts(Creatures.Lairs, _agentRegistry, tick); // a hunted lair emptied pays its hunters (K6.1)
+            _market.SettleHunts(Creatures, _agentRegistry, tick); // a hunted lair emptied, or a hunt's quarry slain, pays its hunters (K6.1; Epic 11, S7.4)
         }
 
         /// <summary>
@@ -163,7 +163,11 @@ namespace Simpiens.Simulation
                 if (agent == null || agent.HasLeft) continue;
                 if (!agent.IsDowned || !InDanger(node.Position))
                 {
-                    if (agent.BleedsOutAt != 0) agent.AddDeed(Simpiens.Simulation.Skills.Deed.DowningSurvived); // its clock stopped and it lives (Epic 11, S0.5)
+                    if (agent.BleedsOutAt != 0)
+                    {
+                        agent.AddDeed(Simpiens.Simulation.Skills.Deed.DowningSurvived); // its clock stopped and it lives (Epic 11, S0.5)
+                        agent.TakeScar(); // and it carries the mark (S6.2)
+                    }
                     agent.BleedsOutAt = 0;
                     continue;
                 }
@@ -437,23 +441,76 @@ namespace Simpiens.Simulation
             SimLog.Drives.ZLogInformation($"{SimLog.Agent(state.AgentId)} was downed by {SimLog.Agent(attacker)} at {state.Position}");
             Chronicle?.RecordEvent(new Simpiens.Narrative.ChronicleEvent(Simpiens.Narrative.ChronicleEventType.CrawlerDowned, state.AgentId, attacker,
                 GetSectorForPosition(state.Position), tick, Simpiens.Narrative.ChronicleIntensity.Crisis));
+            TellRenown(Creatures.Credit(attacker, state.AgentId, death: false), attacker, state.AgentId, killed: false, tick); // its name (Epic 11, S7.1)
+            Kindle(attacker, state.AgentId, tick); // its fallen's friends' grudges (S7.3)
+        }
+
+        /// <summary>
+        /// Grudges (Epic 11, S7.3, D33): a named creature downed or killed <paramref name="fallen"/>, so each of its friends (warmth
+        /// toward it at <see cref="Simpiens.Cognition.Vitality.GrudgeWarmth"/>) holding no grudge takes one against the creature,
+        /// with the trait the act earns (told by its runtime), or again if it holds that trait already. A crawler with every trait
+        /// slot taken has no room to hate. Main thread.
+        /// </summary>
+        private void Kindle(EntityId creatureId, EntityId fallen, uint tick)
+        {
+            if (!Creatures.TryGet(creatureId, out var creature) || !creature.IsNamed) return;
+            var entities = _worldRegistry?.ActiveEntities;
+            if (entities == null) return;
+            for (int i = 0; i < entities.Count; i++)
+            {
+                var friend = entities[i]?.Agent;
+                if (friend == null || friend.HasLeft || friend.AgentId == fallen || friend.Memory == null) continue;
+                if (friend.Traits.Grudge != default || friend.Memory.GetAffinity(fallen, tick).Warmth < Simpiens.Cognition.Vitality.GrudgeWarmth) continue;
+                var traits = friend.Traits;
+                if (!Simpiens.Simulation.Skills.EarnedTraitRules.JudgeAct(ref traits, Simpiens.Simulation.Skills.TraitAct.FriendFelled)
+                    && !Simpiens.Simulation.Skills.EarnedTraitRules.HoldsAct(traits, Simpiens.Simulation.Skills.TraitAct.FriendFelled)) continue;
+                traits.SetGrudge(creature.Id, creature.LairIndex);
+                friend.Traits = traits;
+                SimLog.Simulation.ZLogInformation($"{SimLog.Agent(friend.AgentId)} holds a grudge against {Simpiens.Simulation.Creatures.CreatureCatalog.NameOf(creature.Kind)} {creature.Id}, for {SimLog.Agent(fallen)}");
+            }
+        }
+
+        /// <summary>
+        /// What a downing or a death did for the creature's name (Epic 11, S7.1, D31; <see cref="Simpiens.Simulation.Creatures.CreatureService.Credit"/>),
+        /// told: <c>CreatureNamed</c> when it took one, <c>CreatureRankRose</c> when its rank rose.
+        /// </summary>
+        private void TellRenown(Simpiens.Simulation.Creatures.Renown renown, EntityId creatureId, EntityId crawler, bool killed, uint tick)
+        {
+            if (renown != Simpiens.Simulation.Creatures.Renown.Named && renown != Simpiens.Simulation.Creatures.Renown.RankRose) return;
+            if (!Creatures.TryGet(creatureId, out var creature)) return;
+            SimLog.Simulation.ZLogInformation($"{Simpiens.Simulation.Creatures.CreatureCatalog.NameOf(creature.Kind)} {creatureId} {(renown == Simpiens.Simulation.Creatures.Renown.Named ? "took its name from" : "rose in rank downing")} {SimLog.Agent(crawler)}: rank {creature.Rank}, {creature.Downed} downed");
+            int extra = (byte)creature.Kind + 256 * creature.Rank + (killed ? 1024 : 0) + 2048 * creature.Downed;
+            var type = renown == Simpiens.Simulation.Creatures.Renown.Named ? Simpiens.Narrative.ChronicleEventType.CreatureNamed : Simpiens.Narrative.ChronicleEventType.CreatureRankRose;
+            Chronicle?.RecordEvent(new Simpiens.Narrative.ChronicleEvent(type, creatureId, crawler, GetSectorForPosition(creature.Position), tick,
+                Simpiens.Narrative.ChronicleIntensity.Dramatic, extra));
         }
 
         void Simpiens.Simulation.Creatures.ICreatureWorld.CreatureHit(EntityId crawler, Simpiens.Simulation.Creatures.CreatureState creature, float damage)
-            => _market.RecordHuntDamage(crawler, creature.LairIndex, damage);
+            => _market.RecordHuntDamage(crawler, creature.LairIndex, creature.Id, damage);
 
         void Simpiens.Simulation.Creatures.ICreatureWorld.CreatureSlain(EntityId slayer, Simpiens.Simulation.Creatures.CreatureState creature, System.ReadOnlySpan<ItemInstance> drops, uint tick)
         {
             Piles.Drop(this, creature.Position, drops, 0, slayer, tick); // its loot, claimed for the slayer (K4.2)
+            if (creature.IsNamed) SettleGrudges(creature.Id); // the grudges against it settled (Epic 11, S7.3)
             var killer = _worldRegistry?.GetEntity(slayer)?.Agent; // the slayer's deeds (Epic 11, S0.5)
             if (killer != null)
             {
-                killer.AddDeed(Simpiens.Simulation.Skills.Deed.CreatureSlain);
-                if (creature.Definition != null && creature.Definition.IsBoss) killer.AddDeed(Simpiens.Simulation.Skills.Deed.BossSlain);
+                killer.AddDeed(Simpiens.Simulation.Skills.Deed.CreatureSlain, (byte)creature.Kind); // the kind, for its slayer's epithet (Epic 11, S6.1)
+                if (creature.Definition != null && creature.Definition.IsBoss) killer.AddDeed(Simpiens.Simulation.Skills.Deed.BossSlain, (byte)creature.Kind);
+                if (creature.IsNamed) killer.AddDeed(Simpiens.Simulation.Skills.Deed.NamedCreatureSlain, (byte)creature.Kind, creature.Victim); // the avenger, its victim's name (Epic 11, S7.5, D35)
+                Workshops.Masterpieces.CountKill(killer.Inventory, creature.IsNamed, creature.Victim, creature.Rank); // on the masterpieces it wears (Epic 11, S8.3, D44)
             }
+            if (creature.IsNamed)
+                Chronicle?.RecordEvent(new Simpiens.Narrative.ChronicleEvent(Simpiens.Narrative.ChronicleEventType.NamedCreatureSlain, slayer, creature.Id,
+                    GetSectorForPosition(creature.Position), tick, Simpiens.Narrative.ChronicleIntensity.Crisis, (byte)creature.Kind + 256 * creature.Rank));
             SimLog.Simulation.ZLogInformation($"{SimLog.Agent(slayer)} slew a {Simpiens.Simulation.Creatures.CreatureCatalog.NameOf(creature.Kind)} at {creature.Position}");
             Chronicle?.RecordEvent(new Simpiens.Narrative.ChronicleEvent(Simpiens.Narrative.ChronicleEventType.CreatureSlain, slayer, creature.Id,
                 GetSectorForPosition(creature.Position), tick, Simpiens.Narrative.ChronicleIntensity.Dramatic, (byte)creature.Kind));
+            // Its first: first blood, in the voice of its best skill (Epic 11, S6.4, D30)
+            if (killer != null && killer.Traits.Count(Simpiens.Simulation.Skills.Deed.CreatureSlain) == 1)
+                Chronicle?.RecordEvent(new Simpiens.Narrative.ChronicleEvent(Simpiens.Narrative.ChronicleEventType.FirstBlood, slayer, creature.Id,
+                    GetSectorForPosition(creature.Position), tick, Simpiens.Narrative.ChronicleIntensity.Dramatic,
+                    (byte)creature.Kind + 256 * (byte)Simpiens.Simulation.Skills.CallingRules.BestSkill(killer.Skills)));
 
             // The breach (Epic 10 Part 3, K10.4, Q13): the lair that guards the gate emptied for good (its keeper never returns)
             if ((WorldFlags & Simpiens.Simulation.World.WorldFlags.GateBreached) == 0 && Creatures.GuardsGateEmptyForGood(creature.LairIndex))
@@ -462,6 +519,21 @@ namespace Simpiens.Simulation
                 SimLog.Simulation.ZLogInformation($"{SimLog.Agent(slayer)} slew the {Simpiens.Simulation.Creatures.CreatureCatalog.NameOf(creature.Kind)}: the descent gate is breached");
                 Chronicle?.RecordEvent(new Simpiens.Narrative.ChronicleEvent(Simpiens.Narrative.ChronicleEventType.GateBreached, slayer, creature.Id,
                     GetSectorForPosition(creature.Position), tick, Simpiens.Narrative.ChronicleIntensity.Crisis, (byte)creature.Kind));
+            }
+        }
+
+        // A named creature slain (Epic 11, S7.3, D33): whoever hated it holds its trait still, and its grudge no more
+        private void SettleGrudges(EntityId creatureId)
+        {
+            var entities = _worldRegistry?.ActiveEntities;
+            if (entities == null) return;
+            for (int i = 0; i < entities.Count; i++)
+            {
+                var crawler = entities[i]?.Agent;
+                if (crawler == null || crawler.Traits.Grudge != creatureId) continue;
+                var traits = crawler.Traits;
+                traits.ClearGrudge();
+                crawler.Traits = traits;
             }
         }
 
@@ -536,7 +608,12 @@ namespace Simpiens.Simulation
         }
 
         TradeStallData ISupplyHost.PayWages(TradeStallData stall, uint currentTick) => Workshops.PayWages(this, Guild.PayWages(this, stall, currentTick), currentTick);
-        Simpiens.Simulation.Workshops.CraftStep IIntentExecutionContext.WorkStation(int stationIndex) => Workshops.Work(this, stationIndex);
+        /// <summary>The outpost's masterpieces (Epic 11, S8.3), the workshops': the door the sale, the guild's gift and the piles share.</summary>
+        public Simpiens.Simulation.Workshops.MasterpieceService Masterpieces => Workshops.Masterpieces;
+
+        void Simpiens.Simulation.Loot.IPileWorld.MasterpieceTakenUp(ushort masterpiece, EntityId taker) => Workshops.Masterpieces.TakenUp(masterpiece, taker);
+
+        Simpiens.Simulation.Workshops.CraftStep IIntentExecutionContext.WorkStation(int stationIndex) => Workshops.Work(this, stationIndex, _clock != null ? (uint)_clock.CurrentTick : 0u, Seed);
 
         public uint CurrentTick => _clock != null ? (uint)_clock.CurrentTick : (uint)_fallbackTick;
         public int IntentFaults { get; private set; }
@@ -725,6 +802,9 @@ namespace Simpiens.Simulation
                     ExecuteUpdateStallPricesCommand(influence.UpdateStallPrices);
                     break;
 
+                case InfluenceCommandType.Playtest:
+                    ExecutePlaytestCommand(influence.Playtest, currentTick);
+                    break;
                 case InfluenceCommandType.CalmCrawler:
                     ExecuteCalmCrawlerCommand(influence.CalmCrawler);
                     break;
@@ -783,6 +863,43 @@ namespace Simpiens.Simulation
 
                 case InfluenceCommandType.SetShifts:
                     Workshops.SetShifts(this, influence.SetShifts.CrawlerId, influence.SetShifts.Shifts);
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// A playtest tool, applied on the tick (2026-11-20): its standing with the player at its most, or downed where it stands
+        /// as a stone beetle's blow would (its bleeding clock started: in danger it bleeds out unless carried out; out of danger
+        /// the fallen's rule stops the clock at once, a downing survived with its scar, and it lies until it heals).
+        /// </summary>
+        private void ExecutePlaytestCommand(in Simpiens.Intervention.PlaytestCommand cmd, long currentTick)
+        {
+            var node = _worldRegistry?.GetEntity(cmd.CrawlerId);
+            var agent = node?.Agent;
+            if (agent == null || agent.HasLeft)
+            {
+                SimLog.Intervention.ZLogWarning($"Playtest {cmd.Action} rejected: no crawler {SimLog.Agent(cmd.CrawlerId)}");
+                return;
+            }
+            uint tick = (uint)currentTick;
+            switch (cmd.Action)
+            {
+                case Simpiens.Intervention.PlaytestAction.MaxStanding:
+                    if (agent.Memory == null) return;
+                    var was = agent.Memory.GetAffinity(Simpiens.Simulation.WorldRegistry.PlayerEntityId, tick);
+                    agent.Memory.SetAffinity(Simpiens.Simulation.WorldRegistry.PlayerEntityId, new Simpiens.Cognition.Social.AffinityRecord(100, 100, 0, was.Respect, was.InteractionCount, tick));
+                    SimLog.Intervention.ZLogInformation($"Playtest: {SimLog.Agent(node.Id)}'s warmth and trust toward the player at their most");
+                    break;
+                case Simpiens.Intervention.PlaytestAction.Down:
+                    if (agent.IsDowned) return;
+                    agent.Health = 0f;
+                    agent.IsDowned = true;
+                    agent.DownedBy = DeathCause.Creature;
+                    agent.DownedDetail = (byte)Simpiens.Simulation.Creatures.CreatureKind.StoneBeetle;
+                    agent.Activity.TimesDowned++;
+                    agent.BleedsOutAt = tick + DayClock.Hours(BleedOutHours);
+                    SimLog.Intervention.ZLogInformation($"Playtest: {SimLog.Agent(node.Id)} downed at {node.Position}");
+                    _chronicleService?.RecordEvent(new ChronicleEvent(ChronicleEventType.CrawlerDowned, node.Id, default, GetSectorForPosition(node.Position), tick, ChronicleIntensity.Crisis));
                     break;
             }
         }
@@ -941,6 +1058,8 @@ namespace Simpiens.Simulation
                 if (_sectors != null) _spatialPartition.SetExploredSectors(_sectors.ExploredMask);
                 _spatialPartition.SetChartedLairs(Creatures.ChartedMask); // the lairs known to everyone (Epic 10 Part 3, K2.3)
                 _spatialPartition.SetBossLairs(Creatures.BossMask); // the lairs whose boss lives (K10.2a)
+                Creatures.NamedLairs(out ulong namedLow, out ulong namedHigh);
+                _spatialPartition.SetNamedLairs(namedLow, namedHigh); // the lairs a named creature leads, by its rank (Epic 11, S7.2)
                 _spatialPartition.SetBuiltStations(Workshops.BuiltMask); // the stations standing: a drill yard (Epic 11, S3.4)
                 _spatialPartition.SetPiles(Piles.Piles); // the items on the ground (K4.3b)
                 _spatialPartition.SetHunts(_market.Hunts); // the hunts' parties (K6.2)

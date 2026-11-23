@@ -70,7 +70,7 @@ namespace Simpiens.Testing.Skills
             veteran.Set(Skill.Melee, SkillRules.YardCeiling);
             Assert(!Drill.WouldDrill(Context(built, skills: veteran)), "Not at the yard's ceiling: it teaches to 5.");
             var archer = new Simpiens.Cognition.Inventory.AgentInventory();
-            archer.TryEquip(new ItemInstance(1, ItemType.Sling, 1, 12, durability: 100));
+            archer.TryEquip(new ItemInstance(ItemType.Sling, 1, 12, durability: 100));
             Assert(Drill.WorkOf(archer).Equals(SkillWork.Fight(ranged: true)) && Drill.WorkOf(new Simpiens.Cognition.Inventory.AgentInventory()).Equals(SkillWork.Fight(ranged: false)),
                 "A sling drills shooting; the unarmed drill blows.");
             TestLog.Log("[PASS] Test 2: a guild member with no orders, fed and rested, below 5, would drill at a standing yard; nobody else, and never over orders or needs.");

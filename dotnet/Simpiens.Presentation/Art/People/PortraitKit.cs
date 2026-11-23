@@ -30,7 +30,7 @@ namespace Simpiens.Presentation.Art.People
         private const int FaceLeft = 10, FaceTop = 6;
 
         private const byte None = 0, Skin = 1, Hair = 2, Cloth = 3, Trim = 4, Iris = 5, Sclera = 6, Line = 7, Lip = 8,
-            Gold = 9, Steel = 10, Helm = 11, Lamp = 12, Tabard = 13, Warpaint = 14, Bandage = 15;
+            Gold = 9, Steel = 10, Helm = 11, Lamp = 12, Tabard = 13, Warpaint = 14, Bandage = 15, ScarMark = 16;
 
         private static readonly Rgba32 ScleraColour = new Rgba32(236, 230, 218), Warm = new Rgba32(255, 176, 96);
         private static readonly Rgba32 GoldColour = new Rgba32(212, 160, 40), SteelColour = new Rgba32(148, 163, 184);
@@ -64,7 +64,7 @@ namespace Simpiens.Presentation.Art.People
         public static void BakeFramed(in PortraitKey key, Span<Rgba32> into)
         {
             Span<Rgba32> bust = stackalloc Rgba32[Size * Size];
-            Bake(key.Look, key.Mood, key.Worn, key.Standing == CrawlerStanding.GuildMember, bust);
+            Bake(key.Look, key.Mood, key.Worn, key.Standing == CrawlerStanding.GuildMember, bust, key.Scars);
             Framed(bust, key.Standing, into);
             if (key.Greyed) Grey(into);
         }
@@ -85,7 +85,7 @@ namespace Simpiens.Presentation.Art.People
         /// wearing what shows of <paramref name="worn"/> (Epic 10 Part 3, K1.5: the head's helm or mask; a coat, the shoulders'
         /// cloth in its colour), and the guild's tabard when <paramref name="tabard"/>.
         /// </summary>
-        public static void Bake(in CrawlerLook look, Mood mood, in WornLook worn, bool tabard, Span<Rgba32> into)
+        public static void Bake(in CrawlerLook look, Mood mood, in WornLook worn, bool tabard, Span<Rgba32> into, in ScarMarks scars = default)
         {
             if (into.Length < Size * Size) throw new ArgumentException($"A portrait needs {Size * Size} pixels.", nameof(into));
             Span<byte> mat = stackalloc byte[Size * Size];
@@ -174,6 +174,9 @@ namespace Simpiens.Presentation.Art.People
             if (facial == "beard" && delver)
                 for (int y = cy + 13; y < cy + 17; y++)
                     for (int x = cx + 1; x <= cx + 5; x++) c.Set(x, y, Hair, y % 3 == 0 ? 3 : 2);
+
+            // 6b. Scars (Epic 11, S6.7, D28), each its shape at its place, over skin only, under the hair in front
+            if (!scars.IsEmpty) ScarsOn(ref c, cx, ey, my, scars);
 
             // 7. Hair in front; under a helm only what hangs below its brim
             if (!helm || style is "long" or "braids" or "ponytail") Front(ref c, cx, cy, rx, ry, helm ? "crop" : style);
@@ -364,6 +367,53 @@ namespace Simpiens.Presentation.Art.People
             }
         }
 
+        // A scar's place on the face, its centre: a cheek either side, the brow, the chin
+        private static void ScarsOn(ref Canvas c, int cx, int ey, int my, in ScarMarks scars)
+        {
+            for (int place = 0; place < Simpiens.Simulation.Skills.CrawlerTraits.ScarSlots; place++)
+            {
+                if (!scars.At((Simpiens.Simulation.Skills.ScarPlace)place, out var shape)) continue;
+                var (x, y) = (Simpiens.Simulation.Skills.ScarPlace)place switch
+                {
+                    Simpiens.Simulation.Skills.ScarPlace.LeftCheek => (cx - 2, ey + 4),
+                    Simpiens.Simulation.Skills.ScarPlace.Brow => (cx + 4, ey - 4),
+                    Simpiens.Simulation.Skills.ScarPlace.RightCheek => (cx + 6, ey + 4), // the far cheek is narrower: the face turns to the right
+                    _ => (cx + 4, my + 3),
+                };
+                ScarShaped(ref c, x, y, shape);
+            }
+        }
+
+        private static void ScarShaped(ref Canvas c, int x, int y, Simpiens.Simulation.Skills.ScarShape shape)
+        {
+            switch (shape)
+            {
+                case Simpiens.Simulation.Skills.ScarShape.Claw: // three short rakes
+                    for (int k = 0; k < 3; k++)
+                        for (int i = 0; i < 3; i++) OnSkin(ref c, x - 2 + 2 * k + i, y - 1 + i, i == 1 ? 3 : 2);
+                    break;
+                case Simpiens.Simulation.Skills.ScarShape.Bite: // two rows of teeth
+                    for (int k = -1; k <= 1; k++)
+                    {
+                        OnSkin(ref c, x + 2 * k, y - 1, 3);
+                        OnSkin(ref c, x + 2 * k, y + 1, 3);
+                    }
+                    break;
+                case Simpiens.Simulation.Skills.ScarShape.Burn: // a mottled patch
+                    for (int dy = -1; dy <= 1; dy++)
+                        for (int dx = -1; dx <= 1; dx++) OnSkin(ref c, x + dx, y + dy, ((dx + dy) & 1) == 0 ? 1 : 2);
+                    break;
+                default: // a cut
+                    for (int i = 0; i < 4; i++) OnSkin(ref c, x - 1 + i, y - 2 + i, i == 1 || i == 2 ? 3 : 2);
+                    break;
+            }
+        }
+
+        private static void OnSkin(ref Canvas c, int x, int y, int tone)
+        {
+            if (c.At(x, y) == Skin) c.Set(x, y, ScarMark, tone);
+        }
+
         private static void Accessory(ref Canvas c, int cx, int cy, int rx, int ry, int ey, int near, int ear, string accessory)
         {
             switch (accessory)
@@ -515,6 +565,7 @@ namespace Simpiens.Presentation.Art.People
             var tabard = SpriteKit.RampOf(BodyKit.TabardColour);
             var paint = SpriteKit.RampOf(PaintColour);
             var bandage = SpriteKit.RampOf(BandageColour);
+            var scar = SpriteKit.RampOf(BodyKit.ScarColour);
 
             // The hairline: hair just above skin takes its deepest tone, so the face reads at 1x
             for (int y = 1; y < Size; y++)
@@ -532,7 +583,7 @@ namespace Simpiens.Presentation.Art.People
                     Line => SpriteKit.Outline,
                     Lip => skin.Deep,
                     Lamp => t == 1 ? new Rgba32(255, 255, 230) : gear.Secondary,
-                    _ => RampFor(m, skin, hair, cloth, trim, iris, gold, steel, helm, tabard, paint, bandage)[t],
+                    _ => RampFor(m, skin, hair, cloth, trim, iris, gold, steel, helm, tabard, paint, bandage, scar)[t],
                 };
             }
 
@@ -542,7 +593,7 @@ namespace Simpiens.Presentation.Art.People
                 {
                     byte m = c.Mat[y * Size + x];
                     if (m == None) continue;
-                    if (m is Skin or Hair or Cloth or Trim or Helm or Tabard) into[y * Size + x] = Mix(RampFor(m, skin, hair, cloth, trim, iris, gold, steel, helm, tabard, paint, bandage).Base, Warm);
+                    if (m is Skin or Hair or Cloth or Trim or Helm or Tabard) into[y * Size + x] = Mix(RampFor(m, skin, hair, cloth, trim, iris, gold, steel, helm, tabard, paint, bandage, scar).Base, Warm);
                     break;
                 }
 
@@ -554,11 +605,11 @@ namespace Simpiens.Presentation.Art.People
                     byte lit = c.At(x + 1, y) != None ? c.At(x + 1, y) : c.At(x, y + 1);
                     byte shadow = c.At(x - 1, y) != None ? c.At(x - 1, y) : c.At(x, y - 1);
                     if (shadow != None) into[y * Size + x] = SpriteKit.Outline;
-                    else if (lit != None) into[y * Size + x] = lit is Sclera or Line or Lip or Lamp ? SpriteKit.Outline : RampFor(lit, skin, hair, cloth, trim, iris, gold, steel, helm, tabard, paint, bandage).Deep;
+                    else if (lit != None) into[y * Size + x] = lit is Sclera or Line or Lip or Lamp ? SpriteKit.Outline : RampFor(lit, skin, hair, cloth, trim, iris, gold, steel, helm, tabard, paint, bandage, scar).Deep;
                 }
         }
 
-        private static Ramp RampFor(byte m, in Ramp skin, in Ramp hair, in Ramp cloth, in Ramp trim, in Ramp iris, in Ramp gold, in Ramp steel, in Ramp helm, in Ramp tabard, in Ramp paint, in Ramp bandage) => m switch
+        private static Ramp RampFor(byte m, in Ramp skin, in Ramp hair, in Ramp cloth, in Ramp trim, in Ramp iris, in Ramp gold, in Ramp steel, in Ramp helm, in Ramp tabard, in Ramp paint, in Ramp bandage, in Ramp scar) => m switch
         {
             Hair => hair,
             Cloth => cloth,
@@ -570,6 +621,7 @@ namespace Simpiens.Presentation.Art.People
             Tabard => tabard,
             Warpaint => paint,
             Bandage => bandage,
+            ScarMark => scar,
             _ => skin,
         };
 
@@ -631,14 +683,18 @@ namespace Simpiens.Presentation.Art.People
     /// <summary>A portrait: a look with its mood, its standing (the frame, the tabard) and what shows of its gear.</summary>
     public readonly struct PortraitKey : IEquatable<PortraitKey>
     {
-        public PortraitKey(in CrawlerLook look, Mood mood, CrawlerStanding standing, in WornLook worn, bool greyed = false)
+        public PortraitKey(in CrawlerLook look, Mood mood, CrawlerStanding standing, in WornLook worn, bool greyed = false, in ScarMarks scars = default)
         {
             Look = look;
             Mood = mood;
             Standing = standing;
             Worn = worn;
             Greyed = greyed;
+            Scars = scars;
         }
+
+        /// <summary>The scars it bears (Epic 11, S6.7); none for none.</summary>
+        public ScarMarks Scars { get; }
 
         /// <summary>The dead's portrait (Epic 10 Part 3, K5.8c): the same face, in greys.</summary>
         public bool Greyed { get; }
@@ -658,13 +714,13 @@ namespace Simpiens.Presentation.Art.People
         public static PortraitKey Of(EntityId id, Simpiens.Cognition.AgentState agent, MoodTracker moods, long tick)
         {
             var mood = moods.Update(id, MoodSigns.Of(agent), tick);
-            return new PortraitKey(agent.Look, mood, WorldViewFrame.StandingOf(agent), WornLook.Of(agent.Inventory));
+            return new PortraitKey(agent.Look, mood, WorldViewFrame.StandingOf(agent), WornLook.Of(agent.Inventory), scars: ScarMarks.Of(agent.Traits));
         }
 
-        public bool Equals(PortraitKey other) => Look.Equals(other.Look) && Mood == other.Mood && Standing == other.Standing && Worn.Equals(other.Worn) && Greyed == other.Greyed;
+        public bool Equals(PortraitKey other) => Look.Equals(other.Look) && Mood == other.Mood && Standing == other.Standing && Worn.Equals(other.Worn) && Greyed == other.Greyed && Scars.Equals(other.Scars);
 
         public override bool Equals(object obj) => obj is PortraitKey other && Equals(other);
 
-        public override int GetHashCode() => HashCode.Combine(Look.GetHashCode(), (int)Mood, (int)Standing, Worn.GetHashCode(), Greyed);
+        public override int GetHashCode() => HashCode.Combine(Look.GetHashCode(), (int)Mood, (int)Standing, Worn.GetHashCode(), Greyed, Scars.GetHashCode());
     }
 }

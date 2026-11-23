@@ -147,8 +147,8 @@ namespace Simpiens.Testing.Combat
 
             using (TestItems())
             {
-                Assert(crawler.Inventory.TryEquip(new ItemInstance(1, Cudgel, 1, 10, durability: 3)), "The test cudgel goes in the weapon slot.");
-                Assert(crawler.Inventory.TryEquip(new ItemInstance(1, Brigandine, 1, 10, durability: 100)), "The test brigandine goes in the protection slot.");
+                Assert(crawler.Inventory.TryEquip(new ItemInstance(Cudgel, 1, 10, durability: 3)), "The test cudgel goes in the weapon slot.");
+                Assert(crawler.Inventory.TryEquip(new ItemInstance(Brigandine, 1, 10, durability: 100)), "The test brigandine goes in the protection slot.");
                 var armed = Combatant.ForCrawler(crawler, CrawlerRadius);
                 Assert(armed.Attack == 6f, $"A weapon adds to the bare hand: 2 + 4 = {armed.Attack}.");
                 Assert(armed.SwingInterval == 12, $"A quick weapon multiplies the interval: 1.5 s x 0.8 = {armed.SwingInterval} ticks.");
@@ -157,7 +157,7 @@ namespace Simpiens.Testing.Combat
 
                 // A grade strengthens the effect (Epic 10 Part 2, D56): a Fine cudgel's +4 is +4.4
                 crawler.Inventory.Unequip(EquipmentSlot.Weapon);
-                Assert(crawler.Inventory.TryEquip(new ItemInstance(1, Cudgel, 1, 10, quality: Grades.Fine, durability: 3)), "A Fine cudgel.");
+                Assert(crawler.Inventory.TryEquip(new ItemInstance(Cudgel, 1, 10, quality: Grades.Fine, durability: 3)), "A Fine cudgel.");
                 Assert(SimMath.Approximately(Combatant.ForCrawler(crawler, CrawlerRadius).Attack, 6.4f), "A Fine weapon's attack is a tenth stronger.");
             }
             TestLog.Log("[PASS] Test 5: a crawler's read: 2 bare-handed, a swing every 15 ticks, reach 0.5; a weapon and armour add to it through CrawlerStats; down means not standing.");
@@ -203,7 +203,7 @@ namespace Simpiens.Testing.Combat
             using (TestItems())
             {
                 var inventory = new AgentInventory();
-                Assert(inventory.TryEquip(new ItemInstance(1, Cudgel, 1, 10, durability: 3)), "The cudgel, 3 hits from breaking.");
+                Assert(inventory.TryEquip(new ItemInstance(Cudgel, 1, 10, durability: 3)), "The cudgel, 3 hits from breaking.");
                 var hit = new SwingOutcome(true, 0.7f, 4f);
                 var miss = new SwingOutcome(false, 0.7f, 0f);
                 Assert(!CombatRules.WearOnHit(miss, inventory) && inventory.GetEquipped(EquipmentSlot.Weapon).Durability == 3, "A miss wears nothing.");
@@ -214,8 +214,8 @@ namespace Simpiens.Testing.Combat
                 Assert(!CombatRules.WearOnHit(hit, null), "Nor does a fighter with no inventory (a creature).");
 
                 // Worn gear that isn't a weapon is untouched: a pickaxe in the tool slot, armour in the body slot
-                Assert(inventory.TryEquip(new ItemInstance(1, ItemType.ToolPickaxe, 1, 30, durability: 40)), "A pickaxe in the tool slot.");
-                Assert(inventory.TryEquip(new ItemInstance(1, Brigandine, 1, 10, durability: 100)), "The brigandine in the body slot.");
+                Assert(inventory.TryEquip(new ItemInstance(ItemType.ToolPickaxe, 1, 30, durability: 40)), "A pickaxe in the tool slot.");
+                Assert(inventory.TryEquip(new ItemInstance(Brigandine, 1, 10, durability: 100)), "The brigandine in the body slot.");
                 CombatRules.WearOnHit(hit, inventory);
                 Assert(inventory.GetEquipped(EquipmentSlot.Tool).Durability == 40 && inventory.GetEquipped(EquipmentSlot.Body).Durability == 100, "A hit wears only the weapon.");
             }
@@ -251,7 +251,7 @@ namespace Simpiens.Testing.Combat
         private (long end, float crawlerHealth, float creatureHealth, int blows) Duel(ulong seed, bool crawlerFirst = true)
         {
             var crawler = new AgentState(new EntityId(5, 0, 0, 0)) { Position = new Vec2(0f, 0f), Health = 100f };
-            crawler.Inventory.TryEquip(new ItemInstance(1, Cudgel, 1, 10, durability: 1000));
+            crawler.Inventory.TryEquip(new ItemInstance(Cudgel, 1, 10, durability: 1000));
             var creatureId = new EntityId(6, 0, 0, 0);
             var creaturePosition = new Vec2(1f, 0f);
             float creatureHealth = 60f;

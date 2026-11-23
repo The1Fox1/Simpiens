@@ -144,10 +144,11 @@ namespace Simpiens.Presentation.Dashboard
                 row.HasPortrait = agent.Look.IsComplete;
                 row.Portrait = row.HasPortrait ? Simpiens.Presentation.Art.People.PortraitKey.Of(node.Id, agent, _moods, _context.Clock?.CurrentTick ?? 0) : default;
                 // Its calling and its part in a party before what it does (Epic 11, S5.7, D24): "Warden (front) · Going to bed"
-                row.Doing = CallingTexts.Before(CallingTexts.TitleWithRole(agent.Skills, agent.Traits), PlanText.Action(agent.HasActivePlan ? agent.ActivePlan.CurrentAction : null));
+                // Its epithet before its title (Epic 11, S6.6, D36): the card's name line holds two skills beside the name, with no room for one
+                row.Doing = CallingTexts.Before(CallingTexts.Before(_context.EpithetOf(agent.Traits), CallingTexts.TitleWithRole(agent.Skills, agent.Traits)), PlanText.Action(agent.HasActivePlan ? agent.ActivePlan.CurrentAction : null));
                 row.Health = agent.Health;
                 row.Downed = agent.IsDowned;
-                row.Equipment.Refresh(agent.Inventory);
+                row.Equipment.Refresh(agent.Inventory, _context); // a masterpiece by its name (Epic 11, S8.5)
                 var (trust, warmth) = GuildRules.Standing(agent, (uint)(_context.Clock?.CurrentTick ?? 0));
                 row.Standing = Invariant($"Trust {trust} · Warmth {warmth}");
                 row.Skills = SkillTexts.Best(agent.Skills, 2);

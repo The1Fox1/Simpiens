@@ -24,10 +24,14 @@ namespace Simpiens.Presentation
             return _keys[(byte)item] = ArtKeys.Item(definition.ArtKey, ItemPicture.Icon);
         }
 
-        /// <summary>The icon key of a piece of <paramref name="item"/> at <paramref name="grade"/> (Epic 10 Part 2, W4): its rim a step rarer a grade.</summary>
+        /// <summary>
+        /// The icon key of a piece of <paramref name="item"/> at <paramref name="grade"/> (Epic 10 Part 2, W4): its rim a step
+        /// rarer a grade; a masterpiece's is the Masterwork's (Epic 11, S8.5: its name shows in Legendary's colour).
+        /// </summary>
         public static string Of(ItemType item, byte grade)
         {
             if (grade == Grades.Standard || !Grades.Graded(item)) return Of(item);
+            if (grade > Grades.Masterwork) grade = Grades.Masterwork;
             int at = (byte)item * 3 + (grade < Grades.Masterwork ? grade : Grades.Masterwork);
             var key = _graded[at];
             if (key != null) return key;

@@ -36,7 +36,7 @@ namespace Simpiens.Core.Tests
             {
                 Outfitting.NewPiece(ItemType.Cudgel, Grades.Standard),
                 Outfitting.NewPiece(ItemType.FangKnife, Grades.Standard),
-                new ItemInstance(1, ItemType.Hide, 2, 0),
+                new ItemInstance(ItemType.Hide, 2, 0),
             }, 0, taker.AgentId, tick);
             Assert.True(LootRules.WouldTakeAny(taker.Inventory, new PileView(pile)));
 
@@ -79,9 +79,9 @@ namespace Simpiens.Core.Tests
             var world = (IPileWorld)sim.Simulation;
             var taker = sim.Host.CrawlerStates.First(s => !s.IsDrifter);
             Empty(taker.Inventory);
-            for (int i = 0; i < taker.Inventory.Capacity; i++) Assert.True(taker.Inventory.TryAddItem(new ItemInstance(1, ItemType.IronOre, ItemCatalog.Get(ItemType.IronOre).MaxStack, 0), out _));
+            for (int i = 0; i < taker.Inventory.Capacity; i++) Assert.True(taker.Inventory.TryAddItem(new ItemInstance(ItemType.IronOre, ItemCatalog.Get(ItemType.IronOre).MaxStack, 0), out _));
             uint tick = (uint)sim.Clock.CurrentTick;
-            var pile = piles.Drop(world, taker.Position, new[] { new ItemInstance(1, ItemType.Hide, 1, 0) }, 0, default, tick);
+            var pile = piles.Drop(world, taker.Position, new[] { new ItemInstance(ItemType.Hide, 1, 0) }, 0, default, tick);
             Assert.False(LootRules.WouldTakeAny(taker.Inventory, new PileView(pile)), "No room: nothing it would take.");
             Assert.Equal(0, piles.Take(world, pile.Id, taker.Inventory, taker.AgentId, tick, out _, out _));
             Assert.True(piles.TryGet(pile.Id, out _));
@@ -92,7 +92,7 @@ namespace Simpiens.Core.Tests
         {
             using var sim = Outpost();
             var spot = ByTheStall(sim);
-            var pile = sim.Simulation.Piles.Drop((IPileWorld)sim.Simulation, spot, new[] { new ItemInstance(1, ItemType.Hide, 1, 0) }, 0, default, (uint)sim.Clock.CurrentTick);
+            var pile = sim.Simulation.Piles.Drop((IPileWorld)sim.Simulation, spot, new[] { new ItemInstance(ItemType.Hide, 1, 0) }, 0, default, (uint)sim.Clock.CurrentTick);
             var collectors = new HashSet<EntityId>();
             long gone = -1;
             for (long t = 0; t < DayClock.TicksPerDay / 2 && gone < 0; t++)
@@ -114,7 +114,7 @@ namespace Simpiens.Core.Tests
             var spot = ByTheStall(sim);
             // Its victor far off, at the warren's side of the outpost: nobody else may take it for the claim's hour
             var victor = sim.Host.CrawlerStates.OrderByDescending(c => Vec2.Distance(c.Position, spot)).First(c => !c.IsDrifter);
-            var pile = sim.Simulation.Piles.Drop((IPileWorld)sim.Simulation, spot, new[] { new ItemInstance(1, ItemType.Hide, 1, 0) }, 0, victor.AgentId, (uint)sim.Clock.CurrentTick);
+            var pile = sim.Simulation.Piles.Drop((IPileWorld)sim.Simulation, spot, new[] { new ItemInstance(ItemType.Hide, 1, 0) }, 0, victor.AgentId, (uint)sim.Clock.CurrentTick);
             long gone = -1;
             EntityId taker = default;
             for (long t = 0; t < DayClock.TicksPerDay / 2 && gone < 0; t++)
