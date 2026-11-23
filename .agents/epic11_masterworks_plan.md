@@ -115,7 +115,7 @@ Working document (AGENTS.md, Documentation Protocol 6), the last of Epic 11's pl
 
 ### S9. The gate (1–2 days), then the play session
 **Complexity:** Possibly Complex, as the epic stamps it.
-- [ ] **S9.1 DoD `EpicElevenTogether`, with a save mid-scene** [Possibly Complex: a live scenario across every system]: D46, as `PartThreeTogetherTests` does for Part 3.
+- [x] **S9.1 DoD `EpicElevenTogether`, with a save mid-scene** (done 2026-11-22: gate seed 5, every layer by day 7, the only one of 23; F19) [Possibly Complex: a live scenario across every system]: D46, as `PartThreeTogetherTests` does for Part 3.
 - [ ] **S9.2 The soak's bands and the seeds** [Possibly Complex: measuring; a band moves only by the producer's word]: D47, written to `docs/skills-model.md` §5.15 and `docs/economy-model.md` §8. Seeds 1–120 both ways.
 - [ ] **S9.3 The epic's gate and the play session's brief** [Basic]: the gates on the final build; D48's brief in the epic's §4.
 
