@@ -105,13 +105,13 @@ Working document (AGENTS.md, Documentation Protocol 6), the last of Epic 11's pl
 - [x] **S8.5 The client** (done 2026-11-22; F16 fixed: the four 720-row dossier renders looked at and re-recorded) [Possibly Complex: Gum UI and renders, a look]
   - **What is built:** D45: the story's tooltip, the shelf's, the rim, the legend line, the chronicle, the moment, and F16's fix.
   - **The checks:** `MasterpiecesOnScreenTests`; the art sheet looked at (the rim is the kit's), the renders looked at and re-recorded in the pinned image, in their own commit.
-- [ ] **S8.6 DoD `AMasterpieceHasAMaker`** [Possibly Complex: a live scenario]
+- [x] **S8.6 DoD `AMasterpieceHasAMaker`** (done 2026-11-22: gate seed 424242; made on 11 of 23, worn on 8) [Possibly Complex: a live scenario]
   - **The scenario:** on a gate seed picked from S8.0's measurement, the workshop player's forge with its best smith, within a bounded run:
     - an inspired Journeyman makes a masterpiece;
     - a resident wears it, bought or given;
     - a save and a load mid-run keep its record, its mark on its wearer, its owners and its maker's name.
   - **The explicit measure:** how many gate seeds make one.
-- [ ] **S8.7 S8's gate** [Basic]: AGENTS.md's gates (§4 below).
+- [x] **S8.7 S8's gate** (done 2026-11-22: core 339, client 553 pinned, golden 3/3, compiles clean) [Basic]: AGENTS.md's gates (§4 below).
 
 ### S9. The gate (1–2 days), then the play session
 **Complexity:** Possibly Complex, as the epic stamps it.
