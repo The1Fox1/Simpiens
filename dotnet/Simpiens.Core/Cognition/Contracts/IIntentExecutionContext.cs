@@ -51,6 +51,9 @@ namespace Simpiens.Cognition.Contracts
         /// <summary>The living creature of lair <paramref name="lairIndex"/> nearest <paramref name="from"/> (Epic 10 Part 3, K6.2: a hunter's quarry); false when the lair is empty.</summary>
         bool TryGetNearestLairCreature(int lairIndex, Vec2 from, out Simpiens.Simulation.Creatures.CreatureState creature);
 
+        /// <summary>The outpost's masterpieces (Epic 11, S8.3, D43): what a sale hands out and a trade-in takes back; none in a bare context.</summary>
+        Simpiens.Simulation.Workshops.MasterpieceService Masterpieces => null;
+
         /// <summary>The open hunt <paramref name="bountyId"/>'s party, with its quarry (Epic 11, S7.4); false once it is closed.</summary>
         bool TryGetHunt(ushort bountyId, out Simpiens.Simulation.Economy.HuntRecord hunt) { hunt = default; return false; }
 

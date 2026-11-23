@@ -95,7 +95,7 @@ Working document (AGENTS.md, Documentation Protocol 6), the last of Epic 11's pl
     - `MasterpieceNamesValidator`: Latin-1, the lengths, every kind of slot covered;
     - `DeedsValidator` and `DeedNamesTests` list the new deed.
   - Golden re-recorded in its own commit only if a masterpiece is made within its 3,000 ticks.
-- [ ] **S8.3 Through every hand** [Possibly Complex: the item flow across the stall, the guild and the piles; supervised, for review]
+- [x] **S8.3 Through every hand** (done 2026-11-22; golden unchanged) [Possibly Complex: the item flow across the stall, the guild and the piles; supervised, for review]
   - **The paths:** the shelf at the sale and the gift; handed back whole; the pickup's new owner; the kill counted on the piece; `Find`.
   - **The check:** `MasterpieceFlowTests` (on the live outpost, so in the core tests) follows one piece: made, shelved, sold, worn, handed back, given, its wearer's death, its body picked over, worn again. It checks the owners in order, a kill counted, broken and lost, the shelf never above its good's Masterwork count, and a load keeping every record and mark.
 - [ ] **S8.4 Re-measured** [Possibly Complex: measuring]

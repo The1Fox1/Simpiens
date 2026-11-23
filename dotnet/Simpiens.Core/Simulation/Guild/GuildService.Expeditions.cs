@@ -288,14 +288,19 @@ namespace Simpiens.Simulation.Guild
             var stall = host.ActiveStalls[0];
             WornGear.TryReplacing(crawler.Inventory, item, out var replacing);
             var worn = crawler.Inventory.GetEquipped(replacing);
+            var masterpieces = host.Masterpieces;
             if (!worn.IsEmpty)
             {
                 crawler.Inventory.Unequip(replacing);
-                stall = Simpiens.Simulation.Workshops.Crafting.HandBack(stall, worn);
+                stall = masterpieces != null ? masterpieces.HandBack(stall, worn) : Simpiens.Simulation.Workshops.Crafting.HandBack(stall, worn); // a masterpiece back on the shelf whole (Epic 11, S8.3)
             }
-            // The best grade on the shelf first (Epic 10 Part 2, D57), its life the grade's
+            // The best grade on the shelf first (Epic 10 Part 2, D57), its life the grade's; a masterpiece first (Epic 11, S8.3, D43)
             stall = stall.TakeBest(item, out byte grade);
-            crawler.Inventory.TryEquip(new ItemInstance(item, 1, (ushort)stall.SellPriceOf(item), quality: grade, durability: equipment.DurabilityAt(grade)));
+            ushort masterpiece = 0;
+            var piece = masterpieces != null ? masterpieces.PieceFor(item, grade, (ushort)stall.SellPriceOf(item), out masterpiece)
+                : new ItemInstance(item, 1, (ushort)stall.SellPriceOf(item), quality: grade, durability: equipment.DurabilityAt(grade));
+            crawler.Inventory.TryEquip(piece);
+            if (masterpiece != 0) masterpieces.HandOut(masterpiece, crawlerId);
             host.UpdateStall(stall);
             SimLog.Economy.ZLogInformation($"{SimLog.Agent(crawlerId)} was given {item} from the stall's stock{(worn.IsEmpty ? string.Empty : $" in place of {worn.Type}")}");
             return GuildRules.Check.Ok;

@@ -150,6 +150,87 @@ namespace Simpiens.Simulation.Workshops
             return true;
         }
 
+        // --- Through hands (Epic 11, S8.3, D43) ---
+
+        /// <summary>The masterpiece of <paramref name="item"/> on the stall's shelf that a sale or a gift hands out first (the oldest), or 0.</summary>
+        public ushort OnShelf(ItemType item)
+        {
+            for (int i = 0; i < _records.Count; i++)
+            {
+                if (_records[i].Place == MasterpiecePlace.Shelf && _records[i].Item == item) return _records[i].Id;
+            }
+            return 0;
+        }
+
+        /// <summary>
+        /// The piece a sale or a gift hands out (D43): when the shelf's best is Masterwork and a masterpiece of the item waits
+        /// there, that masterpiece, at its grade and marked, and its id in <paramref name="masterpiece"/>; otherwise an
+        /// ordinary piece at <paramref name="grade"/>. Nothing changes until <see cref="HandOut"/>.
+        /// </summary>
+        public ItemInstance PieceFor(ItemType item, byte grade, ushort price, out ushort masterpiece)
+        {
+            masterpiece = grade == Grades.Masterwork ? OnShelf(item) : (ushort)0;
+            if (masterpiece != 0) grade = Grades.Masterpiece;
+            var equipment = ItemCatalog.Get(item)?.Equipment;
+            var piece = new ItemInstance(item, 1, price, quality: grade, durability: equipment != null ? equipment.DurabilityAt(grade) : (ushort)100);
+            return masterpiece != 0 ? piece.WithMasterpiece(masterpiece) : piece;
+        }
+
+        /// <summary>A masterpiece left the shelf for <paramref name="owner"/> (a sale or a gift): out in the world, its new owner recorded.</summary>
+        public void HandOut(ushort id, EntityId owner)
+        {
+            if (!TryGet(id, out var record)) return;
+            record.Place = MasterpiecePlace.World;
+            record.AddOwner(owner);
+            _records[id - 1] = record;
+        }
+
+        /// <summary>A masterpiece taken up from the ground by <paramref name="owner"/> (D43): its new owner.</summary>
+        public void TakenUp(ushort id, EntityId owner)
+        {
+            if (!TryGet(id, out var record)) return;
+            record.Place = MasterpiecePlace.World;
+            record.AddOwner(owner);
+            _records[id - 1] = record;
+        }
+
+        /// <summary>
+        /// A worn piece handed back at the stall (a swap, a trade-in): a masterpiece goes back onto the shelf whole, among its
+        /// good's Masterwork pieces, never onto the worn shelf, where a repair would make it Standard (D43); any other piece by
+        /// <see cref="Crafting.HandBack"/>.
+        /// </summary>
+        public TradeStallData HandBack(in TradeStallData stall, in ItemInstance piece)
+        {
+            if (!piece.IsMasterpiece || !TryGet(piece.Masterpiece, out var record) || !stall.Trades(piece.Type) || !Crafting.HasRoom(stall, piece.Type, 1))
+                return Crafting.HandBack(stall, piece);
+            record.Place = MasterpiecePlace.Shelf;
+            _records[record.Id - 1] = record;
+            return stall.WithStocked(piece.Type, 1, Grades.Masterwork);
+        }
+
+        /// <summary>
+        /// A creature slain by a crawler wearing masterpieces (D44): each counts the kill, and a named creature by whom it was
+        /// named for and its rank.
+        /// </summary>
+        public void CountKill(Simpiens.Cognition.Inventory.IAgentInventory inventory, bool named, EntityId victim, byte rank)
+        {
+            if (inventory == null || _records.Count == 0) return;
+            var slots = EquipmentSlots.All;
+            for (int i = 0; i < slots.Count; i++)
+            {
+                var piece = inventory.GetEquipped(slots[i].Id);
+                if (!piece.IsMasterpiece || !TryGet(piece.Masterpiece, out var record)) continue;
+                if (record.Kills < ushort.MaxValue) record.Kills++;
+                if (named)
+                {
+                    if (record.NamedSlain < ushort.MaxValue) record.NamedSlain++;
+                    record.SlainVictim = victim;
+                    record.SlainRank = rank;
+                }
+                _records[record.Id - 1] = record;
+            }
+        }
+
         /// <summary>The masterpieces held at station <paramref name="stationIndex"/> are on the shelf now: the stall had room for its make.</summary>
         public void Shelve(int stationIndex)
         {

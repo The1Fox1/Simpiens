@@ -498,6 +498,7 @@ namespace Simpiens.Simulation
                 killer.AddDeed(Simpiens.Simulation.Skills.Deed.CreatureSlain, (byte)creature.Kind); // the kind, for its slayer's epithet (Epic 11, S6.1)
                 if (creature.Definition != null && creature.Definition.IsBoss) killer.AddDeed(Simpiens.Simulation.Skills.Deed.BossSlain, (byte)creature.Kind);
                 if (creature.IsNamed) killer.AddDeed(Simpiens.Simulation.Skills.Deed.NamedCreatureSlain, (byte)creature.Kind, creature.Victim); // the avenger, its victim's name (Epic 11, S7.5, D35)
+                Workshops.Masterpieces.CountKill(killer.Inventory, creature.IsNamed, creature.Victim, creature.Rank); // on the masterpieces it wears (Epic 11, S8.3, D44)
             }
             if (creature.IsNamed)
                 Chronicle?.RecordEvent(new Simpiens.Narrative.ChronicleEvent(Simpiens.Narrative.ChronicleEventType.NamedCreatureSlain, slayer, creature.Id,
@@ -607,6 +608,11 @@ namespace Simpiens.Simulation
         }
 
         TradeStallData ISupplyHost.PayWages(TradeStallData stall, uint currentTick) => Workshops.PayWages(this, Guild.PayWages(this, stall, currentTick), currentTick);
+        /// <summary>The outpost's masterpieces (Epic 11, S8.3), the workshops': the door the sale, the guild's gift and the piles share.</summary>
+        public Simpiens.Simulation.Workshops.MasterpieceService Masterpieces => Workshops.Masterpieces;
+
+        void Simpiens.Simulation.Loot.IPileWorld.MasterpieceTakenUp(ushort masterpiece, EntityId taker) => Workshops.Masterpieces.TakenUp(masterpiece, taker);
+
         Simpiens.Simulation.Workshops.CraftStep IIntentExecutionContext.WorkStation(int stationIndex) => Workshops.Work(this, stationIndex, _clock != null ? (uint)_clock.CurrentTick : 0u, Seed);
 
         public uint CurrentTick => _clock != null ? (uint)_clock.CurrentTick : (uint)_fallbackTick;

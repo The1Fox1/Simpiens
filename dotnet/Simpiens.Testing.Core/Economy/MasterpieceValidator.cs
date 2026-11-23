@@ -30,7 +30,8 @@ namespace Simpiens.Testing.Economy
             ValidateTheOwners();
             ValidateTheService();
             ValidateTheSaveCheck();
-            TestLog.Log("<color=green>[MasterpieceValidator] ALL 5 TESTS PASSED SUCCESSFULLY!</color>");
+            ValidateThroughHands();
+            TestLog.Log("<color=green>[MasterpieceValidator] ALL 6 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private static void ValidateTheMark()
@@ -129,6 +130,46 @@ namespace Simpiens.Testing.Economy
             Assert(refused != null && refused.Contains("masterpiece 2") && refused.Contains("pile"), $"A mark with no record is refused, with where it is: {refused}");
             Assert(SaveItems.FirstUnknownMasterpiece(With(1, new[] { new MasterpieceRecord { Id = 4, Item = ItemType.IronBlade } })) != null, "Records out of order are refused.");
             TestLog.Log("[PASS] The save's check: a mark with no record, or records out of order, refused (D39).");
+        }
+
+        private static void ValidateThroughHands()
+        {
+            var service = new MasterpieceService();
+            var stall = new TradeStallData(new EntityId(9u, 0u, 0u, 9u), Vec2.Zero, 100u).WithGood(new StallGood(ItemType.IronBlade, StallRole.Sells, 40, 0));
+            var plain = service.PieceFor(ItemType.IronBlade, Grades.Masterwork, 40, out ushort none);
+            Assert(none == 0 && !plain.IsMasterpiece && plain.Quality == Grades.Masterwork, "No masterpiece on the shelf: an ordinary Masterwork piece.");
+            ushort id = service.Add(new MasterpieceRecord { Item = ItemType.IronBlade, Place = MasterpiecePlace.Shelf });
+            service.Add(new MasterpieceRecord { Item = ItemType.IronBlade, Place = MasterpiecePlace.Held });
+            Assert(service.OnShelf(ItemType.IronBlade) == id && service.OnShelf(ItemType.RingCoat) == 0, "The shelf's masterpiece of an item; a held one isn't on it.");
+            var fine = service.PieceFor(ItemType.IronBlade, Grades.Fine, 40, out ushort notYet);
+            Assert(notYet == 0 && fine.Quality == Grades.Fine, "Only a Masterwork take hands out a masterpiece (the shelf's best is its grade).");
+            var piece = service.PieceFor(ItemType.IronBlade, Grades.Masterwork, 40, out ushort handed);
+            var blade = ItemCatalog.Get(ItemType.IronBlade).Equipment;
+            Assert(handed == id && piece.Masterpiece == id && piece.Quality == Grades.Masterpiece && piece.Durability == blade.DurabilityAt(Grades.Masterpiece),
+                "A Masterwork take hands out the masterpiece, at its grade and life, marked.");
+            Assert(service.TryGet(id, out var still) && still.Place == MasterpiecePlace.Shelf, "Nothing changes until it is handed out.");
+            service.HandOut(id, A);
+            Assert(service.TryGet(id, out var out_) && out_.Place == MasterpiecePlace.World && out_.LastOwner == A && service.OnShelf(ItemType.IronBlade) == 0, "Handed out: off the shelf, its owner.");
+            service.TakenUp(id, B);
+            Assert(service.TryGet(id, out var taken) && taken.OwnerCount == 2 && taken.LastOwner == B, "Taken up from the ground: its next owner.");
+
+            var wearer = new AgentInventory(4, startingGold: 0);
+            wearer.TryEquip(piece);
+            service.CountKill(wearer, named: false, default, 0);
+            service.CountKill(wearer, named: true, C, 2);
+            Assert(service.TryGet(id, out var bloodied) && bloodied.Kills == 2 && bloodied.NamedSlain == 1 && bloodied.SlainVictim == C && bloodied.SlainRank == 2,
+                "Kills while it is worn; a named creature's by whom it was named for and its rank.");
+            service.CountKill(new AgentInventory(4, startingGold: 0), named: false, default, 0);
+            Assert(service.TryGet(id, out var same) && same.Kills == 2, "A kill without it counts nothing on it.");
+
+            var back = service.HandBack(stall, piece.WithDurability(3));
+            Assert(back.TryGetGood(ItemType.IronBlade, out var good) && good.Stock == 1 && good.Masterwork == 1 && good.Worn == 0, "Handed back: onto the shelf whole, among the Masterwork pieces.");
+            Assert(service.TryGet(id, out var shelved) && shelved.Place == MasterpiecePlace.Shelf, "On the shelf again.");
+            var worn = service.HandBack(stall, plain.WithDurability(3));
+            Assert(worn.TryGetGood(ItemType.IronBlade, out var mend) && mend.Worn == 1 && mend.Masterwork == 0, "An ordinary piece goes onto the worn shelf, as before.");
+            var elsewhere = new TradeStallData(new EntityId(8u, 0u, 0u, 8u), Vec2.Zero, 100u);
+            Assert(service.HandBack(elsewhere, piece).Equals(elsewhere), "A stall that doesn't trade it takes nothing.");
+            TestLog.Log("[PASS] Through hands: the shelf's masterpiece first, handed out, taken up, its kills, handed back whole (D43, D44).");
         }
 
         private static void Assert(bool condition, string message)

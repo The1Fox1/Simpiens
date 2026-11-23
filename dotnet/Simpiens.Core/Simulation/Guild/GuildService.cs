@@ -17,6 +17,9 @@ namespace Simpiens.Simulation.Guild
     /// </summary>
     public interface IGuildHost : Simpiens.Simulation.Skills.ISkillPractice
     {
+        /// <summary>The outpost's masterpieces (Epic 11, S8.3, D43): what a gift hands out and a swap takes back; none in a bare host.</summary>
+        Simpiens.Simulation.Workshops.MasterpieceService Masterpieces => null;
+
         bool TryGetCrawler(EntityId crawlerId, out AgentState crawler);
 
         // The map, for expeditions (Epic 10 G5)
