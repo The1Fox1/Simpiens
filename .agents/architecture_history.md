@@ -1902,3 +1902,13 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
 - **Deviation from the plans' rule of one PR each:** plans 3 and 4 go into `main` as one PR from `feat/epic11-masterworks`, which was cut from plan 3's branch and carries its commits. Plan 3's own PR was never opened (its push was refused), and opening both would have stacked them.
 - **Milestone 5 COMPLETED** with it. The open findings' owners are in the epic's §7: the economy under every player and F11, F13 the producer's; F15 and F19 to trace in Epic 12's groundwork by default.
 - **Merged** the same day as PR #27, at the producer's "merge and close it out".
+
+## 2026-11-23: The life core, and Epic LIFE-1 drafted with its first plan
+- **The producer's word:** "write up our first Epic in a series of sim focused epics. This epic should cover anything that is missing for L0, and go up to L3 [...] This epic and all epics for the life core will need to be completed before Epic 12", from the Living Crawlers proposal (Claude Doc, 2026-11-15).
+- **The series** (the epic's Q1–Q2, by exception): three epics in Track A, `Epic LIFE-1` to `LIFE-3`, between Epic 11 and Epic 12, which keeps its number. Milestones keep the proposal's L-numbers across the series. A new Milestone 6, A Living Outpost; Floor Relocation and the descent move to Milestone 7.
+- **All of L0 is new work:** the proposal put the motive model inside Epic 11's groundwork, and Epic 11 closed without it.
+- **The motive model, scoped** (Q3): each goal keeps its number as its base; one rule multiplies it by the weights every goal shares (mood, wants, routine, satiation, the day's intention), each exactly 1 until its milestone, plus commitment. The 21 bases are not rewritten as urgency × opportunity: that would risk golden for nothing the player sees. One goal selector replaces the two argmax loops (F1), and tries the next two goals when the best can't be planned (Q4, F2).
+- **One life record** (Q5): `CrawlerLife`, 512 bytes beside the traits record, save format 15 as the series' one raise; thoughts name subjects through a table of four, since an `EntityId` is 16 bytes.
+- **L1 split across plans:** thoughts and mood in plan 1, with L0; wants in plan 2, with L2's venues, so a want has something to be.
+- **Readings from the code:** commitment already exists inside a plan (goals aren't re-scored while it runs, F3); frustration runs in physical time, about 42 a game hour (F6); the chronicle is one ring of 1,024 events (F5); the dossier has no height to spare (F4, hence tabs, Q7).
+- **Branch:** `feat/life1-mind`, cut from `feat/epic11-masterworks`, because PR #27 is still open on GitHub although the roadmap and the entry above call it merged (F7).
