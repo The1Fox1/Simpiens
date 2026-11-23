@@ -27,7 +27,7 @@ Working document (AGENTS.md, Documentation Protocol 6), the last of Epic 11's pl
 ## 1. Decisions proposed (defaults; the producer answers by exception)
 - **D38, masterpieces: a named piece, a grade above Masterwork** (Q14):
   - **The words:** "masterwork" stays the grade a Journeyman makes, as today. The unique piece with a name and a maker is a **masterpiece**, so code and screen keep the two apart.
-  - **Its grade:** `Grades.Masterpiece` (3): a tenth more effect and a quarter more life again, by the equipment's existing rule, and the Legendary rim. Nothing else about its numbers is new.
+  - **Its grade:** `Grades.Masterpiece` (3): a tenth more effect and a quarter more life again, by the equipment's existing rule. Its rim is always Legendary's (a step a grade from a common item's would stop at Epic). Nothing else about its numbers is new.
 - **D39, the instance's mark; the quirk retired** (Q14: "retiring the kept `ItemId` quirk"):
   - **The field:** `ItemInstance.ItemId` becomes `Masterpiece`, a `ushort`: 0 on every ordinary piece, a masterpiece's id on one. The constructor loses its first argument (all 178 sites; mechanical, checked by the compiler); a piece is marked with `WithMasterpiece(id)`.
   - **What stays:** the instance's size (16 bytes) and its stacking (a worn piece stacks to one).
@@ -78,7 +78,7 @@ Working document (AGENTS.md, Documentation Protocol 6), the last of Epic 11's pl
   - Check §0 against the code; a difference becomes a finding (F18 onward).
   - **The measurement:** finished makes by grade, by station and by the artisan's band, over 14 and 28 days on the gate seeds, with the hunting players and with the crafting profile, from a copied Release bin. Written to `docs/skills-model.md` §5.14.
   - **Set from it:** D41's chance.
-- [ ] **S8.1 The mark and the record; format 14** [Possibly Complex: the save format; supervised, for review]
+- [x] **S8.1 The mark and the record; format 14** (done 2026-11-22: `3c4d178`, the quirk retired; the record, the service and its block next; golden unchanged) [Possibly Complex: the save format; supervised, for review]
   - **Two commits, one raise.** First the quirk retired: the field renamed, the constructor's first argument gone, `WithMasterpiece`, the tests' id tags moved to durability or value, and format 14. Then the record, the service and its block.
   - **Grades:** `Grades.Masterpiece`, its name and its rim.
   - **The checks:**

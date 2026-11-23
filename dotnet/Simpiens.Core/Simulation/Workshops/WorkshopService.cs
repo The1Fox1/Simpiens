@@ -47,6 +47,9 @@ namespace Simpiens.Simulation.Workshops
         private readonly Dictionary<EntityId, uint> _cooldowns = new Dictionary<EntityId, uint>();
         private readonly List<ArtisanContract> _quitting = new List<ArtisanContract>(4);
 
+        /// <summary>The masterpieces made at the stations, and their provenance (Epic 11, S8.1, D40), saved in this block.</summary>
+        public MasterpieceService Masterpieces { get; } = new MasterpieceService();
+
         /// <summary>The loaded map's stations.</summary>
         public int Count => _stations.Length;
 
@@ -85,6 +88,7 @@ namespace Simpiens.Simulation.Workshops
             _stations = Array.Empty<StationState>();
             _artisans.Clear();
             _cooldowns.Clear();
+            Masterpieces.Reset();
         }
 
         /// <summary>Every artisan's contract, in hire order.</summary>
@@ -578,6 +582,7 @@ namespace Simpiens.Simulation.Workshops
             foreach (var kvp in _cooldowns) cooldowns[n++] = new IdTickRecord { Id = kvp.Key, Tick = kvp.Value };
             Array.Sort(cooldowns, (a, b) => a.Id.CompareTo(b.Id));
             save.Cooldowns = cooldowns;
+            save.Masterpieces = Masterpieces.Capture();
         }
 
         /// <summary>
@@ -590,6 +595,7 @@ namespace Simpiens.Simulation.Workshops
             for (int i = 0; i < _stations.Length; i++) _stations[i] = StationState.Unbuilt(_stations[i].Kind);
             _artisans.Clear();
             _cooldowns.Clear();
+            Masterpieces.Restore(save?.Masterpieces);
             var saved = save?.Stations;
             if (saved == null) return;
             for (int i = 0; i < _stations.Length && i < saved.Length; i++)

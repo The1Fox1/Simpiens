@@ -377,6 +377,12 @@ namespace Simpiens.Core.Session
                 session = null;
                 return $"The save holds equipment this game can't wear ({misworn}).";
             }
+            string masterpieces = SaveItems.FirstUnknownMasterpiece(save);
+            if (masterpieces != null)
+            {
+                session = null;
+                return $"The save's masterpieces don't fit this game ({masterpieces}).";
+            }
             string piles = Simpiens.Simulation.Loot.PileService.Check(save.World.Piles);
             if (piles != null)
             {

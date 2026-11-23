@@ -171,7 +171,10 @@ namespace Simpiens.Testing.Persistence
                 // The forge's artisan, unpaid once, on the day shift and off on a break (W1.2, W1.3), and a crawler who can't
                 // be hired again yet
                 Artisans = new[] { new Simpiens.Simulation.Workshops.ArtisanContract(C, 0, 6, 120u, 1, Simpiens.Simulation.Workshops.ShiftBlocks.DayShift, onBreak: true, shiftRunTicks: 1234) },
-                Cooldowns = new[] { new IdTickRecord { Id = A, Tick = 4000u } }
+                Cooldowns = new[] { new IdTickRecord { Id = A, Tick = 4000u } },
+                // Two masterpieces (Epic 11, S8.1): one on the stall's shelf, one out in the world with its owners and a kill
+                Masterpieces = new[] { Masterpiece(1, ItemType.IronBlade, Simpiens.Simulation.Workshops.MasterpiecePlace.Shelf, owners: new EntityId[0]),
+                    Masterpiece(2, ItemType.RingCoat, Simpiens.Simulation.Workshops.MasterpiecePlace.World, owners: new[] { A, B, C, A, B }) }
             };
             var workshops = new Simpiens.Simulation.Workshops.WorkshopService().Follow(map);
             workshops.RestoreFrom(save);
@@ -180,12 +183,17 @@ namespace Simpiens.Testing.Persistence
             AssertSameBytes(SaveSerializer.Serialize(save), SaveSerializer.Serialize(again), "The stations restored from their save");
             Assert(workshops[0].Built && workshops[0].Progress == 240 && workshops[0].InputsTaken && workshops[0].CrewGroupId == 5 && workshops[1].HeldOutput == 1 && workshops[1].HeldGrade == 1,
                 "A make in progress and a held make, with its grade (Epic 10 Part 2, W4), come back.");
+            Assert(workshops.Masterpieces.Count == 2 && workshops.Masterpieces.TryGet(1, out var shelved) && shelved.Place == Simpiens.Simulation.Workshops.MasterpiecePlace.Shelf && shelved.OwnerCount == 0
+                && workshops.Masterpieces.TryGet(2, out var worn) && worn.Item == ItemType.RingCoat && worn.Maker == C && worn.OwnerCount == 5 && worn.FirstOwner == A && worn.LastOwner == B
+                && worn.RecentAt(0) == C && worn.Kills == 4 && worn.NamedSlain == 1 && worn.SlainVictim == B && worn.SlainRank == 2 && worn.MadeAt == 9000u,
+                "The masterpieces come back: one on the shelf, one with its maker, its owners, its kills and the named creature it slew (Epic 11, S8.1).");
             Assert(workshops.TryGetContract(C, out var contract) && contract.Wage == 6 && contract.StationIndex == 0 && contract.UnpaidVisits == 1 && contract.JoinTick == 120u
                 && contract.Shifts == Simpiens.Simulation.Workshops.ShiftBlocks.DayShift && contract.OnBreak && contract.ShiftRunTicks == 1234
                 && workshops.ArtisanAt(0) == C && workshops.CooldownUntil(A) == 4000u, "The artisan's contract, its shifts and its break, and the cooldown come back.");
 
             workshops.RestoreFrom(null);
-            Assert(workshops.Count == map.Stations.Count && !workshops[0].Built && !workshops[1].Built && workshops.Artisans.Count == 0, "A save without the block loads every station unbuilt, nobody hired.");
+            Assert(workshops.Count == map.Stations.Count && !workshops[0].Built && !workshops[1].Built && workshops.Artisans.Count == 0 && workshops.Masterpieces.Count == 0,
+                "A save without the block loads every station unbuilt, nobody hired, no masterpiece.");
             var swapped = new WorkshopSave { Stations = new[] { save.Stations[1], save.Stations[0] } };
             workshops.RestoreFrom(swapped);
             Assert(!workshops[0].Built && !workshops[1].Built, "A saved station whose kind isn't the map's is left unbuilt.");
@@ -335,6 +343,17 @@ namespace Simpiens.Testing.Persistence
 
         // The items on the ground (Epic 10 Part 3, K4.1): a save restored and captured again is the same bytes; claims, fades,
         // gold and stacks come back; a save that doesn't add up is refused; a save without the block starts with none
+        private static Simpiens.Simulation.Workshops.MasterpieceRecord Masterpiece(ushort id, ItemType item, Simpiens.Simulation.Workshops.MasterpiecePlace place, EntityId[] owners)
+        {
+            var record = new Simpiens.Simulation.Workshops.MasterpieceRecord
+            {
+                Id = id, Item = item, Station = Simpiens.Simulation.Items.StationKind.Forge, StationIndex = 0, Place = place, Adjective = 3, Noun = 1,
+                MadeAt = 9000u, Maker = C, Kills = 4, NamedSlain = 1, SlainVictim = B, SlainRank = 2
+            };
+            for (int i = 0; i < owners.Length; i++) record.AddOwner(owners[i]);
+            return record;
+        }
+
         private void ValidatePilesRoundTrip()
         {
             Assert(System.Runtime.CompilerServices.Unsafe.SizeOf<PileRecord>() == 72, "A pile's record is 72 bytes (whose body since K5.4a), saved as raw memory.");
@@ -350,7 +369,7 @@ namespace Simpiens.Testing.Persistence
                 {
                     new ItemInstance(ItemType.IronOre, 2, 0),
                     new ItemInstance(ItemType.MedicinalHerb, 1, 0),
-                    new ItemInstance(ItemType.Cudgel, 1, 0, durability: 33),
+                    new ItemInstance(ItemType.Cudgel, 1, 0, durability: 33).WithMasterpiece(1), // a masterpiece on the ground (Epic 11, S8.1)
                 },
             };
             Assert(Simpiens.Simulation.Loot.PileService.Check(save) == null, "The save adds up.");
@@ -359,7 +378,8 @@ namespace Simpiens.Testing.Persistence
             AssertSameBytes(SaveSerializer.Serialize(save), SaveSerializer.Serialize(piles.Capture()), "The piles restored from their save");
             Assert(piles.TryGet(A, out var claimed) && claimed.ClaimedFor == C && claimed.ClaimUntil == 2420u && claimed.Count == 2 && !claimed.MayTake(B, 2000u) && claimed.MayTake(B, 2420u),
                 "A claimed pile comes back with its claim and its stacks.");
-            Assert(piles.TryGet(B, out var purse) && purse.Gold == 17 && purse.StackAt(0).Durability == 33 && purse.FadesAt == 9000u, "A pile's gold, its worn piece and its fading come back.");
+            Assert(piles.TryGet(B, out var purse) && purse.Gold == 17 && purse.StackAt(0).Durability == 33 && purse.StackAt(0).Masterpiece == 1 && purse.FadesAt == 9000u,
+                "A pile's gold, its worn piece with its masterpiece's mark, and its fading come back.");
             Assert(purse.IsBody && purse.BodyOf == C && piles.TotalGold == 17u, "A body comes back as whose it was, its purse gold on the ground (K5.4).");
             Assert(Simpiens.Simulation.Loot.PileService.Check(new PileSave { Piles = save.Piles, Stacks = new ItemInstance[1] }) != null, "Stacks that don't add up are refused.");
             Assert(Simpiens.Simulation.Loot.PileService.Check(new PileSave { Piles = new[] { save.Piles[1], save.Piles[0] }, Stacks = save.Stacks }) != null, "Piles out of id order are refused.");

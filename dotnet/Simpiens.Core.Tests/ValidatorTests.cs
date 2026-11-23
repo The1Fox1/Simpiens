@@ -231,6 +231,9 @@ namespace Simpiens.Core.Tests
         public void Grudges() => new Simpiens.Testing.Combat.GrudgeValidator().RunAllValidationTests();
 
         [Fact]
+        public void Masterpieces() => new Simpiens.Testing.Economy.MasterpieceValidator().RunAllValidationTests();
+
+        [Fact]
         public void Recipes() => new Simpiens.Testing.Economy.RecipeValidator().RunAllValidationTests();
 
         [Fact]
