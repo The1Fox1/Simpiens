@@ -1896,3 +1896,8 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
 - **Golden unchanged through the plan** (no forge works in its 3,000 ticks); no DoD's seed moved. New DoDs: `AMasterpieceHasAMaker` (gate seed 424242), `EpicElevenTogether` (gate seed 5).
 - **Findings** to the epic's §7: F16 fixed, F18 (masterpieces come where a guild buys arms), F19 (with the forge, the still and the clears for two weeks, the day's trust check fails on 15 of 23 seeds; not traced).
 - **The index and every plan of the epic deleted** at this close-out (Documentation Protocol 6); the epic is COMPLETED only at the producer's play session's pass.
+
+## 2026-11-23: Epic 11 COMPLETED
+- **The producer's word:** "All of this is a pass. PR this to main", after their play session on plan 4's build. Read as the play session passed, with S7's and S8's looks within it, and as the developer's review of the supervised S7.1–S7.3, S8.1 and S8.3 passed; D38–D48 and the open findings stand by exception. Of the dynamic scenes' speech bubbles (Epic CLIENT M3's, with UI-Beta B3's faces), which the epic's moments now raise often: "an unexpected but nice touch".
+- **Deviation from the plans' rule of one PR each:** plans 3 and 4 go into `main` as one PR from `feat/epic11-masterworks`, which was cut from plan 3's branch and carries its commits. Plan 3's own PR was never opened (its push was refused), and opening both would have stacked them.
+- **Milestone 5 COMPLETED** with it. The open findings' owners are in the epic's §7: the economy under every player and F11, F13 the producer's; F15 and F19 to trace in Epic 12's groundwork by default.
