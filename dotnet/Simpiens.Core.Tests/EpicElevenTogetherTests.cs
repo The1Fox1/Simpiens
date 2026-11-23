@@ -91,8 +91,8 @@ namespace Simpiens.Core.Tests
         /// <summary>
         /// Gate seed 5 (S9.1, <see cref="MeasureEpicElevenTogetherOnTheGateSeeds"/>): every layer by day 7 (a passion's band, a
         /// technique, an epithet, a scar and a named creature on day 3; a calling and a masterpiece on day 7), the days holding.
-        /// The only gate seed with all seven in two weeks: a scar and a name need a downing on a clear (12 seeds), a masterpiece
-        /// a Journeyman at the forge (5 seeds with these players); see F19 for the trust check the rest fail.
+        /// The only gate seed with all seven in two weeks: a scar and a name need a downing on a clear (9 and 8 seeds), a
+        /// masterpiece a Journeyman at the forge (4 seeds with these players); see F19 for the trust check most fail.
         /// </summary>
         private const ulong Seed = 5;
 

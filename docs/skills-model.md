@@ -531,3 +531,8 @@ Plan 3's final build, the 23 gate seeds (`MasterworkMeasurementTests.MeasureMast
 - **As set:** with the hunting players a masterpiece is made on 11 of the 14 seeds whose forge makes Masterwork in two weeks, about one a smith, and on 16 of 21 in a month. Three in four are bought or given and worn; the rest wait on the shelf. None came in grief: nobody died near a Journeyman smith (F13).
 - **The gate seed for the DoD:** on 424242 the forge's smith makes one on day 5.3 and a resident wears it by day 14.
 - **Nothing else moved:** seeds 1–120 pass the outpost's day, 120/120 with and without the guild; the soak 18 of 18, and the `guild`, `crafting` and `hunting` profiles 20 of 20 each; no DoD's seed moved.
+
+### 5.15 The soak at the epic's end (S9.2, 2026-11-22)
+Epic 11's final build (every layer, masterpieces included) against the soak's bands, seeds 1–20 for each player profile: every run within its band (`docs/economy-model.md` §7). The regular soak 18 of 18; `guild`, `crafting` and `hunting` 20 of 20 each. At three days nobody under contract stands past Apprentice, so the asking wage costs nothing yet; the bands are unchanged.
+
+**Every layer together** (S9.1, `MeasureEpicElevenTogetherOnTheGateSeeds`: the forge's and the still's players and the guild's armed clears, 14 days): a passion's band and a technique on 21 of 23 gate seeds (from day 1 to 3), an epithet on 16, a scar on 9, a named creature on 8, a calling earned during the run on 4, a masterpiece on 4; all seven on gate seed 5 alone (by day 7), the DoD's. The days hold on 7 of the 23: the outpost's day fails its trust check on 15 with these players (F19), and 424242 once on a lone entry into a known lair.
