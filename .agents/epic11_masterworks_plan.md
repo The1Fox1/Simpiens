@@ -45,7 +45,7 @@ Working document (AGENTS.md, Documentation Protocol 6), the last of Epic 11's pl
 - **D41, inspiration** (§2.1's "now and then a Journeyman makes a masterwork with a name and a maker"):
   - **When:** a finished make of a worn piece at Masterwork grade (a Journeyman or better at it, techniques counted). A repair never.
   - **The roll:** on its own salt (`SimRandomSalt.Inspiration`, 19), keyed by the maker and the tick: **8% a Masterwork make**, set at S8.0 (§5.14) for a masterpiece on most seeds where a Journeyman smith works for two weeks (about 9 of 14 with the hunting players), about one a smith.
-  - **What raises the chance:** a keen passion for the work (×1.5), a burning one (×2), and grief (×2): a friend (warmth 40 or more, `Vitality.GrudgeWarmth`) dead within two game days, from the departed list.
+  - **What raises the chance:** a keen passion for the work (×1.5), a burning one (×2: the passions' practice multipliers), and grief (×2): a friend's death within two game days in the maker's own memory (the `Grieved` event Epic 10's K5.5 records for each friend at the death line, saved with the crawler's memory), so no new state is needed.
   - **The limit:** one masterpiece a game day per maker, read from its newest record.
   - **What follows:** the piece is stocked at grade 3 with its mark, onto the service's shelf; the maker counts a deed (`Deed.MasterpieceMade`, 10); the chronicle tells it (`MasterpieceMade`, 60).
 - **D42, its name:**
@@ -58,7 +58,7 @@ Working document (AGENTS.md, Documentation Protocol 6), the last of Epic 11's pl
   - **On the ground:** a body or a drop keeps its mark, and a pickup that wears it makes a new owner (`PileService.Take`).
   - **Owners** are recorded at every acquisition: a sale, a gift, a pickup.
   - **Cognition** appraises a stall piece at the stall's best grade, so a masterpiece is valued as a masterwork until it is worn. No new fact (A10).
-- **D44, its deeds:** a kill by a crawler wielding a masterpiece counts on the piece, and a named creature slain with it is kept by name. Its story reads them. No epithet: the Maker (40 makes) stays.
+- **D44, its deeds:** a kill by a crawler wearing a masterpiece counts on the piece (every masterpiece it wears: a slot's kind is named only in the slot table), and a named creature slain with it is kept by whom it was named for and its rank. Its story reads them. No epithet: the Maker (40 makes) stays.
 - **D45, the client:**
   - **Its story** in the tooltip wherever a worn piece shows (the dossier's gear line, the guild's card): "The Quiet Fang, a masterpiece. Made by Tamsin at the forge on day 6, for Ama. Worn by Bram, its second owner. 4 kills, Ama's Bane among them."
   - **On the shelf:** the stall's row for its good names the masterpieces in its tooltip.
@@ -78,7 +78,7 @@ Working document (AGENTS.md, Documentation Protocol 6), the last of Epic 11's pl
   - Check §0 against the code; a difference becomes a finding (F18 onward).
   - **The measurement:** finished makes by grade, by station and by the artisan's band, over 14 and 28 days on the gate seeds, with the hunting players and with the crafting profile, from a copied Release bin. Written to `docs/skills-model.md` §5.14.
   - **Set from it:** D41's chance.
-- [x] **S8.1 The mark and the record; format 14** (done 2026-11-22: `3c4d178`, the quirk retired; the record, the service and its block next; golden unchanged) [Possibly Complex: the save format; supervised, for review]
+- [x] **S8.1 The mark and the record; format 14** (done 2026-11-22: `3c4d178` the quirk retired, `d63799c` the record, the service and its block; golden unchanged) [Possibly Complex: the save format; supervised, for review]
   - **Two commits, one raise.** First the quirk retired: the field renamed, the constructor's first argument gone, `WithMasterpiece`, the tests' id tags moved to durability or value, and format 14. Then the record, the service and its block.
   - **Grades:** `Grades.Masterpiece`, its name and its rim.
   - **The checks:**
@@ -87,7 +87,7 @@ Working document (AGENTS.md, Documentation Protocol 6), the last of Epic 11's pl
     - `SaveItems` refuses an unknown mark;
     - `MasterpieceValidator`: the record, the service's capture order.
   - Golden unchanged (no masterpiece yet; the mark not hashed while 0).
-- [ ] **S8.2 Inspiration and its name** [Possibly Complex: a behaviour change; a new salt]
+- [x] **S8.2 Inspiration and its name** (done 2026-11-22; golden unchanged: no forge works in its 3,000 ticks) [Possibly Complex: a behaviour change; a new salt]
   - **The rule:** `InspirationRules` (pure: grade, passion, grief, the day's limit), called at `WorkshopService.Work`'s finished make. **The name:** `MasterpieceNames`.
   - **What follows:** the record, the marked piece stocked (or held), the deed by its recipe, the chronicle's line.
   - **The checks:**
@@ -97,7 +97,7 @@ Working document (AGENTS.md, Documentation Protocol 6), the last of Epic 11's pl
   - Golden re-recorded in its own commit only if a masterpiece is made within its 3,000 ticks.
 - [ ] **S8.3 Through every hand** [Possibly Complex: the item flow across the stall, the guild and the piles; supervised, for review]
   - **The paths:** the shelf at the sale and the gift; handed back whole; the pickup's new owner; the kill counted on the piece; `Find`.
-  - **The check:** `MasterpieceFlowValidator` follows one piece: made, shelved, sold, worn, handed back, given, its wearer's death, its body picked over, worn again. It checks the owners in order, a kill counted, broken and lost, the shelf never above its good's Masterwork count, and a load keeping every record and mark.
+  - **The check:** `MasterpieceFlowTests` (on the live outpost, so in the core tests) follows one piece: made, shelved, sold, worn, handed back, given, its wearer's death, its body picked over, worn again. It checks the owners in order, a kill counted, broken and lost, the shelf never above its good's Masterwork count, and a load keeping every record and mark.
 - [ ] **S8.4 Re-measured** [Possibly Complex: measuring]
   - The 23 gate seeds' day, seeds 1–120 both ways, the soak, and the S8.0 measurement again with masterpieces (§5.14).
   - A moved DoD is re-picked in its own commit.

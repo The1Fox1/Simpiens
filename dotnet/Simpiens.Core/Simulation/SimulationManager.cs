@@ -607,7 +607,7 @@ namespace Simpiens.Simulation
         }
 
         TradeStallData ISupplyHost.PayWages(TradeStallData stall, uint currentTick) => Workshops.PayWages(this, Guild.PayWages(this, stall, currentTick), currentTick);
-        Simpiens.Simulation.Workshops.CraftStep IIntentExecutionContext.WorkStation(int stationIndex) => Workshops.Work(this, stationIndex);
+        Simpiens.Simulation.Workshops.CraftStep IIntentExecutionContext.WorkStation(int stationIndex) => Workshops.Work(this, stationIndex, _clock != null ? (uint)_clock.CurrentTick : 0u, Seed);
 
         public uint CurrentTick => _clock != null ? (uint)_clock.CurrentTick : (uint)_fallbackTick;
         public int IntentFaults { get; private set; }

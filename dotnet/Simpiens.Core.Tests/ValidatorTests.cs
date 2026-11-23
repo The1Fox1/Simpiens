@@ -234,6 +234,9 @@ namespace Simpiens.Core.Tests
         public void Masterpieces() => new Simpiens.Testing.Economy.MasterpieceValidator().RunAllValidationTests();
 
         [Fact]
+        public void Inspiration() => new Simpiens.Testing.Economy.InspirationValidator().RunAllValidationTests();
+
+        [Fact]
         public void Recipes() => new Simpiens.Testing.Economy.RecipeValidator().RunAllValidationTests();
 
         [Fact]

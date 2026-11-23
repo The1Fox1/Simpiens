@@ -66,7 +66,8 @@ namespace Simpiens.Narrative
         FirstBlood = 56, // Epic 11, S6.4 (D30): ActorA slew its first creature, ActorB; the extra is the creature's kind + 256 x ActorA's best skill
         CreatureNamed = 57, // Epic 11, S7.1 (D31): creature ActorA downed (or killed) crawler ActorB and took a name from it; the extra is the kind + 256 x the rank + 1024 if it killed + 2048 x the crawlers it has downed
         CreatureRankRose = 58, // Epic 11, S7.1 (D31): named creature ActorA downed crawler ActorB and its rank rose; the extra as CreatureNamed's
-        NamedCreatureSlain = 59 // Epic 11, S7.5 (D35): ActorA slew named creature ActorB; the extra is its kind + 256 x its rank
+        NamedCreatureSlain = 59, // Epic 11, S7.5 (D35): ActorA slew named creature ActorB; the extra is its kind + 256 x its rank
+        MasterpieceMade = 60 // Epic 11, S8.2 (D41): ActorA, inspired, made a masterpiece; ActorB is the dead friend it is named for, if any; the extra is its name's parts (MasterpieceNames.Pack)
     }
 
     /// <summary>

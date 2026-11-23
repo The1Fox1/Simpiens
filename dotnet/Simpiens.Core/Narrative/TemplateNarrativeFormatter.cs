@@ -261,6 +261,18 @@ namespace Simpiens.Narrative
                 case ChronicleEventType.NamedCreatureSlain:
                     return $"{actorA} slew {actorB} in {sector}.";
 
+                // Inspiration (Epic 11, S8.2, D41): the piece named from its parts, a dead friend's name in grief
+                case ChronicleEventType.MasterpieceMade:
+                {
+                    Simpiens.Simulation.Workshops.MasterpieceNames.Unpack((int)evt.ExtraData, out var item, out var form, out byte adjective, out byte noun);
+                    var recipe = Simpiens.Simulation.Items.RecipeBook.For(item);
+                    string at = recipe != null ? $" at the {Simpiens.Simulation.Workshops.WorkshopRules.StationName(recipe.Station).ToLowerInvariant()}" : "";
+                    string piece = Simpiens.Simulation.Workshops.MasterpieceNames.NameOf(item, form, adjective, noun, actorB);
+                    return form == Simpiens.Simulation.Workshops.MasterpieceForm.Grief
+                        ? $"{actorA}, grieving {actorB}, made a masterpiece{at}: {piece}."
+                        : $"{actorA}, inspired, made a masterpiece{at}: {piece}.";
+                }
+
                 case ChronicleEventType.CreatureSlain:
                     return $"{actorA} slew a {(Simpiens.Simulation.Creatures.CreatureCatalog.Get((Simpiens.Simulation.Creatures.CreatureKind)(byte)evt.ExtraData)?.DisplayName ?? "creature").ToLowerInvariant()} in {sector}.";
 

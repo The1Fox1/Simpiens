@@ -150,6 +150,18 @@ namespace Simpiens.Simulation.Workshops
             return true;
         }
 
+        /// <summary>The masterpieces held at station <paramref name="stationIndex"/> are on the shelf now: the stall had room for its make.</summary>
+        public void Shelve(int stationIndex)
+        {
+            for (int i = 0; i < _records.Count; i++)
+            {
+                var record = _records[i];
+                if (record.Place != MasterpiecePlace.Held || record.StationIndex != stationIndex) continue;
+                record.Place = MasterpiecePlace.Shelf;
+                _records[i] = record;
+            }
+        }
+
         public void Reset() => _records.Clear();
 
         /// <summary>The records for a save, by id.</summary>

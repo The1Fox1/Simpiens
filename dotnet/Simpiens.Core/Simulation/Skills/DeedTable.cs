@@ -28,7 +28,9 @@ namespace Simpiens.Simulation.Skills
         /// <summary>A crawler taught a skill, the first to teach it that skill (Epic 11, S3.1, D9): counted on the teacher.</summary>
         Taught = 8,
         /// <summary>It struck the blow that slew a named creature (Epic 11, S7.5, D35), counted beside <see cref="CreatureSlain"/>.</summary>
-        NamedCreatureSlain = 9
+        NamedCreatureSlain = 9,
+        /// <summary>It made a masterpiece, inspired (Epic 11, S8.2, D41), counted beside <see cref="Make"/>.</summary>
+        MasterpieceMade = 10
     }
 
     /// <summary>One deed: a row of <see cref="DeedTable"/>.</summary>
@@ -79,7 +81,8 @@ namespace Simpiens.Simulation.Skills
                 new DeedDefinition(Deed.HuntPaid, "HuntPaid", "hunts paid", "a hunt paid"),
                 new DeedDefinition(Deed.ClearWon, "ClearWon", "clears won", "a clear won"),
                 new DeedDefinition(Deed.Taught, "Taught", "crawlers taught", "a crawler taught"),
-                new DeedDefinition(Deed.NamedCreatureSlain, "NamedCreatureSlain", "named creatures slain", "a named creature slain")
+                new DeedDefinition(Deed.NamedCreatureSlain, "NamedCreatureSlain", "named creatures slain", "a named creature slain"),
+                new DeedDefinition(Deed.MasterpieceMade, "MasterpieceMade", "masterpieces made", "a masterpiece made"),
             };
             var byId = new DeedDefinition[Capacity];
             foreach (var row in rows)

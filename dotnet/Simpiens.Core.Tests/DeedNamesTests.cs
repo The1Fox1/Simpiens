@@ -20,7 +20,7 @@ namespace Simpiens.Core.Tests
             ["Simpiens.Core/Simulation/Skills/DeedTable.cs"] = "the table: the deeds' rows",
             ["Simpiens.Core/Simulation/SimulationManager.cs"] = "a kill, a boss's and a named creature's (the creatures' world), a downing survived (the bleeding clock stopped), a crawler taught (a mentor's first lesson)",
             ["Simpiens.Core/Cognition/Planning/Handlers/CarryIntentHandler.cs"] = "a rescue: carried out, or stood up with a medicine",
-            ["Simpiens.Core/Simulation/Workshops/WorkshopService.cs"] = "a make finished",
+            ["Simpiens.Core/Simulation/Workshops/WorkshopService.cs"] = "a make finished, and a masterpiece made (Epic 11, S8.2)",
             ["Simpiens.Core/Simulation/Economy/Market.cs"] = "a hunt's share paid",
             ["Simpiens.Core/Simulation/Guild/GuildService.Expeditions.cs"] = "home from a won clear",
             ["Simpiens.Core/Simulation/Skills/EpithetTable.cs"] = "the epithets' table (Epic 11, S6.1): each row names the deed whose count earns it; it counts none",
