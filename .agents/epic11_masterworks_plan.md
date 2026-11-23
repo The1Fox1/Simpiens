@@ -22,7 +22,7 @@ Working document (AGENTS.md, Documentation Protocol 6), the last of Epic 11's pl
 - **Kills** are credited in `SimulationManager` (`CreatureSlain`, `BossSlain`, `NamedCreatureSlain`), with the killer in hand.
 - **Counts:** deeds 9 of 16; chronicle events to 59; salts to 18; planner facts 48 of 64; save format 13.
 - **Names:** the identity service names crawlers and named creatures; the departed list keeps the dead's names, causes and ticks.
-- **Growth** (`docs/skills-model.md` §5.6, §5.13): the forge's smiths reach Journeyman on about 8 of 23 seeds in two weeks with the hunting players; nobody has measured how many Masterwork pieces are made. S8.0 does.
+- **Growth** (`docs/skills-model.md` §5.6, §5.13): smithing's Journeyman bands come mostly from the forge's hands. **Measured at S8.0** (§5.14): with the hunting players the forge makes Masterwork pieces on 14 of 23 gate seeds in two weeks (193 in all, by 18 smiths) and on 21 in four; the crafting player orders few worn pieces, so it makes them on 4 seeds in two weeks. The rest of this section matched the code.
 
 ## 1. Decisions proposed (defaults; the producer answers by exception)
 - **D38, masterpieces: a named piece, a grade above Masterwork** (Q14):
@@ -44,7 +44,7 @@ Working document (AGENTS.md, Documentation Protocol 6), the last of Epic 11's pl
   - **Where it is now is found, not tracked:** on the shelf (the service's own list), worn or carried by a crawler, or in a pile; found nowhere, it is lost (broken, gone with a drifter, taken by the floor). Nothing can go stale.
 - **D41, inspiration** (§2.1's "now and then a Journeyman makes a masterwork with a name and a maker"):
   - **When:** a finished make of a worn piece at Masterwork grade (a Journeyman or better at it, techniques counted). A repair never.
-  - **The roll:** on its own salt (`SimRandomSalt.Inspiration`, 19), keyed by the maker and the tick, at a chance set at S8.0 from the measured Masterwork makes. The target is a masterpiece on most seeds where a Journeyman smith works for two weeks, and one or two per smith. The first guess is 5%.
+  - **The roll:** on its own salt (`SimRandomSalt.Inspiration`, 19), keyed by the maker and the tick: **8% a Masterwork make**, set at S8.0 (§5.14) for a masterpiece on most seeds where a Journeyman smith works for two weeks (about 9 of 14 with the hunting players), about one a smith.
   - **What raises the chance:** a keen passion for the work (×1.5), a burning one (×2), and grief (×2): a friend (warmth 40 or more, `Vitality.GrudgeWarmth`) dead within two game days, from the departed list.
   - **The limit:** one masterpiece a game day per maker, read from its newest record.
   - **What follows:** the piece is stocked at grade 3 with its mark, onto the service's shelf; the maker counts a deed (`Deed.MasterpieceMade`, 10); the chronicle tells it (`MasterpieceMade`, 60).
@@ -74,7 +74,7 @@ Working document (AGENTS.md, Documentation Protocol 6), the last of Epic 11's pl
 
 ### S8. Masterworks (3–5 days)
 **Complexity:** Very Complex as the epic stamps it (the item system and the save). Split so the mark and its save, the rule, the flow through hands and the client land and are checked alone. S8.1 and S8.3 are supervised (for review).
-- [ ] **S8.0 The hand-over checked, and the masterwork makes measured** [Possibly Complex: measuring]
+- [x] **S8.0 The hand-over checked, and the masterwork makes measured** (done 2026-11-22: §0 matched the code but for the growth line, corrected; `docs/skills-model.md` §5.14; D41's chance 8%) [Possibly Complex: measuring]
   - Check §0 against the code; a difference becomes a finding (F18 onward).
   - **The measurement:** finished makes by grade, by station and by the artisan's band, over 14 and 28 days on the gate seeds, with the hunting players and with the crafting profile, from a copied Release bin. Written to `docs/skills-model.md` §5.14.
   - **Set from it:** D41's chance.

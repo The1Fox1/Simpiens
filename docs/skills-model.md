@@ -504,3 +504,17 @@ Plan 3's final build over 28 days on the 23 gate seeds: what a month makes of th
 - **Growth holds:** no player's curve is §5.8's to the digit; the hunting players' is 0.09 a seed lower, past day 14, where Monster Hunter's blows and Patient Teacher's lessons begin to change who practises.
 - **A month's legend comes to the players' people:** with the hunting players every seed has a resident with an epithet by day 28, a third of the residents one in all; without a player the Teacher alone, on 21 seeds.
 - **Named creatures over a month** (`MeasureDowningsOnTheGateSeeds`, 28 days): the guild's clears down a member on 16 of 23 seeds and name 51 creatures on 13, each slain in the fight that named it (F14); the hunting players down nobody, so name nothing (F13).
+
+### 5.14 What the forge makes, by grade (S8.0, 2026-11-22)
+Plan 3's final build, the 23 gate seeds (`MasterworkMeasurementTests.MeasureMasterworkMakesOnTheGateSeeds`): every finished make of a worn piece by the grade it came out at, with the soak's `crafting` and `hunting` players. Both players build the forge and the still; only the forge makes worn pieces.
+
+| Play, horizon | Seeds with a Masterwork piece | Worn makes: Standard / Fine / Masterwork | Masterwork makes a seed where any (most) | Smiths making Masterwork, a smith's | By the smith's passion: none / keen / burning |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| Crafting, 14 days | 4 | 96 / 57 / 25 | 6.2 (11) | 5, 5.0 | 19 / 1 / 5 |
+| Crafting, 28 days | 8 | 154 / 92 / 73 | 9.1 (26) | 9, 8.1 | 57 / 11 / 5 |
+| Hunting, 14 days | 14 | 286 / 190 / 193 | 13.8 (33) | 18, 10.7 | 116 / 59 / 18 |
+| Hunting, 28 days | 21 | 404 / 374 / 509 | 24.2 (69) | 29, 17.6 | 339 / 124 / 46 |
+
+- **The forge's Journeymen are the hunting players':** their guild buys arms and armour, so the forge works all day. The crafting player orders few worn pieces (its stations make mostly draughts, 748 unworn makes in two weeks), so Masterwork comes on few of its seeds.
+- **Masterwork from the first days** on a few seeds (424242 and 17 from day 2.3): a smith hired at Apprentice 5 with Fine Temper's grade counts as a Journeyman at the forge.
+- **Inspiration's chance, set from it** (plan 4's D41): 8% a Masterwork make. With the passions' multipliers (keen ×1.5, burning ×2; a smith's makes are about 1.25 on average), that is a masterpiece on about two thirds of the seeds where the forge makes Masterwork in two weeks with the hunting players (about 9 of 14, near 19 in all, about one a smith), and on most of them in a month (about 16 of 21). Grief doubles it when it comes.
