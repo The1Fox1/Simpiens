@@ -98,7 +98,7 @@ Working document (AGENTS.md, Documentation Protocol 6), the last of Epic 11's pl
 - [x] **S8.3 Through every hand** (done 2026-11-22; golden unchanged) [Possibly Complex: the item flow across the stall, the guild and the piles; supervised, for review]
   - **The paths:** the shelf at the sale and the gift; handed back whole; the pickup's new owner; the kill counted on the piece; `Find`.
   - **The check:** `MasterpieceFlowTests` (on the live outpost, so in the core tests) follows one piece: made, shelved, sold, worn, handed back, given, its wearer's death, its body picked over, worn again. It checks the owners in order, a kill counted, broken and lost, the shelf never above its good's Masterwork count, and a load keeping every record and mark.
-- [ ] **S8.4 Re-measured** [Possibly Complex: measuring]
+- [x] **S8.4 Re-measured** (done 2026-11-22: `docs/skills-model.md` §5.14; no DoD moved) [Possibly Complex: measuring]
   - The 23 gate seeds' day, seeds 1–120 both ways, the soak, and the S8.0 measurement again with masterpieces (§5.14).
   - A moved DoD is re-picked in its own commit.
 - [ ] **S8.5 The client** [Possibly Complex: Gum UI and renders, a look]

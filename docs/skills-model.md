@@ -518,3 +518,16 @@ Plan 3's final build, the 23 gate seeds (`MasterworkMeasurementTests.MeasureMast
 - **The forge's Journeymen are the hunting players':** their guild buys arms and armour, so the forge works all day. The crafting player orders few worn pieces (its stations make mostly draughts, 748 unworn makes in two weeks), so Masterwork comes on few of its seeds.
 - **Masterwork from the first days** on a few seeds (424242 and 17 from day 2.3): a smith hired at Apprentice 5 with Fine Temper's grade counts as a Journeyman at the forge.
 - **Inspiration's chance, set from it** (plan 4's D41): 8% a Masterwork make. With the passions' multipliers (keen ×1.5, burning ×2; a smith's makes are about 1.25 on average), that is a masterpiece on about two thirds of the seeds where the forge makes Masterwork in two weeks with the hunting players (about 9 of 14, near 19 in all, about one a smith), and on most of them in a month (about 16 of 21). Grief doubles it when it comes.
+
+**With masterpieces** (S8.4, 2026-11-22; inspiration at 8% a Masterwork make, the forge's makes unchanged):
+
+| Play, horizon | Masterpieces (seeds) | Seeds with Masterwork | First made | Makers | Handed out / worn at the end | Kills on them |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| Crafting, 14 days | 0 | 4 | never | 0 | 0 / 0 | 0 |
+| Crafting, 28 days | 7 (4) | 8 | day 17.3 | 4 | 6 / 5 | 0 |
+| Hunting, 14 days | 16 (11) | 14 | day 5.3 | 11 | 12 / 12 | 11 |
+| Hunting, 28 days | 37 (16) | 21 | day 5.3 | 20 | 24 / 24 | 50 |
+
+- **As set:** with the hunting players a masterpiece is made on 11 of the 14 seeds whose forge makes Masterwork in two weeks, about one a smith, and on 16 of 21 in a month. Three in four are bought or given and worn; the rest wait on the shelf. None came in grief: nobody died near a Journeyman smith (F13).
+- **The gate seed for the DoD:** on 424242 the forge's smith makes one on day 5.3 and a resident wears it by day 14.
+- **Nothing else moved:** seeds 1–120 pass the outpost's day, 120/120 with and without the guild; the soak 18 of 18, and the `guild`, `crafting` and `hunting` profiles 20 of 20 each; no DoD's seed moved.

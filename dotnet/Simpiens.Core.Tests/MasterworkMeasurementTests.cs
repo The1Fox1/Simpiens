@@ -29,6 +29,9 @@ namespace Simpiens.Core.Tests
             public readonly Dictionary<EntityId, int> MasterworkByMaker = new Dictionary<EntityId, int>();
             public int Unworn, StationsBuilt;
             public long FirstMasterwork = -1;
+            // Masterpieces (S8.4): made, in grief, handed out, worn at the end, the owners and kills on them, the first's tick
+            public int Masterpieces, InGrief, HandedOut, WornAtEnd, Owners, Kills, Makers;
+            public long FirstMasterpiece = -1;
         }
 
         private static Makes Play(ulong seed, string profile, long horizon)
@@ -75,6 +78,26 @@ namespace Simpiens.Core.Tests
                 }
             }
             for (int i = 0; i < workshops.Count; i++) if (workshops[i].Built) makes.StationsBuilt++;
+            var masterpieces = workshops.Masterpieces;
+            var makers = new HashSet<EntityId>();
+            for (int i = 0; i < masterpieces.Count; i++)
+            {
+                var m = masterpieces[i];
+                makes.Masterpieces++;
+                makers.Add(m.Maker);
+                if (m.Form == MasterpieceForm.Grief) makes.InGrief++;
+                if (m.OwnerCount > 0) makes.HandedOut++;
+                makes.Owners += m.OwnerCount;
+                makes.Kills += m.Kills;
+                if (makes.FirstMasterpiece < 0 || m.MadeAt < makes.FirstMasterpiece) makes.FirstMasterpiece = m.MadeAt;
+            }
+            makes.Makers = makers.Count;
+            foreach (var crawler in sim.Host.CrawlerStates)
+            {
+                if (crawler.HasLeft || crawler.Inventory == null) continue;
+                var slots = EquipmentSlots.All;
+                for (int s = 0; s < slots.Count; s++) if (crawler.Inventory.GetEquipped(slots[s].Id).IsMasterpiece) makes.WornAtEnd++;
+            }
             return makes;
         }
 
@@ -94,7 +117,8 @@ namespace Simpiens.Core.Tests
                 {
                     var m = runs[i];
                     out_?.WriteLine($"seed {seeds[i]}: stations {m.StationsBuilt}; worn makes Standard {m.ByGrade[0]}, Fine {m.ByGrade[1]}, Masterwork {m.ByGrade[2]} "
-                        + $"(by {m.MasterworkMakers.Count} makers, first {Day(m.FirstMasterwork)}); unworn {m.Unworn}");
+                        + $"(by {m.MasterworkMakers.Count} makers, first {Day(m.FirstMasterwork)}); unworn {m.Unworn}; "
+                        + $"masterpieces {m.Masterpieces} (first {Day(m.FirstMasterpiece)}, {m.InGrief} in grief, {m.HandedOut} handed out, {m.WornAtEnd} worn at the end, {m.Kills} kills)");
                 }
                 int withMasterwork = runs.Count(r => r.ByGrade[2] > 0);
                 var perMaker = runs.SelectMany(r => r.MasterworkByMaker.Values).ToList();
@@ -104,6 +128,8 @@ namespace Simpiens.Core.Tests
                 out_?.WriteLine($"Masterwork makes a seed where any: {(withMasterwork > 0 ? runs.Where(r => r.ByGrade[2] > 0).Average(r => r.ByGrade[2]) : 0):F1} (most {runs.Max(r => r.ByGrade[2])}); "
                     + $"makers {perMaker.Count}, a maker's {(perMaker.Count > 0 ? perMaker.Average() : 0):F1} (most {(perMaker.Count > 0 ? perMaker.Max() : 0)})");
                 out_?.WriteLine($"Masterwork makes by the maker's passion: none {runs.Sum(r => r.MasterworkByPassion[0])}, keen {runs.Sum(r => r.MasterworkByPassion[1])}, burning {runs.Sum(r => r.MasterworkByPassion[2])}");
+                out_?.WriteLine($"masterpieces: {runs.Sum(r => r.Masterpieces)} on {runs.Count(r => r.Masterpieces > 0)} seeds (of {withMasterwork} with Masterwork), first on {Range(runs.Select(r => r.FirstMasterpiece))}; "
+                    + $"by {runs.Sum(r => r.Makers)} makers; {runs.Sum(r => r.InGrief)} in grief; {runs.Sum(r => r.HandedOut)} handed out, {runs.Sum(r => r.Owners)} owners in all; {runs.Sum(r => r.WornAtEnd)} worn at the end; {runs.Sum(r => r.Kills)} kills on them");
                 foreach (var p in new[] { 0.03, 0.05, 0.08, 0.10 })
                 {
                     // The chance a seed sees at least one masterpiece at p a Masterwork make (passion's multiplier left out)
