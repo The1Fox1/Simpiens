@@ -467,6 +467,7 @@ Done means crawlers grow into someone in the live outpost with nothing injected 
   - **Masterworks:** the chronicle's "…, inspired, made a masterpiece at the forge: the …"; the inspiration moment; the stall's row naming it ("masterpiece the … by …"); sold or given (the guild's Give), its name in amber on the wearer's gear line, its story in the line's tip (maker, day, owners, kills).
   - **At 720 rows:** the dossier fits its frame (F16).
   - **Decided by exception:** inspiration's 8% and its multipliers, one a day; a masterpiece a grade above Masterwork; handed back, mended for nothing; kills counted on every masterpiece worn; the placeholder words; F14–F19.
+- [x] **Epic 11's numbers at the close** (C.1): `docs/skills-model.md` §5.16, 28 days on the gate seeds with every layer: growth without a player as at plan 3's close to the digit; with the hunting players 3.65 residents a seed hold a Journeyman's skill (3.48 before masterpieces), epithets on every seed, masterpieces on 16; nobody reaches Master in a month.
 - [ ] **The merges,** on the producer's word: plan 3's PR first (`feat/epic11-legend`), then plan 4's.
 
 ## 5. Deferred and out of scope

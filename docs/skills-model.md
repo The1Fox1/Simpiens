@@ -536,3 +536,21 @@ Plan 3's final build, the 23 gate seeds (`MasterworkMeasurementTests.MeasureMast
 Epic 11's final build (every layer, masterpieces included) against the soak's bands, seeds 1–20 for each player profile: every run within its band (`docs/economy-model.md` §7). The regular soak 18 of 18; `guild`, `crafting` and `hunting` 20 of 20 each. At three days nobody under contract stands past Apprentice, so the asking wage costs nothing yet; the bands are unchanged.
 
 **Every layer together** (S9.1, `MeasureEpicElevenTogetherOnTheGateSeeds`: the forge's and the still's players and the guild's armed clears, 14 days): a passion's band and a technique on 21 of 23 gate seeds (from day 1 to 3), an epithet on 16, a scar on 9, a named creature on 8, a calling earned during the run on 4, a masterpiece on 4; all seven on gate seed 5 alone (by day 7), the DoD's. The days hold on 7 of the 23: the outpost's day fails its trust check on 15 with these players (F19), and 424242 once on a lone entry into a known lair.
+
+### 5.16 Epic 11 complete (C.1, 2026-11-22)
+Plan 4's final build over 28 days on the 23 gate seeds: every layer, masterpieces included.
+
+| At day 28 | No player | Hunting players | Plan 3's final build (§5.13): no player / hunting |
+| :--- | :--- | :--- | :--- |
+| Seeds with a Journeyman made | 19 (from day 12.3) | 22 (from day 4.0) | |
+| Residents holding a Journeyman's skill | 1.83 a seed (most 4) | 3.65 a seed (most 7) | 1.83 / 3.48 |
+| Masters | none | none | none / none |
+| Residents with an epithet | 40, on 21 seeds | 132, on all 23 | 40 / 135 |
+| By epithet | the Teacher 40 | Lairbreaker 45, the Maker 24, a boss's word 22, a kind's word 18, the Teacher 16, the Huntsman 7 | |
+| Earned traits | Patient Teacher 40 | Patient Teacher 18, Monster Hunter 6 | |
+| Masterpieces (S8.4) | none (no forge) | 37 on 16 seeds, 24 worn at the end, 50 kills on them | |
+| Downings, scars, named creatures | none | none | none / none |
+
+- **Growth holds without a player** to the digit: masterpieces touch only what the forge makes and who wears it.
+- **With the hunting players** a little more grows past Journeyman (3.65 a seed against 3.48) and a few epithets move (Lairbreaker 45 against 49, the Maker 24 against 22): a masterpiece's grade arms its wearer a tenth better, which moves who fights and who practises. Nobody reaches Master in a month, as at every close since plan 1.
+- **Every layer reaches the players' people in a month:** passions and techniques from the first days, callings, epithets on every seed, and masterpieces on two thirds; downings, scars and named creatures where the player sends parties into lairs (§5.12, F13).
