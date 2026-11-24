@@ -13,7 +13,7 @@ namespace Simpiens.Cognition.Planning.Goals
     {
         public const float Priority = 95f;
 
-        public LeaveOutpostGoal() : base("LeaveOutpost", WorldState.Empty.With(StateFact.HasLeftOutpost, true))
+        public LeaveOutpostGoal() : base("LeaveOutpost", WorldState.Empty.With(StateFact.HasLeftOutpost, true), Motive.Leave, ActivityFamily.Unweighted)
         {
         }
 

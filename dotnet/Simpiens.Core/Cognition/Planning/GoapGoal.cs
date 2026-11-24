@@ -11,11 +11,22 @@ namespace Simpiens.Cognition.Planning
         public string Name { get; }
         public WorldState DesiredState { get; protected set; }
 
-        protected GoapGoal(string name, in WorldState desiredState)
+        /// <summary>What the goal is for (Epic LIFE-1, L0.2, D1): the motive model weighs goals by it.</summary>
+        public Motive Motive { get; }
+
+        /// <summary>The part of the day it belongs to (D1): the routine and the day's intention weigh goals by it. See <see cref="FamilyFor"/>.</summary>
+        public ActivityFamily Family { get; }
+
+        protected GoapGoal(string name, in WorldState desiredState, Motive motive = Motive.None, ActivityFamily family = ActivityFamily.Unweighted)
         {
             Name = name;
             DesiredState = desiredState;
+            Motive = motive;
+            Family = family;
         }
+
+        /// <summary>The goal's family for <paramref name="context"/>: its declared <see cref="Family"/>, unless the goal names another by context (loot gathered under a clear's orders is unweighted, as orders are).</summary>
+        public virtual ActivityFamily FamilyFor(AgentContext context) => Family;
 
         /// <summary>
         /// Checks whether the target goal state is already satisfied by the agent's current state.

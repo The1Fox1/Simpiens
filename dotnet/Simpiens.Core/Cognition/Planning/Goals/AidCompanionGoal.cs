@@ -10,7 +10,7 @@ namespace Simpiens.Cognition.Planning.Goals
     /// </summary>
     public class AidCompanionGoal : GoapGoal
     {
-        public AidCompanionGoal() : base("AidCompanion", WorldState.Empty.With(StateFact.HasAidedPeer, true))
+        public AidCompanionGoal() : base("AidCompanion", WorldState.Empty.With(StateFact.HasAidedPeer, true), Motive.Aid, ActivityFamily.Unweighted)
         {
         }
 

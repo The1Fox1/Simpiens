@@ -14,7 +14,7 @@ namespace Simpiens.Cognition.Planning.Goals
         /// <summary>Just above earning's floor (25): a bought book is read before the next round of work, once the purse allows.</summary>
         public const float Priority = 27f;
 
-        public ReadManualGoal() : base("ReadManual", WorldState.Empty.With(StateFact.HasManual, false))
+        public ReadManualGoal() : base("ReadManual", WorldState.Empty.With(StateFact.HasManual, false), Motive.Growth, ActivityFamily.Leisure)
         {
         }
 

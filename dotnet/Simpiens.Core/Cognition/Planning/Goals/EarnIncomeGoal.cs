@@ -10,7 +10,7 @@ namespace Simpiens.Cognition.Planning.Goals
     /// </summary>
     public class EarnIncomeGoal : GoapGoal
     {
-        public EarnIncomeGoal() : base("EarnIncome", WorldState.Empty.With(StateFact.HasSoldSalvage, true))
+        public EarnIncomeGoal() : base("EarnIncome", WorldState.Empty.With(StateFact.HasSoldSalvage, true), Motive.Income, ActivityFamily.Work)
         {
         }
 

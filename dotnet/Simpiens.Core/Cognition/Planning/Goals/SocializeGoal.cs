@@ -9,7 +9,7 @@ namespace Simpiens.Cognition.Planning.Goals
     /// </summary>
     public class SocializeGoal : GoapGoal
     {
-        public SocializeGoal() : base("Socialize", WorldState.Empty.With(StateFact.HasExchangedGossip, true))
+        public SocializeGoal() : base("Socialize", WorldState.Empty.With(StateFact.HasExchangedGossip, true), Motive.Company, ActivityFamily.Social)
         {
         }
 

@@ -9,7 +9,7 @@ namespace Simpiens.Cognition.Planning.Goals
     /// </summary>
     public class SatiateHungerGoal : GoapGoal
     {
-        public SatiateHungerGoal() : base("SatiateHunger", WorldState.Empty.With(StateFact.IsHungry, false))
+        public SatiateHungerGoal() : base("SatiateHunger", WorldState.Empty.With(StateFact.IsHungry, false), Motive.Hunger, ActivityFamily.Unweighted)
         {
         }
 

@@ -12,7 +12,7 @@ namespace Simpiens.Cognition.Planning.Goals
         /// <summary>Above outfitting for danger (40): it lies within sight, a few minutes' work.</summary>
         public const float Priority = 42f;
 
-        public CollectLootGoal() : base("CollectLoot", WorldState.Empty.With(StateFact.LootCollected, true))
+        public CollectLootGoal() : base("CollectLoot", WorldState.Empty.With(StateFact.LootCollected, true), Motive.Income, ActivityFamily.Work)
         {
         }
 
@@ -23,6 +23,10 @@ namespace Simpiens.Cognition.Planning.Goals
         public const float ClearPriority = 125f;
 
         public override float CalculatePriority(AgentContext context) => context.Expedition.Kind == Simpiens.Simulation.Guild.ExpeditionKind.Clear && context.Expedition.IsActive ? ClearPriority : Priority;
+
+        /// <summary>Under a clear's orders the haul is the party's order, unweighted as orders are (Epic LIFE-1, D1); otherwise work.</summary>
+        public override ActivityFamily FamilyFor(AgentContext context) =>
+            context.Expedition.Kind == Simpiens.Simulation.Guild.ExpeditionKind.Clear && context.Expedition.IsActive ? ActivityFamily.Unweighted : Family;
 
         public override bool IsValid(AgentContext context)
         {

@@ -8,7 +8,7 @@ namespace Simpiens.Cognition.Planning.Goals
     /// </summary>
     public class FulfillBountyGoal : GoapGoal
     {
-        public FulfillBountyGoal() : base("FulfillBounty", WorldState.Empty.With(StateFact.BountyDelivered, true))
+        public FulfillBountyGoal() : base("FulfillBounty", WorldState.Empty.With(StateFact.BountyDelivered, true), Motive.Income, ActivityFamily.Work)
         {
         }
 

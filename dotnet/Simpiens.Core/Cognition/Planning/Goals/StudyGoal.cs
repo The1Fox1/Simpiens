@@ -13,7 +13,7 @@ namespace Simpiens.Cognition.Planning.Goals
         /// <summary>Beside selling salvage (30), under equipping for work (35): bought on the way between rounds of work.</summary>
         public const float Priority = 30f;
 
-        public StudyGoal() : base("Study", WorldState.Empty.With(StateFact.HasManual, true))
+        public StudyGoal() : base("Study", WorldState.Empty.With(StateFact.HasManual, true), Motive.Growth, ActivityFamily.Leisure)
         {
         }
 

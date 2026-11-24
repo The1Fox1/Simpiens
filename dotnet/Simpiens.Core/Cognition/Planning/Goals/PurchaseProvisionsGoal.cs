@@ -10,7 +10,7 @@ namespace Simpiens.Cognition.Planning.Goals
     /// </summary>
     public class PurchaseProvisionsGoal : GoapGoal
     {
-        public PurchaseProvisionsGoal() : base("PurchaseProvisions", WorldState.Empty.With(StateFact.HasProvisions, true))
+        public PurchaseProvisionsGoal() : base("PurchaseProvisions", WorldState.Empty.With(StateFact.HasProvisions, true), Motive.Hunger, ActivityFamily.Unweighted)
         {
         }
 

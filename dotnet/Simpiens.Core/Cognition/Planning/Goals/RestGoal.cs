@@ -9,7 +9,7 @@ namespace Simpiens.Cognition.Planning.Goals
     /// </summary>
     public class RestGoal : GoapGoal
     {
-        public RestGoal() : base("Rest", WorldState.Empty.With(StateFact.IsResting, true))
+        public RestGoal() : base("Rest", WorldState.Empty.With(StateFact.IsResting, true), Motive.Rest, ActivityFamily.Rest)
         {
         }
 

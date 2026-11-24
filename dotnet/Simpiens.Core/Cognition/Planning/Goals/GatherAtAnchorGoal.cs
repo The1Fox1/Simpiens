@@ -12,7 +12,7 @@ namespace Simpiens.Cognition.Planning.Goals
         public const float StarvationCrisisThreshold = 60f;
         public const float ExhaustionCrisisThreshold = 20f;
 
-        public GatherAtAnchorGoal() : base("GatherAtAnchor", WorldState.Empty.With(StateFact.IsGatheredAtAnchor, true))
+        public GatherAtAnchorGoal() : base("GatherAtAnchor", WorldState.Empty.With(StateFact.IsGatheredAtAnchor, true), Motive.Company, ActivityFamily.Social)
         {
         }
 

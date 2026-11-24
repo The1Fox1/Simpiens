@@ -15,7 +15,7 @@ namespace Simpiens.Cognition.Planning.Goals
         /// <summary>Under outfitting for danger (40), so gear comes first; above equipping for work (35) and selling salvage (30).</summary>
         public const float Priority = 38f;
 
-        public CarryMedicineGoal() : base("CarryMedicine", WorldState.Empty.With(StateFact.HasMedicine, true))
+        public CarryMedicineGoal() : base("CarryMedicine", WorldState.Empty.With(StateFact.HasMedicine, true), Motive.Gear, ActivityFamily.Work)
         {
         }
 

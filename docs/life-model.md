@@ -61,7 +61,28 @@ The rules and measurements of the life core (Milestone 6: [Epic LIFE-1](epics/ep
 61 event types (0–60), one ring of 1,024 events outpost-wide and one of 100 per sector, each event with two actors, a sector, a tick, an intensity and one number of extra data.
 
 ## 2. The motive model (L0)
-*Filled at L0.2 and L0.5.*
+
+### 2.1 Motives and families (L0.2, D1)
+Every goal declares what it is for (`Motive`) and the part of the day it belongs to (`ActivityFamily`), on `GoapGoal`'s constructor. `MotiveValidator` pins this table.
+
+| Goal | Motive | Family |
+| :--- | :--- | :--- |
+| `SatiateHunger`, `PurchaseProvisions` | Hunger | Unweighted |
+| `Rest` | Rest | Rest |
+| `Socialize`, `GatherAtAnchor` | Company | Social |
+| `AidCompanion`, `Rescue` | Aid | Unweighted |
+| `ComplyDirective` | Duty | Unweighted |
+| `OutfitForDanger`, `EquipForWork`, `ArmForFight`, `CarryMedicine` | Gear | Work |
+| `CollectLoot` | Income | Work; Unweighted under a clear's orders (`FamilyFor`) |
+| `Hunt`, `LiquidateSalvage`, `FulfillBounty`, `EarnIncome` | Income | Work |
+| `Study`, `ReadManual`, `Drill` | Growth | Leisure (free hours, as Epic 11's D10 put the drill) |
+| `LeaveOutpost` | Leave | Unweighted |
+
+- **Unweighted** goals are never scaled by the routine or the day's intention (the epic's A8), so hunger, orders, aid and leaving keep their precedence.
+- **A new goal** declares both; the validator's table gains its row.
+
+### 2.2 The rule
+*Filled at L0.5.*
 
 ## 3. Measurements
 *L0.3: a crawler's day on the gate seeds.*

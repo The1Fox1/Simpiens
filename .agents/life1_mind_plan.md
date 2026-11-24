@@ -213,7 +213,7 @@ This is a working document (AGENTS.md, Documentation Protocol 6), the first of E
     - the needs and frustration;
     - where events happen that thoughts will ride on.
   - Link it from the epic and from AGENTS.md's cognition paragraph.
-- [ ] **L0.2 Motives and families declared** (D1) [Basic: metadata only; golden unchanged]
+- [x] **L0.2 Motives and families declared** (D1) (done 2026-11-23; golden unchanged) [Basic: metadata only; golden unchanged]
   - `Motive`, `ActivityFamily`, `GoapGoal`'s constructor and `FamilyFor`, and the 21 goals' declarations.
   - Test goals in the validators keep compiling through defaults (None, Unweighted).
   - **The check:** `MotiveValidator`: every production goal declares a motive other than None, and its family is one of D1's. `docs/life-model.md` carries D1's table, written from the code.

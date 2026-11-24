@@ -15,7 +15,7 @@ namespace Simpiens.Cognition.Planning.Goals
         /// <summary>Under equipping for work (35), above selling salvage (30): a purse that spares it arms the bold before its next round.</summary>
         public const float Priority = 33f;
 
-        public ArmForFightGoal() : base("ArmForFight", WorldState.Empty.With(StateFact.HasWeapon, true))
+        public ArmForFightGoal() : base("ArmForFight", WorldState.Empty.With(StateFact.HasWeapon, true), Motive.Gear, ActivityFamily.Work)
         {
         }
 

@@ -14,7 +14,7 @@ namespace Simpiens.Cognition.Planning.Goals
         /// <summary>A fallen party mate's rescue outranks the order (Epic 10 Part 3, K7.2c, Q8: "members carry their fallen out"): over the expedition's 120.</summary>
         public const float UnderOrdersPriority = 130f;
 
-        public RescueGoal() : base("Rescue", WorldState.Empty.With(StateFact.FallenRescued, true))
+        public RescueGoal() : base("Rescue", WorldState.Empty.With(StateFact.FallenRescued, true), Motive.Aid, ActivityFamily.Unweighted)
         {
         }
 

@@ -29,7 +29,7 @@ namespace Simpiens.Cognition.Planning.Goals
         public const float ShiftPriority = ExpeditionPriority;
         public const float IntimidationFearThreshold = 70f;
 
-        public ComplyDirectiveGoal() : base("ComplyDirective", WorldState.Empty.With(StateFact.DirectiveFulfilled, true))
+        public ComplyDirectiveGoal() : base("ComplyDirective", WorldState.Empty.With(StateFact.DirectiveFulfilled, true), Motive.Duty, ActivityFamily.Unweighted)
         {
         }
 
