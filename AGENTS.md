@@ -240,6 +240,11 @@ CI (`.github/workflows/dotnet.yml`) runs the tests (the client's in the pinned i
 - **Nothing else:** Recreate's score, the spell, its fills, its cost and its thought follow.
 - **The checks:** `ActivityValidator` (the table and its bounds); `ActivityNamesTests` (code names an activity only in the table and the places listed there).
 
+### Adding a venue
+- **A venue is map data** (Epic LIFE-1 plan 2, L2.3, D13; after The Sims' smart objects: what a place offers lives in the place): a line in the layout, `MapDefinitionBuilder.Venue`: its key, centre and radius, its seats (where a crawler stands or sits at an activity; free when no one is within `VenueDefinition.SeatRadius`), the activities it offers, its hours (a `ShiftBlocks` mask, every block by default), who may come (`VenueAccess`), and the key of a station it needs standing.
+- **Nothing else:** which venues are open (`VenueRules.OpenMask`, in the snapshot's `OpenVenueMask`), Recreate's choice among them and the spell at a seat follow. At most 32 a map.
+- **The checks:** `VenueValidator` (no venue or seat in a hazard sector or a lair's reach; seats in the venue's sector; room for each recreation it offers; open by hours and stations); the builder refuses a venue in no sector, offering nothing, never open, or needing a station the map hasn't.
+
 ### Passions, challenge and the cost of mastery
 - **A passion** (Epic 11, S1): a step of `PassionTable` (none, keen, burning), saved in the traits record. A new step is a `Passion` value and a row: its practice multiplier, the frustration it eases, its weight in the work's choice and its UI kit glyph (`UiKit`, then the art pins). The draw's odds are `PassionTable`'s constants.
 - **The mastery budget** (Epic 11, S2): at most two skills past Apprentice and one at Master, held in practice's one entry beside the source's ceiling (`SkillRules.BudgetCeiling`). `OutpostWatch` fails a live scenario's day on any breach.

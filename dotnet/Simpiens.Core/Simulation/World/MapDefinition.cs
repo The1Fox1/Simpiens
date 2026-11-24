@@ -163,6 +163,60 @@ namespace Simpiens.Simulation.World
         }
     }
 
+    /// <summary>Who may spend free time at a venue (Epic LIFE-1 plan 2, L2.3, D13).</summary>
+    public enum VenueAccess : byte
+    {
+        Anyone = 0,
+        /// <summary>The guild's members only: the guildhall's yard.</summary>
+        GuildMembers = 1,
+    }
+
+    /// <summary>
+    /// A place to spend free time (Epic LIFE-1 plan 2, L2.3, D13; the epic's A6, "venues are map data", after The Sims' smart
+    /// objects: what a place offers lives in the place): its key, sector, centre and radius, its seats (where a crawler stands
+    /// or sits at an activity; free when no one is within <see cref="SeatRadius"/> of it), its hours (a <c>ShiftBlocks</c>
+    /// mask), the activities it offers (a bit per <c>Activity</c> id), who may come, and the station it needs built, if any.
+    /// No venue stands in a hazard sector or a lair's reach (<c>VenueValidator</c>).
+    /// </summary>
+    public readonly struct VenueDefinition
+    {
+        /// <summary>How near another crawler makes a seat taken.</summary>
+        public const float SeatRadius = 0.4f;
+
+        public readonly string Key;
+        public readonly byte SectorId;
+        public readonly Vec2 Position;
+        public readonly float Radius;
+        public readonly IReadOnlyList<Vec2> Seats;
+
+        /// <summary>The blocks of the day it is open (<c>ShiftBlocks</c>: bit 0 is 06:00–10:00; all six for a place always open).</summary>
+        public readonly byte Hours;
+
+        /// <summary>The activities it offers: bit i for activity id i.</summary>
+        public readonly uint Activities;
+
+        public readonly VenueAccess Access;
+
+        /// <summary>The key of the station it needs built (the drill yard for the guildhall's yard; the tavern's counter); null for none.</summary>
+        public readonly string Station;
+
+        public VenueDefinition(string key, byte sectorId, Vec2 position, float radius, IReadOnlyList<Vec2> seats, byte hours, uint activities, VenueAccess access, string station)
+        {
+            Key = key;
+            SectorId = sectorId;
+            Position = position;
+            Radius = radius;
+            Seats = seats ?? System.Array.Empty<Vec2>();
+            Hours = hours;
+            Activities = activities;
+            Access = access;
+            Station = station;
+        }
+
+        /// <summary>Whether it offers <paramref name="activity"/>.</summary>
+        public bool Offers(Simpiens.Simulation.Life.Activity activity) => (byte)activity < 32 && (Activities & (1u << (byte)activity)) != 0;
+    }
+
     /// <summary>
     /// A creatures' lair (Epic 10 Part 3, K2.1; Q5: "lairs are map data"): where a pack of one kind lives, rests and heals.
     /// Its pack is drawn from the session's seed and a slain member returns there (<see cref="Simpiens.Simulation.Creatures.CreatureService"/>).
@@ -251,6 +305,12 @@ namespace Simpiens.Simulation.World
         /// <summary>The creatures' lairs, in definition order (Epic 10 Part 3, K2.1). Empty on a map with none.</summary>
         public readonly IReadOnlyList<LairDefinition> Lairs;
 
+        /// <summary>The places to spend free time, in definition order (Epic LIFE-1 plan 2, L2.3, D13); at most 32. Empty on a map with none.</summary>
+        public readonly IReadOnlyList<VenueDefinition> Venues;
+
+        /// <summary>The most venues a map holds: the snapshot's open mask is 32 bits.</summary>
+        public const int MaxVenues = 32;
+
         /// <summary>
         /// The trade caravan's way in (Epic 10 Part 2, the stretch, D70): from where the road meets the map to the stall, in
         /// order; it walks back out the same way. Empty on a map the caravan doesn't walk.
@@ -269,8 +329,10 @@ namespace Simpiens.Simulation.World
             StationDefinition[] stations,
             MapLabel[] labels,
             Vec2[] caravanRoute = null,
-            LairDefinition[] lairs = null)
+            LairDefinition[] lairs = null,
+            VenueDefinition[] venues = null)
         {
+            Venues = venues ?? System.Array.Empty<VenueDefinition>();
             CaravanRoute = caravanRoute ?? System.Array.Empty<Vec2>();
             Lairs = lairs ?? System.Array.Empty<LairDefinition>();
             Name = name;

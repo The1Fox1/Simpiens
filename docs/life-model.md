@@ -233,3 +233,15 @@ The guild issues the party's directive afresh at each stage (muster, march, work
 | Dice | 30 | social 10 / h | 60 min | — | Games | one to three others | bold | A game of dice +4, 8 h |
 
 The hearth's relax reads the fireside's row (6 an hour), so its rate has one home; golden unchanged.
+
+### 5.6 Venues (L2.3, 2026-11-24)
+`VenueDefinition` in the map (D13), with `VenueRules.OpenMask` computed on the main thread each tick and carried by the snapshot (`OpenVenueMask`). The outpost's four, before the tavern:
+
+| Venue | Sector | Offers | Seats | Open |
+| :--- | :--- | :--- | ---: | :--- |
+| The hearth | the hub | the fireside (`GatherAtAnchor`'s) | — | always |
+| The stall | the hub | browsing | 4 | always |
+| The Garden | the Garden | a walk | 6 | always (D26) |
+| The guildhall yard | the guildhall | sparring, members only | 2 | while the drill yard stands |
+
+None stands in a hazard sector or a lair's reach (`VenueValidator`). Nothing reads them yet: golden unchanged.

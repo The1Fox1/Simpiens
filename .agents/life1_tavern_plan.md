@@ -161,7 +161,7 @@ This is a working document (AGENTS.md, Documentation Protocol 6), the second of 
   - `Activity`, `ActivityDefinition`, `ActivityTable`; the activities' thoughts as `ThoughtTable` rows (thought from L2.5).
   - `ActivityValidator` (fills, durations, company, groups within bounds); `ActivityNamesTests` (code names an activity only in the table and the venues' data).
   - AGENTS.md: "Adding an activity".
-- [ ] **L2.3 Venues as map data** (D13) [Possibly Complex: map data and a mask the snapshot carries, both read by cognition; golden unchanged]
+- [x] **L2.3 Venues as map data** (D13) (done 2026-11-24: `docs/life-model.md` §5.6; golden unchanged, core 355/355) [Possibly Complex: map data and a mask the snapshot carries, both read by cognition; golden unchanged]
   - `VenueDefinition` and the builder's `Venue`; Floor 1's hearth, stall, Garden and guildhall yard (the tavern's comes with T.2).
   - `OpenVenueMask` computed on the main thread and carried by the snapshot.
   - `VenueValidator`: in no hazard sector and no lair's reach; seats inside the sector; every activity offered in the table.

@@ -91,6 +91,9 @@ namespace Simpiens.Core.Session.Layouts
         public const string Still = "workshop.still";
         /// <summary>The guildhall's drill yard (Epic 11, S3.4, D10): in the hall's west half, inside the door.</summary>
         public const string DrillYard = "guildhall.yard";
+
+        /// <summary>The venues' keys (Epic LIFE-1 plan 2, L2.3, D13): where free time goes.</summary>
+        public const string HearthVenue = "venue.hearth", StallVenue = "venue.stall", GardenVenue = "venue.garden", YardVenue = "venue.yard";
         public const float StationRadius = 1.5f;
 
         public const int SpawnPointCount = 12;
@@ -247,6 +250,18 @@ namespace Simpiens.Core.Session.Layouts
             b.Station(Still, StationKind.Still, new Vec2(-1f, -21f), StationRadius);
             // --- The guildhall's yard (Epic 11, S3.4, D10): a drill yard may be built there, west of the barracks ---
             b.Station(DrillYard, StationKind.DrillYard, new Vec2(12f, -21.5f), StationRadius);
+
+            // --- Venues (Epic LIFE-1 plan 2, L2.3, D13): where free time goes, what each offers, its seats. The hearth's
+            // fireside is GatherAtAnchor's; Recreate takes the rest. Open at all hours (D26), the yard while the drill yard
+            // stands, for the guild's members. The tavern's comes with its room (T.2) ---
+            b.Venue(HearthVenue, new Vec2(-4.5f, -3.5f), 3f, null, new[] { Simpiens.Simulation.Life.Activity.Fireside });
+            b.Venue(StallVenue, new Vec2(0f, 2.5f), 3f, new[] { new Vec2(-2f, 1.2f), new Vec2(-0.7f, 0.8f), new Vec2(0.7f, 0.8f), new Vec2(2f, 1.2f) },
+                new[] { Simpiens.Simulation.Life.Activity.Browse });
+            b.Venue(GardenVenue, new Vec2(0f, 12f), 6f,
+                new[] { new Vec2(-6.5f, 8f), new Vec2(-6.5f, 16f), new Vec2(0f, 16.5f), new Vec2(6.5f, 16f), new Vec2(6.5f, 8f), new Vec2(0f, 7.5f) },
+                new[] { Simpiens.Simulation.Life.Activity.Walk });
+            b.Venue(YardVenue, new Vec2(12f, -21.5f), 2f, new[] { new Vec2(10.8f, -21.5f), new Vec2(13.2f, -21.5f) },
+                new[] { Simpiens.Simulation.Life.Activity.Spar }, access: VenueAccess.GuildMembers, station: DrillYard);
 
             // --- Road Gate spawn points: two rows of six ---
             for (int i = 0; i < SpawnPointCount; i++)
