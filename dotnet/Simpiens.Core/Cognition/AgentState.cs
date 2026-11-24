@@ -156,6 +156,12 @@ namespace Simpiens.Cognition
         public Simpiens.Simulation.Skills.CrawlerTraits Traits { get; set; }
 
         /// <summary>
+        /// Who it is living as (Epic LIFE-1, L0.8, D6): its thoughts and the crawlers they name, and room for wants, fun and the
+        /// day's rhythm. Written on the main thread only, saved whole in its record, copied for cognition.
+        /// </summary>
+        public Simpiens.Simulation.Life.CrawlerLife Life { get; set; }
+
+        /// <summary>
         /// Counts one <paramref name="deed"/> in its traits record (Epic 11, S0.5, A7): where the deed happens, on the main thread;
         /// then judges its legend: an epithet the count earns (S6.1, D27), naming <paramref name="kind"/> (a creature slain) or
         /// <paramref name="subject"/> (a crawler) where its form does, and a trait (S6.3, D29). The runtime tells the chronicle.
@@ -558,7 +564,8 @@ namespace Simpiens.Cognition
                 DownedBy = DownedBy,
                 DownedDetail = DownedDetail,
                 Skills = Skills,
-                Traits = Traits
+                Traits = Traits,
+                Life = Life
             };
         }
 
@@ -603,6 +610,7 @@ namespace Simpiens.Cognition
             DownedDetail = record.DownedDetail;
             Skills = record.Skills;
             Traits = record.Traits;
+            Life = record.Life;
 
             ActivePlan.Clear();
             ScratchPlan.Clear();
@@ -645,7 +653,8 @@ namespace Simpiens.Cognition
                 Memberships.TryGet(Simpiens.Cognition.Groups.GroupType.TemporaryParty, out var party) ? party.GroupId : (byte)0,
                 Skills,
                 Traits,
-                Memberships.TryGet(Simpiens.Cognition.Groups.GroupType.FactionGuild, out var guild) ? guild.GroupId : (byte)0);
+                Memberships.TryGet(Simpiens.Cognition.Groups.GroupType.FactionGuild, out var guild) ? guild.GroupId : (byte)0,
+                Life);
         }
     }
 }

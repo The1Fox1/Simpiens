@@ -246,7 +246,7 @@ This is a working document (AGENTS.md, Documentation Protocol 6), the first of E
   - **The rule:** the goal whose plan just ended reaches the next evaluation through the cognition job, unsaved.
   - **Its value:** if L0.3 measured switching that matters, its value is set here, with golden re-recorded in its own commit. Otherwise it stays 0 and plan 2 sets it.
   - **The check:** a validator that a commitment set in a test tuning keeps a crawler on its goal against a near-equal rival.
-- [ ] **L0.8 The life record, format 15** (D6) [Possibly Complex: saved state]
+- [x] **L0.8 The life record, format 15** (D6) (done 2026-11-23; golden unchanged; core 344/344, client 553/553. The spare bytes hold D6's later fields' places as one reserved block, laid out when each lands) [Possibly Complex: saved state]
   - **The record:** `CrawlerLife`, as `AgentState.Life`, written and read in `CaptureRecord` and `RestoreRecord`, and copied to `AgentContext.Life`.
   - **The save:** format 15. The record's size is pinned beside the traits record's, with the round trip in `SessionCaptureValidator` and `SessionRestoreValidator`.
   - **The world hash** mixes it only when it isn't empty, so golden is unchanged.

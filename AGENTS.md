@@ -217,6 +217,12 @@ CI (`.github/workflows/dotnet.yml`) runs the tests (the client's in the pinned i
 - **A new field** goes into the record's spare bytes, so its size and the save's format don't change (`EconomySerializationValidator` pins 256); an `EntityId` or wider field on a 4-byte boundary, or the layout pads past 256. The restore validator checks the round trip, and the world hash mixes the record once anything is written.
 - **The numbers and measurements** are in [`docs/skills-model.md`](docs/skills-model.md).
 
+### Who a crawler is living as: the life record
+- **One record** (Epic LIFE-1, L0.8, D6): `CrawlerLife` (`Simulation/Life/`), 512 bytes after the traits record in the crawler's record, saved whole (format 15, the life core's one raise) and copied for cognition (`AgentContext.Life`). It holds thoughts (16 slots) and the four crawlers they name, and room for wants, fun, the day's rhythm (plans 2 and 3), taste and keepsakes (LIFE-2) and an aspiration (LIFE-3).
+- **A new field** goes into its spare bytes, laid out in the plan's D6, so its size and the save's format don't change (`EconomySerializationValidator` pins 512). A field reads 0 as "none", so a save made before it loads unchanged; an `EntityId` or wider field sits on a 4-byte boundary.
+- **The checks:** the round trip in `SessionCaptureValidator` and `SessionRestoreValidator`; the world hash mixes the record once anything is written.
+- **The rules and numbers** are in [`docs/life-model.md`](docs/life-model.md).
+
 ### Passions, challenge and the cost of mastery
 - **A passion** (Epic 11, S1): a step of `PassionTable` (none, keen, burning), saved in the traits record. A new step is a `Passion` value and a row: its practice multiplier, the frustration it eases, its weight in the work's choice and its UI kit glyph (`UiKit`, then the art pins). The draw's odds are `PassionTable`'s constants.
 - **The mastery budget** (Epic 11, S2): at most two skills past Apprentice and one at Master, held in practice's one entry beside the source's ceiling (`SkillRules.BudgetCeiling`). `OutpostWatch` fails a live scenario's day on any breach.
