@@ -1,9 +1,9 @@
 # Epic LIFE-1: The Mind and the Day
 
-- **Status**: ACTIVE (2026-11-23), at the producer's go: "Proceed with development of Life-1". QUEUED from the same day, drafted at the producer's word with its first plan.
+- **Status**: ACTIVE (2026-11-23), at the producer's go: "Proceed with development of Life-1". Plan 1, Groundwork and the mind, was done and closed out the same day on `feat/life1-mind`; its PR into `main` waits for the producer's look at L1 (the faces, the mood line, the dossier's tabs) and their word. QUEUED from the same day, drafted at the producer's word with its first plan.
 - **Series**: the life core, Epic LIFE-1 to LIFE-3, all complete before Epic 12 (the producer, 2026-11-23; ROADMAP Track Rules, rule 1). This epic is the first: the proposal's L0 to L3. LIFE-2 takes L4–L6 (talk, gifts and bonds) and LIFE-3 takes L7–L8 and the series' gate (L9). Milestones keep the proposal's names, so an L-number means the same thing in every epic of the series.
 - **Plans**: three, one PR each (2026-11-23):
-  1. **Groundwork and the mind**: L0, and L1's thoughts, mood, day log and the dossier's Mind and Today. Under way: [`.agents/life1_mind_plan.md`](../../.agents/life1_mind_plan.md), on `feat/life1-mind`.
+  1. **Groundwork and the mind**: L0, and L1's thoughts, mood, day log and the dossier's Mind and Today. Done and closed out 2026-11-23 on `feat/life1-mind`. Its decisions are D1–D10 below, its findings F8–F12 in §7, its numbers in `docs/life-model.md`, and its summary in `.agents/architecture_history.md`. The plan itself is deleted (git keeps it).
   2. **Wants, fun and the tavern**: L1's wants, and L2. Drafted when plan 1 merges.
   3. **Rhythm and the gate**: L3, and LG1. Drafted when plan 2 merges.
   - **Why L1 is split:** wants need something to want. At L1 alone, the only wants the code could fulfil are today's needs under a new name ("eat", "buy a pickaxe"), and "a want arises and is fulfilled" would pass without meaning anything. With L2's venues they can be a tavern supper, a walk in the Garden or an evening with a friend. Both new goals of the epic (the want's and Recreate) then enter the motive model together, in plan 2. Thoughts and mood stand alone: they read events that already happen, so they fit plan 1 beside the refactor.
@@ -59,8 +59,18 @@ Every row is a default that stands by exception. The proposal's questions keep t
 
 ---
 
-### Plan 1's decisions (Groundwork and the mind)
-Proposed in [plan 1](../../.agents/life1_mind_plan.md) as D1–D10. Each moves here when its step lands. The producer answers by exception.
+### Plan 1's decisions (Groundwork and the mind, 2026-11-23)
+Proposed in plan 1 as defaults; each landed with its step. The producer answers by exception.
+- **D1, motives and families:** every goal declares a `Motive` (hunger, rest, company, income, gear, growth, duty, aid, leave) and an `ActivityFamily` (unweighted, work, leisure, social, rest), as `docs/life-model.md` §2.1 tabulates; growth is leisure; loot under a clear's orders is unweighted (`FamilyFor`). `MotiveValidator` pins the table.
+- **D2, the motive model:** priority = the goal's base (`BasePriority`, today's formula unchanged) × the product of the shared weights + commitment. The factors multiply first, then the base, so a weight of exactly 1 changes nothing; golden reproduced byte for byte. The first factor is the session's weight by motive (`LifeTuning`, in `EconomyTuning`); `Urgency.Of` gives new goals their motive's need; `MotiveModelTests` keeps `BasePriority` inside the model.
+- **D3, one goal selector:** `GoalSelector.Rank`, called by both evaluators (F1): the best three, ties to the earlier goal, -1 never ranked, nothing allocated; decisions keep the best goal's base and weight.
+- **D4, the fallback:** the next two goals are planned when the best can't be (`GoalSelector.PlanFirst`, depth 2 in the live game). It never runs today (F9), so golden didn't move.
+- **D5, commitment:** the goal of the last plan adopted (`AgentState.LastGoal`, unsaved) gains `LifeTuning.Commitment`, 0 for now (0.8 flips a resident-day); plan 2 sets it.
+- **D6, the life record:** `CrawlerLife`, 512 bytes after the traits record, format 15 (the series' one raise): 16 thought slots and four subjects; 320 spare bytes laid out for wants, fun, the day's rhythm, taste, keepsakes and an aspiration.
+- **D7, thoughts:** 21 rows in `ThoughtTable`, thought where things happen through `AgentState.Think` (stacking, replacement of the slot worth least, lazy expiry, four subjects). A friend's death is -25 (from -20, L1.3). **Deviation:** thought at its sites, not hooked onto deeds, since `AddDeed` carries no tick and a rescue's thought names the rescued.
+- **D8, mood:** the need terms plus the live thoughts, within ±100, in five bands (Breaking to -35, Low to -10, Steady, Good from 10, Happy from 30); pure and unsaved; the context computes its band once (`AgentContext.Mood`).
+- **D9, what mood changes:** frustration eases 10 a game hour on the day's pace (F6); a breaking mood adds 15 an hour, a low one 5, good and happy ease 5 more; a low mood weighs income 0.9, a breaking one 0.75; nothing under orders (A8). **Amended (F12):** company is not weighed in plan 1.
+- **D10, what the player sees:** happy, low and grieving faces; the mood line names its reason ("Low: Bram died."); the dossier's Crawler, Mind and Today tabs on the state badge's line; Mind and Today read lazily. The chronicle's ring grows to 2,048 (F5).
 
 ---
 
@@ -188,7 +198,26 @@ Done means crawlers live a day, in the live outpost, with nothing injected (ROAD
 - **Docs:** the roadmap first, then this file's status, then the focus file; `architecture_history.md`; `docs/life-model.md`; the economy model (the tavern); `AGENTS.md` (the motive model's place in cognition, and each table's recipe).
 
 ## 4. Acceptance checklist (delivered work only)
-Nothing yet.
+
+### L0. Groundwork (done 2026-11-23, `feat/life1-mind`)
+- [x] The hand-over checked, and `docs/life-model.md` (L0.1); goals declare a motive and a family (L0.2).
+- [x] A crawler's day measured on the gate seeds (L0.3, `MeasureACrawlersDay`): rest 9.8 h, work 8.4 h, the hearth 3.1 h, idling under a quarter hour; no plan unfound; 592 chronicle lines a day.
+- [x] One goal selector (L0.4) and the motive model (L0.5), golden unchanged; the fallback (L0.6) and commitment at 0 (L0.7), golden unchanged.
+- [x] The life record, save format 15 (L0.8), its round trip in the save validators.
+
+### L1. The mind, plan 1's part (done 2026-11-23, `feat/life1-mind`; the producer's look next)
+- [x] The thought table (L1.1) and thinking at 15 sites (L1.2), `ThoughtNamesTests` listing each; golden re-recorded for coverage only.
+- [x] Mood (L1.3, measured: ordinary days Steady to Good 99%; a friend's death takes a mourner to Low) and what it changes (L1.4: frustration on the day's pace; income's weight when low; F12).
+- [x] The Mind and Today models (L1.5); happy, low and grieving faces and the mood line's reason (L1.6, art pins); the dossier's tabs (L1.7, renders recorded in the pinned image).
+- [x] **DoD `MoodFollowsTheDay`** (L1.8): `MoodsRiseWithAMealAndABunk` (gate seed 424242: 11 residents, all 69 onsets lifted mood; a save mid-day keeps every thought and mood) and `MoodFallsForAFriendsDeath` (seed 8: six mourners fell to Low or below within the hour).
+
+### Plan 1's gate (2026-11-23)
+- [x] `dotnet test`: core 350/350, client 563/563 (and in the pinned image); golden 3/3.
+- [x] The soak: 18 of 18 within their bands; `guild`, `crafting` and `hunting` on seeds 1–20, 20 of 20 each.
+- [x] Cost (`PopulationScalingProbe`, Release, against `main`): 16 crawlers 19.5–20.4k ticks a second against 20.1–20.6k; 24 crawlers 16.4–17.4k against 17.8–18.3k.
+
+### Still to come in this epic
+- L1's wants (plan 2), L2 fun and the tavern (plan 2), L3 rhythm (plan 3), LG1 (plan 3).
 
 ## 5. Deferred and out of scope
 | Item | Where it goes |
@@ -219,15 +248,15 @@ Nothing yet.
 
 ## 7. Findings
 Read from the code while drafting (2026-11-23), each with its owner.
-- **F1. Goal choice is written twice.** `AgentCognitionService.EvaluateAsync` picks the best goal for the live game. `GoapCognitiveEvaluator.EvaluateAsync` repeats the same argmax, and only `PlanExecutionValidator` uses it. Owner: L0.4 [Possibly Complex], one selector for both.
-- **F2. A goal that can't be planned falls through to ambient wandering.** Nobody has measured how often. Owner: L0.3 measures it [Possibly Complex], and L0.6 tries the next goals [Possibly Complex].
-- **F3. Commitment exists only within a plan.** Goals are not re-scored while a plan runs (only reflexes cut it short), so flicker can only happen at a plan's end. But plans are short (F10). L0.3 measured near ties at 3.6% of choices and 0.8 flips a resident-day. Owner: L0.7 builds the rule at 0 [Possibly Complex]; plan 2 sets its value when leisure options compete.
-- **F4. The dossier has no height to spare at 720 rows** (Epic 11's F16). Mind and Today won't fit as sections. Owner: L1.7, tabs (Q7) [Possibly Complex].
+- **F1. Goal choice is written twice.** `AgentCognitionService.EvaluateAsync` picks the best goal for the live game. `GoapCognitiveEvaluator.EvaluateAsync` repeats the same argmax, and only `PlanExecutionValidator` uses it. Owner: L0.4 [Possibly Complex], one selector for both. **Resolved** at L0.4: `GoalSelector`.
+- **F2. A goal that can't be planned falls through to ambient wandering.** Nobody has measured how often. Owner: L0.3 measures it [Possibly Complex], and L0.6 tries the next goals [Possibly Complex]. **Resolved** at L0.3 and L0.6: none goes unfound today (F9); the fallback is in place for plan 2's goals.
+- **F3. Commitment exists only within a plan.** Goals are not re-scored while a plan runs (only reflexes cut it short), so flicker can only happen at a plan's end. But plans are short (F10). L0.3 measured near ties at 3.6% of choices and 0.8 flips a resident-day. Owner: L0.7 builds the rule at 0 [Possibly Complex]; plan 2 sets its value when leisure options compete. **Open, plan 2's:** the rule is built (L0.7) at 0.
+- **F4. The dossier has no height to spare at 720 rows** (Epic 11's F16). Mind and Today won't fit as sections. Owner: L1.7, tabs (Q7) [Possibly Complex]. **Resolved** at L1.7: the tabs sit on the state badge's line.
 - **F5. The chronicle is one ring of 1,024 events for the whole outpost.** A day log read from it holds only what the ring still holds. L0.3 measured 592 lines a day (391 to 1,141 a seed-day; over half gossip and companionship), so on the busiest seeds the morning is gone by night. Owner: L1.5, decided: the day log tells the thoughts begun since midnight and the crawler's dramatic and crisis lines that no same-tick thought tells, and the ring grows to 2,048, past the busiest day measured.
-- **F6. Frustration runs in physical time:** −1 every second (`AgentState`'s drives), about 42 a game hour. Every other need is paced in game time through `DayTuning`. A low mood that "feeds frustration" in game hours would be drowned by it. Owner: L1.4 judges whether frustration moves onto the day's pace, as its own behaviour change [Possibly Complex].
-- **F9. No plan goes unfound.** L0.3 measured none in 828 resident-days, with and without the guild player. Tier 3 runs only when no goal is valid. So D4's fallback changes nothing today: it is for plan 2's goals (a venue out of reach, a friend gone). Owner: L0.6 [Possibly Complex]; golden should not move.
-- **F10. Plans are short.** About 600 decisions a resident-day, 594 of them a new plan: goals are re-scored every 17 ticks or so, because a harvest's step ends every few game minutes. The motive model is on the hottest path of cognition, and a weight that moves with the hour reaches a crawler within minutes. Owner: L0.4 and L0.5 keep it allocation-free [Possibly Complex]; the gate measures its cost.
-- **F11. Idle has gone.** Residents earn 8.4 hours a day (walks included) and spend 3.1 at the hearth; idling and wandering take under a quarter of an hour. Leisure will compete with `EarnIncome` itself. Owner: plan 2 (L2), whose Recreate must win evenings from work through the motive model's weights, and plan 3 (L3), whose satiation lowers work's pull [Possibly Complex].
-- **F8. Frustration starts no tantrum.** The proposal's "a very unhappy one breaks, through today's frustration path" has no path to ride: tantrums come only from a contested node lost to a rival and an artisan's breakdown, and `MentalBreakEvaluator` reads hunger, energy and danger. Frustration weighs against compliance (`ComplianceUtility`) and sets `IsThreatened`, a fact no action reads. Owner: L1.4 [Possibly Complex]: mood feeds frustration, so unhappy crawlers defy orders sooner; a break of its own is left to plan 2's wants or LIFE-2, by exception.
+- **F6. Frustration runs in physical time:** −1 every second (`AgentState`'s drives), about 42 a game hour. Every other need is paced in game time through `DayTuning`. A low mood that "feeds frustration" in game hours would be drowned by it. Owner: L1.4 judges whether frustration moves onto the day's pace, as its own behaviour change [Possibly Complex]. **Resolved** at L1.4: 10 a game hour on the day's pace, its own commit.
+- **F9. No plan goes unfound.** L0.3 measured none in 828 resident-days, with and without the guild player. Tier 3 runs only when no goal is valid. So D4's fallback changes nothing today: it is for plan 2's goals (a venue out of reach, a friend gone). Owner: L0.6 [Possibly Complex]; golden should not move. **Resolved** at L0.6.
+- **F10. Plans are short.** About 600 decisions a resident-day, 594 of them a new plan: goals are re-scored every 17 ticks or so, because a harvest's step ends every few game minutes. The motive model is on the hottest path of cognition, and a weight that moves with the hour reaches a crawler within minutes. Owner: L0.4 and L0.5 keep it allocation-free [Possibly Complex]; the gate measures its cost. **Resolved** at L0.4–L0.5: allocation-free; the gate's cost measured (§4).
+- **F11. Idle has gone.** Residents earn 8.4 hours a day (walks included) and spend 3.1 at the hearth; idling and wandering take under a quarter of an hour. Leisure will compete with `EarnIncome` itself. Owner: plan 2 (L2), whose Recreate must win evenings from work through the motive model's weights, and plan 3 (L3), whose satiation lowers work's pull [Possibly Complex]. **Open, plans 2 and 3's.**
+- **F8. Frustration starts no tantrum.** The proposal's "a very unhappy one breaks, through today's frustration path" has no path to ride: tantrums come only from a contested node lost to a rival and an artisan's breakdown, and `MentalBreakEvaluator` reads hunger, energy and danger. Frustration weighs against compliance (`ComplianceUtility`) and sets `IsThreatened`, a fact no action reads. Owner: L1.4 [Possibly Complex]: mood feeds frustration, so unhappy crawlers defy orders sooner; a break of its own is left to plan 2's wants or LIFE-2, by exception. **Resolved** at L1.4: mood feeds frustration; no break of its own in plan 1.
 - **F12. A hurt crawler's low mood kept it from healing.** With L1.4's first weights, a low mood pulled company goals 1.25: a crawler hurt in a fight (the hurt term and thought make it low) went to the hearth instead of its bunk, healed more slowly there and stayed low. Four live DoDs failed with it (`ADraughtKeepsAPartyWorking`, `EveryScenarioPlaysTogether`, `PassionBurnsBright`, `ACallingEmerges`), though their gate-seed measurements barely moved. Owner: L1.4, resolved: mood weighs income only in plan 1 (low 0.9, breaking 0.75), and never a crawler under orders (the epic's A8). "An unhappy crawler wants leisure more" lands on plan 2's fun, whose Recreate must not outbid healing [Possibly Complex].
 - **F7, resolved 2026-11-23. PR #27 (Epic 11's plans 3 and 4) was open** while the roadmap and the history called it merged, so plan 1's branch was first cut from `feat/epic11-masterworks`. #27 merged the same day (`d0d2d47`), and the branch was rebased onto `main` at the go.
