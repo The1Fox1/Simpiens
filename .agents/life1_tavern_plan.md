@@ -176,7 +176,7 @@ This is a working document (AGENTS.md, Documentation Protocol 6), the second of 
   - `RecreateGoal`, `RecreateAction`, the fact `Recreated` (49 of 64), and their places in `OutpostGoapDomain`; `MotiveValidator`'s and `docs/life-model.md` §2.1's rows; the Bored mood term (D11, moved from L2.1) in `MoodRules` and `MoodValidator`.
   - **Tuning:** boredom's pace and the fills, from the evening's measurement, so that free evenings go to venues and work keeps most of its hours. The numbers go to `docs/life-model.md` §5.
   - **The checks:** the gate seeds' day holds; every DoD keeps its seed or is re-picked with the reason (F12's four first); the soak's bands measured, any move to the producer by exception.
-- [ ] **L2.7 Variety and curiosity** (D15) [Possibly Complex: two saved fields and a draw on its own salt; golden re-recorded in its own commit]
+- [x] **L2.7 Variety and curiosity** (D15) (done 2026-11-24: curiosity at byte 277, drawn at spawn on `SimRandomSalt.Curiosity` as the mean of two draws; the tried venues at 278; variety at 280, tired 64 by a spell, eased 64 by a night's sleep; the score × (1 − 0.6 × had, more for the curious) and × up to 1.3 for an untried venue. Golden re-recorded; scenario re-picks batched with the wants and L2.8) [Possibly Complex: two saved fields and a draw on its own salt; golden re-recorded in its own commit]
   - Variety's eight bytes and their easing; curiosity's draw at spawn and its tried venues; both read by `Leisure.Score`.
   - **The checks:** the round trip; `LeisureValidator` gains variety and curiosity; a seed's earlier draws (looks, skills, techniques) are unchanged by the new salt.
 

@@ -73,5 +73,7 @@ namespace Simpiens.Simulation
         public const uint Passions = 17; // a crawler's passions (Epic 11, S1.1, D3)
         public const uint Techniques = 18; // a crawler's pick of a technique at a band reached (Epic 11, S4.2, D15)
         public const uint Inspiration = 19; // whether a Masterwork make is a masterpiece, and its name's words (Epic 11, S8.2, D41)
+        public const uint Curiosity = 20; // a crawler's curiosity, a sixth trait drawn at spawn (Epic LIFE-1 plan 2, L2.7, Q8)
+        public const uint Wants = 21; // whether a want arises on waking, and which (Epic LIFE-1 plan 2, W.2, D20)
     }
 }

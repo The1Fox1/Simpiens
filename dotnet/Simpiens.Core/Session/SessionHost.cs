@@ -453,6 +453,12 @@ namespace Simpiens.Core.Session
             state.Traits = Simpiens.Simulation.Skills.PassionTable.Draw(seed, state.AgentId, state.Personality, state.Skills, state.Traits);
             // Its techniques at the bands its talents start in (Epic 11, S4.2, D15), by its nature, on their own salt
             state.Traits = Simpiens.Simulation.Skills.TechniqueRules.PickAtSpawn(seed, state.AgentId, state.Personality, state.Skills, state.Traits);
+            // Its curiosity (Epic LIFE-1 plan 2, L2.7, Q8): a sixth trait in its life record, on its own salt after every earlier
+            // draw, so none moves; most are moderate (the mean of two draws)
+            var curious = SimRandom.For(seed, state.AgentId, 0, SimRandomSalt.Curiosity);
+            var life = state.Life;
+            life.SetCuriosity((curious.Range(-1f, 1f) + curious.Range(-1f, 1f)) * 0.5f);
+            state.Life = life;
             // Its calling, from its best skill and the technique it took there (Epic 11, S5.3, D21); not told
             var traits = state.Traits;
             Simpiens.Simulation.Skills.CallingRules.Rejudge(state.Skills, ref traits, out _);

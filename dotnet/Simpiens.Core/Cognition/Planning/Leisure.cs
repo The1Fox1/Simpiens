@@ -35,6 +35,15 @@ namespace Simpiens.Cognition.Planning
         public const float FriendsPresent = 1.25f;
         public const int FriendLine = 20;
 
+        /// <summary>Variety (L2.7, D15): each spell tires its group this much; each night's sleep eases every group this much.</summary>
+        public const int TirePerSpell = 64, EasePerDay = 64;
+
+        /// <summary>How far having had enough of a group lowers its score: all of it (255) takes this share off, more for the curious.</summary>
+        public const float VarietyWeight = 0.6f;
+
+        /// <summary>A venue not yet tried draws the curious up to this much more (curiosity 1).</summary>
+        public const float NoveltyPull = 0.3f;
+
         [System.ThreadStatic]
         private static List<EntitySnapshot> _nearby;
 
@@ -87,7 +96,13 @@ namespace Simpiens.Cognition.Planning
             if (row.Hunger < 0) share += SimMath.Min(context.Hunger, -row.Hunger) / 100f;
             if (share > 1f) share = 1f;
             float distance = 1f / (1f + Vec2.Distance(context.Position, venue.Position) / DistanceScale);
-            return share * Lean(context.Personality, row.Lean) * distance * (friend ? FriendsPresent : 1f);
+            // Variety and curiosity (L2.7, D15, Q8): a group had of late palls, more for the curious; a venue not yet tried draws them
+            var life = context.Life;
+            float curiosity = life.Curiosity;
+            float variety = 1f - VarietyWeight * (life.HadOf((int)row.Group) / 255f) * (1f + 0.5f * curiosity);
+            if (variety < 0.2f) variety = 0.2f;
+            float novelty = !life.HasTried(venueIndex) && curiosity > 0f ? 1f + NoveltyPull * curiosity : 1f;
+            return share * Lean(context.Personality, row.Lean) * distance * (friend ? FriendsPresent : 1f) * variety * novelty;
         }
 
         /// <summary>

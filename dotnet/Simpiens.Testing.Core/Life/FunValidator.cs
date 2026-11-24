@@ -40,7 +40,7 @@ namespace Simpiens.Testing.Life
             life.Bore(-500f);
             Assert(life.Boredom == 0f && life.Fun == 100f, "Entertained, it holds at 0.");
             Assert(System.Runtime.CompilerServices.Unsafe.SizeOf<CrawlerLife>() == CrawlerLife.Size, "The record keeps its 512 bytes.");
-            Assert(CrawlerLife.SpareBytes == 244, $"244 spare bytes after the wants' room and boredom ({CrawlerLife.SpareBytes}).");
+            Assert(CrawlerLife.SpareBytes == 224, $"224 spare bytes after the wants, boredom, the rhythm's room, curiosity and variety ({CrawlerLife.SpareBytes}).");
             life.Bore(12.5f);
             var bytes = CrawlerLife.BytesOf(life);
             Assert(BitConverter.ToSingle(bytes.Slice(264, 4)) == 12.5f, "Boredom sits at byte 264 (D6).");

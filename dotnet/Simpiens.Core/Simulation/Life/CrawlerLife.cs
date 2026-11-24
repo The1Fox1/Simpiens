@@ -36,7 +36,21 @@ namespace Simpiens.Simulation.Life
         private byte _first;
     }
 
-    /// <summary>The record's room for plans 2 and 3 and for LIFE-2 and LIFE-3 (D6's table), at 268: zeros until a field is laid in it.</summary>
+    /// <summary>Plan 3's room for weariness and the last windfall (D6), at 268: zeros until then.</summary>
+    [InlineArray(8)]
+    public struct LifeRhythmRoom
+    {
+        private byte _first;
+    }
+
+    /// <summary>Variety (plan 2's L2.7, D15): a byte a variety group, how much of it a crawler has had of late.</summary>
+    [InlineArray(CrawlerLife.VarietyGroups)]
+    public struct LifeVariety
+    {
+        private byte _first;
+    }
+
+    /// <summary>The record's room for LIFE-2 and LIFE-3 (D6's table), at 288: zeros until a field is laid in it.</summary>
     [InlineArray(CrawlerLife.SpareBytes)]
     public struct LifeSpare
     {
@@ -54,9 +68,12 @@ namespace Simpiens.Simulation.Life
     /// <item><b>Wants</b> (plan 2's W.2): three slots of 24 bytes, at 192, reserved until then.</item>
     /// <item><b>Boredom</b> (plan 2's L2.1, D11): a float at 264, 0 to 100; fun is 100 less it. Held this way round so a record
     /// written before fun reads entertained.</item>
-    /// <item><b>Spare</b>, at 268: laid out for weariness, the last windfall, the day's intention and curiosity (12, at 268) and
-    /// variety (8, at 280) in plans 2 and 3; then taste and keepsakes (LIFE-2) and an aspiration (LIFE-3), with about 100 bytes
-    /// left. A field laid here later reads 0 as "none", so a save made before it loads unchanged.</item>
+    /// <item><b>Rhythm</b> (plan 3): weariness and the last windfall at 268, the day's intention at 276; reserved until then.</item>
+    /// <item><b>Curiosity</b> (plan 2's L2.7, Q8): a sixth trait at 277, drawn at spawn (0 unset, read as neutral); the venues
+    /// a crawler has tried at 278, a bit a venue.</item>
+    /// <item><b>Variety</b> (L2.7, D15): eight bytes at 280, a variety group each.</item>
+    /// <item><b>Spare</b>, at 288: taste and keepsakes (LIFE-2) and an aspiration (LIFE-3), with about 100 bytes left. A field
+    /// laid here later reads 0 as "none", so a save made before it loads unchanged.</item>
     /// </list>
     /// Its size is pinned (<c>EconomySerializationValidator</c>).
     /// </summary>
@@ -72,8 +89,12 @@ namespace Simpiens.Simulation.Life
         /// <summary>The wants' room: three slots of 24 bytes (D6).</summary>
         public const int WantBytes = 72;
 
-        /// <summary>What's left of <see cref="Size"/> after the thoughts, their subjects, the wants and boredom.</summary>
-        public const int SpareBytes = Size - ThoughtCapacity * 8 - SubjectCapacity * 16 - WantBytes - sizeof(float);
+        /// <summary>Variety's groups: a byte each (<c>VarietyGroup</c>).</summary>
+        public const int VarietyGroups = 8;
+
+        /// <summary>What's left of <see cref="Size"/> after the thoughts, their subjects, the wants, boredom, the rhythm's room,
+        /// the intention, curiosity, the tried venues, a byte of padding and variety.</summary>
+        public const int SpareBytes = Size - ThoughtCapacity * 8 - SubjectCapacity * 16 - WantBytes - sizeof(float) - 8 - 4 - VarietyGroups;
 
         /// <summary>The most boredom holds: fun at 0.</summary>
         public const float MaxBoredom = 100f;
@@ -82,7 +103,13 @@ namespace Simpiens.Simulation.Life
         private ThoughtSubjects _subjects; // 128: 64
         private LifeWantsRoom _wants;      // 192: 72
         private float _boredom;            // 264: 4
-        private LifeSpare _spare;          // 268: 244
+        private LifeRhythmRoom _rhythm;    // 268: 8 (plan 3)
+        private byte _intention;           // 276 (plan 3)
+        private byte _curiosity;           // 277
+        private byte _venuesTried;         // 278
+        private byte _pad279;              // 279
+        private LifeVariety _variety;      // 280: 8
+        private LifeSpare _spare;          // 288: 224
 
         // --- Thoughts (L1.2) ---
 
@@ -114,6 +141,37 @@ namespace Simpiens.Simulation.Life
 
         /// <summary>Adds <paramref name="amount"/> to its boredom (a negative amount entertains it), held within 0 and 100.</summary>
         public void Bore(float amount) => _boredom = Math.Clamp((float)(_boredom + amount), 0f, MaxBoredom);
+
+        // --- Curiosity and variety (plan 2's L2.7, D15, Q8) ---
+
+        /// <summary>Its curiosity, -1 to 1: 0 for a record with none drawn (0 is unset, read as neutral).</summary>
+        public readonly float Curiosity => _curiosity == 0 ? 0f : (_curiosity - 128) / 127f;
+
+        /// <summary>Sets its curiosity, -1 to 1, as a byte from 1 to 255.</summary>
+        public void SetCuriosity(float curiosity) => _curiosity = (byte)(128 + (int)MathF.Round(Math.Clamp(curiosity, -1f, 1f) * 127f));
+
+        /// <summary>Whether it has tried the map's venue <paramref name="venue"/> (0 to 7; venues past 7 count as tried).</summary>
+        public readonly bool HasTried(int venue) => venue >= 8 || venue < 0 || (_venuesTried & (1 << venue)) != 0;
+
+        public void MarkTried(int venue)
+        {
+            if (venue >= 0 && venue < 8) _venuesTried |= (byte)(1 << venue);
+        }
+
+        /// <summary>How much of variety group <paramref name="group"/> it has had of late, 0 to 255.</summary>
+        public readonly byte HadOf(int group) => (uint)group < VarietyGroups ? _variety[group] : (byte)0;
+
+        /// <summary>A spell of group <paramref name="group"/> done: <paramref name="amount"/> more of it, at most 255.</summary>
+        public void Tire(int group, int amount)
+        {
+            if ((uint)group < VarietyGroups) _variety[group] = (byte)Math.Min(255, _variety[group] + amount);
+        }
+
+        /// <summary>A day passed (it woke): every group eased by <paramref name="amount"/>.</summary>
+        public void EaseVariety(int amount)
+        {
+            for (int g = 0; g < VarietyGroups; g++) _variety[g] = (byte)Math.Max(0, _variety[g] - amount);
+        }
 
         // --- The record as bytes ---
 

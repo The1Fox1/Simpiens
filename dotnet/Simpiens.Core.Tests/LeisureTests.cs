@@ -116,6 +116,38 @@ namespace Simpiens.Core.Tests
             Assert.Equal(0, seat); // the other spot is taken
         }
 
+        /// <summary>Variety and curiosity (L2.7, D15, Q8): a group had of late palls, more for the curious; a venue not yet tried draws the curious; every resident has a curiosity drawn, most of them moderate.</summary>
+        [Fact]
+        public void VarietyPallsAndTheCuriousTrySomewhereNew()
+        {
+            using var sim = Outpost();
+            var crawler = Resident(sim);
+            int garden = Venue(sim, Floor1Layout.GardenVenue);
+            var life = crawler.Life;
+            life.SetCuriosity(0f);
+            life.MarkTried(garden);
+            crawler.Life = life;
+            float fresh = Leisure.Score(Context(sim, crawler), garden, Activity.Walk, out _);
+            life.Tire((int)VarietyGroup.Outdoors, 255);
+            crawler.Life = life;
+            float tired = Leisure.Score(Context(sim, crawler), garden, Activity.Walk, out _);
+            Assert.True(System.Math.Abs(tired / fresh - (1f - Leisure.VarietyWeight)) < 0.01f, $"Had its fill of the outdoors: x{1f - Leisure.VarietyWeight} ({tired:F3} against {fresh:F3}).");
+            life.EaseVariety(255);
+            life.SetCuriosity(1f);
+            crawler.Life = life;
+            Assert.True(System.Math.Abs(Leisure.Score(Context(sim, crawler), garden, Activity.Walk, out _) - fresh) < 0.001f, "Eased, and tried already: as fresh.");
+            var untried = crawler.Life;
+            untried = default;
+            untried.SetCuriosity(1f);
+            crawler.Life = untried;
+            float novel = Leisure.Score(Context(sim, crawler), garden, Activity.Walk, out _);
+            Assert.True(System.Math.Abs(novel / fresh - (1f + Leisure.NoveltyPull)) < 0.02f, $"Never tried, the curious: x{1f + Leisure.NoveltyPull} ({novel:F3}).");
+
+            var residents = sim.Host.CrawlerStates.Where(c => !c.IsDrifter).ToList();
+            Assert.All(residents, c => Assert.True(c.Life.Curiosity != 0f || c == crawler, "Curiosity drawn at spawn."));
+            Assert.True(residents.Count(c => System.Math.Abs(c.Life.Curiosity) < 0.6f) >= residents.Count / 2, "Most are moderate.");
+        }
+
         [Fact]
         public void TheScoreIsPureAndAllocatesNothing()
         {
