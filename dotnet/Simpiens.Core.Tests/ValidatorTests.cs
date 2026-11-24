@@ -57,6 +57,9 @@ namespace Simpiens.Core.Tests
         public void Mood() => new Simpiens.Testing.Life.MoodValidator().RunAllValidationTests(); // Epic LIFE-1, L1.3
 
         [Fact]
+        public void Fun() => new Simpiens.Testing.Life.FunValidator().RunAllValidationTests(); // Epic LIFE-1 plan 2, L2.1
+
+        [Fact]
         public void Look() => new Simpiens.Testing.People.LookValidator().RunAllValidationTests();
 
         [Fact]

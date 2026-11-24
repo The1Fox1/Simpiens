@@ -29,7 +29,14 @@ namespace Simpiens.Simulation.Life
         private EntityId _first;
     }
 
-    /// <summary>The record's room for plans 2 and 3 and for LIFE-2 and LIFE-3 (D6's table): zeros until a field is laid in it.</summary>
+    /// <summary>The wants' room, at 192 (D6: three slots of 24 bytes, laid out at plan 2's W.2): zeros until then.</summary>
+    [InlineArray(CrawlerLife.WantBytes)]
+    public struct LifeWantsRoom
+    {
+        private byte _first;
+    }
+
+    /// <summary>The record's room for plans 2 and 3 and for LIFE-2 and LIFE-3 (D6's table), at 268: zeros until a field is laid in it.</summary>
     [InlineArray(CrawlerLife.SpareBytes)]
     public struct LifeSpare
     {
@@ -44,10 +51,12 @@ namespace Simpiens.Simulation.Life
     /// <item><b>Thoughts</b> (L1.2): 16 slots of 8 bytes, at 0.</item>
     /// <item><b>Subjects</b> (L1.2): the four crawlers the thoughts name, an <see cref="EntityId"/> each, at 128. An id is 16
     /// bytes, so a thought names a subject by its slot here, and a slot frees when no thought names it.</item>
-    /// <item><b>Spare</b>, at 192: laid out for wants (3 of 24 bytes, at 192), fun, weariness, the last windfall, the day's
-    /// intention and curiosity (16, at 264) and variety (8, at 280) in plans 2 and 3; then taste and keepsakes (LIFE-2) and an
-    /// aspiration (LIFE-3), with about 100 bytes left. A field laid here later reads 0 as "none", so a save made before it
-    /// loads unchanged.</item>
+    /// <item><b>Wants</b> (plan 2's W.2): three slots of 24 bytes, at 192, reserved until then.</item>
+    /// <item><b>Boredom</b> (plan 2's L2.1, D11): a float at 264, 0 to 100; fun is 100 less it. Held this way round so a record
+    /// written before fun reads entertained.</item>
+    /// <item><b>Spare</b>, at 268: laid out for weariness, the last windfall, the day's intention and curiosity (12, at 268) and
+    /// variety (8, at 280) in plans 2 and 3; then taste and keepsakes (LIFE-2) and an aspiration (LIFE-3), with about 100 bytes
+    /// left. A field laid here later reads 0 as "none", so a save made before it loads unchanged.</item>
     /// </list>
     /// Its size is pinned (<c>EconomySerializationValidator</c>).
     /// </summary>
@@ -60,12 +69,20 @@ namespace Simpiens.Simulation.Life
         public const int ThoughtCapacity = 16;
         public const int SubjectCapacity = 4;
 
-        /// <summary>What's left of <see cref="Size"/> after the thoughts and their subjects.</summary>
-        public const int SpareBytes = Size - ThoughtCapacity * 8 - SubjectCapacity * 16;
+        /// <summary>The wants' room: three slots of 24 bytes (D6).</summary>
+        public const int WantBytes = 72;
+
+        /// <summary>What's left of <see cref="Size"/> after the thoughts, their subjects, the wants and boredom.</summary>
+        public const int SpareBytes = Size - ThoughtCapacity * 8 - SubjectCapacity * 16 - WantBytes - sizeof(float);
+
+        /// <summary>The most boredom holds: fun at 0.</summary>
+        public const float MaxBoredom = 100f;
 
         private ThoughtSlots _thoughts;    //   0: 128
         private ThoughtSubjects _subjects; // 128: 64
-        private LifeSpare _spare;          // 192: 320
+        private LifeWantsRoom _wants;      // 192: 72
+        private float _boredom;            // 264: 4
+        private LifeSpare _spare;          // 268: 244
 
         // --- Thoughts (L1.2) ---
 
@@ -86,6 +103,17 @@ namespace Simpiens.Simulation.Life
         {
             if (slot >= 1 && slot <= SubjectCapacity) _subjects[slot - 1] = id;
         }
+
+        // --- Fun (plan 2's L2.1, D11) ---
+
+        /// <summary>How bored it is, 0 to 100: rises awake, falls with what entertains it.</summary>
+        public readonly float Boredom => _boredom;
+
+        /// <summary>Its fun, 0 to 100: 100 less its boredom, so a record written before fun reads entertained.</summary>
+        public readonly float Fun => MaxBoredom - _boredom;
+
+        /// <summary>Adds <paramref name="amount"/> to its boredom (a negative amount entertains it), held within 0 and 100.</summary>
+        public void Bore(float amount) => _boredom = Math.Clamp((float)(_boredom + amount), 0f, MaxBoredom);
 
         // --- The record as bytes ---
 

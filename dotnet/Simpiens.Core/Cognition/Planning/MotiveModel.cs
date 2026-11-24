@@ -65,6 +65,7 @@ namespace Simpiens.Cognition.Planning
             Motive.Hunger => context.Hunger,
             Motive.Rest => 100f - context.Energy,
             Motive.Company => 100f - context.Social,
+            Motive.Fun => 100f - context.Life.Fun, // its boredom (plan 2's L2.1, D11)
             _ => 0f,
         };
     }

@@ -159,7 +159,9 @@ namespace Simpiens.Cognition
         /// Who it is living as (Epic LIFE-1, L0.8, D6): its thoughts and the crawlers they name, and room for wants, fun and the
         /// day's rhythm. Written on the main thread only, saved whole in its record, copied for cognition.
         /// </summary>
-        public Simpiens.Simulation.Life.CrawlerLife Life { get; set; }
+        public Simpiens.Simulation.Life.CrawlerLife Life { get => _life; set => _life = value; }
+
+        private Simpiens.Simulation.Life.CrawlerLife _life;
 
         /// <summary>
         /// Thinks <paramref name="thought"/> at <paramref name="tick"/>, naming <paramref name="subject"/> where its row names a
@@ -423,6 +425,14 @@ namespace Simpiens.Cognition
             float social = SimMath.Max(0f, (float)(Needs.Social - (float)(dt * day.SocialPerSecond)));
             Needs = new AgentNeeds(hunger, energy, social);
             Frustration = SimMath.Max(0f, (float)(Frustration - (float)(dt * day.FrustrationEasePerSecond))); // on the day's pace (Epic LIFE-1, L1.4, F6)
+
+            // Boredom (Epic LIFE-1 plan 2, L2.1, D11): held asleep, eased at the hearth while relaxing there, rising otherwise
+            bool asleep = IsExhaustionCollapsed || inBunk || (HasActivePlan && ActivePlan.CurrentAction is Simpiens.Cognition.Planning.Actions.RestAction);
+            if (!asleep)
+            {
+                bool fireside = HasActivePlan && ActivePlan.CurrentAction is Simpiens.Cognition.Planning.Actions.RelaxAtAnchorAction;
+                _life.Bore(fireside ? -(float)(dt * day.FiresideFunPerSecond) : (float)(dt * day.BoredomPerSecond));
+            }
 
             // Emergency preemption check
             bool emergencyExhaustion = energy <= MentalBreakEvaluator.ExhaustionThreshold;

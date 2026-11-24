@@ -22,6 +22,8 @@ namespace Simpiens.Cognition.Planning
         Aid = 8,
         /// <summary>A drifter leaving the outpost.</summary>
         Leave = 9,
+        /// <summary>Fun: what boredom asks for (Epic LIFE-1 plan 2, L2.1, D11); Recreate's, from L2.6.</summary>
+        Fun = 10,
     }
 
     /// <summary>

@@ -154,8 +154,8 @@ This is a working document (AGENTS.md, Documentation Protocol 6), the second of 
 
 ### L2a. Fun and its venues (4–6 days)
 **Complexity:** Very Complex as a phase by bundling (saved fields, map data, a new goal on the hot path, a behaviour change). Split into seven steps, each Basic or Possibly Complex. Golden is unchanged through L2.2–L2.5; L2.1 and L2.6 re-record it in their own commits.
-- [ ] **L2.1 Fun** (D11) [Possibly Complex: a saved field, a mood term cognition reads; golden re-recorded in its own commit if mood's term moves a choice]
-  - Boredom in the life record, its pace in `DayTuning`, fun filled at the hearth's relax, `Urgency.Of(Fun)`, and the Bored term.
+- [x] **L2.1 Fun** (D11) (done 2026-11-24: `docs/life-model.md` §5.4; behaviour unchanged, golden re-recorded for coverage only in its own commit. **Deviation:** the Bored mood term moves to L2.6, with Recreate, so mood never pays for boredom before a crawler can answer it) [Possibly Complex: a saved field, a mood term cognition reads; golden re-recorded in its own commit if mood's term moves a choice]
+  - Boredom in the life record, its pace in `DayTuning`, fun filled at the hearth's relax, `Urgency.Of(Fun)`; the Bored term at L2.6.
   - **The checks:** the round trip in the save validators; `MoodValidator` with the new term; a plan 1 save loads entertained; the gate seeds' day holds.
 - [ ] **L2.2 The activity table** (D12) [Basic: a table with its validator and names test, as `ThoughtTable`; nothing reads it yet]
   - `Activity`, `ActivityDefinition`, `ActivityTable`; the activities' thoughts as `ThoughtTable` rows (thought from L2.5).
@@ -173,7 +173,7 @@ This is a working document (AGENTS.md, Documentation Protocol 6), the second of 
   - `RecreateIntent` and `RecreateIntentHandler`: walk to the seat, fill over the duration on the day's pace, think the thought at the end; the cost waits for T.5.
   - **The check:** `RecreateValidator`, with a forced intent: a crawler walks to the Garden, walks 45 game minutes, comes back with its fun up and the thought held; struck, it stops.
 - [ ] **L2.6 Recreate** (D14) [Possibly Complex: a GOAP goal, action and fact; a behaviour change, golden re-recorded in its own commit]
-  - `RecreateGoal`, `RecreateAction`, the fact `Recreated` (49 of 64), and their places in `OutpostGoapDomain`; `MotiveValidator`'s and `docs/life-model.md` §2.1's rows.
+  - `RecreateGoal`, `RecreateAction`, the fact `Recreated` (49 of 64), and their places in `OutpostGoapDomain`; `MotiveValidator`'s and `docs/life-model.md` §2.1's rows; the Bored mood term (D11, moved from L2.1) in `MoodRules` and `MoodValidator`.
   - **Tuning:** boredom's pace and the fills, from the evening's measurement, so that free evenings go to venues and work keeps most of its hours. The numbers go to `docs/life-model.md` §5.
   - **The checks:** the gate seeds' day holds; every DoD keeps its seed or is re-picked with the reason (F12's four first); the soak's bands measured, any move to the producer by exception.
 - [ ] **L2.7 Variety and curiosity** (D15) [Possibly Complex: two saved fields and a draw on its own salt; golden re-recorded in its own commit]

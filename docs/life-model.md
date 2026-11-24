@@ -212,3 +212,9 @@ The guild issues the party's directive afresh at each stage (muster, march, work
 
 - **On the gate seeds nothing moves:** members who stayed behind or deserted a trip, before and after, the same 2 in the clears' 69 seed-days and 1 in death's players' 230, all of them members not at the muster in time. A member willing at dispatch is still willing at the next stage unless something sours it. Golden is unchanged (no expedition in its 3,000 ticks); core 351/351.
 - **What it opens:** a member whose trust falls on a trip (a friend dying under orders costs the patron trust, Epic 10 Part 3's K5) or who grows frustrated or hungry can now walk off it.
+
+### 5.4 Fun (L2.1, 2026-11-24)
+- **Held as boredom** in the life record (a float at byte 264, 0 to 100); fun is 100 less it, so a record written before fun reads entertained (D11). The wants keep their 72 bytes at 192, and 244 bytes stay spare from 268.
+- **Its pace** (`DayTuning`): 3 a game hour awake (`BoredomPerSecond`), held asleep (a bunk, resting, an exhaustion collapse), eased 6 an hour while relaxing at the hearth (`FiresideFunPerSecond`, D12's fireside).
+- **Its urgency:** `Urgency.Of(Motive.Fun)` = 100 − fun. `Motive.Fun` is 10.
+- **Nothing reads it yet:** the day's measurement re-ran identical, so golden moved for its coverage only (the world hash mixes every record, now none is empty). The Bored mood term lands with Recreate (L2.6), so a penalty never comes before its remedy.
