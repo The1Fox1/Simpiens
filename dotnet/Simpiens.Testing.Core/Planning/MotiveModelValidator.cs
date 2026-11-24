@@ -110,9 +110,13 @@ namespace Simpiens.Testing.Planning
                 $"Low: income pulls 0.9; company (until plan 2's fun, F12) and hunger as ever ({MotiveModel.Weight(earn, low)}, {MotiveModel.Weight(socialize, low)}).");
             var life = LifeTuning.Default;
             Assert(life.MoodWeight(Simpiens.Simulation.Life.MoodBand.Breaking, (int)Motive.Income) == 0.75f && life.MoodWeight(Simpiens.Simulation.Life.MoodBand.Breaking, (int)Motive.Company) == 1f, "Breaking: income 0.75, company 1.");
+            Assert(life.MoodWeight(Simpiens.Simulation.Life.MoodBand.Low, (int)Motive.Duty) == 0.85f && life.MoodWeight(Simpiens.Simulation.Life.MoodBand.Breaking, (int)Motive.Duty) == 0.6f
+                && life.MoodWeight(Simpiens.Simulation.Life.MoodBand.Steady, (int)Motive.Duty) == 1f, "Duty: low 0.85, breaking 0.6, steady 1 (plan 2's D25).");
+            // Under orders, mood weighs as anywhere (the producer, 2026-11-24: orders don't override a crawler's autonomy; D25)
             var shift = new AgentContext(default, default, new AgentNeeds(65f, 25f, 20f), 0f, null, null, 0, station: new StationOrder(0, default, 1f));
-            Assert(shift.Mood == Simpiens.Simulation.Life.MoodBand.Low && MotiveModel.UnderOrders(shift) && MotiveModel.Weight(earn, shift) == 1f,
-                "Under orders (on shift), mood weighs nothing: the orders decide (the epic's A8).");
+            var comply = new Simpiens.Cognition.Planning.Goals.ComplyDirectiveGoal();
+            Assert(shift.Mood == Simpiens.Simulation.Life.MoodBand.Low && shift.Station.IsActive && MotiveModel.Weight(earn, shift) == 0.9f && MotiveModel.Weight(comply, shift) == 0.85f,
+                $"Under orders (on shift), a low mood weighs earning 0.9 and duty 0.85 ({MotiveModel.Weight(earn, shift)}, {MotiveModel.Weight(comply, shift)}).");
             Assert(life.MoodFrustrationPerHour(Simpiens.Simulation.Life.MoodBand.Breaking) == 15f && life.MoodFrustrationPerHour(Simpiens.Simulation.Life.MoodBand.Low) == 5f
                 && life.MoodFrustrationPerHour(Simpiens.Simulation.Life.MoodBand.Steady) == 0f && life.MoodFrustrationPerHour(Simpiens.Simulation.Life.MoodBand.Happy) == -5f, "Mood's frustration: +15, +5, 0, -5.");
             var quiet = life.WithoutMood();

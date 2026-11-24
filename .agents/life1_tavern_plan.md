@@ -144,7 +144,7 @@ This is a working document (AGENTS.md, Documentation Protocol 6), the second of 
 
 ### O. Orders and autonomy (1–2 days)
 **Complexity:** Possibly Complex: two behaviour changes in cognition and the guild, each with golden re-recorded in its own commit. Neither generalises the expedition's machine: it already handles a member who stays behind or deserts, and only *when* a member judges changes.
-- [ ] **O.1 Mood reaches crawlers under orders** (D25) [Possibly Complex: a behaviour change on the hot path; golden re-recorded in its own commit]
+- [x] **O.1 Mood reaches crawlers under orders** (D25) (done 2026-11-24: `docs/life-model.md` §5.2; almost nothing moves, golden unchanged, core 350/350. **Deviation:** no golden re-record was needed) [Possibly Complex: a behaviour change on the hot path; golden re-recorded in its own commit]
   - `MotiveModel.UnderOrders` removed; duty's mood weights in `LifeTuning.Default`; `MotiveModelValidator` gains a crawler under orders whose low mood weighs its duty.
   - **The checks:** F12's four DoDs (`ADraughtKeepsAPartyWorking`, `EveryScenarioPlaysTogether`, `PassionBurnsBright`, `ACallingEmerges`) and every Epic 10 and 11 live scenario on their seeds; the gate seeds' day holds; orders refused a day measured before and after (`docs/life-model.md` §3.3).
 - [ ] **O.2 An expedition's orders judged at every stage** (D25) [Possibly Complex: a behaviour change in the guild's stages and cognition's directive evaluation; golden re-recorded in its own commit]

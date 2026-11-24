@@ -224,6 +224,14 @@ namespace Simpiens.Core.Tests
                     tally.FrustrationSum += crawler.Frustration;
                     if (crawler.Frustration >= 60f) tally.FrustratedTicks++; // the face's line
                     if (crawler.DefiantTimer > 0f) tally.DefiantTicks++;      // an order defied, shown
+                    // Under orders (out with the guild's party, or on shift), and pursuing something else (plan 2's O.1, D25)
+                    if (crawler.Expedition.IsActive || crawler.Station.IsActive)
+                    {
+                        tally.OrderedTicks++;
+                        var goal = crawler.HasActivePlan ? crawler.ActiveGoal : null;
+                        if (goal != null && goal.Motive != Simpiens.Cognition.Planning.Motive.Duty && goal.Motive != Simpiens.Cognition.Planning.Motive.Aid
+                            && goal.Motive != Simpiens.Cognition.Planning.Motive.Hunger && goal.Family != Simpiens.Cognition.Planning.ActivityFamily.Unweighted) tally.OrdersAsideTicks++;
+                    }
 
                     // A friend's death: mood the tick before it was thought, and an hour after
                     bool grieves = ThoughtRules.Holds(crawler.Life, Thought.FriendDied, now);
@@ -247,7 +255,7 @@ namespace Simpiens.Core.Tests
         internal sealed class MoodTally
         {
             public int Seeds, Deaths;
-            public long ResidentTicks, MoodSum, FrustratedTicks, DefiantTicks;
+            public long ResidentTicks, MoodSum, FrustratedTicks, DefiantTicks, OrderedTicks, OrdersAsideTicks;
             public double FrustrationSum;
             public int Lowest = int.MaxValue, Highest = int.MinValue;
             public readonly long[] Band = new long[6];
@@ -257,7 +265,7 @@ namespace Simpiens.Core.Tests
             public void Add(MoodTally o)
             {
                 Seeds += o.Seeds; Deaths += o.Deaths; ResidentTicks += o.ResidentTicks; MoodSum += o.MoodSum;
-                FrustrationSum += o.FrustrationSum; FrustratedTicks += o.FrustratedTicks; DefiantTicks += o.DefiantTicks;
+                FrustrationSum += o.FrustrationSum; FrustratedTicks += o.FrustratedTicks; DefiantTicks += o.DefiantTicks; OrderedTicks += o.OrderedTicks; OrdersAsideTicks += o.OrdersAsideTicks;
                 if (o.Lowest < Lowest) Lowest = o.Lowest;
                 if (o.Highest > Highest) Highest = o.Highest;
                 for (int i = 0; i < Band.Length; i++) Band[i] += o.Band[i];
@@ -271,6 +279,7 @@ namespace Simpiens.Core.Tests
                 var text = new StringBuilder();
                 text.AppendLine($"{residentDays:F0} resident-days; mood mean {MoodSum / (double)ResidentTicks:F1}, lowest {Lowest}, highest {Highest}; deaths {Deaths}.");
                 text.AppendLine($"Frustration: mean {FrustrationSum / ResidentTicks:F1}; at 60 or more (the face) {100.0 * FrustratedTicks / ResidentTicks:F2}% of the time; defiant {DefiantTicks / residentDays:F1} ticks a resident-day.");
+                text.AppendLine($"Under orders: {OrderedTicks / (double)DayClock.TicksPerHour / residentDays:F2} h a resident-day, of it on a plan other than duty, aid or hunger {(OrderedTicks > 0 ? 100.0 * OrdersAsideTicks / OrderedTicks : 0):F2}% (plan 2's O.1).");
                 text.AppendLine("Time in each band: " + string.Join(", ", new[] { MoodBand.Breaking, MoodBand.Low, MoodBand.Steady, MoodBand.Good, MoodBand.Happy }
                     .Select(b => $"{b} {100.0 * Band[(int)b] / ResidentTicks:F1}%")));
                 text.AppendLine("Thoughts thought a resident-day:");

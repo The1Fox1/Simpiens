@@ -89,7 +89,7 @@ Every goal declares what it is for (`Motive`) and the part of the day it belongs
   | Factor | Keyed by | From |
   | :--- | :--- | :--- |
   | The session's weight | motive | L0.5 (`LifeTuning.MotiveWeight`; 1 for every motive by default) |
-  | Mood | motive and mood's band; never under orders (an expedition, a shift) | L1.4: low, income 0.9; breaking, income 0.75; company held at 1 until plan 2 (F12) |
+  | Mood | motive and mood's band; under orders too, from plan 2's O.1 (D25) | L1.4: low, income 0.9; breaking, income 0.75; company held at 1 until plan 2 (F12). O.1: duty low 0.85, breaking 0.6 |
   | The want | the want's motive | plan 2 |
   | The routine | family and hour | plan 3 |
   | Satiation | work | plan 3 |
@@ -150,7 +150,7 @@ When the best goal can't be planned, the next are planned in order, up to `LifeT
 ### 3.3 What mood changes (L1.4, 2026-11-23)
 - **Frustration on the day's pace (F6):** it eased 1 every real second (about 42 a game hour); now 10 a game hour (`DayTuning.FrustrationEasePerSecond`). Mean frustration 0.6 to 2.4 with no player, at the face's 60 for 0.14% of the time (from none). Golden and moods unchanged.
 - **Mood's frustration** (`LifeTuning.MoodFrustrationPerHour`, applied in the crawler's drives): breaking +15 a game hour, low +5, good and happy -5. It weighs against compliance, so an unhappy crawler defies orders sooner (F8); none did on the gate seeds, where moods are seldom low.
-- **Mood's weights** (`LifeTuning.MoodWeight`, in the motive model): low, income 0.9; breaking, income 0.75; nothing for a crawler under orders (an expedition or a shift: the epic's A8).
+- **Mood's weights** (`LifeTuning.MoodWeight`, in the motive model): low, income 0.9; breaking, income 0.75; nothing for a crawler under orders (an expedition or a shift: the epic's A8). **Since plan 2's O.1** (the producer, 2026-11-24: "Crawlers can absolutely disobey orders"), mood weighs crawlers under orders too, and duty gains its weights (§5.2).
   - **Company's first weights (low 1.25, breaking 1.5) were dropped (F12):** a crawler hurt in a fight read low, went to the hearth instead of its bunk, healed slower there and stayed low. Four live DoDs failed (`ADraughtKeepsAPartyWorking`, `EveryScenarioPlaysTogether`, `PassionBurnsBright`, `ACallingEmerges`) though their gate-seed measurements barely moved (a Warden on 1 seed to 3, draughts 15 of 23 to 13, a passion burning bright 11 to 9). With income only, all four pass on their seeds.
 - **Readings after L1.4** (`MeasureMoodOnTheGateSeeds`, `MeasureACrawlersDay`): ordinary days unchanged (rest 9.8 h, work 8.4 h, the hearth 3.1 h; moods Steady to Good 99%); with death's players, frustration at 60 for 0.16% of the time, no orders defied, and a friend's death still takes a mourner to Low in 37 of 40 griefs.
 
@@ -191,3 +191,18 @@ When the best goal can't be planned, the next are planned in order, up to `LifeT
 - **The outpost has no night (F16).** Sleep starts when energy falls below the tired line and ends at the wake lines (`DayTuning.Wakes`), never by the clock. Every resident spawns at 06:00 rested, so the outpost sleeps together from mid-afternoon (40% at 13:00) to before midnight (56% at 18:00) and works through the small hours (43% at 02:00). The time model's "06:00 start" lines the day up once; nothing keeps it lined up.
 - **The hearth is busiest late morning** (27% at 11:00) and flat otherwise (9–15%).
 - **For plan 2:** an evening tavern (18:00–02:00) would open while half the outpost sleeps. Plan 2 stays clock-agnostic (D26): the tavern's hours are its keeper's shifts, set where residents are free; plan 3's routine (the epic's bedtime pull) brings sleep to the night.
+
+### 5.2 Mood reaches crawlers under orders (O.1, 2026-11-24)
+`MotiveModel.UnderOrders` is gone: mood weighs every crawler's goals, and duty gains mood's weights (low 0.85, breaking 0.6; D25). Orders still stand at 120 when complied with, so a low member's duty (102) still outranks everything but the reflexes, rescue and hunger from 70; a breaking one's (72) can lose to the hearth or a bed.
+
+`MeasureMoodOnTheGateSeeds`, before and after, on the same build (the measurement gained a count of time under orders spent on a plan other than duty, aid or hunger; it counts gear bought at the muster and loot under a clear's orders as well as refusals, so only its change reads):
+
+| | The clears, before | after | Death's players (10 days), before | after |
+| :--- | ---: | ---: | ---: | ---: |
+| Under orders, h a resident-day | 0.64 | 0.64 | 0.80 | 0.80 |
+| On another plan meanwhile | 25.73% | 25.73% | 12.87% | 12.90% |
+| Deaths | 0 | 0 | 9 | 11 |
+| Mood mean; breaking, low | 9.1; 0.0%, 1.2% | the same | 9.3; 1.5%, 3.5% | 9.3; 1.4%, 3.5% |
+
+- **Almost nothing moves:** members under orders are seldom low (a low member on a trip is mostly one just hurt, who is already turning back). Golden is unchanged (nothing in its 3,000 ticks reads low), and every live scenario passes on its seed (core 350/350).
+- **What it opens:** from L2.6 a bored, unhappy member's Recreate competes with its duty through the same weights.

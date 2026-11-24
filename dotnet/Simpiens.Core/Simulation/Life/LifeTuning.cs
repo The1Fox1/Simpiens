@@ -74,17 +74,21 @@ namespace Simpiens.Simulation.Life
         /// <item>every session weight 1, no commitment, and the fallback to the next two goals (L0.6, D4);</item>
         /// <item>mood's weights (L1.4, D9): low, income pulls 0.9; breaking, 0.75; steady and above, 1. Company's pull waits for plan
         /// 2's fun: weighed here, a hurt crawler's low mood sent it to the hearth instead of its bunk, where it healed slower and
-        /// stayed low (the epic's F12);</item>
+        /// stayed low (the epic's F12). Duty (plan 2's O.1, D25): low 0.85, breaking 0.6, under orders as anywhere, since orders
+        /// are a motive a crawler may set aside;</item>
         /// <item>mood's frustration a game hour (L1.4, D9): breaking +15, low +5, good and happy -5 (eased faster).</item>
         /// </list>
         /// </summary>
         public static LifeTuning Default => new LifeTuning(commitment: 0f, fallbackDepth: 2)
             .WithMoodWeight(MoodBand.Low, Income, 0.9f)
             .WithMoodWeight(MoodBand.Breaking, Income, 0.75f)
+            .WithMoodWeight(MoodBand.Low, Duty, 0.85f)
+            .WithMoodWeight(MoodBand.Breaking, Duty, 0.6f)
             .WithMoodFrustration(MoodBand.Breaking, 15f).WithMoodFrustration(MoodBand.Low, 5f)
             .WithMoodFrustration(MoodBand.Good, -5f).WithMoodFrustration(MoodBand.Happy, -5f);
 
         private const int Income = (int)Simpiens.Cognition.Planning.Motive.Income;
+        private const int Duty = (int)Simpiens.Cognition.Planning.Motive.Duty;
 
         /// <summary>The session's weight on every goal of <paramref name="motiveId"/>: 1 unless set (a tuning dial, and the tests' lever).</summary>
         public float MotiveWeight(int motiveId) => motiveId >= 0 && motiveId < MotiveCapacity ? 1f + _motiveBiases[motiveId] : 1f;

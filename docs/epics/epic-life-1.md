@@ -67,6 +67,11 @@ Every row is a default that stands by exception. The proposal's questions keep t
 - **The map** may grow past what a window shows whole: the tavern takes the Garden's room off the hub, and the Garden moves north (plan 2's D16; F14).
 - **Orders are a motive, not a rule:** a crawler judges orders by compliance at every stage of a trip and every block of a shift, and mood weighs them as it weighs anything (plan 2's D25; F15). It amends A8 below, plan 1's D9, and Epic 10's D8 (an expedition's orders judged once, at dispatch).
 
+### Plan 2's decisions (Wants, fun and the tavern, from 2026-11-24)
+Proposed in plan 2 as defaults; each lands here with its step. The producer answers by exception.
+- **D25, orders are a motive, not a rule** (the producer's change): mood weighs crawlers under orders as anyone, and duty gains mood's weights, low 0.85 and breaking 0.6 (O.1: almost nothing moved on the gate seeds; golden unchanged).
+- **D26, plan 2 keeps no clock** (F16): the outpost has no night, so the tavern opens on its keeper's shifts, set where residents are free; plan 3's routine brings sleep to the night.
+
 ### Plan 1's decisions (Groundwork and the mind, 2026-11-23)
 Proposed in plan 1 as defaults; each landed with its step. The producer answers by exception.
 - **D1, motives and families:** every goal declares a `Motive` (hunger, rest, company, income, gear, growth, duty, aid, leave) and an `ActivityFamily` (unweighted, work, leisure, social, rest), as `docs/life-model.md` §2.1 tabulates; growth is leisure; loot under a clear's orders is unweighted (`FamilyFor`). `MotiveValidator` pins the table.

@@ -46,15 +46,11 @@ namespace Simpiens.Cognition.Planning
         {
             var life = Considerations.Economy(context).Life;
             int motive = (int)goal.Motive;
-            float weight = life.MotiveWeight(motive);
-            // Mood's weight (L1.4, D9) bends free hours only: under orders (an expedition, a shift) the orders decide, and mood
-            // reaches them through frustration, which weighs against compliance (the epic's A8)
-            if (!UnderOrders(context)) weight *= life.MoodWeight(context.Mood, motive);
-            return weight;
+            // Mood's weight (L1.4, D9) reaches every crawler, under orders too: orders are duty, a motive weighed like the rest,
+            // and a member's mood weighs its duty as it weighs its earning (the producer, 2026-11-24: "Crawlers can absolutely
+            // disobey orders"; plan 2's D25, amending the epic's A8)
+            return life.MotiveWeight(motive) * life.MoodWeight(context.Mood, motive);
         }
-
-        /// <summary>Whether <paramref name="context"/>'s crawler is under orders now: out with the guild's party, or on its station's shift.</summary>
-        public static bool UnderOrders(AgentContext context) => context.Expedition.IsActive || context.Station.IsActive;
     }
 
     /// <summary>
