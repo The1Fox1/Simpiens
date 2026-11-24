@@ -74,7 +74,7 @@ namespace Simpiens.Simulation.Economy
         public readonly float FrustrationEasePerSecond;
 
         /// <summary>
-        /// How fast a crawler grows bored awake, a game second at a time (Epic LIFE-1 plan 2, L2.1, D11): 3 a game hour, held
+        /// How fast a crawler grows bored awake, a game second at a time (Epic LIFE-1 plan 2, L2.1, D11; set at L2.6): 2 a game hour, held
         /// asleep. Fun is 100 less boredom.
         /// </summary>
         public readonly float BoredomPerSecond;
@@ -124,7 +124,7 @@ namespace Simpiens.Simulation.Economy
         /// <item>work is stretched RimWorld-style, and tires as walking does (D22, T2.4: <see cref="ActionTuning.Default"/>);</item>
         /// <item>a bunk heals 10 an hour, a night 80, and awake about 50 a day (T3.2a; hazards' damage is the map's, gear's
         /// life the catalog's);</item>
-        /// <item>boredom rises 3 a game hour awake (Epic LIFE-1 plan 2, L2.1); what entertains is each activity's row (L2.2);</item>
+        /// <item>boredom rises 2 a game hour awake (Epic LIFE-1 plan 2, L2.1; 3 until L2.6 measured where it settles); what entertains is each activity's row (L2.2);</item>
         /// <item>trust and the other affinities fade 5 every 12 game hours since the last dealing, not every 2.4 (T4.3, D27: at 6
         /// trust rose for 8 of 12 residents on all but one gate seed; at 12, on all of them).</item>
         /// </list>
@@ -151,7 +151,7 @@ namespace Simpiens.Simulation.Economy
             bunkHealPerSecond: DayClock.PerSecond(10f),
             trustFadeTicks: DayClock.Hours(12),
             frustrationEasePerSecond: DayClock.PerSecond(10f),
-            boredomPerSecond: DayClock.PerSecond(3f));
+            boredomPerSecond: DayClock.PerSecond(2f));
     }
 
     /// <summary>

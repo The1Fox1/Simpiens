@@ -251,3 +251,19 @@ None stands in a hazard sector or a lair's reach (`VenueValidator`). Nothing rea
 - **Gates (0):** the venue closed, the guild's yard for a non-member, its sector uncharted, the activity not a recreation it offers, its cost beyond the purse or out of the stall's stock, too few others there (sparring needs one, dice one to three), no seat free.
 - **Score:** the share it fills (fun an hour over 30, dice's; a supper adds the hunger it eases, over 100; at most 1) × its lean (a trait of ±1 gives ×1.5 or ×0.5) × the walk (1 / (1 + distance / 30)) × 1.25 with a warm or trusted friend there. Variety and curiosity join at L2.7.
 - **At the start** of the outpost a resident's best is a walk in the Garden or browsing the stall, about 0.3–0.5 for a neutral nature in the hub. Recreate's base will be fun's urgency times it.
+
+### 5.8 Recreate (L2.6, 2026-11-24)
+`RecreateGoal` (Fun, Leisure; the fact `Recreated`, 49 of 64; after the training goals, before earning): base = fun's urgency × the best leisure score; never while hungry (60), tired (under 40 energy) or hurt (under 60 health), valid under orders (D25). The Bored term (−5, fun 25 or less) lands with it.
+
+**Boredom's pace, set by where it settles** (`MeasureACrawlersDay`, six days, the 23 gate seeds, residents, no player):
+
+| Boredom a game hour awake | Boredom at each day's end (mean) | Recreate | Work | The hearth |
+| ---: | :--- | ---: | ---: | ---: |
+| 3 (D11's first value) | 30, 48, 48, 47, 47, 45 | 1.5 h | 7.2 h | 3.4 h |
+| **2 (set)** | 19, 33, 38, 39, 40, 38 | 0.7 h | 7.6 h | 3.6 h |
+
+At 2 boredom settles near 40 (fun 60), so the Bored term seldom holds and Recreate takes about 0.7 h a resident-day from the outpost's venues alone (the Garden and the stall); the tavern adds its own at T.4–T.6. Over three days, against §3.1's: work 8.4 → 8.0 h, the hearth 3.1 → 2.7 h, leisure 0.2 → 1.0 h; no plan unfound.
+
+**What it costs the fighting** (each scenario's measurement, before and after, the gate seeds): clears 21 and 21 of 23 seeds, hunts paid 21 and 21, a Warden 1 and 1, a passion burning bright 11 and 11, armour from a kill 3 and 5, melee, mining and a smith's grade all rising 8 and 9; fewer: a kill within four days 9 to 5, a masterpiece made 11 to 8, harder foes teaching more 4 to 0, boss downings in the clears' run 18 (15 on one seed) to 0. On 60 seeds a kill within four days comes on 20 against 21, within eight on 32 against 36, and 48 kills against 56: about 14% less fighting, the time leisure takes. The 23-seed drop was mostly chance.
+
+**Seeds re-picked:** the live scenarios whose moment no longer came on their seed were re-picked (each scenario's summary names its new seed and the reason), with `ScenarioSeed.Or` and `SIMPIENS_SCENARIO_SEED` for the search. Day failures across the measurements stay where they were (25 before, 27 after: starvations on 3 seed-runs before and 6 after, each a member downed or carried and recovering while its hunger ran out, Epic 10's open finding).

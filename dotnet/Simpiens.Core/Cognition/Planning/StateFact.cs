@@ -53,6 +53,7 @@ namespace Simpiens.Cognition.Planning
         HasHuntBounty = 44, // it is in a hunt's party (Epic 10 Part 3, K6.2)
         LairHunted = 45, // no hunt it is in or would join (K6.2)
         HasManual = 46, // carries a manual to read (Epic 11, S3.3, D11): bought by StudyGoal, read away by ReadManualGoal. A new fact: no other says a book is in the pack (47 of 64)
-        Drilled = 47 // a spell of drill at the guildhall's yard done (Epic 11, S3.4, D10); never true in a built state, as HasLeftOutpost: a member drills a game hour, then decides afresh (48 of 64)
+        Drilled = 47, // a spell of drill at the guildhall's yard done (Epic 11, S3.4, D10); never true in a built state, as HasLeftOutpost: a member drills a game hour, then decides afresh (48 of 64)
+        Recreated = 48 // a spell of free time at a venue done (Epic LIFE-1 plan 2, L2.6, D14); never true in a built state, as Drilled: a spell, then a fresh choice (49 of 64)
     }
 }

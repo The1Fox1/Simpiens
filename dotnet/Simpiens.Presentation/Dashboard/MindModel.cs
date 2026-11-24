@@ -76,8 +76,8 @@ namespace Simpiens.Presentation.Dashboard
             Band = MoodRules.BandOf(Mood);
             MoodText = LifeTexts.BandWord(Band) + " (" + LifeTexts.Value(Mood) + ")";
 
-            Span<MoodTerm> terms = stackalloc MoodTerm[4];
-            int n = MoodRules.TermsOf(agent.Needs, agent.Health, agent.IsDowned, terms);
+            Span<MoodTerm> terms = stackalloc MoodTerm[MoodRules.TermCapacity];
+            int n = MoodRules.TermsOf(agent.Needs, agent.Health, agent.IsDowned, life.Fun, terms);
             int needLines = 0;
             for (int i = 0; i < n; i++)
             {

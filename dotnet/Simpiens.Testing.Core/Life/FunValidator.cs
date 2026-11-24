@@ -12,7 +12,7 @@ namespace Simpiens.Testing.Life
 {
     /// <summary>
     /// Fun (Epic LIFE-1 plan 2, L2.1, D11): held as boredom in the life record, so a record written before fun (a plan 1 save)
-    /// reads entertained; boredom within 0 and 100; its pace on the day's (3 a game hour awake, held asleep, eased 6 an hour
+    /// reads entertained; boredom within 0 and 100; its pace on the day's (2 a game hour awake, held asleep, eased 6 an hour
     /// at the hearth while relaxing there); its urgency, 100 less fun; and its place in the record, which keeps its size.
     /// Runs as a test (ValidatorTests).
     /// </summary>
@@ -53,7 +53,7 @@ namespace Simpiens.Testing.Life
 
             var awake = new AgentState(Ama);
             Tick(awake, hour, day);
-            Assert(Math.Abs(awake.Life.Boredom - 3f) < 0.05f, $"Awake, a game hour adds 3 boredom ({awake.Life.Boredom:F2}).");
+            Assert(Math.Abs(awake.Life.Boredom - 2f) < 0.05f, $"Awake, a game hour adds 2 boredom ({awake.Life.Boredom:F2}).");
 
             var asleep = new AgentState(Ama);
             asleep.ActivePlan.AddAction(new SleepAtBunkAction(), 1f);

@@ -64,6 +64,14 @@ namespace Simpiens.Core.Tests
                 residents.Clear();
                 foreach (var crawler in sim.Host.CrawlerStates) if (!crawler.IsDrifter && !crawler.IsDowned) residents.Add(crawler);
                 tally.ResidentTicks += residents.Count;
+                if (sim.Clock.CurrentTick % DayClock.TicksPerDay == 0)
+                {
+                    // Boredom at each day's end (plan 2's fun): where it settles, or whether it climbs day on day
+                    int day = (int)(sim.Clock.CurrentTick / DayClock.TicksPerDay) - 1;
+                    float sum = 0f;
+                    foreach (var crawler in residents) sum += crawler.Life.Boredom;
+                    if (day < tally.BoredomAtDayEnd.Length && residents.Count > 0) tally.BoredomAtDayEnd[day] += sum / residents.Count;
+                }
 
                 foreach (var crawler in residents)
                 {
@@ -153,6 +161,7 @@ namespace Simpiens.Core.Tests
             public long ResidentTicks, Decisions, GoalsChosen, NearTies, Flips, PlansNotFound, PairTicks, ChronicleLines, ChronicleLinesAboutResidents;
             public readonly Dictionary<string, long> ByCategory = new(), ByGoal = new(), BySource = new(), NotFoundGoals = new(), AfterNotFound = new(), NearTiePairs = new(), FlipPairs = new(), ByEventType = new();
             public readonly HashSet<(int Day, EntityId A, EntityId B)> PairsMet = new();
+            public readonly double[] BoredomAtDayEnd = new double[16];
             public readonly Dictionary<string, long>[] ByHour = Enumerable.Range(0, 24).Select(_ => new Dictionary<string, long>()).ToArray();
             private int _seeds = 1;
             private long _distinctPairDays;
@@ -171,6 +180,7 @@ namespace Simpiens.Core.Tests
                 foreach (var map in new[] { (ByCategory, other.ByCategory), (ByGoal, other.ByGoal), (BySource, other.BySource), (NotFoundGoals, other.NotFoundGoals),
                                             (AfterNotFound, other.AfterNotFound), (NearTiePairs, other.NearTiePairs), (FlipPairs, other.FlipPairs), (ByEventType, other.ByEventType) })
                     foreach (var pair in map.Item2) map.Item1[pair.Key] = (map.Item1.TryGetValue(pair.Key, out long n) ? n : 0) + pair.Value;
+                for (int d = 0; d < BoredomAtDayEnd.Length; d++) BoredomAtDayEnd[d] += other.BoredomAtDayEnd[d];
                 for (int h = 0; h < 24; h++)
                     foreach (var pair in other.ByHour[h]) ByHour[h][pair.Key] = (ByHour[h].TryGetValue(pair.Key, out long n) ? n : 0) + pair.Value;
             }
@@ -205,6 +215,7 @@ namespace Simpiens.Core.Tests
                 text.AppendLine($"Flips (A, B, A again within a game hour): {PerResidentDay(Flips)} a resident-day; the commonest:");
                 foreach (var pair in FlipPairs.OrderByDescending(p => p.Value).Take(6)) text.AppendLine($"  {pair.Key}: {pair.Value}");
                 text.AppendLine($"Together (two residents within {GossipRadius} units): {_distinctPairDays / SeedDays:F1} distinct pairs a day; {PairTicks / (double)DayClock.TicksPerHour / SeedDays:F1} pair-hours a day.");
+                text.AppendLine("Boredom at each day's end, the mean resident: " + string.Join(", ", Enumerable.Range(0, Days).Select(d => (BoredomAtDayEnd[d] / _seeds).ToString("F1"))));
                 text.AppendLine("The day by the clock: what residents do in each game hour, as a share of their time (P.1, the evening's baseline):");
                 text.AppendLine("  hour   work social   rest leisure  unweighted  other");
                 for (int i = 0; i < 24; i++)
