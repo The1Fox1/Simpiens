@@ -87,7 +87,7 @@ namespace Simpiens.Testing.Planning
                 _valid = valid;
             }
 
-            public override float CalculatePriority(AgentContext context) => _priority;
+            public override float BasePriority(AgentContext context) => _priority;
             public override bool IsValid(AgentContext context) => _valid;
         }
 

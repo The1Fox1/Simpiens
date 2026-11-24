@@ -15,7 +15,7 @@ namespace Simpiens.Cognition.Planning.Goals
         {
         }
 
-        public override float CalculatePriority(AgentContext context) => Priority;
+        public override float BasePriority(AgentContext context) => Priority;
 
         public override bool IsValid(AgentContext context) => Drill.WouldDrill(context);
     }

@@ -22,7 +22,7 @@ namespace Simpiens.Cognition.Planning.Goals
         /// </summary>
         public const float ClearPriority = 125f;
 
-        public override float CalculatePriority(AgentContext context) => context.Expedition.Kind == Simpiens.Simulation.Guild.ExpeditionKind.Clear && context.Expedition.IsActive ? ClearPriority : Priority;
+        public override float BasePriority(AgentContext context) => context.Expedition.Kind == Simpiens.Simulation.Guild.ExpeditionKind.Clear && context.Expedition.IsActive ? ClearPriority : Priority;
 
         /// <summary>Under a clear's orders the haul is the party's order, unweighted as orders are (Epic LIFE-1, D1); otherwise work.</summary>
         public override ActivityFamily FamilyFor(AgentContext context) =>

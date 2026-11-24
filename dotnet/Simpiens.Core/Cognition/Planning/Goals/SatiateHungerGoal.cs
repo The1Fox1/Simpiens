@@ -13,7 +13,7 @@ namespace Simpiens.Cognition.Planning.Goals
         {
         }
 
-        public override float CalculatePriority(AgentContext context)
+        public override float BasePriority(AgentContext context)
         {
             // Higher hunger yields higher priority
             return context.Hunger;

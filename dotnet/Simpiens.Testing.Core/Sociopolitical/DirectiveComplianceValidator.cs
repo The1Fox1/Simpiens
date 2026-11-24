@@ -249,7 +249,7 @@ namespace Simpiens.Testing.Sociopolitical
                 var ctx = new AgentContext(followerId, Vec2.Zero, new AgentNeeds(20, 80, 50), 0f, snapshot, memory, 150, mem, IdentityTag.Default);
 
                 Assert(goal.IsValid(ctx), "Goal is valid for loyal follower.");
-                float priority = goal.CalculatePriority(ctx);
+                float priority = goal.BasePriority(ctx);
                 Assert(priority >= 70f, $"Compliance priority ({priority}) is high for loyal follower.");
             }
 
@@ -259,7 +259,7 @@ namespace Simpiens.Testing.Sociopolitical
                 var ctx = new AgentContext(followerId, Vec2.Zero, new AgentNeeds(50, 50, 50), 20f, snapshot, null, 150, mem, IdentityTag.Default);
 
                 Assert(!goal.IsValid(ctx), "Goal is invalid for defiant follower.");
-                Assert(goal.CalculatePriority(ctx) == 0f, "Goal priority is 0 for defiant follower.");
+                Assert(goal.BasePriority(ctx) == 0f, "Goal priority is 0 for defiant follower.");
             }
 
             // Scenario C: Severe starvation (Hunger = 80 >= 70) with low leader fear (Fear = 10 < 70)
@@ -271,8 +271,8 @@ namespace Simpiens.Testing.Sociopolitical
                 var mem = new GroupMembership(groupId, RoleRank.Follower, 100, 50);
                 var ctx = new AgentContext(followerId, Vec2.Zero, new AgentNeeds(80, 80, 50), 0f, snapshot, memory, 150, mem, IdentityTag.Default);
 
-                float directivePriority = goal.CalculatePriority(ctx);
-                float hungerPriority = hungerGoal.CalculatePriority(ctx);
+                float directivePriority = goal.BasePriority(ctx);
+                float hungerPriority = hungerGoal.BasePriority(ctx);
 
                 Assert(directivePriority <= 40f, $"Severe starvation suppressed directive priority to {directivePriority}.");
                 Assert(hungerPriority >= 80f, $"Hunger priority is {hungerPriority}.");
@@ -287,7 +287,7 @@ namespace Simpiens.Testing.Sociopolitical
                 var mem = new GroupMembership(groupId, RoleRank.Follower, 90, 50);
                 var ctx = new AgentContext(followerId, Vec2.Zero, new AgentNeeds(80, 80, 50), 0f, snapshot, memory, 150, mem, IdentityTag.Default);
 
-                float intimidatedPriority = goal.CalculatePriority(ctx);
+                float intimidatedPriority = goal.BasePriority(ctx);
                 Assert(intimidatedPriority >= 70f, $"Intimidation fear maintained high directive priority ({intimidatedPriority}) despite starvation.");
             }
 
@@ -353,7 +353,7 @@ namespace Simpiens.Testing.Sociopolitical
             // ComplyDirectiveGoal with default context
             var goal = new ComplyDirectiveGoal();
             Assert(!goal.IsValid(defaultContext), "Goal is invalid for default context.");
-            Assert(goal.CalculatePriority(defaultContext) == 0f, "Goal priority is 0 for default context.");
+            Assert(goal.BasePriority(defaultContext) == 0f, "Goal priority is 0 for default context.");
 
             // Actions with default context
             var travelAction = new TravelToDirectiveAction(null);
@@ -393,7 +393,7 @@ namespace Simpiens.Testing.Sociopolitical
                 WorldStateBuilder.BuildWorldState(context);
                 ComplianceUtility.CalculateUtility(context, groupData);
                 ComplianceUtility.Evaluate(context, groupData);
-                goal.CalculatePriority(context);
+                goal.BasePriority(context);
             }
 
             // Force clean GC
@@ -409,7 +409,7 @@ namespace Simpiens.Testing.Sociopolitical
                 var state = WorldStateBuilder.BuildWorldState(context);
                 float util = ComplianceUtility.CalculateUtility(context, groupData);
                 var decision = ComplianceUtility.Evaluate(context, groupData);
-                float priority = goal.CalculatePriority(context);
+                float priority = goal.BasePriority(context);
 
                 if (!state.Get(StateFact.HasActiveDirective) || util < 0f || decision != ComplianceDecision.Comply || priority <= 0f)
                 {

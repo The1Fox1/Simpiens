@@ -13,7 +13,7 @@ namespace Simpiens.Cognition.Planning.Goals
         {
         }
 
-        public override float CalculatePriority(AgentContext context)
+        public override float BasePriority(AgentContext context)
         {
             // The more isolated (lower social score), the higher the priority
             float priority = 100f - context.Social;

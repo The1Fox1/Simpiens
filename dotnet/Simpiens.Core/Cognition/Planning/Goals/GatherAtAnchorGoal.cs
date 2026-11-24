@@ -16,7 +16,7 @@ namespace Simpiens.Cognition.Planning.Goals
         {
         }
 
-        public override float CalculatePriority(AgentContext context)
+        public override float BasePriority(AgentContext context)
         {
             // If in biological crisis (starving or exhausted), anchor gathering is completely suppressed
             if (context.Hunger >= StarvationCrisisThreshold || context.Energy <= ExhaustionCrisisThreshold)

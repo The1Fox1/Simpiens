@@ -13,7 +13,7 @@ namespace Simpiens.Cognition.Planning.Goals
         {
         }
 
-        public override float CalculatePriority(AgentContext context)
+        public override float BasePriority(AgentContext context)
         {
             // Base priority 30, scaled higher if inventory is constrained
             int occupiedSlots = 0;

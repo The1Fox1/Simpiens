@@ -83,7 +83,7 @@ namespace Simpiens.Testing.Sociopolitical
             var contextHealthy = new AgentContext(EntityId.Generate(), Vec2.Zero, healthyNeeds, 0f, null, memory, 0);
 
             Assert(goal.IsValid(contextHealthy), "GatherAtAnchorGoal is valid when agent is sated and healthy.");
-            float healthyPriority = goal.CalculatePriority(contextHealthy);
+            float healthyPriority = goal.BasePriority(contextHealthy);
             Assert(SimMath.Approximately(healthyPriority, 65f), $"GatherAtAnchorGoal priority is 65 when Social = 25 (actual: {healthyPriority})");
             Assert(healthyPriority > 10f, "GatherAtAnchorGoal dominates generic wander priority (~10f).");
 
@@ -92,7 +92,7 @@ namespace Simpiens.Testing.Sociopolitical
             var contextStarving = new AgentContext(EntityId.Generate(), Vec2.Zero, starvingNeeds, 0f, null, memory, 0);
 
             Assert(!goal.IsValid(contextStarving), "GatherAtAnchorGoal is invalid during starvation crisis (Hunger >= 60).");
-            float starvingPriority = goal.CalculatePriority(contextStarving);
+            float starvingPriority = goal.BasePriority(contextStarving);
             Assert(SimMath.Approximately(starvingPriority, 0f), $"GatherAtAnchorGoal priority drops to 0 during starvation (actual: {starvingPriority})");
 
             // Scenario 3: Exhaustion crisis (Energy = 15 <= 20)
@@ -100,7 +100,7 @@ namespace Simpiens.Testing.Sociopolitical
             var contextExhausted = new AgentContext(EntityId.Generate(), Vec2.Zero, exhaustedNeeds, 0f, null, memory, 0);
 
             Assert(!goal.IsValid(contextExhausted), "GatherAtAnchorGoal is invalid during exhaustion crisis (Energy <= 20).");
-            float exhaustedPriority = goal.CalculatePriority(contextExhausted);
+            float exhaustedPriority = goal.BasePriority(contextExhausted);
             Assert(SimMath.Approximately(exhaustedPriority, 0f), $"GatherAtAnchorGoal priority drops to 0 during exhaustion (actual: {exhaustedPriority})");
 
             TestLog.Log("[PASS] Test 2: GatherAtAnchorGoal priority dominance switching verified.");

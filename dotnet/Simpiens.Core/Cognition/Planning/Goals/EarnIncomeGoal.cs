@@ -14,7 +14,7 @@ namespace Simpiens.Cognition.Planning.Goals
         {
         }
 
-        public override float CalculatePriority(AgentContext context)
+        public override float BasePriority(AgentContext context)
         {
             int gold = context.Inventory != null ? context.Inventory.Gold : 0;
             int comfortable = Considerations.Economy(context).ComfortablePurse;

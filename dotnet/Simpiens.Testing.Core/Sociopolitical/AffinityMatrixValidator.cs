@@ -155,8 +155,8 @@ namespace Simpiens.Testing.Sociopolitical
 
             // 4. Validate SocializeGoal priority bonus
             var socializeGoal = new SocializeGoal();
-            float neutralPriority = socializeGoal.CalculatePriority(contextNeutral);
-            float allyPriority = socializeGoal.CalculatePriority(contextPopulated);
+            float neutralPriority = socializeGoal.BasePriority(contextNeutral);
+            float allyPriority = socializeGoal.BasePriority(contextPopulated);
             Assert(allyPriority > neutralPriority, $"SocializeGoal priority increased when warm/trusted companions are known ({allyPriority} > {neutralPriority}).");
 
             TestLog.Log("[PASS] Test 4: GOAP WorldState relational fact mapping and goal priority weighting verified.");

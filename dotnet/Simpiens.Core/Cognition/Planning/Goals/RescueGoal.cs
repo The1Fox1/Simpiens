@@ -18,7 +18,7 @@ namespace Simpiens.Cognition.Planning.Goals
         {
         }
 
-        public override float CalculatePriority(AgentContext context) =>
+        public override float BasePriority(AgentContext context) =>
             Rescue.TryChooseFallen(context, out var fallen, out _) && fallen.PartyGroupId != 0 && fallen.PartyGroupId == context.PartyGroupId ? UnderOrdersPriority : Priority;
 
         public override bool IsValid(AgentContext context) => context.Inventory != null && Rescue.TryChooseFallen(context, out _, out _);

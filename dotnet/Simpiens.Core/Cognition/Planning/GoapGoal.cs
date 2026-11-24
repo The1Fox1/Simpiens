@@ -37,11 +37,12 @@ namespace Simpiens.Cognition.Planning
         }
 
         /// <summary>
-        /// Calculates the dynamic priority of this goal based on agent context
-        /// (e.g., priority scales with hunger or danger level).
-        /// Higher score means higher selection precedence.
+        /// The goal's own number for <paramref name="context"/>, its base (Epic LIFE-1, L0.5, D2): the motive model multiplies
+        /// it by the weights every goal shares (<see cref="MotiveModel"/>), and only the model and the validators that pin a
+        /// goal's number call it. A new goal's base is its motive's urgency (<see cref="Urgency"/>) times its own opportunity.
+        /// Higher means more wanted.
         /// </summary>
-        public abstract float CalculatePriority(AgentContext context);
+        public abstract float BasePriority(AgentContext context);
 
         /// <summary>
         /// Validates whether this goal is currently viable or relevant for the agent.

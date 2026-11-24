@@ -256,6 +256,7 @@ namespace Simpiens.Cognition
             // Top three goals considered this evaluation ("Why?" groundwork); names are cached strings, no allocation
             string topGoal1 = null, topGoal2 = null, topGoal3 = null;
             float topPriority1 = -1f, topPriority2 = -1f, topPriority3 = -1f;
+            float topBase1 = 0f, topWeight1 = 1f; // the best goal's parts (Epic LIFE-1, L0.5)
             bool trace = SimLog.Traces(context.AgentId);
 
             // Emergency rest if in exhaustion collapse
@@ -321,6 +322,7 @@ namespace Simpiens.Cognition
                     topGoal1 = ranked.Goal1?.Name; topPriority1 = ranked.Priority1;
                     topGoal2 = ranked.Goal2?.Name; topPriority2 = ranked.Priority2;
                     topGoal3 = ranked.Goal3?.Name; topPriority3 = ranked.Priority3;
+                    if (ranked.Goal1 != null) { topBase1 = ranked.Base1; topWeight1 = ranked.Weight1; }
                     GoapGoal bestGoal = ranked.Goal1;
                     float highestPriority = ranked.Priority1;
 
@@ -372,7 +374,7 @@ namespace Simpiens.Cognition
             }
 
             intent.Decision = new DecisionSummary(source, context.CurrentTick,
-                topGoal1, topPriority1, topGoal2, topPriority2, topGoal3, topPriority3);
+                topGoal1, topPriority1, topGoal2, topPriority2, topGoal3, topPriority3, topBase1, topWeight1);
 
             result.Intent = intent;
             return result;

@@ -232,7 +232,7 @@ This is a working document (AGENTS.md, Documentation Protocol 6), the first of E
   - `GoalSelector.Rank`, with both evaluators calling it, and the trace lines moved with it.
   - `PlanExecutionValidator` and every test pass unchanged. Golden reproduces byte for byte, or the step doesn't land.
   - **Zero allocations:** the existing allocation checks, or a validator in the style of the planner's, prove none in the hot path.
-- [ ] **L0.5 The motive model** (D2) [Possibly Complex: every priority passes through it; golden unchanged]
+- [x] **L0.5 The motive model** (D2) (done 2026-11-23; golden unchanged; the session's weight by motive is the first factor, a tuning dial and the validators' lever) [Possibly Complex: every priority passes through it; golden unchanged]
   - **The code:** `MotiveModel`, `LifeTuning` in `EconomyTuning`, `Urgency`, and `BasePriority` (renamed). The base-and-weight in `DecisionSummary`.
   - **The names test:** nothing outside the model calls `BasePriority`, except the validators that pin a goal's number.
   - **Mechanism validators:** a weight of 1 leaves every choice as it was; a weight set in a test tuning changes a choice; an unweighted goal ignores family weights.

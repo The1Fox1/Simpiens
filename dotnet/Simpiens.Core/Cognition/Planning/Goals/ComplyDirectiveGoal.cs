@@ -57,7 +57,7 @@ namespace Simpiens.Cognition.Planning.Goals
             return utility >= ComplianceUtility.ComplianceThreshold;
         }
 
-        public override float CalculatePriority(AgentContext context)
+        public override float BasePriority(AgentContext context)
         {
             if (!context.DirectiveMembership.HasGroup || context.Snapshot == null) return 0f;
             if (!context.Snapshot.TryGetGroup(context.DirectiveMembership.GroupId, out var groupData)) return 0f;

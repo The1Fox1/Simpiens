@@ -15,6 +15,9 @@ namespace Simpiens.Cognition.Planning
         public GoapGoal Goal1, Goal2, Goal3;
         public float Priority1, Priority2, Priority3;
 
+        /// <summary>The best goal's parts (Epic LIFE-1, L0.5, D2): its own number and the shared weight it was multiplied by.</summary>
+        public float Base1, Weight1;
+
         /// <summary>How many slots hold a goal (0 to 3).</summary>
         public readonly int Count => Goal1 == null ? 0 : Goal2 == null ? 1 : Goal3 == null ? 2 : 3;
 
@@ -31,6 +34,7 @@ namespace Simpiens.Cognition.Planning
     /// How a crawler chooses its goal (Epic LIFE-1, L0.4, D3; the epic's F1): the one argmax over the valid, unsatisfied goals,
     /// which <see cref="AgentCognitionService"/> and <see cref="Evaluators.GoapCognitiveEvaluator"/> both call. Ties go to
     /// the earlier goal in the list (a later one must be strictly higher), and a priority of -1 or less is never ranked.
+    /// A goal's priority comes from the motive model (<see cref="MotiveModel"/>), never from the goal alone.
     /// Stateless; allocates nothing; reads only the context it is given, so it runs off the main thread.
     /// </summary>
     public static class GoalSelector
@@ -58,13 +62,15 @@ namespace Simpiens.Cognition.Planning
                     continue;
                 }
 
-                float priority = goal.CalculatePriority(context);
-                if (trace) SimLog.Planning.ZLogTrace($"{SimLog.Agent(context.AgentId)} goal {goal.Name}: priority {priority:F1}");
+                // The motive model (L0.5, D2): the goal's own number times the weights every goal shares
+                float priority = MotiveModel.Score(goal, context, out float basePriority, out float weight);
+                if (trace) SimLog.Planning.ZLogTrace($"{SimLog.Agent(context.AgentId)} goal {goal.Name}: priority {priority:F1} (base {basePriority:F1} x weight {weight:F2})");
                 if (priority > ranked.Priority1)
                 {
                     ranked.Goal3 = ranked.Goal2; ranked.Priority3 = ranked.Priority2;
                     ranked.Goal2 = ranked.Goal1; ranked.Priority2 = ranked.Priority1;
                     ranked.Goal1 = goal; ranked.Priority1 = priority;
+                    ranked.Base1 = basePriority; ranked.Weight1 = weight;
                 }
                 else if (priority > ranked.Priority2)
                 {

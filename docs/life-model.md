@@ -81,8 +81,24 @@ Every goal declares what it is for (`Motive`) and the part of the day it belongs
 - **Unweighted** goals are never scaled by the routine or the day's intention (the epic's A8), so hunger, orders, aid and leaving keep their precedence.
 - **A new goal** declares both; the validator's table gains its row.
 
-### 2.2 The rule
-*Filled at L0.5.*
+### 2.2 The rule (L0.5, D2)
+**Priority = the goal's base × its weight** (+ commitment from L0.7, when it isn't 0).
+- **The base** is the goal's own number (`GoapGoal.BasePriority`), §1.2's formulas unchanged.
+- **The weight** is the product of the factors every goal shares, each exactly 1 until its milestone sets it:
+
+  | Factor | Keyed by | From |
+  | :--- | :--- | :--- |
+  | The session's weight | motive | L0.5 (`LifeTuning.MotiveWeight`; 1 for every motive by default) |
+  | Mood | motive and mood's band | L1.4 |
+  | The want | the want's motive | plan 2 |
+  | The routine | family and hour | plan 3 |
+  | Satiation | work | plan 3 |
+  | The day's intention | family | plan 3 |
+
+- **Exact while neutral:** the factors are multiplied together first, then the base by their product; a float times exactly 1 is itself, so golden reproduced byte for byte through L0.4 and L0.5.
+- **The one door:** `GoalSelector` reaches a priority only through `MotiveModel`; `MotiveModelTests` fails production code that reads a base elsewhere.
+- **Urgency** (`Urgency.Of`) is a motive's shared need: hunger, 100 − energy, 100 − social; 0 for a motive with no need behind it. New goals build their base from it.
+- **The "why":** `DecisionSummary` keeps the best goal's base and weight beside the top three.
 
 ## 3. Measurements
 

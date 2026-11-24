@@ -45,6 +45,9 @@ namespace Simpiens.Core.Tests
         public void GoalSelector() => new Simpiens.Testing.Planning.GoalSelectorValidator().RunAllValidationTests(); // Epic LIFE-1, L0.4
 
         [Fact]
+        public void MotiveModel() => new Simpiens.Testing.Planning.MotiveModelValidator().RunAllValidationTests(); // Epic LIFE-1, L0.5
+
+        [Fact]
         public void Look() => new Simpiens.Testing.People.LookValidator().RunAllValidationTests();
 
         [Fact]

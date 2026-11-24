@@ -13,7 +13,7 @@ namespace Simpiens.Cognition.Planning.Goals
         {
         }
 
-        public override float CalculatePriority(AgentContext context)
+        public override float BasePriority(AgentContext context)
         {
             // The more exhausted (lower energy), the higher the priority
             return 100f - context.Energy;
