@@ -101,6 +101,9 @@ namespace Simpiens.Simulation
         /// reads it.
         /// </summary>
         event System.Action<Simpiens.Cognition.AgentState, Simpiens.Simulation.Skills.Skill, int, Simpiens.Simulation.Skills.PracticeSource> Practised;
+
+        /// <summary>An item served at a venue, with its price (Epic LIFE-1 plan 2, T.5): the tavern's takings, observed.</summary>
+        event System.Action<EntityId, Simpiens.Simulation.Economy.ItemType, uint> Served;
         string FirstIntentFault { get; }
     }
 }

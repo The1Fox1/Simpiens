@@ -95,6 +95,14 @@ namespace Simpiens.Hosting
         /// fighting itself starts at the horizon's edge (0-2 kills in three days; 0-8 in eight), so kills aren't banded.
         /// </summary>
         public const uint HuntingReserve = 150;
+
+        /// <summary>
+        /// The tavern profile (Epic LIFE-1 plan 2, T.6): the fair player's prices and the tavern player, keeping the hunting
+        /// players' reserve so building it never empties the stall. Its band asks for the tavern built and kept, the stall
+        /// solvent, trust as the fair player's and nobody starving; its takings are read, not banded (finding F18).
+        /// </summary>
+        public const uint TavernReserve = 150;
+        public const int TavernTrustUpMin = 8;
         public const uint HuntingTreasuryMin = 0;
         public const uint HuntingTreasuryMax = 1200;
         public const int HuntingTrustUpMin = 8;
@@ -105,7 +113,7 @@ namespace Simpiens.Hosting
 
         /// <summary>The soak's seeds.</summary>
         public static readonly ulong[] DefaultSeeds = { 20261009UL, 1UL, 2UL };
-        public static readonly string[] Profiles = { "fair", "greedy", "generous", "guild", "crafting", "hunting" };
+        public static readonly string[] Profiles = { "fair", "greedy", "generous", "guild", "crafting", "hunting", "tavern" };
 
         /// <summary>A soak player: the prices it sets (item, price), as the typed command it sends on the first tick.</summary>
         public readonly struct Player
@@ -148,6 +156,7 @@ namespace Simpiens.Hosting
                 case "guild": return new Player("guild", Prices(1f, 1f, 1f, 1f), sendsCommand: false);
                 case "crafting": return new Player("crafting", Prices(1f, 1f, 1f, 1f), sendsCommand: false);
                 case "hunting": return new Player("hunting", Prices(1f, 1f, 1f, 1f), sendsCommand: false); // Epic 10 Part 3, K11.2
+                case "tavern": return new Player("tavern", Prices(1f, 1f, 1f, 1f), sendsCommand: false); // Epic LIFE-1 plan 2, T.6
                 // Rations 30g, ore 2g, herbs 3g, gear 60g
                 case "greedy": return new Player("greedy", Prices(2f, 0.5f, 0.5f, 2f), sendsCommand: true);
                 // Rations 5g, ore 9g, herbs 10g, gear 20g
@@ -206,6 +215,12 @@ namespace Simpiens.Hosting
 
             /// <summary>The hunting profile's (Epic 10 Part 3, K11.2): creatures slain, hunts paid, rescues made and deaths, over the horizon.</summary>
             public int Kills, HuntsPaid, Rescues, Deaths;
+
+            /// <summary>The tavern profile's (Epic LIFE-1 plan 2, T.6): when it stood, what it served and took, the caravan's wholesale for its menu.</summary>
+            public long TavernBuiltTick = -1;
+            public int TavernServed;
+            public uint TavernTakings, TavernWholesale;
+            public long TavernOpenTicks, TavernKeptFrom = -1;
             public long GuildFullTick = -1;
             public uint Wages, WageGold, Shares, ShareGold;
 
@@ -277,6 +292,13 @@ namespace Simpiens.Hosting
                         if (UnpaidQuits > 0) failures.Add($"hunting: {UnpaidQuits} quit for want of pay (worst run {WorstUnpaid} unpaid)");
                         if (Deaths > HuntingDeathsMax) failures.Add($"hunting: {Deaths} deaths (at most {HuntingDeathsMax})");
                         break;
+                    case "tavern":
+                        if (TavernBuiltTick < 0) failures.Add("tavern: never built");
+                        if (TavernKeptFrom < 0) failures.Add("tavern: never kept (no keeper at its counter on shift)");
+                        if (minTreasury == 0 || everInArrears) failures.Add($"tavern: the stall went broke (lowest treasury {minTreasury}g)");
+                        if (last.TrustUp < TavernTrustUpMin) failures.Add($"tavern: trust rose for only {last.TrustUp} crawlers (need {TavernTrustUpMin})");
+                        if (last.StarvingEpisodes != 0) failures.Add($"tavern: {last.StarvingEpisodes} starving episodes (need 0)");
+                        break;
                     case "generous":
                         if (!(minTreasury == 0 || everInArrears)) failures.Add($"generous: the stall never went broke (lowest treasury {minTreasury}g)");
                         if (peakTrustUp < GenerousTrustUpPeakMin) failures.Add($"generous: trust rose for at most {peakTrustUp} crawlers (need {GenerousTrustUpPeakMin} at its peak)");
@@ -298,6 +320,7 @@ namespace Simpiens.Hosting
                     ? $"; guild {Members} (signed {Signed}, full at t{GuildFullTick}), wages {Wages} ({WageGold}g), worst unpaid {WorstUnpaid}, quit unpaid {UnpaidQuits}, expeditions home {ExpeditionsHome}, shares {ShareGold}g"
                     : string.Empty;
                 if (Player.Name == "crafting") guild += $"; stations {StationsBuilt}, artisans {Artisans}, made {Made}";
+                if (Player.Name == "tavern") guild += $"; tavern {(TavernBuiltTick >= 0 ? "built" : "not built")}, first kept t{TavernKeptFrom}, open {TavernOpenTicks / (double)DayClock.TicksPerHour:F1} h, served {TavernServed} for {TavernTakings}g, wholesale {TavernWholesale}g";
                 if (Player.Name == "hunting") guild = $"; guild {Members} (full at t{GuildFullTick}), quit unpaid {UnpaidQuits}; kills {Kills}, hunts paid {HuntsPaid}, rescues {Rescues}, deaths {Deaths}";
                 if (Player.Name == "guild" || Player.Name == "crafting" || Player.Name == "hunting") guild += $"; specialists {Specialists}, upkeep {Upkeep}g a visit, raises owed {RaisesOwed}";
                 return $"{Player.Name,-8} seed {Seed,-9} treasury {string.Join(" ", checkpoints)}g; trust mean {last.TrustMean:F1}, up {last.TrustUp}, down {last.TrustDown}; starving {last.StarvingEpisodes}, collapses {last.Collapses}; ledger violations {ConservationViolations}{guild}";
@@ -346,6 +369,8 @@ namespace Simpiens.Hosting
                 guildPlayer.SendExpeditions(Floor1Layout.DrownedGallerySectorId, Floor1Layout.GallerySeamYield);
                 guildPlayer.SendSecondParty(Floor1Layout.GlowCavesSectorId, 3, together: true);
             }
+            // The tavern profile's player (Epic LIFE-1 plan 2, T.6): the tavern built and kept, the fair player's prices
+            if (profile == "tavern") new TavernPlayer(sim, reserve: TavernReserve);
             // The hunting profile's players (Epic 10 Part 3, K11.2): every fighting player at once, each keeping a reserve
             if (profile == "hunting")
             {
@@ -381,6 +406,8 @@ namespace Simpiens.Hosting
 
             // The profile's scripted players, acting only through commands
             GuildPlayer guildPlayer = AttachPlayers(sim, result.Player.Name);
+            if (result.Player.Name == "tavern") manager.Served += (crawler, item, price) => { result.TavernServed++; result.TavernTakings += price; };
+            int tavernIndex = manager.Workshops != null ? manager.Workshops.IndexOf(StationKind.Tavern) : -1;
             int guildSize = result.Player.Name == "crafting" ? CraftingGuildSize : GuildProfileSize;
             var told = new List<Simpiens.Narrative.ChronicleEvent>(16);
             int huntsOpen = 0;
@@ -402,6 +429,11 @@ namespace Simpiens.Hosting
             {
                 long rel = sim.Clock.CurrentTick - start;
                 result.ObservedTicks = rel;
+                if (result.Player.Name == "tavern" && tavernIndex >= 0 && (manager.Workshops.KeptMask((Simpiens.Simulation.Workshops.IWorkshopHost)manager, (uint)sim.Clock.CurrentTick) & (1UL << tavernIndex)) != 0)
+                {
+                    result.TavernOpenTicks++;
+                    if (result.TavernKeptFrom < 0) result.TavernKeptFrom = rel;
+                }
 
                 // Integrity and the lifecycle counters, every tick
                 uint stallGold = 0;
@@ -513,6 +545,12 @@ namespace Simpiens.Hosting
                 result.Made += workshops[i].Made;
             }
             result.Artisans = workshops?.Artisans.Count ?? 0;
+            if (result.Player.Name == "tavern" && workshops != null)
+            {
+                int tavern = workshops.IndexOf(StationKind.Tavern);
+                result.TavernBuiltTick = tavern >= 0 && workshops[tavern].Built ? 1 : -1;
+                result.TavernWholesale = (uint)(manager.EconomyLedger?.GetSinkTotal(SupplyService.TavernSinkName) ?? 0);
+            }
             MeasureUpkeep(sim, result);
             if (manager.EconomyLedger != null)
             {
