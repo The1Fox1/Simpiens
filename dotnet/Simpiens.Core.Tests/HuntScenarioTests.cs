@@ -72,8 +72,10 @@ namespace Simpiens.Core.Tests
         /// one the hunt is posted at t13016 and paid at t17755 to three hunters.
         /// Gate seed 8 since passions and practice by challenge (Epic 11, S1.5): a hunt paid on 19 of 23, to two or more on 5
         /// (5, 8, 13, 19, 20); seed 3 draws a single hunter now. On this one the hunt is posted at t12938 and paid at t17557 to two.
+        /// Gate seed 3 since Epic LIFE-1's Recreate (plan 2, L2.6, `docs/life-model.md` §5.8): free time moved the outpost's history, and seed 8 drew a single hunter: a hunt paid on 21 of 23, three hunters joining on 3, 13, 14 and 18;
+        /// on this one it is posted at t12979 and paid at t24240 to two.
         /// </summary>
-        private const ulong Seed = 8;
+        private static readonly ulong Seed = ScenarioSeed.Or(3);
 
         [Fact]
         public void AHuntBountyClearsALair()

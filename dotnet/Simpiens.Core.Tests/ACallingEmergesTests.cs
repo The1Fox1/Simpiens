@@ -118,9 +118,11 @@ namespace Simpiens.Core.Tests
         /// Gate seed 3 (S5.9, <see cref="MeasureACallingEmergesOnTheGateSeeds"/> on S5's build): over ten days a member became a
         /// Warden on its own on 2 of the 23 gate seeds (3 and 11), and on both it held the front at a clear that emptied its lair
         /// (finding F12: melee seldom becomes a member's best skill in ten days). On this one Lane becomes a Warden at t60619, and
-        /// at the clear that ends at t81285 takes 26 of the creatures' blows, a mate 4 at the most.
+        /// at the clear that ends at t81285 takes 26 of the creatures' blows, a mate 4 at the most. Gate seed 11 since Epic LIFE-1's Recreate (plan 2, L2.6, `docs/life-model.md` §5.8): free time moved the outpost's history, and
+        /// seed 3 earned no Warden in ten days: still on 1 of 23, this one, where Eamon becomes a Warden at t52910 and at the clear
+        /// that ends at t63461 takes 23 of the blows, a mate 2 at the most.
         /// </summary>
-        private const ulong Seed = 3;
+        private static readonly ulong Seed = ScenarioSeed.Or(11);
 
         [Fact]
         public void ACallingEmerges()

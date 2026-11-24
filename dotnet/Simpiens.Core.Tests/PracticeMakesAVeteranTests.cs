@@ -116,8 +116,12 @@ namespace Simpiens.Core.Tests
             return run;
         }
 
-        /// <summary>The default seed: a member's melee 1 to 2 on day 2.9, a resident's mining 0 to 1 on day 3.6, the smith (a Novice 2 when hired) Fine on day 4.3, at its fifth make.</summary>
-        private const ulong Seed = SimulationSettings.DefaultSeed;
+        /// <summary>
+        /// The default seed: a member's melee 1 to 2 on day 2.9, a resident's mining 0 to 1 on day 3.6, the smith (a Novice 2 when
+        /// hired) Fine on day 4.3, at its fifth make. Gate seed 20261010 since Epic LIFE-1's Recreate (plan 2, L2.6, `docs/life-model.md` §5.8): free time moved the outpost's history, and the default's members' melee rose no more
+        /// in the week: all three rise with the days holding on 9 of 23; on this one Ellis's melee 0 to 1 on day 3.5.
+        /// </summary>
+        private static readonly ulong Seed = ScenarioSeed.Or(20261010);
 
         private const long Horizon = 7 * DayClock.TicksPerDay;
 

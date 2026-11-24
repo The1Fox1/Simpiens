@@ -159,9 +159,11 @@ namespace Simpiens.Core.Tests
         /// Gate seed 20261009 since Epic 11's teachers (S3.6, <see cref="MeasureClearsOnTheGateSeeds"/> on S3's final build): an
         /// armed four clearing a lair on 21 of the 23 gate seeds, nobody dead, a fallen member carried out alive on 14; seed 3,
         /// K8's, now comes home with nothing picked up. On this one, the earliest clear with a haul, a member falls and is carried
-        /// out alive, and the party comes home at t18824 with one of the lair's material. (Since K8: seed 3, 22 of 23 cleared.)
+        /// out alive, and the party comes home at t18824 with one of the lair's material. (Since K8: seed 3, 22 of 23 cleared.) Gate
+        /// seed 15 since Epic LIFE-1's Recreate (plan 2, L2.6, `docs/life-model.md` §5.8): free time moved the outpost's history, and 20261009's party came home with nothing picked up: cleared on 21 of 23, this one home at t19938 with
+        /// one of the lair's material.
         /// </summary>
-        private const ulong ClearSeed = 20261009;
+        private static readonly ulong ClearSeed = ScenarioSeed.Or(15);
 
         [Fact]
         public void AnArmedPartyClearsANest()
@@ -179,8 +181,12 @@ namespace Simpiens.Core.Tests
             AssertTheDaysHeld(run);
         }
 
-        /// <summary>Gate seed 6: a member falls in the lair, the guild sends a mate who carries it out, and it stands again (K7.4's measurement; at S3.6 three fall and all three are carried out alive, the first standing at t26502).</summary>
-        private const ulong CarrySeed = 6;
+        /// <summary>
+        /// Gate seed 6: a member falls in the lair, the guild sends a mate who carries it out, and it stands again (K7.4's
+        /// measurement; at S3.6 three fall and all three are carried out alive, the first standing at t26502). Gate seed 3 since Epic LIFE-1's Recreate (plan 2, L2.6, `docs/life-model.md` §5.8): free time moved the outpost's history,
+        /// and on seed 6 nobody fell: a fallen member carried out alive on 12 of 23, this one's first standing at t21478.
+        /// </summary>
+        private static readonly ulong CarrySeed = ScenarioSeed.Or(3);
 
         [Fact]
         public void AFriendCarriesTheFallenOut()
@@ -211,9 +217,9 @@ namespace Simpiens.Core.Tests
         /// newcomer settles at t66925.
         /// Gate seed 8 since grudges run both ways (Epic 11, S7.3; on 11 the fallen are now carried out alive): over ten days a
         /// death on 2 of the 23 gate seeds (5 and 8); on this one, the earlier, the first death is at t53385 and a newcomer
-        /// settles at t73545.
+        /// settles at t73545. Gate seed 20261010 since Epic LIFE-1's Recreate (plan 2, L2.6, `docs/life-model.md` §5.8): free time moved the outpost's history, and seed 8's two now live through the fortnight's first ten days.
         /// </summary>
-        private const ulong DeathSeed = 8;
+        private static readonly ulong DeathSeed = ScenarioSeed.Or(20261010);
 
         [Fact]
         public void DeathHasItsCost()
