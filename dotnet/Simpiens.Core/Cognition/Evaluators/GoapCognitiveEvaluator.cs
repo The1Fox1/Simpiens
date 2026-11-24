@@ -48,16 +48,15 @@ namespace Simpiens.Cognition.Evaluators
             var currentState = WorldStateBuilder.BuildWorldState(context);
 
             // 2. Select the highest priority valid, unsatisfied goal: the one choice (Epic LIFE-1, L0.4, D3)
-            GoapGoal bestGoal = GoalSelector.Rank(_goals, context, currentState).Goal1;
+            var ranked = GoalSelector.Rank(_goals, context, currentState);
 
-            if (bestGoal == null)
+            if (ranked.Goal1 == null)
             {
                 return null;
             }
 
-            // 3. Plan using the A* search engine
-            bool success = _planner.Plan(currentState, bestGoal, _actionGraph, context, _scratchPlan);
-            if (!success || _scratchPlan.IsEmpty)
+            // 3. Plan using the A* search engine: the best, or the next when it can't be planned (L0.6, D4)
+            if (GoalSelector.PlanFirst(ranked, Considerations.Economy(context).Life.FallbackDepth, _planner, currentState, _actionGraph, context, _scratchPlan) < 0)
             {
                 return null;
             }

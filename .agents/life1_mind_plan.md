@@ -238,7 +238,7 @@ This is a working document (AGENTS.md, Documentation Protocol 6), the first of E
   - **Mechanism validators:** a weight of 1 leaves every choice as it was; a weight set in a test tuning changes a choice; an unweighted goal ignores family weights.
   - **AGENTS.md:** the motive model in the cognition paragraph, and a recipe, "Adding a goal".
   - Golden reproduces byte for byte.
-- [ ] **L0.6 The fallback** (D4; F2) [Possibly Complex: a behaviour change; golden re-recorded in its own commit]
+- [x] **L0.6 The fallback** (D4; F2) (done 2026-11-23. **Deviation:** golden didn't move, so nothing was re-recorded: no plan goes unfound today (F9), and L0.3's three-day measurement re-ran identical; the fallback waits for plan 2's goals) [Possibly Complex: a behaviour change; golden re-recorded in its own commit]
   - **Its commits:** the fallback, then golden re-recorded in its own commit.
   - **The checks:** the gate seeds' day holds; every DoD keeps its seed or is re-picked in its own commit, with the reason; the soak's bands are measured and any move goes to the producer by exception.
   - **Re-run** L0.3's measurement, and record plans not found and wandering's share before and after.

@@ -20,7 +20,8 @@ namespace Simpiens.Testing.Planning
             ValidateTies();
             ValidateWhatIsNeverRanked();
             ValidateNoAllocation();
-            TestLog.Log("<color=green>[GoalSelectorValidator] ALL 4 TESTS PASSED SUCCESSFULLY!</color>");
+            ValidateTheFallback();
+            TestLog.Log("<color=green>[GoalSelectorValidator] ALL 5 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private static AgentContext Context() => new AgentContext(default, default, AgentNeeds.Default, 0f, null, null, 0);
@@ -72,6 +73,45 @@ namespace Simpiens.Testing.Planning
             long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
             Assert(allocated == 0, $"A thousand choices allocate nothing ({allocated} bytes).");
             Assert(sum == 40000f, "And each chose the same.");
+        }
+
+        private void ValidateTheFallback()
+        {
+            var goals = new List<GoapGoal> { new Fixed("Best", 40f), new Fixed("Second", 30f), new Fixed("Third", 20f) };
+            var ranked = GoalSelector.Rank(goals, Context(), WorldState.Empty);
+            var plan = new GoapPlan(4);
+            var graph = new ActionGraph();
+            var everything = new Planner();
+            Assert(GoalSelector.PlanFirst(ranked, 2, everything, WorldState.Empty, graph, Context(), plan) == 0 && everything.Asked == 1, "The best planned, nothing else asked.");
+            var notBest = new Planner("Best");
+            Assert(GoalSelector.PlanFirst(ranked, 2, notBest, WorldState.Empty, graph, Context(), plan) == 1 && !plan.IsEmpty, "The best unplannable: the second is planned.");
+            var onlyThird = new Planner("Best", "Second");
+            Assert(GoalSelector.PlanFirst(ranked, 2, onlyThird, WorldState.Empty, graph, Context(), plan) == 2, "Then the third.");
+            Assert(GoalSelector.PlanFirst(ranked, 1, new Planner("Best", "Second"), WorldState.Empty, graph, Context(), plan) == -1, "A depth of 1 stops at the second.");
+            var none = new Planner("Best", "Second", "Third");
+            Assert(GoalSelector.PlanFirst(ranked, 2, none, WorldState.Empty, graph, Context(), plan) == -1 && none.Asked == 3, "None plannable: Tier 3, after three asked.");
+            var noDepth = new Planner("Best");
+            Assert(GoalSelector.PlanFirst(ranked, 0, noDepth, WorldState.Empty, graph, Context(), plan) == -1 && noDepth.Asked == 1, "A depth of 0 is today's rule: the best or nothing.");
+            var two = GoalSelector.Rank(new List<GoapGoal> { new Fixed("Best", 40f) }, Context(), WorldState.Empty);
+            Assert(GoalSelector.PlanFirst(two, 2, new Planner("Best"), WorldState.Empty, graph, Context(), plan) == -1, "No goal after the best: nothing more to try.");
+        }
+
+        /// <summary>A planner that plans every goal but those named, one step each.</summary>
+        private sealed class Planner : IGoapPlanner
+        {
+            private readonly HashSet<string> _refused;
+            public int Asked;
+
+            public Planner(params string[] refused) => _refused = new HashSet<string>(refused);
+
+            public bool Plan(in WorldState currentState, GoapGoal goal, ActionGraph actionGraph, AgentContext context, GoapPlan outPlan)
+            {
+                Asked++;
+                outPlan.Clear();
+                if (_refused.Contains(goal.Name)) return false;
+                outPlan.AddAction(new Simpiens.Cognition.Planning.Actions.RestAction(), 1f);
+                return true;
+            }
         }
 
         /// <summary>A goal with a fixed priority, never satisfied unless told.</summary>

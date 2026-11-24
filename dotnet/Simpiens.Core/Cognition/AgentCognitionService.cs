@@ -328,10 +328,13 @@ namespace Simpiens.Cognition
 
                     if (bestGoal != null)
                     {
+                        // The best, or the next two when it can't be planned (Epic LIFE-1, L0.6, D4)
                         var plan = agent.ScratchPlan;
-                        bool planFound = planner.Plan(currentState, bestGoal, actionGraph, context, plan);
-                        if (planFound && !plan.IsEmpty)
+                        int place = GoalSelector.PlanFirst(ranked, Considerations.Economy(context).Life.FallbackDepth, planner, currentState, actionGraph, context, plan, trace);
+                        if (place >= 0)
                         {
+                            bestGoal = ranked.GoalAt(place);
+                            highestPriority = ranked.PriorityAt(place);
                             result.AdoptScratchPlan = true;
                             result.Goal = bestGoal;
 
@@ -344,12 +347,8 @@ namespace Simpiens.Cognition
                             if (firstAction != null && firstAction.IsValid(context))
                             {
                                 intent = await firstAction.CreateIntentAsync(context, ct);
-                                source = "GOAP new plan";
+                                source = place == 0 ? "GOAP new plan" : "GOAP fallback";
                             }
-                        }
-                        else if (trace)
-                        {
-                            SimLog.Planning.ZLogDebug($"{SimLog.Agent(context.AgentId)} found NO plan for {bestGoal.Name} (priority {highestPriority:F1}) from {currentState}");
                         }
                     }
                 }

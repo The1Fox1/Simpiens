@@ -84,5 +84,24 @@ namespace Simpiens.Cognition.Planning
             }
             return ranked;
         }
+
+        /// <summary>
+        /// Plans the ranked goals in order (Epic LIFE-1, L0.6, D4; the epic's F9): the best, then up to <paramref name="depth"/>
+        /// more when the one before can't be planned, into <paramref name="plan"/>. Returns the place of the goal planned (0
+        /// for the best), or -1 when none could be, which falls to Tier 3 as before. A depth of 0 plans the best only.
+        /// </summary>
+        public static int PlanFirst(in RankedGoals ranked, int depth, IGoapPlanner planner, in WorldState state, ActionGraph graph,
+                                    AgentContext context, GoapPlan plan, bool trace = false)
+        {
+            int tries = depth <= 0 ? 1 : depth >= 2 ? 3 : 2;
+            for (int place = 0; place < tries; place++)
+            {
+                var goal = ranked.GoalAt(place);
+                if (goal == null) return -1;
+                if (planner.Plan(state, goal, graph, context, plan) && !plan.IsEmpty) return place;
+                if (trace) SimLog.Planning.ZLogDebug($"{SimLog.Agent(context.AgentId)} found NO plan for {goal.Name} (priority {ranked.PriorityAt(place):F1}) from {state}");
+            }
+            return -1;
+        }
     }
 }

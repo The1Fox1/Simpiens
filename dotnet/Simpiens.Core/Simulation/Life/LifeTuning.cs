@@ -11,8 +11,8 @@ namespace Simpiens.Simulation.Life
 
     /// <summary>
     /// The life core's numbers for a session (Epic LIFE-1, the epic's A11), inside <see cref="Economy.EconomyTuning"/> as the
-    /// day's pace is. The motive model reads them (<c>Cognition.Planning.MotiveModel</c>). The zeroed default changes nothing:
-    /// every weight 1, no commitment, no fallback, so a session that sets none plays as before the life core.
+    /// day's pace is. The motive model reads them (<c>Cognition.Planning.MotiveModel</c>). A zeroed tuning weighs every motive
+    /// 1, with no commitment and no fallback.
     /// </summary>
     public readonly struct LifeTuning
     {
@@ -44,8 +44,12 @@ namespace Simpiens.Simulation.Life
             FallbackDepth = from.FallbackDepth;
         }
 
-        /// <summary>The life core's numbers before any milestone sets one: every weight 1, no commitment, no fallback.</summary>
-        public static LifeTuning Default => default;
+        /// <summary>
+        /// The life core's numbers for the live game: every weight 1, no commitment, and the fallback to the next two goals (L0.6,
+        /// D4), which changes nothing while every best goal can be planned (the epic's F9). <c>default</c> is the same with no
+        /// fallback.
+        /// </summary>
+        public static LifeTuning Default => new LifeTuning(commitment: 0f, fallbackDepth: 2);
 
         /// <summary>The session's weight on every goal of <paramref name="motiveId"/>: 1 unless set (a tuning dial, and the tests' lever).</summary>
         public float MotiveWeight(int motiveId) => motiveId >= 0 && motiveId < MotiveCapacity ? 1f + _motiveBiases[motiveId] : 1f;

@@ -77,7 +77,8 @@ namespace Simpiens.Testing.Planning
         {
             var life = LifeTuning.Default;
             for (int id = 0; id < LifeTuning.MotiveCapacity; id++) Assert(life.MotiveWeight(id) == 1f, $"Motive {id}: weight 1 by default.");
-            Assert(life.Commitment == 0f && life.FallbackDepth == 0, "No commitment and no fallback by default.");
+            Assert(life.Commitment == 0f && life.FallbackDepth == 2, "No commitment by default, and the fallback to the next two goals (L0.6).");
+            Assert(default(LifeTuning).FallbackDepth == 0 && default(LifeTuning).MotiveWeight((int)Motive.Rest) == 1f, "A zeroed tuning: no fallback, every weight 1.");
             Assert(EconomyTuning.Default.Life.MotiveWeight((int)Motive.Income) == 1f, "The session's default tuning sets nothing.");
             Assert(life.MotiveWeight(-1) == 1f && life.MotiveWeight(LifeTuning.MotiveCapacity) == 1f, "An id out of range weighs 1.");
             var set = life.WithMotiveWeight((int)Motive.Income, 0.75f).WithCommitment(4f).WithFallbackDepth(2);
