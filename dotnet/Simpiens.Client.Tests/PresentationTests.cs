@@ -214,11 +214,13 @@ namespace Simpiens.Client.Tests
         }
 
         [Fact]
-        public void FramingShowsTheWholeFrameAtAWholeNumberOfPixelsPerArtPixel()
+        public void FramingIsAtAWholeNumberOfPixelsPerArtPixel()
         {
+            // The floor may run past the window (the producer, 2026-11-24; Epic LIFE-1 plan 2, T.2): framed crisp, its width fits
+            // a 1280-wide window and its height may not
             var frame = Floor1Layout.Definition.CameraFrame;
             var camera = View.Framing(TopDownProjection.Instance, frame, 1280, 720);
-            Assert.True(frame.Width * camera.PixelsPerUnit <= 1280 && frame.Height * camera.PixelsPerUnit <= 720);
+            Assert.True(frame.Width * camera.PixelsPerUnit <= 1280);
             Assert.Equal(0f, camera.PixelsPerUnit % TopDownProjection.BasePixelsPerUnit);
             Assert.True(camera.PixelsPerUnit >= TopDownProjection.BasePixelsPerUnit);
         }

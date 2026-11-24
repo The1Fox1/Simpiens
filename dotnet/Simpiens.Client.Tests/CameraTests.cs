@@ -126,22 +126,26 @@ namespace Simpiens.Client.Tests
         // In the game's window (1280x720). Since the Drowned Gallery (Epic 10 G5) Floor 1 is 42 tall, more than an 800x600
         // screen shows at 1:1: there the crisp view crops it, and zooming out shows the rest
         [Fact]
-        public void WithAPixelHeightReframeShowsTheWholeMapAtWholePixelsPerArtPixel()
+        public void WithAPixelHeightReframeStartsCrispAndZoomsOutToTheWholeMap()
         {
+            // Floor 1 runs past a 720-row window since the tavern's room (the producer, 2026-11-24; Epic LIFE-1 plan 2, T.2): the
+            // rig frames it at 1:1 on its centre, as the wider isometric outpost always was, and zooms out as far as the whole map
             var rig = new CameraRig();
             rig.Configure(Floor1Layout.Definition.CameraFrame, 1280f / 720f, 720);
-            Assert.True(rig.Size >= rig.FitSize - Eps, "The whole map is still visible.");
+            Assert.True(rig.Size < rig.FitSize, "The floor is taller than the window shows at 1:1.");
             var camera = rig.ToView(1280, 720);
             Assert.Equal(0f, camera.PixelsPerUnit % TopDownProjection.BasePixelsPerUnit, 3);
+            Assert.True(Vec2.Distance(rig.Position, rig.Frame.Center) < 1e-3f, "Framed on the map's centre.");
             rig.ZoomAt(rig.Frame.Center, 10f);
-            Assert.Equal(rig.MaxSize, rig.Size, 4); // that crisp view is the zoom-out limit
+            Assert.Equal(rig.MaxSize, rig.Size, 4);
+            Assert.True(rig.MaxSize >= rig.FitSize - Eps, "Zoomed out, the whole map shows.");
         }
     }
 
     /// <summary>The camera controls on input snapshots (Epic CLIENT M1.4): Unity's CameraController rules.</summary>
     public class CameraInputTests
     {
-        /// <summary>The game's window, where Home shows the whole of Floor 1 at 1:1 (see <see cref="CameraRigTests"/>).</summary>
+        /// <summary>The game's window, where Home frames Floor 1 at 1:1 on its centre (see <see cref="CameraRigTests"/>).</summary>
         private const int ScreenWidth = 1280, ScreenHeight = 720;
 
         private static (CameraRig rig, CameraInput input) Setup()
@@ -213,7 +217,8 @@ namespace Simpiens.Client.Tests
             Assert.True(rig.Position.X > start.X && rig.Position.Y > start.Y);
 
             Step(input, rig, default, new KeyInput { HomePressed = true });
-            Assert.Equal(rig.MaxSize, rig.Size, 4);
+            var (framed, _) = Setup();
+            Assert.Equal(framed.Size, rig.Size, 4); // as freshly framed
             Assert.True(Vec2.Distance(rig.Position, rig.Frame.Center) < 1e-3f);
 
             Assert.True(Step(input, rig, default, new KeyInput { EscapePressed = true }).StopFollowing);
