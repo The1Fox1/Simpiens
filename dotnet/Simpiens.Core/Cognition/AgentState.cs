@@ -163,6 +163,9 @@ namespace Simpiens.Cognition
 
         private Simpiens.Simulation.Life.CrawlerLife _life;
 
+        /// <summary>Eases its boredom by <paramref name="amount"/> (Epic LIFE-1 plan 2, L2.5): an activity's fill. Main thread.</summary>
+        internal void Entertain(float amount) => _life.Bore(-amount);
+
         /// <summary>
         /// Thinks <paramref name="thought"/> at <paramref name="tick"/>, naming <paramref name="subject"/> where its row names a
         /// crawler (Epic LIFE-1, L1.2, D7; the epic's A5): the one entry, called where the event happens, on the main thread.

@@ -66,6 +66,9 @@ namespace Simpiens.Core.Tests
         public void Venues() => new Simpiens.Testing.World.VenueValidator().RunAllValidationTests(); // Epic LIFE-1 plan 2, L2.3
 
         [Fact]
+        public void Recreate() => new Simpiens.Testing.Life.RecreateValidator().RunAllValidationTests(); // Epic LIFE-1 plan 2, L2.5
+
+        [Fact]
         public void Look() => new Simpiens.Testing.People.LookValidator().RunAllValidationTests();
 
         [Fact]

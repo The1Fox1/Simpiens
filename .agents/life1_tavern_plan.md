@@ -169,7 +169,7 @@ This is a working document (AGENTS.md, Documentation Protocol 6), the second of 
 - [x] **L2.4 The leisure score** (D15, without variety's and curiosity's fields: L2.7) (done 2026-11-24: `docs/life-model.md` §5.7; golden unchanged. **Deviation:** the validator is `LeisureTests` in `Simpiens.Core.Tests`, on the live outpost's snapshot, not a `LeisureValidator`) [Possibly Complex: cognition; pure, allocation-free]
   - `Leisure.Score` and `Leisure.TryChoose` (the best venue and activity a crawler knows of).
   - `LeisureValidator`: each factor moves the score its way; a closed, full or unaffordable venue scores 0; the same inputs score the same; nothing allocates.
-- [ ] **L2.5 The Recreate intent** (D14's handler) [Possibly Complex: an intent handler on the main thread; a mechanism with no goal yet, so golden is unchanged]
+- [x] **L2.5 The Recreate intent** (D14's handler) (done 2026-11-24: golden unchanged; a walk strolls among the venue's seats at half pace. **Deviation:** "struck, it stops" is the runtime's pre-emption of any intent, already proved, so `RecreateValidator` checks the handler's refusals instead) [Possibly Complex: an intent handler on the main thread; a mechanism with no goal yet, so golden is unchanged]
   - `RecreateIntent` and `RecreateIntentHandler`: walk to the seat, fill over the duration on the day's pace, think the thought at the end; the cost waits for T.5.
   - **The check:** `RecreateValidator`, with a forced intent: a crawler walks to the Garden, walks 45 game minutes, comes back with its fun up and the thought held; struck, it stops.
 - [ ] **L2.6 Recreate** (D14) [Possibly Complex: a GOAP goal, action and fact; a behaviour change, golden re-recorded in its own commit]
