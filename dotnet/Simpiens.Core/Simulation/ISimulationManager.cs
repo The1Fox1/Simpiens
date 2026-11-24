@@ -104,6 +104,9 @@ namespace Simpiens.Simulation
 
         /// <summary>An item served at a venue, with its price (Epic LIFE-1 plan 2, T.5): the tavern's takings, observed.</summary>
         event System.Action<EntityId, Simpiens.Simulation.Economy.ItemType, uint> Served;
+
+        /// <summary>The simulation's seed (Epic LIFE-1 plan 2, W.2: a want's roll on waking is on it).</summary>
+        ulong Seed { get; }
         string FirstIntentFault { get; }
     }
 }

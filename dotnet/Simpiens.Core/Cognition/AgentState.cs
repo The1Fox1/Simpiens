@@ -176,6 +176,58 @@ namespace Simpiens.Cognition
         /// <summary>It woke from a night's sleep (L2.7): every variety group eased. Main thread.</summary>
         internal void EaseVariety(int amount) => _life.EaseVariety(amount);
 
+        /// <summary>Set when it wakes from a bunk's sleep, taken by the runtime that tick: a want may arise then (plan 2, W.2). Unsaved.</summary>
+        public bool JustWoke { get; set; }
+
+        /// <summary>
+        /// Wants <paramref name="want"/> from <paramref name="tick"/> (Epic LIFE-1 plan 2, W.2, D20): the one entry, on the main
+        /// thread, naming the activity, the venue (its index, or -1) and the friend it is for. Returns whether it was held.
+        /// </summary>
+        internal bool Want(Simpiens.Simulation.Life.Want want, uint tick, Simpiens.Simulation.Life.Activity activity = Simpiens.Simulation.Life.Activity.None, int venue = -1, EntityId friend = default)
+        {
+            var row = Simpiens.Simulation.Life.WantTable.Get(want);
+            if (row == null) return false;
+            var slot = new Simpiens.Simulation.Life.WantSlot
+            {
+                Want = (ushort)want,
+                Activity = (byte)activity,
+                Venue = (byte)(venue >= 0 ? venue + 1 : 0),
+                ExpiresAt = tick + (uint)(row.Hours * Simpiens.Simulation.DayClock.TicksPerHour),
+                Friend = friend,
+            };
+            return Simpiens.Simulation.Life.WantRules.Add(ref _life, slot);
+        }
+
+        /// <summary>Clears the wants run out at <paramref name="tick"/>, thinking each one's thought (W.2). Main thread.</summary>
+        internal void ExpireWants(uint tick)
+        {
+            System.Span<Simpiens.Simulation.Life.WantSlot> expired = stackalloc Simpiens.Simulation.Life.WantSlot[Simpiens.Simulation.Life.CrawlerLife.WantCapacity];
+            int n = Simpiens.Simulation.Life.WantRules.Expire(ref _life, tick, expired);
+            for (int i = 0; i < n; i++)
+            {
+                var row = Simpiens.Simulation.Life.WantTable.Get((Simpiens.Simulation.Life.Want)expired[i].Want);
+                if (row != null && row.Expired != Simpiens.Simulation.Life.Thought.None) Think(row.Expired, tick, expired[i].Friend);
+            }
+        }
+
+        /// <summary>A spell of <paramref name="activity"/> at venue <paramref name="venue"/> ended: the wants it answers come true, each thinking its thought (W.3). Main thread.</summary>
+        internal void FulfilWants(Simpiens.Simulation.Life.Activity activity, int venue, uint tick)
+        {
+            System.Span<Simpiens.Simulation.Life.WantSlot> fulfilled = stackalloc Simpiens.Simulation.Life.WantSlot[Simpiens.Simulation.Life.CrawlerLife.WantCapacity];
+            int n = Simpiens.Simulation.Life.WantRules.Fulfil(ref _life, activity, venue, tick, fulfilled);
+            for (int i = 0; i < n; i++)
+            {
+                var row = Simpiens.Simulation.Life.WantTable.Get((Simpiens.Simulation.Life.Want)fulfilled[i].Want);
+                if (row != null && row.Fulfilled != Simpiens.Simulation.Life.Thought.None) Think(row.Fulfilled, tick);
+            }
+        }
+
+        /// <summary>It talked with <paramref name="friend"/>: a want to see it comes true (W.3). Main thread.</summary>
+        internal void Saw(EntityId friend, uint tick)
+        {
+            if (Simpiens.Simulation.Life.WantRules.Saw(ref _life, friend, tick)) Think(Simpiens.Simulation.Life.Thought.SawAFriend, tick, friend);
+        }
+
         /// <summary>
         /// Thinks <paramref name="thought"/> at <paramref name="tick"/>, naming <paramref name="subject"/> where its row names a
         /// crawler (Epic LIFE-1, L1.2, D7; the epic's A5): the one entry, called where the event happens, on the main thread.

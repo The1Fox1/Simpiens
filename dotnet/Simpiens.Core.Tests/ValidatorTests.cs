@@ -75,6 +75,9 @@ namespace Simpiens.Core.Tests
         public void TavernMenu() => new Simpiens.Testing.Economy.TavernMenuValidator().RunAllValidationTests(); // Epic LIFE-1 plan 2, T.3
 
         [Fact]
+        public void Wants() => new Simpiens.Testing.Life.WantsValidator().RunAllValidationTests(); // Epic LIFE-1 plan 2, W.1-W.3
+
+        [Fact]
         public void Look() => new Simpiens.Testing.People.LookValidator().RunAllValidationTests();
 
         [Fact]

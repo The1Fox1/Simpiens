@@ -29,11 +29,24 @@ namespace Simpiens.Simulation.Life
         private EntityId _first;
     }
 
-    /// <summary>The wants' room, at 192 (D6: three slots of 24 bytes, laid out at plan 2's W.2): zeros until then.</summary>
-    [InlineArray(CrawlerLife.WantBytes)]
-    public struct LifeWantsRoom
+    /// <summary>
+    /// One want held (Epic LIFE-1 plan 2, W.2, D20): which want, the activity and the venue (its index plus one) it is for, the
+    /// tick it runs out at, and the friend it names. 24 bytes; an empty slot is all zeros.
+    /// </summary>
+    [StructLayout(LayoutKind.Sequential)]
+    public struct WantSlot
     {
-        private byte _first;
+        public ushort Want;
+        public byte Activity;
+        public byte Venue;
+        public uint ExpiresAt;
+        public EntityId Friend;
+    }
+
+    [InlineArray(CrawlerLife.WantCapacity)]
+    public struct WantSlots
+    {
+        private WantSlot _first;
     }
 
     /// <summary>Plan 3's room for weariness and the last windfall (D6), at 268: zeros until then.</summary>
@@ -86,8 +99,9 @@ namespace Simpiens.Simulation.Life
         public const int ThoughtCapacity = 16;
         public const int SubjectCapacity = 4;
 
-        /// <summary>The wants' room: three slots of 24 bytes (D6).</summary>
-        public const int WantBytes = 72;
+        /// <summary>The wants: three slots of 24 bytes (D6).</summary>
+        public const int WantCapacity = 3;
+        public const int WantBytes = WantCapacity * 24;
 
         /// <summary>Variety's groups: a byte each (<c>VarietyGroup</c>).</summary>
         public const int VarietyGroups = 8;
@@ -101,7 +115,7 @@ namespace Simpiens.Simulation.Life
 
         private ThoughtSlots _thoughts;    //   0: 128
         private ThoughtSubjects _subjects; // 128: 64
-        private LifeWantsRoom _wants;      // 192: 72
+        private WantSlots _wants;          // 192: 72
         private float _boredom;            // 264: 4
         private LifeRhythmRoom _rhythm;    // 268: 8 (plan 3)
         private byte _intention;           // 276 (plan 3)
@@ -129,6 +143,16 @@ namespace Simpiens.Simulation.Life
         public void SetSubject(int slot, EntityId id)
         {
             if (slot >= 1 && slot <= SubjectCapacity) _subjects[slot - 1] = id;
+        }
+
+        // --- Wants (plan 2's W.2, D20) ---
+
+        /// <summary>The want slot at <paramref name="index"/> (0 to 2); an empty one out of range.</summary>
+        public readonly WantSlot WantAt(int index) => (uint)index < WantCapacity ? _wants[index] : default;
+
+        public void SetWant(int index, in WantSlot slot)
+        {
+            if ((uint)index < WantCapacity) _wants[index] = slot;
         }
 
         // --- Fun (plan 2's L2.1, D11) ---

@@ -176,6 +176,13 @@ namespace Simpiens.Cognition
             }
             if (!wasCollapsed && State.IsExhaustionCollapsed) State.Think(Simpiens.Simulation.Life.Thought.SleptOnTheFloor, (uint)currentTick); // collapsed where it stood (Epic LIFE-1, L1.2)
             FeelMood(currentTick);
+            if (State.JustWoke)
+            {
+                // Woken: old wants run out, and a new one may arise (Epic LIFE-1 plan 2, W.2, D20)
+                State.JustWoke = false;
+                State.ExpireWants((uint)currentTick);
+                if (_simulationManager != null) Wanting.OnWaking(State, _spatialPartition?.GetActiveSnapshot(), _simulationManager.Economy, _simulationManager.Seed, (uint)currentTick);
+            }
 
             // Sent for a fallen mate (Epic 10 Part 3, K7.2c, D42): once its last decision has landed, it drops what it does
             var carry = State.Expedition.Carry;

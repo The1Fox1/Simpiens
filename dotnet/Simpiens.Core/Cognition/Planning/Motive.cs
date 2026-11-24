@@ -24,6 +24,8 @@ namespace Simpiens.Cognition.Planning
         Leave = 9,
         /// <summary>Fun: what boredom asks for (Epic LIFE-1 plan 2, L2.1, D11); Recreate's, from L2.6.</summary>
         Fun = 10,
+        /// <summary>A want: a goal with a reason (Epic LIFE-1 plan 2, W.3, D20); FulfilWant's.</summary>
+        Want = 11,
     }
 
     /// <summary>

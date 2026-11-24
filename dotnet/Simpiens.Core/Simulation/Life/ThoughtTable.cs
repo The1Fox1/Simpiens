@@ -64,6 +64,18 @@ namespace Simpiens.Simulation.Life
         ASupperAtTheTavern = 26,
         /// <summary>A game of dice ended.</summary>
         AGameOfDice = 27,
+        // A want come true, or run out (plan 2's W.1, D20)
+        HadMyTavernSupper = 28,
+        MissedMySupper = 29,
+        ANightOfDice = 30,
+        NoDiceTonight = 31,
+        AQuietWalk = 32,
+        NoTimeToMyself = 33,
+        /// <summary>It saw the friend it wanted to (names the friend).</summary>
+        SawAFriend = 34,
+        /// <summary>It never saw the friend it wanted to (names the friend).</summary>
+        MissedAFriend = 35,
+        TriedSomewhereNew = 36,
     }
 
     /// <summary>What a thought is about: a need met or missed, an event in its life, or another crawler.</summary>
@@ -178,6 +190,16 @@ namespace Simpiens.Simulation.Life
                 new ThoughtDefinition(Thought.AnAleAtTheTavern, "AnAleAtTheTavern", "An ale at the tavern", 3, 8, 2, 0.5f, ThoughtKind.Event),
                 new ThoughtDefinition(Thought.ASupperAtTheTavern, "ASupperAtTheTavern", "A supper at the tavern", 4, 10, 1, 1f, ThoughtKind.Need),
                 new ThoughtDefinition(Thought.AGameOfDice, "AGameOfDice", "A game of dice", 4, 8, 2, 0.5f, ThoughtKind.Event),
+                // A want come true, or run out (plan 2's W.1, D20): a little more than the activity's own, a little less when missed
+                new ThoughtDefinition(Thought.HadMyTavernSupper, "HadMyTavernSupper", "Had my tavern supper", 5, 24, 1, 1f, ThoughtKind.Event),
+                new ThoughtDefinition(Thought.MissedMySupper, "MissedMySupper", "Missed my supper", -2, 12, 1, 1f, ThoughtKind.Event),
+                new ThoughtDefinition(Thought.ANightOfDice, "ANightOfDice", "A night of dice", 5, 24, 1, 1f, ThoughtKind.Event),
+                new ThoughtDefinition(Thought.NoDiceTonight, "NoDiceTonight", "No dice tonight", -2, 12, 1, 1f, ThoughtKind.Event),
+                new ThoughtDefinition(Thought.AQuietWalk, "AQuietWalk", "A quiet walk", 3, 24, 1, 1f, ThoughtKind.Event),
+                new ThoughtDefinition(Thought.NoTimeToMyself, "NoTimeToMyself", "No time to myself", -1, 12, 1, 1f, ThoughtKind.Event),
+                new ThoughtDefinition(Thought.SawAFriend, "SawAFriend", "Saw {0}", 4, 24, 1, 1f, ThoughtKind.Social),
+                new ThoughtDefinition(Thought.MissedAFriend, "MissedAFriend", "Missed {0}", -3, 24, 1, 1f, ThoughtKind.Social),
+                new ThoughtDefinition(Thought.TriedSomewhereNew, "TriedSomewhereNew", "Somewhere new", 4, 24, 1, 1f, ThoughtKind.Event),
             };
             var byId = new ThoughtDefinition[Capacity];
             foreach (var row in rows)

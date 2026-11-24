@@ -81,6 +81,8 @@ namespace Simpiens.Simulation.Social
                                 agentB.Social = SimMath.Min(100f, agentB.Social + 25f);
                                 agentA.Think(Simpiens.Simulation.Life.Thought.AGoodTalk, (uint)currentTick); // a good talk, both (Epic LIFE-1, L1.2)
                                 agentB.Think(Simpiens.Simulation.Life.Thought.AGoodTalk, (uint)currentTick);
+                                agentA.Saw(agentB.AgentId, (uint)currentTick); // a want to see the other comes true (plan 2, W.3)
+                                agentB.Saw(agentA.AgentId, (uint)currentTick);
 
                                 agentA.TriggerGossipVisual(currentTick);
                                 agentB.TriggerGossipVisual(currentTick);
@@ -188,6 +190,8 @@ namespace Simpiens.Simulation.Social
                                 agentB.Social = SimMath.Min(100f, agentB.Social + 25f);
                                 agentA.Think(Simpiens.Simulation.Life.Thought.AGoodTalk, (uint)currentTick); // a good talk, both (Epic LIFE-1, L1.2)
                                 agentB.Think(Simpiens.Simulation.Life.Thought.AGoodTalk, (uint)currentTick);
+                                agentA.Saw(agentB.AgentId, (uint)currentTick); // a want to see the other comes true (plan 2, W.3)
+                                agentB.Saw(agentA.AgentId, (uint)currentTick);
                                 agentA.TriggerGossipVisual(currentTick);
                                 agentB.TriggerGossipVisual(currentTick);
 

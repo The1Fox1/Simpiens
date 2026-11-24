@@ -54,6 +54,7 @@ namespace Simpiens.Cognition.Planning.Handlers
             if (state.ElapsedTime < row.Minutes * DayClock.TicksPerMinute * context.FixedTickDeltaTime) return IntentResult.InProgress;
             if (row.Thought != Thought.None) agent.Think(row.Thought, context.CurrentTick);
             agent.Spent((int)row.Group, recreate.VenueIndex, Leisure.TirePerSpell); // its group tired, its venue tried (L2.7)
+            agent.FulfilWants(row.Id, recreate.VenueIndex, context.CurrentTick); // the wants it answers come true (W.3)
             agent.VisualState = AgentVisualState.Idle;
             return IntentResult.Success;
         }

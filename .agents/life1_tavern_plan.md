@@ -208,16 +208,16 @@ This is a working document (AGENTS.md, Documentation Protocol 6), the second of 
 
 ### L1w. Wants (3–4 days)
 **Complexity:** Very Complex as a phase by bundling (saved fields, a draw, a goal, the client). Split into four steps, each Basic or Possibly Complex.
-- [ ] **W.1 The want table** (D20) [Basic: a table with its validator and names test; nothing reads it yet]
+- [x] **W.1 The want table** (D20) (done 2026-11-24, with W.2–W.4 in one commit: five wants, nine thoughts (28–36), `WantsValidator`, `WantNamesTests`) [Basic: a table with its validator and names test; nothing reads it yet]
   - `Want`, `WantDefinition`, `WantTable`; the wants' thoughts as `ThoughtTable` rows.
   - `WantsValidator`; `WantNamesTests`. AGENTS.md: "Adding a want".
-- [ ] **W.2 Wants arise and end** (D20) [Possibly Complex: saved fields, a draw on its own salt, events on the main thread; golden re-recorded in its own commit]
+- [x] **W.2 Wants arise and end** (D20) (done 2026-11-24: three slots at 192; one roll on waking a game day on `SimRandomSalt.Wants`, a 60% chance among the wants whose triggers hold (`Wanting`); lazy expiry on waking with its thought) [Possibly Complex: saved fields, a draw on its own salt, events on the main thread; golden re-recorded in its own commit]
   - The three slots, `AgentState.Want`, the waking roll and the event triggers, lazy expiry with its thought; `OutpostWatch` tallies wants arisen, fulfilled and expired.
   - **The checks:** the round trip; a validator of each trigger and of expiry.
-- [ ] **W.3 Fulfilling a want** (D20) [Possibly Complex: a GOAP goal, action and fact; a behaviour change, golden re-recorded in its own commit]
+- [x] **W.3 Fulfilling a want** (D20) (done 2026-11-24: `FulfilWantGoal`, `FulfilWantAction`, the fact `WantMet` (50 of 64); a spell's end fulfils the wants it answers. **Deviation:** a want to see a friend is fulfilled when the two talk, not pursued: every pair meets daily (§3.1)) [Possibly Complex: a GOAP goal, action and fact; a behaviour change, golden re-recorded in its own commit]
   - `FulfilWantGoal`, `FulfilWantAction`, the fact `WantMet` (50 of 64); fulfilment at the activity's end, or at meeting the friend.
   - **The checks:** `MotiveValidator`'s row; a validator that a want pulls its crawler to its venue over a nearer one; the gate seeds' day holds.
-- [ ] **W.4 Wants on screen** (D23) [Possibly Complex: presentation models and Gum; renders re-recorded]
+- [x] **W.4 Wants on screen** (D23) (done 2026-11-24: the Mind tab lists wants after the thoughts, "Wants: a tavern supper · 9 h left"; renders re-recorded with the batch) [Possibly Complex: presentation models and Gum; renders re-recorded]
   - The Mind tab lists wants with their time left; `MindModel` and `LifeTexts` gain them.
   - **The checks:** `LifeModelsTests`; the Mind tab's render re-recorded in the pinned image.
 

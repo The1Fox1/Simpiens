@@ -65,6 +65,16 @@ namespace Simpiens.Client.Tests
             Assert.Equal("Starving", hungry.Reason);
             Assert.Equal(MoodBand.Low, hungry.Band);
 
+            // A want (Epic LIFE-1 plan 2, W.4): listed after the thoughts, with its time left, never the reason
+            var wanting = Crawler(new AgentNeeds(30f, 80f, 60f));
+            var life = wanting.Life;
+            WantRules.Add(ref life, new WantSlot { Want = (ushort)Want.SeeAFriend, ExpiresAt = (uint)(now + 9 * DayClock.TicksPerHour), Friend = Bram });
+            wanting.Life = life;
+            var wants = new MindModel();
+            wants.Refresh(wanting, now, Names);
+            Assert.Equal("Wants: to see Bram · 9 h left", wants.Lines[wants.Lines.Count - 1].Text);
+            Assert.NotEqual("to see Bram", wants.Reason);
+
             var none = new MindModel();
             none.Refresh(null, now, Names);
             Assert.False(none.HasCrawler);

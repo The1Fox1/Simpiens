@@ -35,6 +35,7 @@ namespace Simpiens.Presentation.Dashboard
             [typeof(ReadManualGoal)] = "Read its primer",
             [typeof(DrillGoal)] = "Drill at the yard", // Epic 11, S3.4
             [typeof(RecreateGoal)] = "Enjoy some free time", // Epic LIFE-1 plan 2, L2.6
+            [typeof(FulfilWantGoal)] = "Do what it wants", // W.3
             [typeof(RestGoal)] = "Rest",
             [typeof(SatiateHungerGoal)] = "Satisfy hunger",
             [typeof(SocializeGoal)] = "Socialize",
@@ -50,6 +51,7 @@ namespace Simpiens.Presentation.Dashboard
             [typeof(ReadManualAction)] = "Reading by the hearth",
             [typeof(DrillAction)] = "Drilling at the yard", // Epic 11, S3.4
             [typeof(RecreateAction)] = "Enjoying some free time", // Epic LIFE-1 plan 2, L2.6
+            [typeof(FulfilWantAction)] = "Doing what it wanted", // W.3
             [typeof(ClaimBountyAction)] = "Claiming a bounty",
             [typeof(ClaimGatherBountyAction)] = "Claiming a gather bounty",
             [typeof(ClaimScoutBountyAction)] = "Claiming a scout bounty",

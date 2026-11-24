@@ -133,6 +133,45 @@ namespace Simpiens.Cognition.Planning
             return venueIndex >= 0;
         }
 
+        /// <summary>
+        /// The best spell that answers a want <paramref name="context"/>'s crawler holds (Epic LIFE-1 plan 2, W.3, D20): for an
+        /// activity's want, that activity at a venue offering it (the one it names, if any); for a venue's, any recreation there.
+        /// Ranked by the want's strength times the leisure score; <paramref name="pull"/> is that product. A want to see a friend
+        /// is answered by meeting it, not here.
+        /// </summary>
+        public static bool TryChooseForWants(AgentContext context, out int venueIndex, out Activity activity, out int seat, out float pull)
+        {
+            venueIndex = -1;
+            activity = Activity.None;
+            seat = -1;
+            pull = 0f;
+            var map = context.Snapshot?.Map;
+            if (map == null) return false;
+            var life = context.Life;
+            for (int w = 0; w < CrawlerLife.WantCapacity; w++)
+            {
+                var slot = life.WantAt(w);
+                var row = WantTable.Get((Want)slot.Want);
+                if (row == null || context.CurrentTick >= slot.ExpiresAt || row.Target == WantTarget.Friend) continue;
+                for (int v = 0; v < map.Venues.Count; v++)
+                {
+                    if (slot.Venue != 0 && slot.Venue != v + 1) continue;
+                    for (int a = 1; a < ActivityTable.Capacity; a++)
+                    {
+                        if (row.Target == WantTarget.Activity && a != slot.Activity) continue;
+                        if (!map.Venues[v].Offers((Activity)a)) continue;
+                        float value = row.Strength * Score(context, v, (Activity)a, out int at);
+                        if (value <= pull) continue;
+                        pull = value;
+                        venueIndex = v;
+                        activity = (Activity)a;
+                        seat = at;
+                    }
+                }
+            }
+            return venueIndex >= 0;
+        }
+
         /// <summary>How <paramref name="personality"/> leans toward an activity of <paramref name="lean"/>: 1 for a neutral nature.</summary>
         public static float Lean(in AgentPersonality personality, ActivityLean lean) => lean switch
         {
