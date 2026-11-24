@@ -31,6 +31,7 @@ namespace Simpiens.Core.Tests
             ["Simpiens.Core/Simulation/SimulationManager.cs"] = "a downing survived, a kill, a band reached, a creature's blow",
             ["Simpiens.Core/Simulation/SimulationManager.Lodging.cs"] = "a friend's death, for each who grieves",
             ["Simpiens.Core/Cognition/Planning/Handlers/CarryIntentHandler.cs"] = "a rescue: the rescuer's and the rescued's",
+            ["Simpiens.Presentation/Art/People/MoodRule.cs"] = "reads a friend's death, held, for the grieving face (Epic LIFE-1, L1.6); thinks nothing",
         };
 
         private static readonly string[] Projects = { "Simpiens.Core", "Simpiens.Presentation", "Simpiens.Client", "Simpiens.Hosting" };
@@ -54,7 +55,7 @@ namespace Simpiens.Core.Tests
 
             var offenders = naming.Keys.Where(f => !Allowed.ContainsKey(f)).OrderBy(f => f).Select(f => $"{f} ({string.Join(", ", naming[f])})").ToList();
             var stale = Allowed.Keys.Where(f => !naming.ContainsKey(f)).OrderBy(f => f).ToList();
-            var thought = naming.Where(kv => kv.Key != "Simpiens.Core/Simulation/Life/ThoughtTable.cs").SelectMany(kv => kv.Value).ToHashSet();
+            var thought = naming.Where(kv => kv.Key != "Simpiens.Core/Simulation/Life/ThoughtTable.cs" && kv.Key != "Simpiens.Presentation/Art/People/MoodRule.cs").SelectMany(kv => kv.Value).ToHashSet(); // the table and the face read thoughts; they think none
             var unthought = Simpiens.Simulation.Life.ThoughtTable.All.Select(t => t.Id.ToString()).Where(n => !thought.Contains(n)).ToList();
             Assert.True(offenders.Count == 0, "Think a thought where its event happens, and list the place here: " + string.Join("; ", offenders));
             Assert.True(stale.Count == 0, "These files no longer name thoughts; take them off the list: " + string.Join("; ", stale));
