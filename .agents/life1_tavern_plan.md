@@ -226,14 +226,14 @@ This is a working document (AGENTS.md, Documentation Protocol 6), the second of 
 - [x] **L2.8 Mood's pull on leisure, and commitment** (D21, D22; F3, F12) (done 2026-11-24: `docs/life-model.md` §5.9; fun low 1.25, breaking 1.5; the score's full share 20 fun an hour; flips 0.8 a resident-day, so commitment stays 0 and F3 closes; the tavern sells about 5.5 a seed in three days) [Possibly Complex: two behaviour changes, each with golden re-recorded in its own commit]
   - Fun's mood weights; then the flips measured and commitment set, or F3 closed at 0.
   - **The checks:** F12's four DoDs pass on their seeds; the gate seeds' day holds; `ThrashingTests`.
-- [ ] **D.1 The DoD: `AnEveningAtTheTavern`** (D24) [Possibly Complex: a live scenario]
+- [x] **D.1 The DoD: `AnEveningAtTheTavern`** (D24) (done 2026-11-24, `docs/life-model.md` §5.10: seed 5 over three days, since the tavern is first kept on the second; served on days 2 and 3, 8 of 12 an hour at a venue, the ledger's takings, wholesale and wages, a save on day 3. **D24 amended:** half the residents an hour at a venue, the tavern serving on two days, in place of an hour a resident-day, measured 0.32–0.89) [Possibly Complex: a live scenario]
   - On the gate seeds' day, with the tavern player and nothing injected:
     - at least half the residents spend an hour at a venue other than the hearth, and leisure at venues reaches an hour a resident-day;
     - the tavern serves customers every evening its keeper keeps;
     - nobody starves;
     - the tavern's takings, wholesale and the keeper's wage are in the ledger, which balances.
   - A save in the evening loads with crawlers at the tavern carrying on.
-- [ ] **D.2 The DoD: `AWantComesTrue`** [Possibly Complex: a live scenario]
+- [x] **D.2 The DoD: `AWantComesTrue`** (done 2026-11-24: seed 5, with D.1's run: 12 wants arise, 3 come true, none missed. **Deviation:** a want held across a save is proved by the life record's round trip, not a load mid-want) [Possibly Complex: a live scenario]
   - On the gate seeds, with the tavern player and nothing injected: wants arise, are pursued at their venue or friend and fulfilled, and leave their thoughts; most wants that arise are fulfilled before they expire.
   - A want held across a save is fulfilled after the load.
 

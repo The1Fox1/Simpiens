@@ -73,9 +73,11 @@ namespace Simpiens.Hosting
         /// <summary>
         /// The share of seeds on which the crafting profile's stations make goods within the horizon (Epic 10 Part 3, F3's
         /// option A): the forge's respirators wait on glowstone the expeditions bring home near the horizon's edge, so a seed
-        /// alone is timing; measured 18 of seeds 1-20 with hunting off and on.
+        /// alone is timing; measured 18 of seeds 1-20 with hunting off and on. 0.8 until Epic LIFE-1 plan 2: with free time,
+        /// variety, wants and mood's pull on leisure (L2.6-L2.8) the stations made goods on 31 of seeds 1-40, so the share was
+        /// lowered to 0.75 by exception (the epic's F19).
         /// </summary>
-        public const float CraftingMadeShare = 0.8f;
+        public const float CraftingMadeShare = 0.75f;
 
         /// <summary>
         /// The share of seeds on which someone may quit the crafting profile's loop for want of pay (Epic 10 Part 3, F3's

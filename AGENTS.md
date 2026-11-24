@@ -246,6 +246,15 @@ CI (`.github/workflows/dotnet.yml`) runs the tests (the client's in the pinned i
 - **Nothing else:** building, hiring, the station window's words and the cost follow from the row; code asks the row, never the kind (a scripted player or the drill may find a station by its kind).
 - **The checks:** `StationsValidator` (a row for every kind; recipes where the book has them; words and costs read from the rows); `ArtCompletenessTests`.
 
+### Adding a want
+- **A want is a row** (Epic LIFE-1 plan 2, W.1, D20): a goal with a reason, held in one of the life record's three want slots.
+  1. A `Want` value (a `ushort`, under `WantTable.Capacity`). Never reuse one: a want slot holds it, and the save.
+  2. Its row in `WantTable`: the player's words ("{0}" for the friend it names), its `WantTrigger`, its `WantTarget` (an activity, a venue or a friend) and its activity, how long it lasts in game hours, its strength, and the thoughts it leaves when it comes true and when it runs out.
+  3. The two thoughts' rows in `ThoughtTable`.
+  4. A new trigger is a `WantTrigger` value and its case in `Wanting.OnWaking`.
+- **Nothing else:** arising on waking (one roll a game day on `SimRandomSalt.Wants`), lazy expiry, `FulfilWantGoal`'s pull to the spell that answers it, fulfilment at the spell's end (or meeting the friend), the thoughts, the save and the Mind tab follow.
+- **The checks:** `WantsValidator` (the table, the rules, the entries); `WantNamesTests` (code names a want only in the table and the places listed there).
+
 ### Adding a venue
 - **A venue is map data** (Epic LIFE-1 plan 2, L2.3, D13; after The Sims' smart objects: what a place offers lives in the place): a line in the layout, `MapDefinitionBuilder.Venue`: its key, centre and radius, its seats (where a crawler stands or sits at an activity; free when no one is within `VenueDefinition.SeatRadius`), the activities it offers, its hours (a `ShiftBlocks` mask, every block by default), who may come (`VenueAccess`), and the key of a station it needs standing.
 - **Nothing else:** which venues are open (`VenueRules.OpenMask`, in the snapshot's `OpenVenueMask`), Recreate's choice among them and the spell at a seat follow. At most 32 a map.
