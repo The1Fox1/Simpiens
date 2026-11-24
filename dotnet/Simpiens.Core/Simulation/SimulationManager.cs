@@ -205,6 +205,11 @@ namespace Simpiens.Simulation
         /// <inheritdoc/>
         public event Action<AgentState, Simpiens.Simulation.Skills.Skill, int, Simpiens.Simulation.Skills.PracticeSource> Practised;
 
+        /// <summary>An item served at a venue, with its price (Epic LIFE-1 plan 2, T.5): the tavern's takings, observed. Nothing in the rules reads it.</summary>
+        public event Action<EntityId, ItemType, uint> Served;
+
+        void IIntentExecutionContext.RecordServed(EntityId crawler, ItemType item, uint price) => Served?.Invoke(crawler, item, price);
+
         public void Practise(AgentState agent, in Simpiens.Simulation.Skills.SkillWork work, int experience, in Simpiens.Simulation.Skills.PracticeSource source)
         {
             if (agent == null || experience <= 0) return;

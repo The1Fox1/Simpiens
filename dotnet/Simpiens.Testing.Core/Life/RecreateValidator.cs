@@ -1,6 +1,8 @@
 using System;
 using Simpiens.Cognition;
 using Simpiens.Cognition.Contracts;
+using Simpiens.Cognition.Inventory;
+using Simpiens.Simulation.Items;
 using Simpiens.Core.Session.Layouts;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Economy;
@@ -25,7 +27,8 @@ namespace Simpiens.Testing.Life
             ValidateAWalk();
             ValidateABrowse();
             ValidateTheRefusals();
-            TestLog.Log("<color=green>[RecreateValidator] ALL 3 TESTS PASSED SUCCESSFULLY!</color>");
+            ValidateASupperAtTheTavern();
+            TestLog.Log("<color=green>[RecreateValidator] ALL 4 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateAWalk()
@@ -71,6 +74,53 @@ namespace Simpiens.Testing.Life
             Assert(Run(sim, far, new RecreateIntent(far.Node.Id, garden, Activity.Walk, 9, null)) == IntentResult.TargetMissing, "No such seat.");
             Assert(Run(sim, far, new RecreateIntent(far.Node.Id, 31, Activity.Walk, 0, null)) == IntentResult.TargetMissing, "No such venue.");
             Assert(Run(sim, far, new RecreateIntent(far.Node.Id, Venue(Floor1Layout.HearthVenue), Activity.Fireside, 0, null)) == IntentResult.TargetMissing, "The fireside isn't Recreate's.");
+        }
+
+        /// <summary>
+        /// A supper at the tavern (plan 2's T.5, D19): its stew bought from the stall's stock as it begins, 10g to the treasury
+        /// through the ledger, one off the shelf, its meal eaten, its thought thought, told as served; with none in stock, or a
+        /// purse short of its price, refused with nothing changed.
+        /// </summary>
+        private void ValidateASupperAtTheTavern()
+        {
+            var registry = new WorldRegistry();
+            var ledger = new EconomyLedger();
+            var sectors = new SectorRegistry();
+            sectors.Load(Floor1Layout.Definition);
+            var sim = new SimulationManager(registry, null, sectors: sectors, economyLedger: ledger);
+            sim.SetEconomy(EconomyTuning.Default);
+            var goods = new System.Collections.Generic.List<StallGood>(TradeStallData.GoodsCapacity);
+            EconomyTuning.Default.StallGoods(goods);
+            var stall = new TradeStallData(EntityId.Generate(), Vec2.Zero, 100, 3f);
+            foreach (var good in goods) stall = stall.WithGood(good);
+            sim.RegisterTradeStall(stall.WithStock(ItemType.Stew, 1));
+            ledger.RecordFaucet(100, "InitialSeed");
+            int served = 0;
+            uint takings = 0;
+            sim.Served += (who, item, price) => { served++; takings += price; };
+
+            int tavern = Venue(Floor1Layout.TavernVenue);
+            var seat = Floor1Layout.Definition.Venues[tavern].Seats[0];
+            var crawler = HeadlessEntities.Crawler(registry, sim, null, seat, id: EntityId.Generate());
+            crawler.Agent.Inventory.Gold = 25;
+            crawler.Agent.Hunger = 50f;
+            ledger.RecordFaucet(25, "InitialSeed");
+            var state = new ActiveIntentState { Intent = new RecreateIntent(crawler.Node.Id, tavern, Activity.Supper, 0, null), CurrentWaypointIndex = 0, LastSampledPosition = seat };
+            var result = sim.RunToCompletion(crawler.Node, state, 45 * DayClock.TicksPerMinute + 5);
+            var after = sim.ActiveStalls[0];
+            Assert(result == IntentResult.Success, $"A supper ends ({result}).");
+            Assert(crawler.Agent.Inventory.Gold == 15 && after.TreasuryGold == 110 && after.SellStockOf(ItemType.Stew) == 0, "10g to the treasury, the stew off the shelf.");
+            Assert(Math.Abs(crawler.Agent.Hunger - 10f) < 0.01f && ThoughtRules.Holds(crawler.Agent.Life, Thought.ASupperAtTheTavern, sim.CurrentTick), "Its meal eaten, its thought thought.");
+            Assert(crawler.Agent.Inventory.CountOf(ItemCategory.Served) == 0, "Served and taken there: nothing in the pack.");
+            Assert(served == 1 && takings == 10, $"Told as served at its price ({served}, {takings}g).");
+            Assert(ledger.ValidateConservation(after.TreasuryGold + (uint)crawler.Agent.Inventory.Gold, 0, out int discrepancy), $"The ledger balances ({discrepancy}g).");
+
+            var again = new ActiveIntentState { Intent = new RecreateIntent(crawler.Node.Id, tavern, Activity.Supper, 0, null), CurrentWaypointIndex = 0, LastSampledPosition = seat };
+            Assert(sim.ExecuteIntent(crawler.Node, again) == IntentResult.Failed && crawler.Agent.Inventory.Gold == 15, "None left: refused, nothing paid.");
+            sim.UpdateStall(sim.ActiveStalls[0].WithStock(ItemType.Stew, 3));
+            crawler.Agent.Inventory.Gold = 5;
+            var poor = new ActiveIntentState { Intent = new RecreateIntent(crawler.Node.Id, tavern, Activity.Supper, 0, null), CurrentWaypointIndex = 0, LastSampledPosition = seat };
+            Assert(sim.ExecuteIntent(crawler.Node, poor) == IntentResult.Failed && sim.ActiveStalls[0].SellStockOf(ItemType.Stew) == 3, "Short of its price: refused, the stock untouched.");
         }
 
         private static IntentResult Run(SimulationManager sim, TestCrawler crawler, RecreateIntent intent)
