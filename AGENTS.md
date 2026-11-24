@@ -231,6 +231,15 @@ CI (`.github/workflows/dotnet.yml`) runs the tests (the client's in the pinned i
 - **Nothing else:** holding, stacking, expiry, mood, the face, the mood line, the dossier's Mind and Today follow.
 - **The checks:** `ThoughtsValidator` (the table and its bounds); `ThoughtNamesTests` (code names a thought only in the table and at the places listed there, and every row is thought somewhere: list the new place).
 
+### Adding an activity
+- **An activity is a row** (Epic LIFE-1 plan 2, L2.2, D12): a way to spend free time, which venues offer and Recreate scores.
+  1. An `Activity` value (a byte, under `ActivityTable.Capacity`). Never reuse one: venues' data and a want's target name it.
+  2. Its row in `ActivityTable`: the player's words (Latin-1), fun and company filled a game hour, hunger eased once at its start, how long a spell lasts in game minutes, the item served for it (none if free), its `VarietyGroup` (at most eight), the company it needs, the side of nature that leans toward it (`ActivityLean`), the pose it is drawn in, and the thought it leaves.
+  3. Its thought's row in `ThoughtTable` ("Adding a thought"; the activity's row is where it is named).
+  4. The venues that offer it (their data).
+- **Nothing else:** Recreate's score, the spell, its fills, its cost and its thought follow.
+- **The checks:** `ActivityValidator` (the table and its bounds); `ActivityNamesTests` (code names an activity only in the table and the places listed there).
+
 ### Passions, challenge and the cost of mastery
 - **A passion** (Epic 11, S1): a step of `PassionTable` (none, keen, burning), saved in the traits record. A new step is a `Passion` value and a row: its practice multiplier, the frustration it eases, its weight in the work's choice and its UI kit glyph (`UiKit`, then the art pins). The draw's odds are `PassionTable`'s constants.
 - **The mastery budget** (Epic 11, S2): at most two skills past Apprentice and one at Master, held in practice's one entry beside the source's ceiling (`SkillRules.BudgetCeiling`). `OutpostWatch` fails a live scenario's day on any breach.

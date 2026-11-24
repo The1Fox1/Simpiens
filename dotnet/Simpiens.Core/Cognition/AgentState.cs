@@ -426,12 +426,14 @@ namespace Simpiens.Cognition
             Needs = new AgentNeeds(hunger, energy, social);
             Frustration = SimMath.Max(0f, (float)(Frustration - (float)(dt * day.FrustrationEasePerSecond))); // on the day's pace (Epic LIFE-1, L1.4, F6)
 
-            // Boredom (Epic LIFE-1 plan 2, L2.1, D11): held asleep, eased at the hearth while relaxing there, rising otherwise
+            // Boredom (Epic LIFE-1 plan 2, L2.1, D11): held asleep, eased at the hearth while relaxing there (the fireside's row,
+            // L2.2), rising otherwise
             bool asleep = IsExhaustionCollapsed || inBunk || (HasActivePlan && ActivePlan.CurrentAction is Simpiens.Cognition.Planning.Actions.RestAction);
             if (!asleep)
             {
                 bool fireside = HasActivePlan && ActivePlan.CurrentAction is Simpiens.Cognition.Planning.Actions.RelaxAtAnchorAction;
-                _life.Bore(fireside ? -(float)(dt * day.FiresideFunPerSecond) : (float)(dt * day.BoredomPerSecond));
+                _life.Bore(fireside ? -(float)(dt * Simpiens.Simulation.DayClock.PerSecond(Simpiens.Simulation.Life.ActivityTable.Get(Simpiens.Simulation.Life.Activity.Fireside).FunPerHour))
+                    : (float)(dt * day.BoredomPerSecond));
             }
 
             // Emergency preemption check

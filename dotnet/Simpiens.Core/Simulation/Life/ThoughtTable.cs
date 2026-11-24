@@ -52,6 +52,18 @@ namespace Simpiens.Simulation.Life
         EarnedAName = 20,
         /// <summary>It made a masterpiece.</summary>
         MadeAMasterpiece = 21,
+        /// <summary>A walk in the Garden ended (plan 2's activities, L2.2: thought at an activity's end).</summary>
+        AWalkInTheGarden = 22,
+        /// <summary>A browse of the stall's goods ended.</summary>
+        BrowsedTheMarket = 23,
+        /// <summary>A bout in the yard ended.</summary>
+        AGoodBout = 24,
+        /// <summary>An ale at the tavern ended.</summary>
+        AnAleAtTheTavern = 25,
+        /// <summary>A supper at the tavern ended.</summary>
+        ASupperAtTheTavern = 26,
+        /// <summary>A game of dice ended.</summary>
+        AGameOfDice = 27,
     }
 
     /// <summary>What a thought is about: a need met or missed, an event in its life, or another crawler.</summary>
@@ -159,6 +171,13 @@ namespace Simpiens.Simulation.Life
                 new ThoughtDefinition(Thought.GrewInMyCraft, "GrewInMyCraft", "Grew in my craft", 8, 48, 1, 1f, ThoughtKind.Event),
                 new ThoughtDefinition(Thought.EarnedAName, "EarnedAName", "Earned a name", 12, 72, 1, 1f, ThoughtKind.Event),
                 new ThoughtDefinition(Thought.MadeAMasterpiece, "MadeAMasterpiece", "Made a masterpiece", 15, 120, 1, 1f, ThoughtKind.Event),
+                // An activity's end (plan 2, L2.2, D12): a little lift, gone by the next day
+                new ThoughtDefinition(Thought.AWalkInTheGarden, "AWalkInTheGarden", "A walk in the Garden", 2, 6, 2, 0.5f, ThoughtKind.Event),
+                new ThoughtDefinition(Thought.BrowsedTheMarket, "BrowsedTheMarket", "Browsed the market", 1, 6, 2, 0.5f, ThoughtKind.Event),
+                new ThoughtDefinition(Thought.AGoodBout, "AGoodBout", "A good bout", 3, 8, 2, 0.5f, ThoughtKind.Event),
+                new ThoughtDefinition(Thought.AnAleAtTheTavern, "AnAleAtTheTavern", "An ale at the tavern", 3, 8, 2, 0.5f, ThoughtKind.Event),
+                new ThoughtDefinition(Thought.ASupperAtTheTavern, "ASupperAtTheTavern", "A supper at the tavern", 4, 10, 1, 1f, ThoughtKind.Need),
+                new ThoughtDefinition(Thought.AGameOfDice, "AGameOfDice", "A game of dice", 4, 8, 2, 0.5f, ThoughtKind.Event),
             };
             var byId = new ThoughtDefinition[Capacity];
             foreach (var row in rows)

@@ -31,6 +31,7 @@ namespace Simpiens.Core.Tests
             ["Simpiens.Core/Simulation/SimulationManager.cs"] = "a downing survived, a kill, a band reached, a creature's blow",
             ["Simpiens.Core/Simulation/SimulationManager.Lodging.cs"] = "a friend's death, for each who grieves",
             ["Simpiens.Core/Cognition/Planning/Handlers/CarryIntentHandler.cs"] = "a rescue: the rescuer's and the rescued's",
+            ["Simpiens.Core/Simulation/Life/ActivityTable.cs"] = "each activity's thought, thought at a spell's end (plan 2, L2.2, D12)",
             ["Simpiens.Presentation/Art/People/MoodRule.cs"] = "reads a friend's death, held, for the grieving face (Epic LIFE-1, L1.6); thinks nothing",
         };
 

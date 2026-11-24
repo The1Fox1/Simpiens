@@ -218,3 +218,18 @@ The guild issues the party's directive afresh at each stage (muster, march, work
 - **Its pace** (`DayTuning`): 3 a game hour awake (`BoredomPerSecond`), held asleep (a bunk, resting, an exhaustion collapse), eased 6 an hour while relaxing at the hearth (`FiresideFunPerSecond`, D12's fireside).
 - **Its urgency:** `Urgency.Of(Motive.Fun)` = 100 − fun. `Motive.Fun` is 10.
 - **Nothing reads it yet:** the day's measurement re-ran identical, so golden moved for its coverage only (the world hash mixes every record, now none is empty). The Bored mood term lands with Recreate (L2.6), so a penalty never comes before its remedy.
+
+### 5.5 Activities (L2.2, 2026-11-24)
+`ActivityTable` (D12), each with its thought in `ThoughtTable` (ids 22 to 27):
+
+| Activity | Fun / h | Also | Lasts | Cost | Group | Company | Leans | Thought |
+| :--- | ---: | :--- | ---: | :--- | :--- | :--- | :--- | :--- |
+| Fireside | 6 | (`GatherAtAnchor`'s +20 social) | — | — | Fireside | — | sociable | — |
+| Walk | 15 | | 45 min | — | Outdoors | — | solitary | A walk in the Garden +2, 6 h |
+| Browse | 10 | | 30 min | — | Market | — | greedy | Browsed the market +1, 6 h |
+| Spar | 20 | social 5 / h | 45 min | — | Games | one other | bold | A good bout +3, 8 h |
+| Ale | 20 | social 5 / h | 45 min | an ale (T.3) | Drink | — | sociable | An ale at the tavern +3, 8 h |
+| Supper | 10 | hunger −40 | 45 min | a stew (T.3) | Meal | — | — | A supper at the tavern +4, 10 h |
+| Dice | 30 | social 10 / h | 60 min | — | Games | one to three others | bold | A game of dice +4, 8 h |
+
+The hearth's relax reads the fireside's row (6 an hour), so its rate has one home; golden unchanged.

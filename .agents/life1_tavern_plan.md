@@ -157,7 +157,7 @@ This is a working document (AGENTS.md, Documentation Protocol 6), the second of 
 - [x] **L2.1 Fun** (D11) (done 2026-11-24: `docs/life-model.md` §5.4; behaviour unchanged, golden re-recorded for coverage only in its own commit. **Deviation:** the Bored mood term moves to L2.6, with Recreate, so mood never pays for boredom before a crawler can answer it) [Possibly Complex: a saved field, a mood term cognition reads; golden re-recorded in its own commit if mood's term moves a choice]
   - Boredom in the life record, its pace in `DayTuning`, fun filled at the hearth's relax, `Urgency.Of(Fun)`; the Bored term at L2.6.
   - **The checks:** the round trip in the save validators; `MoodValidator` with the new term; a plan 1 save loads entertained; the gate seeds' day holds.
-- [ ] **L2.2 The activity table** (D12) [Basic: a table with its validator and names test, as `ThoughtTable`; nothing reads it yet]
+- [x] **L2.2 The activity table** (D12) (done 2026-11-24: `docs/life-model.md` §5.5; golden unchanged, core 354/354. The fireside's fill moved from `DayTuning` to its row; the costs of ale and supper wait for T.3's items) [Basic: a table with its validator and names test, as `ThoughtTable`; nothing reads it yet]
   - `Activity`, `ActivityDefinition`, `ActivityTable`; the activities' thoughts as `ThoughtTable` rows (thought from L2.5).
   - `ActivityValidator` (fills, durations, company, groups within bounds); `ActivityNamesTests` (code names an activity only in the table and the venues' data).
   - AGENTS.md: "Adding an activity".
