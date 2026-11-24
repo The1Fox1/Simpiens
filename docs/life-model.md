@@ -245,3 +245,9 @@ The hearth's relax reads the fireside's row (6 an hour), so its rate has one hom
 | The guildhall yard | the guildhall | sparring, members only | 2 | while the drill yard stands |
 
 None stands in a hazard sector or a lair's reach (`VenueValidator`). Nothing reads them yet: golden unchanged.
+
+### 5.7 The leisure score (L2.4, 2026-11-24)
+`Leisure.Score(context, venue, activity)`, and `Leisure.TryChoose` over every venue's recreations (D15), pure and allocation-free:
+- **Gates (0):** the venue closed, the guild's yard for a non-member, its sector uncharted, the activity not a recreation it offers, its cost beyond the purse or out of the stall's stock, too few others there (sparring needs one, dice one to three), no seat free.
+- **Score:** the share it fills (fun an hour over 30, dice's; a supper adds the hunger it eases, over 100; at most 1) × its lean (a trait of ±1 gives ×1.5 or ×0.5) × the walk (1 / (1 + distance / 30)) × 1.25 with a warm or trusted friend there. Variety and curiosity join at L2.7.
+- **At the start** of the outpost a resident's best is a walk in the Garden or browsing the stall, about 0.3–0.5 for a neutral nature in the hub. Recreate's base will be fun's urgency times it.
