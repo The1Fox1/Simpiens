@@ -2,35 +2,46 @@
 
 This is a working document (AGENTS.md, Documentation Protocol 6), the second of Epic LIFE-1's three plans. It was written 2026-11-24 at the producer's "Looks good PR, merge and close it out then draft up plan 2", after plan 1 merged as PR #28.
 - **The design** is the epic, [`docs/epics/epic-life-1.md`](../docs/epics/epic-life-1.md): its rules A1–A12, its questions Q1–Q11 (standing by exception), §2.5's sketch of wants, fun, venues and the tavern, and the findings plan 1 left open (F3, F11, F12).
-- **The decisions** below (D11–D24) are this plan's defaults; the producer answers by exception. Each moves to the epic's §0 when its step lands.
+- **The decisions** below (D11–D25) are this plan's defaults; the producer answers by exception. Each moves to the epic's §0 when its step lands.
+- **The producer's changes to the draft** (2026-11-24, with the go):
+  > It is not only okay but encouraged to expand the map beyond the viewport size.
+  > Crawlers can absolutely disobey orders, being a guild member does not grant the player authority to override their autonomy.
+  - The first moves the tavern off the hub, with the floor growing north (D16, F14).
+  - The second ends three places where orders override a crawler's choice (F15): the orders and autonomy steps, O.1 and O.2, come before fun (D25). It amends the epic's A8, plan 1's D9 and Epic 10's D8.
 
-- **Complexity:** Very Complex as a whole: a new goal family that competes with work on the hottest path of cognition, saved fields, a map room, a new building with its economy, art, poses and Gum. Split below so that every step is Basic or Possibly Complex. No step needs supervision: the tavern's building, which the epic marked supervised unless it split below that, is split into seven steps (T.1–T.7), none above Possibly Complex.
-- **Scope:** L1's wants and all of L2: fun, activities, venues as map data, Recreate, variety, curiosity (Q8), commitment's value (F3), the tavern room and the tavern as the player's building (Q10), poses and thought icons at venues; the DoDs `AnEveningAtTheTavern` and `AWantComesTrue`.
+- **Complexity:** Very Complex as a whole: orders that a crawler may set aside, a new goal family that competes with work on the hottest path of cognition, saved fields, a map room, a new building with its economy, art, poses and Gum. Split below so that every step is Basic or Possibly Complex. No step needs supervision: the tavern's building, which the epic marked supervised unless it split below that, is split into seven steps (T.1–T.7), none above Possibly Complex.
+- **Scope:** orders weighed as duty, not obeyed by rule (D25); L1's wants and all of L2: fun, activities, venues as map data, Recreate, variety, curiosity (Q8), commitment's value (F3), the tavern room and the tavern as the player's building (Q10), poses and thought icons at venues; the DoDs `AnEveningAtTheTavern` and `AWantComesTrue`.
 - **Branch:** `feat/life1-tavern`, from `main` after PR #28's merge. One PR into `main` at the end, with a commit per step.
-- **The go:** waits for the producer's word.
-- **Estimate:** 14–20 agent days (L2's fun and venues 4–6, the tavern 5–7, wants 3–4, tuning and the DoDs 2–3).
+- **The go:** 2026-11-24, "Proceed", with the two changes above.
+- **Estimate:** 15–22 agent days (orders and autonomy 1–2, L2's fun and venues 4–6, the tavern 5–7, wants 3–4, tuning and the DoDs 2–3).
 - **The producer's stops:**
-  - the go, before P.1;
   - the look at L2, "an evening at the tavern", after T.7;
   - the soak's bands with the tavern (T.6), and the DoD's amended reading (D24), by exception;
   - the merge.
 - **The checks:**
-  - golden unchanged through the refactor and every step that only adds data or mechanism (P.1, L2.2–L2.5, T.1, T.3, W.1);
+  - golden unchanged through the refactor and every step that only adds data or mechanism (P.1, L2.2–L2.5, T.1, W.1);
+  - Epic 10's and 11's live scenarios after O.1 and O.2, which let members set orders aside;
   - each behaviour change re-records golden in its own commit, with the gate seeds' day held;
   - `AnEveningAtTheTavern` and `AWantComesTrue`, live on the real outpost with nothing injected (the tavern player acts only through commands).
 
 ## 0. What plan 1 hands over (checked at P.1)
-- **The motive model** (`MotiveModel`, `LifeTuning`): priority = base × weights + commitment. Motives 0–9 (None to Leave), room for 16; this plan adds Fun (10) and Want (11). Mood weighs income only (low 0.9, breaking 0.75), never under orders. Commitment is built and 0 (F3). The fallback plans the next two goals when the best can't be planned; nothing goes unfound today (F9), so plan 2's goals are its first users.
+- **The motive model** (`MotiveModel`, `LifeTuning`): priority = base × weights + commitment. Motives 0–9 (None to Leave), room for 16; this plan adds Fun (10) and Want (11). Mood weighs income only (low 0.9, breaking 0.75), never under orders (until O.1). Commitment is built and 0 (F3). The fallback plans the next two goals when the best can't be planned; nothing goes unfound today (F9), so plan 2's goals are its first users.
 - **The life record** (`CrawlerLife`, 512 bytes, format 15): thoughts at 0, subjects at 128, and 320 spare bytes from 192, laid out by D6 for wants (192), fun, weariness, the windfall, the intention and curiosity (264) and variety (280). A field reads 0 as "none", so a plan 1 save loads into plan 2 unchanged. No format raise in this plan.
 - **Thoughts and mood:** 21 thought rows thought at 15 sites; mood is the need terms plus live thoughts; the dossier's Mind and Today read them. `ThoughtNamesTests` lists every site.
 - **The day as measured** (`docs/life-model.md` §3.1): rest 9.8 h, work 8.4 h (walks included), the hearth 3.1 h, wandering and idling 0.1 h. Every pair of residents meets every day, most at the hearth.
   - Leisure must win hours from `EarnIncome`, not from idling (F11). `EarnIncome` = max(5, 25 + the purse's need (up to 20) − hunger × 0.2) × greed × diligence, valid below the comfortable purse (80g): about 25–45 for a neutral crawler. `GatherAtAnchor` = (max(0, 75 − social) + 15, +5 with a friend) × sociability. `Rest` = 100 − energy.
-  - A hurt crawler heals in its bunk; a low mood that pulled company sent it to the hearth instead (F12). Recreate must never outbid eating, sleep, healing or orders.
+  - A hurt crawler heals in its bunk; a low mood that pulled company sent it to the hearth instead (F12). Recreate must never outbid eating, sleep or healing.
 - **The hearth** is company's: `GatherAtAnchor` walks there (`TravelToAnchor`, `RelaxAtAnchor`), and the relax's completion gives +20 social and a little energy (`AgentConsequenceService`).
 - **The stations** (`WorkshopService`, `WorkshopRules`, `StationState`): three kinds on the map's sites (forge, still, drill yard), built by `BuildStationCommand` (the `Construction` sink), worked by an artisan hired by `HireArtisanCommand` on its shifts (`ShiftBlocks`: six blocks of four hours, block 3 is 18:00–22:00, block 4 22:00–02:00). The drill yard has no recipes and no artisan. Six places switch on a station's kind: `WorkshopTuning.CostOf`, `WorkshopRules` (the artisan check, the kind's word), `StationModel` (takes work, name, description) and `ArtKeys.Station` (F13).
 - **The stall:** 29 goods in a table of 32 (`TradeStallData.GoodsCapacity`), so two more fit inside the format. Prices by `UpdateStallPricesCommand`; the caravan's supplies by `SupplyTuning`'s caravan terms, paid into wholesale sinks (manuals' `ManualWholesale` is the latest).
-- **The map** (`Floor1Layout`): 14 sectors on 64 × 42 units, the most that fits a 720-row window at one screen pixel per art pixel. Every cell beside the hub is taken. The one free ground is the solid strip west of the Ore Quarry and the Sump, under the Old Stair (x −40 to −24, y −24 to 6), and the beetles' reach ends at y 10 (F14).
+- **The map** (`Floor1Layout`): 14 sectors on 64 × 42 units, kept to what a 720-row window shows whole, which the producer lifted on 2026-11-24 (F14). Every room beside the hub is taken: the Garden north, the Ore Quarry west, the Herb Grove east, the Bunkhouse south. The Garden (x −8 to 8, y 6 to 18) opens only onto the hub, between the Deep Seam and the Overgrowth; the beetles' reach ends at x −15 and the rats' at x 15.
 - **The drill** (Epic 11, S3.4) is the precedent for a spell of free time at a place: `DrillGoal`, the fact `Drilled` (never true in a built state), `DrillAction` and `DrillIntent`, which walks there and spends a game hour.
+- **Orders override a crawler's choice in three places** (checked while revising, F15):
+  - **An expedition's orders are judged once,** at dispatch (Epic 10's D8, `AgentCognitionService.EvaluateGroupDirective`, keyed on the directive's issued tick). After that `ComplyDirectiveGoal` is valid whatever the member's compliance, at 120 (`ExpeditionPriority`), above everything but the reflexes, rescue and hunger from 70.
+  - **A shift's orders** are judged at each block (the crew's directive is issued per block) and again by compliance at every choice; complied with, they stand at 120 too.
+  - **The motive model** leaves crawlers under orders out of mood's weights (`MotiveModel.UnderOrders`; plan 1's D9, the epic's A8).
+  - **What already copes:** a member who refuses stays behind (allegiance −5) or deserts (leaving the guild); the muster waits a bounded time and goes without who isn't there; a party with no one left ends its trip (`GuildService.Expeditions`). An artisan who deserts its shift's order quits the station.
+- **The camera** already shows a map larger than the window: it frames at 1:1 on the map's centre and pans (`CameraRig`; the isometric outpost is wider than a 1280 × 720 window).
 - **The planner:** 48 of 64 facts.
 
 ## 1. Decisions proposed (defaults; the producer answers by exception)
@@ -61,16 +72,19 @@ This is a working document (AGENTS.md, Documentation Protocol 6), the second of 
   - **Seats aren't claimed:** a seat is free when no crawler stands within 0.4 of it in the snapshot. No contention state, nothing saved; a full venue scores 0.
 - **D14, Recreate** (A1, A6, A12; F11, F12):
   - **The goal:** `RecreateGoal` (Fun, Leisure). Base = `Urgency.Of(Fun)` × the best activity's opportunity (`Leisure.Score`, D15).
-  - **Its validity:** invalid when hungry (60 or more), tired (under `Considerations.TiredEnergy`), hurt (under `Vitality.TreatWoundsBelow`) or under orders. So Recreate never outbids eating, sleep, healing or orders (F12), and the motive model's weights reach it only in free time.
+  - **Its validity:** invalid when hungry (60 or more), tired (under `Considerations.TiredEnergy`) or hurt (under `Vitality.TreatWoundsBelow`). So Recreate never outbids eating, sleep or healing (F12). It stays valid under orders and competes with duty through the motive model (D25): a content member keeps to its orders, which stand at 120, and a bored, unhappy one may not.
   - **Planning:** one fact, `Recreated` (48: never true in a built state, as `Drilled`); one action, `RecreateAction`, whose intent carries the venue, the activity, the seat and the path (49 of 64 facts).
   - **The handler:** walks to the seat, pays the activity's cost as it begins (D19), fills fun (and social or hunger) over its duration on the day's pace, and thinks the activity's thought at its end. Struck, hungry or ordered away, it stops as any intent does.
 - **D15, the leisure score** (A6; Q8): `Leisure.Score(context, venue, activity)` = the activity's fill share × the trait's lean × variety × distance × friends present × (open, a seat free, its cost affordable and in stock), in [0, 1]. Pure, allocation-free, and the same on both threads.
   - **Variety** (life record, 280): a byte a variety group, "had enough", raised 64 by each spell and eased 64 a game day. The score is multiplied by 1 − 0.6 × had-enough / 255.
   - **Curiosity** (Q8; life record, 277): a sixth trait, drawn at spawn on its own salt (`SimRandomSalt.Curiosity`), so no earlier draw moves; 0 reads as unset, a neutral 50. A curious crawler weighs variety more and leans toward venues it hasn't tried (life record, 278: a bit a venue).
   - **Friends present:** ×1.25 when a warm or trusted friend is at the venue (the affinity map, as `GatherAtAnchor` reads it).
-- **D16, the tavern room** (Q10; F14): a new sector, the Tavern (id 15, a facility), in the rock strip west of the Ore Quarry, x −40 to −24 and y −6 to 6: the hub's size. One door in the quarry's west wall, y −2 to 2. Inside, the counter (the tavern's station site, `StationKind.Tavern`) and tables with eight seats (its venue). The quarry sits outside the beetles' reach, and the walk from the hearth is about 28 units, some 15 game minutes.
-  - **Alternatives:** a corner of the hub (no room: the hearth's ring, the stall and the lane leave no corner free); the Road Gate's west half (the drifters' spawn points would move).
-  - **The rest of the strip** stays rock; the Sump's side and the Drowned Gallery's side are hazards, and no door opens from them.
+- **D16, the tavern room** (Q10; F14, the producer's change): the tavern takes the Garden's room, directly off the hub (x −8 to 8, y 6 to 18, the hub's size), and the Garden moves one room north, to a new room at y 18 to 30. The floor grows north by 12 units, past what a 720-row window shows whole, as the producer encourages.
+  - **Doors:** the hub's door north (x −3 to 3) now opens into the tavern; the tavern's door to the Garden sits at its east end, so the way to the Garden skirts the tables. The Garden still opens onto nothing else.
+  - **Inside:** the counter (the tavern's station site, `StationKind.Tavern`) and tables with eight seats (its venue). A new sector, the Tavern (id 15, a facility); the Garden keeps its id and moves with its four plots, 12 units further from the stall.
+  - **Unmoved:** the frontier row, its lairs and nodes, the Old Stair. The tavern is at least seven units outside the beetles' and the rats' reach.
+  - **The walk** from the hearth is about 16 units, some 8 game minutes.
+  - **Alternatives:** past the Ore Quarry, in the rock under the Old Stair (the first draft: no room moves, but a 28-unit walk); or a band inserted south of the hub (the whole lower wing moves, with the bunks, the workshops and the guildhall).
 - **D17, station kinds as a table** (A4; the epic's "every new system is a table"; F13): `StationTable`, a row per `StationKind`: its words, description, whether it takes an artisan, whether it has recipes, whether it is a venue, and its art key. It replaces the six kind switches, behaviour-neutral, so the tavern is a row. This is the cleanup the project's "refactor and reevaluate" rule asks for: without it the tavern adds a seventh switch in each of six files.
 - **D18, the tavern as the player's building** (Q10):
   - **Built** by `BuildStationCommand` at the tavern's site, for `WorkshopTuning.TavernCost` (200g, the drill yard's price; the forge and the still cost 300g), into the `Construction` sink.
@@ -97,7 +111,7 @@ This is a working document (AGENTS.md, Documentation Protocol 6), the second of 
   - **Pursued** by `FulfilWantGoal` (Want; Leisure, or Social for a friend). Base = the want's strength × `Leisure.Score` for its target (or a friend's reach), so a want pulls toward one venue or one crawler. One fact, `WantMet` (49, never true in a built state; 50 of 64), and `FulfilWantAction`, which builds a `RecreateIntent` for an activity or venue, or a walk to the friend for one.
   - **Ending:** fulfilled, its thought and the slot freed; past its lifetime, expired lazily when the record is written, with its small bad thought.
   - **A good** as a want's target (§2.5) waits for LIFE-2's personal goods and taste: today's goods are gear, which residents already buy by their stats.
-- **D21, mood's pull on leisure** (F12, resolved here): a low mood weighs Fun 1.25 and a breaking one 1.5; company stays 1. Safe now, because Recreate is invalid while hurt, hungry, tired or under orders (D14).
+- **D21, mood's pull on leisure** (F12, resolved here): a low mood weighs Fun 1.25 and a breaking one 1.5; company stays 1. Safe now, because Recreate is invalid while hurt, hungry or tired (D14). It reaches crawlers under orders as anyone (D25).
 - **D22, commitment** (F3): measured with Recreate in (flips among leisure goals at plans' ends). If they pass 2 a resident-day, commitment is set (5 to start), with golden re-recorded in its own commit; otherwise it stays 0, and F3 closes with the measurement.
 - **D23, what the player sees** (A10):
   - **The tavern on the map:** the room, its counter and tables; a plot until built (`prop/tavern`, `prop/station-plot`).
@@ -105,6 +119,13 @@ This is a working document (AGENTS.md, Documentation Protocol 6), the second of 
   - **At venues:** a seated pose (`AgentVisualState.Seated`), and a thought icon over a crawler at an activity (a mug, a bowl, dice, a leaf, a purse), carried by the frames (`EntityView.Activity`).
   - **The dossier:** Mind lists wants with their time left ("A tavern supper · 9 h left"); Today tells evenings through the activities' and wants' thoughts.
 - **D24, the DoDs' readings** (F11): `AnEveningAtTheTavern` keeps the epic's outcomes but one. "Ambient wandering falls by half" can't be read: wandering is already 0.1 h a resident-day (F11). In its place: residents' leisure at venues other than the hearth rises from 0.2 h to at least an hour a resident-day, with work's hours measured beside it (D25's band is plan 3's).
+
+- **D25, orders are a motive, not a rule** (the producer's change; F15):
+  - **Mood reaches crawlers under orders** as anyone: `MotiveModel.UnderOrders` goes, and duty gains mood's weights (low 0.85, breaking 0.6 to start, measured at O.1). Plan 1's D9 ("nothing under orders") and the epic's A8 are amended.
+  - **An expedition's orders are judged at every stage,** as a shift's are at every block: the guild issues its directive afresh when the stage changes (muster, march, work or fight, return), so each member judges it again by compliance. A member who no longer complies stays behind or deserts, by the path dispatch uses. `ComplyDirectiveGoal` no longer holds a member to a trip it judged once. Epic 10's D8 is amended.
+  - **Duty keeps its weight:** orders stand at 120 when complied with, so a content, loyal member keeps to them; frustration, low trust or loyalty (compliance) and a low mood (its weight) are what set them aside. Leisure and wants stay valid under orders and compete through the model.
+  - **What the guild does about it** is today's: a member who stays behind loses allegiance; one who deserts leaves. The muster's and the return's time limits keep a trip from waiting for someone who isn't coming.
+  - **Plan 3's routine and intention** (the epic's A1 keeps orders out of their weights): whether a day off can weigh against a shift is plan 3's to decide under this rule.
 
 ## 2. The milestones, phased
 
@@ -114,6 +135,16 @@ This is a working document (AGENTS.md, Documentation Protocol 6), the second of 
   - Check §0 against the code, and record any difference as a finding (the epic's §7, F13 onward).
   - `MeasureACrawlersDay` gains hours by the hour of day (where residents are from 18:00 to 02:00) and who meets whom at the hearth, as the baseline for L2.6 and the DoDs.
   - `docs/life-model.md` gains §5, "Fun and the evening", with the baseline.
+
+### O. Orders and autonomy (1–2 days)
+**Complexity:** Possibly Complex: two behaviour changes in cognition and the guild, each with golden re-recorded in its own commit. Neither generalises the expedition's machine: it already handles a member who stays behind or deserts, and only *when* a member judges changes.
+- [ ] **O.1 Mood reaches crawlers under orders** (D25) [Possibly Complex: a behaviour change on the hot path; golden re-recorded in its own commit]
+  - `MotiveModel.UnderOrders` removed; duty's mood weights in `LifeTuning.Default`; `MotiveModelValidator` gains a crawler under orders whose low mood weighs its duty.
+  - **The checks:** F12's four DoDs (`ADraughtKeepsAPartyWorking`, `EveryScenarioPlaysTogether`, `PassionBurnsBright`, `ACallingEmerges`) and every Epic 10 and 11 live scenario on their seeds; the gate seeds' day holds; orders refused a day measured before and after (`docs/life-model.md` §3.3).
+- [ ] **O.2 An expedition's orders judged at every stage** (D25) [Possibly Complex: a behaviour change in the guild's stages and cognition's directive evaluation; golden re-recorded in its own commit]
+  - The guild re-issues the party's directive at each stage change; `ComplyDirectiveGoal` judges an expedition by compliance as it judges a shift; the "judged once" short-circuit goes.
+  - **The checks:** a validator that a frustrated member stays behind at the march and the party goes on without it; the guild's and the clears' live scenarios (`GuildScenarioTests`, `ClearScenarioTests`, `GateScenarioTests`, `PartThreeTogetherTests`, `EpicElevenTogetherTests`) on their seeds; members who stay behind mid-trip counted on the gate seeds with the guild player.
+  - AGENTS.md: the guild's paragraph says orders are judged at each stage.
 
 ### L2a. Fun and its venues (4–6 days)
 **Complexity:** Very Complex as a phase by bundling (saved fields, map data, a new goal on the hot path, a behaviour change). Split into seven steps, each Basic or Possibly Complex. Golden is unchanged through L2.2–L2.5; L2.1 and L2.6 re-record it in their own commits.
@@ -148,9 +179,9 @@ This is a working document (AGENTS.md, Documentation Protocol 6), the second of 
 - [ ] **T.1 Station kinds as a table** (D17; F13) [Possibly Complex: across core and presentation; behaviour-neutral, golden and renders unchanged]
   - `StationTable` replaces the six switches; `StationsValidator` checks the table.
   - AGENTS.md: "Adding a station kind".
-- [ ] **T.2 The tavern room** (D16) [Possibly Complex: the map and its nav grid; golden re-recorded in its own commit; renders re-recorded in the pinned image after a look]
-  - The sector, its walls and door, the tavern's station site and its venue (seats at tables), its label.
-  - **The checks:** `MapDefinitionValidator`'s Floor 1 checks (doors leave four walkable cells, sectors don't overlap); `VenueValidator`; the gate seeds' day holds; look at the outpost renders, then re-record them in the pinned image.
+- [ ] **T.2 The tavern room** (D16) [Possibly Complex: the map grows and a room moves, with the nav grid; golden re-recorded in its own commit; renders re-recorded in the pinned image after a look]
+  - The Garden moved north with its plots and label; the tavern in its room, with its walls, doors, station site, venue (seats at tables) and label; the floor's bounds to y 30; `Floor1Layout`'s comment on the window's limit replaced with the producer's rule.
+  - **The checks:** `MapDefinitionValidator`'s Floor 1 checks (doors leave four walkable cells, sectors don't overlap, the Garden reached only through the tavern); `VenueValidator`; `AtlasLayoutTests` and the fog's sheet for the larger floor; the gate seeds' day holds (nobody starves with the Garden further off); look at the outpost renders in both view modes, then re-record them in the pinned image.
 - [ ] **T.3 Ale and stew** (D19's items) [Possibly Complex: a new item group that residents' purchases must skip; otherwise "Adding or removing an item"]
   - Their `ItemType` values, catalogue rows (`ItemCategory.Served`), terms in the stall's goods and the caravan's supplies (`TavernWholesale`), and their looks in `ItemArt`.
   - **The checks:** `ItemSystemProofTests`' pattern; a validator that no resident buys a served good to carry or eats one from the pack; the art sheet looked at and the art pins re-recorded in their own commit; golden re-recorded if the caravan's supplies move the ledger.
@@ -218,12 +249,14 @@ This is a working document (AGENTS.md, Documentation Protocol 6), the second of 
 ## 3. What plan 3 takes
 Drafted when this plan merges, from the epic's §2.4 and §2.5.
 - **L3, rhythm:** routines and chronotypes, the weights by family and hour, satiation (the purse against its target, plus what wants save for), weariness, the day's intention, rest days in safe zones, Q11's switch, and the DoD `ADayOffAfterAWindfall`.
+- **Duty under the routine:** whether the day's intention or a routine's hours weigh against a shift or a trip, under D25.
 - **LG1, the gate:** `LifeOneTogether`, the soak's bands with days off and the tavern, scaling, and the producer's play session.
 
 ## 4. Risks (this plan's; the epic's §6 holds the rest)
 - **Leisure eats the economy.** Evenings at venues take hours from `EarnIncome` (F11), and the tavern takes gold. Crawlers earn what they spend, so they may simply work less and eat less well. L2.6 tunes boredom and fills against the evening's baseline; T.6 measures purses and work hours with the tavern, and the soak's bands go to the producer. Plan 3's satiation is the epic's lever on work hours; this plan doesn't pull it.
-- **Recreate outbids what keeps a crawler alive.** D14's validity keeps it out of hunger, tiredness, hurt and orders, and L2.6 re-runs F12's four DoDs first.
-- **The tavern sits far from the hub** (D16). If the walk keeps crawlers away, the tavern's fill and friends' pull are tuned at T.6 before anything moves on the map; a different site is the producer's call.
+- **Recreate outbids what keeps a crawler alive.** D14's validity keeps it out of hunger, tiredness and hurt, and L2.6 re-runs F12's four DoDs first. Against orders it competes by design (D25).
+- **Members walk off their orders** (D25). Epic 10's and 11's scenarios assume a party that stays together. O.1 and O.2 re-run them first; if one fails because a member set its orders aside, its scripted player is checked for a seed or a moment that made the member unhappy, and the measurement goes to the producer before any weight is tuned to keep members obedient.
+- **The Garden is further from the stall** (D16): 12 more units each way, through the tavern. It is the outpost's fallback food, eaten 0.2 times a resident-day (§3.2), so starvation is watched on the gate seeds at T.2.
 - **Stew undercuts rations** (10g against 15g), and the stall's ration sales fall. The soak's `tavern` profile reads it; stew's price is the player's lever, and its starting price can rise.
 - **Crawlers flicker between activities.** Commitment (L2.8), variety (L2.7) and `ThrashingTests`.
 - **Leisure scoring costs every choice.** It scores a handful of venues, allocation-free; the gate measures it beside `main`.
