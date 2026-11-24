@@ -289,7 +289,7 @@ This is a working document (AGENTS.md, Documentation Protocol 6), the first of E
   - **The code:** the tab row, and Crawler, Mind and Today in `DashboardPanels`.
   - **The checks:** the window-size test confirms the dossier fits at every offered size from 720 rows. Look at the renders, then re-record them in the pinned image (`scripts/test-client-in-container.sh --record`), committed on their own.
   - **The producer's look** at L1 follows this step.
-- [ ] **L1.8 The DoD: `MoodFollowsTheDay`** [Possibly Complex: a live scenario]
+- [x] **L1.8 The DoD: `MoodFollowsTheDay`** (done 2026-11-23: `MoodsRiseWithAMealAndABunk` on gate seed 424242, two days: 11 residents thought a good meal and a bunk's sleep, all 69 onsets lifted the mood, a save on day 2 came back with every thought and mood; `MoodFallsForAFriendsDeath` on `DeathHasItsCost`'s seed 8: six mourners each fell to Low or below within the hour, the thought naming the dead. The day log's presentation is proved by the client's `LifeModelsTests` and `DossierTabsTests`; the grieving face by `MoodRuleTests`) [Possibly Complex: a live scenario]
   - **The gate seeds' day, nothing injected:**
     - every resident thinks "a good meal" and "slept in a bunk", and its mood is higher after each than before;
     - every resident's day log holds its meals and its sleep.
