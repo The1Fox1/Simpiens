@@ -23,7 +23,7 @@ namespace Simpiens.Cognition.Planning
     public static class Leisure
     {
         /// <summary>Fun an hour that fills a whole share: dice's.</summary>
-        public const float FullFunPerHour = 30f;
+        public const float FullFunPerHour = 20f; // 30 until L2.8: free time won too seldom against work to fill the tavern (F18)
 
         /// <summary>How far an activity's lean bends the score: a trait of ±1 gives ×1.5 or ×0.5.</summary>
         public const float LeanStrength = 0.5f;

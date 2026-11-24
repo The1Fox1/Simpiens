@@ -223,7 +223,7 @@ This is a working document (AGENTS.md, Documentation Protocol 6), the second of 
 
 ### L2c. Tuning and the DoDs (2–3 days)
 **Complexity:** Possibly Complex: behaviour changes and live scenarios.
-- [ ] **L2.8 Mood's pull on leisure, and commitment** (D21, D22; F3, F12) [Possibly Complex: two behaviour changes, each with golden re-recorded in its own commit]
+- [x] **L2.8 Mood's pull on leisure, and commitment** (D21, D22; F3, F12) (done 2026-11-24: `docs/life-model.md` §5.9; fun low 1.25, breaking 1.5; the score's full share 20 fun an hour; flips 0.8 a resident-day, so commitment stays 0 and F3 closes; the tavern sells about 5.5 a seed in three days) [Possibly Complex: two behaviour changes, each with golden re-recorded in its own commit]
   - Fun's mood weights; then the flips measured and commitment set, or F3 closed at 0.
   - **The checks:** F12's four DoDs pass on their seeds; the gate seeds' day holds; `ThrashingTests`.
 - [ ] **D.1 The DoD: `AnEveningAtTheTavern`** (D24) [Possibly Complex: a live scenario]
