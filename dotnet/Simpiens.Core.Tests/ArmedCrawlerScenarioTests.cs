@@ -22,10 +22,12 @@ namespace Simpiens.Core.Tests
     /// the days held on all 23 (<see cref="MeasureFightsBackOnTheGateSeeds"/>), this one's first at t19597. Gate seed 424242
     /// since Epic LIFE-1's Recreate (plan 2, L2.6, `docs/life-model.md` §5.8): free time moved the outpost's history, and seed 18 brought no kill in four days; a kill within four days on 5 of the 23 (20 of seeds 1–60), this one's
     /// first at t13492.
-    /// </summary>
+    /// Gate seed 20261009 since the tavern's room (Epic LIFE-1 plan 2, T.2): the taller floor and the Garden's move moved the
+        /// outpost's history, and seed 424242's moment no longer came.
+        /// </summary>
     public class ArmedCrawlerScenarioTests
     {
-        private static readonly ulong Seed = ScenarioSeed.Or(424242);
+        private static readonly ulong Seed = ScenarioSeed.Or(20261009);
         private const long Horizon = 4 * DayClock.TicksPerDay;
 
         [Fact]

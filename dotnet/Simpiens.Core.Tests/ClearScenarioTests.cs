@@ -162,8 +162,10 @@ namespace Simpiens.Core.Tests
         /// out alive, and the party comes home at t18824 with one of the lair's material. (Since K8: seed 3, 22 of 23 cleared.) Gate
         /// seed 15 since Epic LIFE-1's Recreate (plan 2, L2.6, `docs/life-model.md` §5.8): free time moved the outpost's history, and 20261009's party came home with nothing picked up: cleared on 21 of 23, this one home at t19938 with
         /// one of the lair's material.
+        /// Gate seed 20261009 since the tavern's room (Epic LIFE-1 plan 2, T.2): the taller floor and the Garden's move moved the
+        /// outpost's history, and seed 15's moment no longer came.
         /// </summary>
-        private static readonly ulong ClearSeed = ScenarioSeed.Or(15);
+        private static readonly ulong ClearSeed = ScenarioSeed.Or(20261009);
 
         [Fact]
         public void AnArmedPartyClearsANest()
@@ -218,8 +220,10 @@ namespace Simpiens.Core.Tests
         /// Gate seed 8 since grudges run both ways (Epic 11, S7.3; on 11 the fallen are now carried out alive): over ten days a
         /// death on 2 of the 23 gate seeds (5 and 8); on this one, the earlier, the first death is at t53385 and a newcomer
         /// settles at t73545. Gate seed 20261010 since Epic LIFE-1's Recreate (plan 2, L2.6, `docs/life-model.md` §5.8): free time moved the outpost's history, and seed 8's two now live through the fortnight's first ten days.
+        /// Gate seed 6 since the tavern's room (Epic LIFE-1 plan 2, T.2): the taller floor and the Garden's move moved the
+        /// outpost's history, and seed 20261010's moment no longer came.
         /// </summary>
-        private static readonly ulong DeathSeed = ScenarioSeed.Or(20261010);
+        private static readonly ulong DeathSeed = ScenarioSeed.Or(6);
 
         [Fact]
         public void DeathHasItsCost()

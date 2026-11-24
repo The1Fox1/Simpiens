@@ -62,8 +62,10 @@ namespace Simpiens.Core.Tests
         /// <summary>
         /// Gate seed 424242 since Epic 11's S5.6 (<see cref="MeasureTheBoldBuyingOnTheGateSeeds"/>): the bold buy a draught to carry,
         /// and only they, on 15 of 23 gate seeds; the default seed's no longer since Leadership moved every draw.
+        /// Gate seed 20261010 since the tavern's room (Epic LIFE-1 plan 2, T.2): the taller floor and the Garden's move moved the
+        /// outpost's history, and seed 424242's moment no longer came.
         /// </summary>
-        private static readonly ulong BoldBuySeed = ScenarioSeed.Or(424242);
+        private static readonly ulong BoldBuySeed = ScenarioSeed.Or(20261010);
 
         /// <summary>The measurement behind the seed (Epic 11, S5.6): who buys a draught to carry on each gate seed. Explicit.</summary>
         [Fact(Explicit = true)]

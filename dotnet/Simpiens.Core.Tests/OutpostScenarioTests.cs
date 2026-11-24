@@ -152,9 +152,11 @@ namespace Simpiens.Core.Tests
         /// the stall on its own and, in the same hazard sector, loses health more slowly per tick of exposure than a crawler
         /// without; its gear wears; the caravan restocks the stall's gear under its own sink, and the ledger balances; the
         /// day's checks still hold.
+        /// Gate seed 424242 since the tavern's room (Epic LIFE-1 plan 2, T.2): the taller floor and the Garden's move moved the
+        /// outpost's history, and the default seed's moment no longer came.
         /// </summary>
         /// <summary>The gear scenario's seed: the default until a deliberate behaviour change moves it (re-picked with <see cref="ScenarioSeed"/>).</summary>
-        private static readonly ulong GearSeed = ScenarioSeed.Or(SimulationSettings.DefaultSeed);
+        private static readonly ulong GearSeed = ScenarioSeed.Or(424242);
 
         [Fact]
         public void TheGearedTakeLessDamageInTheSameSector()
