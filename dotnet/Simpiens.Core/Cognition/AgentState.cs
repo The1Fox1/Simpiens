@@ -422,7 +422,7 @@ namespace Simpiens.Cognition
 
             float social = SimMath.Max(0f, (float)(Needs.Social - (float)(dt * day.SocialPerSecond)));
             Needs = new AgentNeeds(hunger, energy, social);
-            Frustration = SimMath.Max(0f, (float)(Frustration - (float)(dt * 1f)));
+            Frustration = SimMath.Max(0f, (float)(Frustration - (float)(dt * day.FrustrationEasePerSecond))); // on the day's pace (Epic LIFE-1, L1.4, F6)
 
             // Emergency preemption check
             bool emergencyExhaustion = energy <= MentalBreakEvaluator.ExhaustionThreshold;
