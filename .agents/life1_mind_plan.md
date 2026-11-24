@@ -46,13 +46,13 @@ This is a working document (AGENTS.md, Documentation Protocol 6), the first of E
 - **Personality:** every trait enters as `Considerations.TraitFactor(trait, strength)`, which is exactly 1 for a neutral trait. Passions weigh a node's score in `ResourceTargeting`, not a goal.
 - **Needs and frustration:**
   - **Needs:** `AgentNeeds` (hunger, energy, social; 12 bytes) in `CrawlerRecord`, paced by `DayTuning`.
-  - **Frustration:** +25 when a harvest fails, and +25 (`SimulationManager.GriefFrustration`) for each friend who dies, beside a `Grieved` memory event. It falls by 1 every real second (F6), and tantrums come through `MentalBreakEvaluator`.
+  - **Frustration:** +25 when a rival takes a contested node (with a tantrum), and +25 (`SimulationManager.GriefFrustration`) for each friend who dies, beside a `Grieved` memory event. It falls by 1 every real second (F6). What reads it: compliance (`ComplianceUtility`, −0.2 a point, so a frustrated crawler defies orders sooner), the `IsThreatened` fact (set, read by no action) and the face (frustrated at 60). No rule starts a tantrum from frustration: tantrums come from a contested node lost and an artisan's breakdown (checked at L0.1, finding F8).
 - **Events a thought can ride on:**
   - deeds, counted in one entry (`AgentState.AddDeed`): a creature slain, a rescue, a make, a downing survived, a hunt paid, a clear won, a crawler taught;
   - a band reached (practice's entry), an epithet, a technique chosen, a masterpiece made;
   - wages paid or unpaid (`GuildService`, `WorkshopService`);
   - a bounty delivered, meals (`Cognition/ItemUse`; the Garden plot's rule), a bunk slept in, an exhaustion collapse;
-  - food shared, gossip (`SocialDynamics`), a failed harvest.
+  - food shared, gossip (`SocialDynamics`), a contested node lost to a rival.
 - **The chronicle:** 61 event types (0–60), one ring of 1,024 events outpost-wide and a ring of 100 per sector, each event with an intensity. `TemplateNarrativeFormatter` words them.
 - **The client:**
   - **Faces:** `MoodRule` has seven moods (asleep, hurt, frustrated, scared, hungry, tired, content), held by `MoodTracker` for 30 ticks. `PortraitKit` draws each mood's features, and `PortraitKey` includes the mood.
@@ -143,7 +143,7 @@ This is a working document (AGENTS.md, Documentation Protocol 6), the first of E
     | Wage unpaid | −8 | 2 d | 2 | | a wage unpaid |
     | Raise unpaid | −4 | 2 d | 1 | | paid below the asking wage (Epic 11, D8) |
     | A good payday | +4 | 1 d | 3 | | a bounty paid, a hunt's share, an expedition's share |
-    | A wasted trip | −2 | 4 h | 3 | | a failed harvest (beside today's frustration) |
+    | Beaten to it | −3 | 6 h | 3 | | a contested node lost to a rival (beside today's frustration) |
     | Hurt | −4 | 12 h | 3 | | struck by a creature |
     | Downed | −12 | 2 d | 1 | | a downing survived (the deed) |
     | Rescued by {0} | +10 | 3 d | 1 | ✓ | carried out or given medicine |
@@ -172,7 +172,7 @@ This is a working document (AGENTS.md, Documentation Protocol 6), the first of E
   - **The bands** (`MoodBand`): Breaking up to −35, Low to −10, Steady to +10, Good to +30, Happy above. L1.3 sets them, so that an ordinary day sits mostly Steady to Good ("average is the default") and a friend's death reaches Low.
   - **The name:** the core's word is `MoodBand`, so it never collides with the client's face enum, `Mood`.
 - **D9, what mood changes** (Q6; F6). The starting values are set at L1.4:
-  - **Frustration:** Low adds 5 a game hour, Breaking 15, and Good and Happy ease 5. This feeds today's tantrums through `MentalBreakEvaluator`.
+  - **Frustration:** Low adds 5 a game hour, Breaking 15, and Good and Happy ease 5. Today that makes an unhappy crawler defy orders sooner (an artisan skips a shift) and shows on its face. No tantrum is started from it (F8): a breaking crawler's break is a later want or LIFE-2's, not this plan's.
   - **F6 first:** frustration's fall moves onto the day's pace (`DayTuning.FrustrationEasePerHour`), because at 42 a game hour it drowns any hourly term. It is its own commit inside L1.4's behaviour change, measured on the gate seeds before and after.
   - **Weights by motive** (`LifeTuning`):
 
@@ -205,7 +205,7 @@ This is a working document (AGENTS.md, Documentation Protocol 6), the first of E
 
 ### L0. Groundwork (5–7 days)
 **Complexity:** Very Complex as a phase by bundling (a measurement, the hot path of every decision, a behaviour change, saved state). Split into eight steps, each Basic or Possibly Complex. Golden stays unchanged through L0.2–L0.5, L0.7 (at 0) and L0.8. Only L0.6 re-records it.
-- [ ] **L0.1 The hand-over checked, and the life model** [Basic: docs from the code as it stands]
+- [x] **L0.1 The hand-over checked, and the life model** (done 2026-11-23: §0 matches the code but for F8, corrected in place; `docs/life-model.md`) [Basic: docs from the code as it stands]
   - Check §0 against the code, and record any difference as a finding (the epic's §7, F8 onward).
   - Create `docs/life-model.md` with what stands today:
     - the 21 goals' bases and their ranges;
@@ -275,7 +275,7 @@ This is a working document (AGENTS.md, Documentation Protocol 6), the first of E
   - **The commits, in order:**
     1. frustration onto the day's pace (F6), with golden re-recorded in its own commit;
     2. mood's frustration terms and weights by motive, with golden re-recorded again in its own commit.
-  - **The checks:** the gate seeds' day holds; every DoD keeps its seed or is re-picked with the reason; tantrums a day are measured before and after.
+  - **The checks:** the gate seeds' day holds; every DoD keeps its seed or is re-picked with the reason; frustration's spread and orders defied a day are measured before and after.
   - **The soak's bands:** measured, and any move goes to the producer by exception.
 - [ ] **L1.5 The day log and the mind, as models** (D10; F5) [Possibly Complex: presentation models and the chronicle's words about one crawler]
   - **The models:** `DayLogModel`, `MindModel` and `LifeTexts` (thoughts' and bands' words, Latin-1 only), read through `DashboardContext`.
@@ -326,5 +326,5 @@ Drafted when the plan before merges, from the epic's §2.4 and §2.5.
 ## 4. Risks (this plan's; the epic's §6 holds the rest)
 - **The refactor moves golden by a float's last bit.** D2's order of operations is exact. If golden moves anyway, the step stops and the difference is traced with `WorldStateHash`'s per-part descriptions. It never lands as a re-record.
 - **The fallback changes many choices at once.** L0.3's baseline and its re-run show how many. If the gate seeds' day breaks, the fallback's depth drops to 1 before anything is retuned.
-- **Thoughts tuned too strong** make moods swing and tantrums spread. L1.3 tunes them before L1.4 lets mood act, and L1.4 measures tantrums a day.
+- **Thoughts tuned too strong** make moods swing and orders go unobeyed. L1.3 tunes them before L1.4 lets mood act, and L1.4 measures orders defied a day.
 - **The dossier's tabs crowd the header.** The tab row takes one plaque's height. If that doesn't fit at 720 rows, the mood line moves into the Mind tab.

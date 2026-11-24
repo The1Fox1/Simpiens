@@ -13,7 +13,7 @@
 - **The numbers:** `docs/life-model.md`, created at L0.1: the life core's rules and measurements, kept up to date as each milestone lands, as `docs/skills-model.md` was for Epic 11.
 - **Preceding**: [Epic 11](epic-11.md). **Builds on**:
   - **Cognition:** the needs (`AgentNeeds`: hunger, energy, social), personality (`AgentPersonality`, five traits, read as `Considerations.TraitFactor`) and the GOAP domain (`OutpostGoapDomain`: 21 goals, 48 of 64 planner facts);
-  - **Frustration:** the frustration and tantrum path (`MentalBreakEvaluator`), and the memory ledger with its `Grieved` event (Epic 10 Part 3, K5.5);
+  - **Frustration:** frustration, which weighs against compliance and shows on the face (no rule starts a tantrum from it: F8), and the memory ledger with its `Grieved` event (Epic 10 Part 3, K5.5);
   - **Epic 11:** the traits record (A3) and its pattern for a fixed record with spare bytes; passions, which weigh a node's score;
   - **The day:** `DayClock`, `DayTuning`, [`docs/time-model.md`](../time-model.md) and its finding that crawlers earn only what they spend (D25 unmet);
   - **The workshops:** the build-and-hire pattern (`BuildStationCommand`, `HireArtisanCommand`), which the tavern follows;
@@ -225,4 +225,5 @@ Read from the code while drafting (2026-11-23), each with its owner.
 - **F4. The dossier has no height to spare at 720 rows** (Epic 11's F16). Mind and Today won't fit as sections. Owner: L1.7, tabs (Q7) [Possibly Complex].
 - **F5. The chronicle is one ring of 1,024 events for the whole outpost.** A day log read from it holds only what the ring still holds. Owner: L0.3 counts lines a day [Possibly Complex]; L1.5 decides [Possibly Complex].
 - **F6. Frustration runs in physical time:** −1 every second (`AgentState`'s drives), about 42 a game hour. Every other need is paced in game time through `DayTuning`. A low mood that "feeds frustration" in game hours would be drowned by it. Owner: L1.4 judges whether frustration moves onto the day's pace, as its own behaviour change [Possibly Complex].
+- **F8. Frustration starts no tantrum.** The proposal's "a very unhappy one breaks, through today's frustration path" has no path to ride: tantrums come only from a contested node lost to a rival and an artisan's breakdown, and `MentalBreakEvaluator` reads hunger, energy and danger. Frustration weighs against compliance (`ComplianceUtility`) and sets `IsThreatened`, a fact no action reads. Owner: L1.4 [Possibly Complex]: mood feeds frustration, so unhappy crawlers defy orders sooner; a break of its own is left to plan 2's wants or LIFE-2, by exception.
 - **F7, resolved 2026-11-23. PR #27 (Epic 11's plans 3 and 4) was open** while the roadmap and the history called it merged, so plan 1's branch was first cut from `feat/epic11-masterworks`. #27 merged the same day (`d0d2d47`), and the branch was rebased onto `main` at the go.
