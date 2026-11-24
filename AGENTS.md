@@ -240,6 +240,12 @@ CI (`.github/workflows/dotnet.yml`) runs the tests (the client's in the pinned i
 - **Nothing else:** Recreate's score, the spell, its fills, its cost and its thought follow.
 - **The checks:** `ActivityValidator` (the table and its bounds); `ActivityNamesTests` (code names an activity only in the table and the places listed there).
 
+### Adding a station kind
+- **A station kind is a row** (Epic LIFE-1 plan 2, T.1, D17): a `StationKind` value (never reused: stations are saved by kind) and its row in `StationTable`: the player's word and title, what it is for, whether an artisan works it, whether it has recipes (`RecipeBook`), its build cost's line (`StationCost`, priced in `WorkshopTuning`), and its art key (its name in kebab case: the built station is drawn as `prop/` and it).
+- **Then:** its sites on the map (`MapDefinitionBuilder.Station`), its recipes if it makes to order, its art (a row under its key in both view modes' tables), and a venue if free time is spent there.
+- **Nothing else:** building, hiring, the station window's words and the cost follow from the row; code asks the row, never the kind (a scripted player or the drill may find a station by its kind).
+- **The checks:** `StationsValidator` (a row for every kind; recipes where the book has them; words and costs read from the rows); `ArtCompletenessTests`.
+
 ### Adding a venue
 - **A venue is map data** (Epic LIFE-1 plan 2, L2.3, D13; after The Sims' smart objects: what a place offers lives in the place): a line in the layout, `MapDefinitionBuilder.Venue`: its key, centre and radius, its seats (where a crawler stands or sits at an activity; free when no one is within `VenueDefinition.SeatRadius`), the activities it offers, its hours (a `ShiftBlocks` mask, every block by default), who may come (`VenueAccess`), and the key of a station it needs standing.
 - **Nothing else:** which venues are open (`VenueRules.OpenMask`, in the snapshot's `OpenVenueMask`), Recreate's choice among them and the spell at a seat follow. At most 32 a map.

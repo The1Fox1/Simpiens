@@ -182,7 +182,7 @@ This is a working document (AGENTS.md, Documentation Protocol 6), the second of 
 
 ### L2b. The tavern (5–7 days)
 **Complexity:** Very Complex as a phase by bundling (a refactor, a map room, a building, items, the economy, art and Gum). Split into seven steps, each Basic or Possibly Complex.
-- [ ] **T.1 Station kinds as a table** (D17; F13) [Possibly Complex: across core and presentation; behaviour-neutral, golden and renders unchanged]
+- [x] **T.1 Station kinds as a table** (D17; F13) (done 2026-11-24: `StationTable` in `Simulation/Items/`, its row class `StationKindDefinition` since the map's sites are `StationDefinition`; costs as a `StationCost` line priced in `WorkshopTuning`; the art keys built once from the rows; golden, core and the client in the pinned image unchanged) [Possibly Complex: across core and presentation; behaviour-neutral, golden and renders unchanged]
   - `StationTable` replaces the six switches; `StationsValidator` checks the table.
   - AGENTS.md: "Adding a station kind".
 - [ ] **T.2 The tavern room** (D16) [Possibly Complex: the map grows and a room moves, with the nav grid; golden re-recorded in its own commit; renders re-recorded in the pinned image after a look]

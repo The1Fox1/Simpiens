@@ -65,8 +65,12 @@ namespace Simpiens.Simulation.Economy
         /// </summary>
         public readonly ushort DrillYardCost;
 
-        /// <summary>What a station of <paramref name="kind"/> costs to build: the yard its own, the workshop row's stations <see cref="ConstructionCost"/>.</summary>
-        public ushort CostOf(Simpiens.Simulation.Items.StationKind kind) => kind == Simpiens.Simulation.Items.StationKind.DrillYard ? DrillYardCost : ConstructionCost;
+        /// <summary>What a station of <paramref name="kind"/> costs to build: its row's cost line (<c>StationTable</c>), priced here.</summary>
+        public ushort CostOf(Simpiens.Simulation.Items.StationKind kind) => Simpiens.Simulation.Items.StationTable.Get(kind).Cost switch
+        {
+            Simpiens.Simulation.Items.StationCost.Yard => DrillYardCost,
+            _ => ConstructionCost,
+        };
 
         public WorkshopTuning(ushort constructionCost, sbyte hireTrust, sbyte hireWarmth, byte maxRiskTolerancePercent, ushort reservationWage,
             ushort defaultWage, ushort maxWage, uint rehireCooldownTicks, byte initialAllegiance, sbyte quitTrust, byte maxUnpaidVisits,

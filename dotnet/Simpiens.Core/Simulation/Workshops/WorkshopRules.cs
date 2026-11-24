@@ -102,7 +102,7 @@ namespace Simpiens.Simulation.Workshops
         {
             if ((uint)index >= (uint)workshops.Count) return Check.NoStation;
             if (!workshops[index].Built) return Check.NotBuilt;
-            if (workshops[index].Kind == Simpiens.Simulation.Items.StationKind.DrillYard) return Check.NoArtisanHere;
+            if (!Simpiens.Simulation.Items.StationTable.Get(workshops[index].Kind).TakesArtisan) return Check.NoArtisanHere;
             if (workshops.ArtisanAt(index) != default) return Check.Staffed;
             if (crawler == null || crawler.HasLeft) return Check.NoCrawler;
             if (crawler.IsDrifter) return Check.Drifter;
@@ -194,12 +194,6 @@ namespace Simpiens.Simulation.Workshops
         }
 
         /// <summary>A station's name in the player's words: "forge", "still".</summary>
-        public static string StationName(Simpiens.Simulation.Items.StationKind kind) => kind switch
-        {
-            Simpiens.Simulation.Items.StationKind.Forge => "forge",
-            Simpiens.Simulation.Items.StationKind.Still => "still",
-            Simpiens.Simulation.Items.StationKind.DrillYard => "drill yard",
-            _ => "station"
-        };
+        public static string StationName(Simpiens.Simulation.Items.StationKind kind) => Simpiens.Simulation.Items.StationTable.Get(kind).Word;
     }
 }
