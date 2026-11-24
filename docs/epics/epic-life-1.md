@@ -1,9 +1,9 @@
 # Epic LIFE-1: The Mind and the Day
 
-- **Status**: QUEUED (2026-11-23). Drafted at the producer's word, with its first plan, which waits for the go.
+- **Status**: ACTIVE (2026-11-23), at the producer's go: "Proceed with development of Life-1". QUEUED from the same day, drafted at the producer's word with its first plan.
 - **Series**: the life core, Epic LIFE-1 to LIFE-3, all complete before Epic 12 (the producer, 2026-11-23; ROADMAP Track Rules, rule 1). This epic is the first: the proposal's L0 to L3. LIFE-2 takes L4–L6 (talk, gifts and bonds) and LIFE-3 takes L7–L8 and the series' gate (L9). Milestones keep the proposal's names, so an L-number means the same thing in every epic of the series.
 - **Plans**: three, one PR each (2026-11-23):
-  1. **Groundwork and the mind**: L0, and L1's thoughts, mood, day log and the dossier's Mind and Today. Drafted: [`.agents/life1_mind_plan.md`](../../.agents/life1_mind_plan.md), on `feat/life1-mind`.
+  1. **Groundwork and the mind**: L0, and L1's thoughts, mood, day log and the dossier's Mind and Today. Under way: [`.agents/life1_mind_plan.md`](../../.agents/life1_mind_plan.md), on `feat/life1-mind`.
   2. **Wants, fun and the tavern**: L1's wants, and L2. Drafted when plan 1 merges.
   3. **Rhythm and the gate**: L3, and LG1. Drafted when plan 2 merges.
   - **Why L1 is split:** wants need something to want. At L1 alone, the only wants the code could fulfil are today's needs under a new name ("eat", "buy a pickaxe"), and "a want arises and is fulfilled" would pass without meaning anything. With L2's venues they can be a tavern supper, a walk in the Garden or an evening with a friend. Both new goals of the epic (the want's and Recreate) then enter the motive model together, in plan 2. Thoughts and mood stand alone: they read events that already happen, so they fit plan 1 beside the refactor.
@@ -225,4 +225,4 @@ Read from the code while drafting (2026-11-23), each with its owner.
 - **F4. The dossier has no height to spare at 720 rows** (Epic 11's F16). Mind and Today won't fit as sections. Owner: L1.7, tabs (Q7) [Possibly Complex].
 - **F5. The chronicle is one ring of 1,024 events for the whole outpost.** A day log read from it holds only what the ring still holds. Owner: L0.3 counts lines a day [Possibly Complex]; L1.5 decides [Possibly Complex].
 - **F6. Frustration runs in physical time:** −1 every second (`AgentState`'s drives), about 42 a game hour. Every other need is paced in game time through `DayTuning`. A low mood that "feeds frustration" in game hours would be drowned by it. Owner: L1.4 judges whether frustration moves onto the day's pace, as its own behaviour change [Possibly Complex].
-- **F7. PR #27 (Epic 11's plans 3 and 4) is open,** though the roadmap and the history call it merged. So `main` lacks Epic 11's last two plans, and plan 1's branch is cut from `feat/epic11-masterworks`. Owner: the producer, who merges #27 before plan 1's PR opens.
+- **F7, resolved 2026-11-23. PR #27 (Epic 11's plans 3 and 4) was open** while the roadmap and the history called it merged, so plan 1's branch was first cut from `feat/epic11-masterworks`. #27 merged the same day (`d0d2d47`), and the branch was rebased onto `main` at the go.

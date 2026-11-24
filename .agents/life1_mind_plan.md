@@ -6,15 +6,14 @@ This is a working document (AGENTS.md, Documentation Protocol 6), the first of E
 
 - **Complexity:** Very Complex as a whole: a refactor of goal choice that every decision passes through, saved state (format 15), a new rule cognition reads, and the client's faces and tabs. Split below so that every step is Basic or Possibly Complex. L0 and L1 are Very Complex as phases only by bundling. No step needs supervision: the golden hashes are a complete check of the two steps that touch every decision (L0.4, L0.5), and they land only if golden reproduces byte for byte.
 - **Scope:** all of L0, and L1 except its wants. Wants go to plan 2 with L2's venues, so they have something to want (the epic's header gives the reasoning).
-- **Branch:** `feat/life1-mind`, cut from `feat/epic11-masterworks` at `1fca6ba`, because PR #27 (Epic 11's plans 3 and 4) is still open and `main` lacks them (the epic's F7).
-  - One PR into `main` at the end, with a commit per step.
-  - It opens only after #27 merges, so it is never stacked. Once #27 merges, the PR shows only this plan's commits.
+- **Branch:** `feat/life1-mind`, from `main` at `d0d2d47` (first cut from `feat/epic11-masterworks` while PR #27 was open, then rebased once it merged: the epic's F7). One PR into `main` at the end, with a commit per step.
+- **The go:** 2026-11-23, "Proceed with development of Life-1".
 - **Estimate:** 11–15 agent days (L0 5–7, L1 5–7, the gate 1).
 - **The producer's stops:**
   - the go, before L0;
   - the look at L1 (faces, the mood line, the dossier's tabs), after L1.7;
   - L1.4's soak bands, by exception;
-  - the merge, after #27's.
+  - the merge.
 - **The checks:**
   - golden unchanged through L0.4 and L0.5;
   - the gate seeds' day holds after L0.6 and L1.4;
@@ -312,7 +311,7 @@ This is a working document (AGENTS.md, Documentation Protocol 6), the first of E
     2. decisions to the epic's §0, findings to its §7, and numbers to `docs/life-model.md`;
     3. the focus file, and a summary in `.agents/architecture_history.md`.
   - **Delete this plan.**
-  - **Open the PR** into `main` once #27 has merged.
+  - **Open the PR** into `main`.
 
 ## 3. What plans 2 and 3 take
 Drafted when the plan before merges, from the epic's §2.4 and §2.5.
