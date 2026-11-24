@@ -265,7 +265,7 @@ This is a working document (AGENTS.md, Documentation Protocol 6), the first of E
   - **Observed:** `SimulationManager.Thought` (the crawler, the thought), and `OutpostWatch` tallies thoughts by row.
   - **Golden** moves only because the hash now mixes written records (nothing reads thoughts yet). Re-recorded in its own commit, with the reason.
   - **The round trip** carries live thoughts and their subjects across a save mid-day.
-- [ ] **L1.3 Mood** (D8) [Possibly Complex: a rule cognition reads; measuring]
+- [x] **L1.3 Mood** (D8) (done 2026-11-23: `docs/life-model.md` §3.2; an ordinary day sits Steady to Good, 99%; a friend's death set from -20 to -25 so 37 of 40 griefs reach Low; no other value or band moved; golden unchanged) [Possibly Complex: a rule cognition reads; measuring]
   - **The code:** `MoodRules`, the `MoodTerms` table and `MoodBand`.
   - **The validator:** terms within bounds, the bands ordered, and the rule pure (the same inputs at the same tick give the same mood).
   - **The measurement:** `MeasureMoodOnTheGateSeeds`, explicit, three days, two runs as L0.3's. It reads mood's spread by band per resident-day, how long each thought lives and stacks, and mood around a death on the guild player's run.

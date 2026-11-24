@@ -129,3 +129,21 @@ When the best goal can't be planned, the next are planned in order, up to `LifeT
 - **Near ties** (the best goal within 5% of the second): 3.6% of choices, 21.6 a resident-day, nearly all `EarnIncome` against `GatherAtAnchor` or `Socialize`. **Flips** (A, B, A again within a game hour): 0.8 a resident-day. Commitment (D5) stays 0 at L0.7.
 - **Together:** every pair of the 12 residents comes within the gossip radius (2.5) every day (65.8 of 66 pairs), for about 300 pair-hours a day, most of them at the hearth.
 - **The chronicle:** 592 lines a day outpost-wide (747 with the guild player), from 391 to 1,141 a seed-day, so the busiest seeds overflow the ring of 1,024 within a day (F5). 44 lines a resident-day name a resident. By type: gossip 253, trades 120, companionship 87, claims 60, regrowth 29, tantrums (contested nodes) 22.5 a day.
+
+### 3.2 Moods before mood acts (L1.3, 2026-11-23)
+`MoodFollowsTheDayTests.MeasureMoodOnTheGateSeeds`, explicit: the 23 gate seeds; three game days with no player and with the guild's clears (`TheOutpostRemembers`' players: four armed, Steady), and ten with `DeathHasItsCost`'s (two unarmed against the beetles, Bold), which bring deaths. Thoughts thought, mood read each tick; nothing reads mood yet. About 30 s in Release.
+
+| | No player | The clears | Death's players (10 days) |
+| :--- | ---: | ---: | ---: |
+| Mood, mean | 8.2 | 9.1 | 9.4 |
+| Lowest, highest | -21, 35 | -44, 48 | -82, 59 |
+| Breaking | 0.0% | 0.0% | 1.4% |
+| Low | 0.9% | 1.2% | 3.7% |
+| Steady | 53.1% | 48.4% | 35.4% |
+| Good | 45.9% | 49.1% | 56.6% |
+| Happy | 0.0% | 1.3% | 2.9% |
+
+- **Average is the default:** an ordinary day sits Steady to Good (99%), from comfort (+4), a bunk's sleep and meals (+3 each) and the hearth's talk (+2, stacking to 3.5), less the odd node lost to a rival (-3).
+- **Thoughts a resident-day** (no player): a good talk 25.5 (the hearth's gossip refreshes it all evening), a good meal 2.4, beaten to it 1.9, slept in a bunk 1.0, ate at the Garden 0.2; paydays, bands and the rest rarer. With the clears, paid in full 0.7 and hurt 0.5 join them.
+- **A friend's death** (7 deaths, 40 griefs in the death run): at -20 (D7's first value), mood fell from 8.5 to -15.3 an hour after, and 28 of 40 griefs reached Low. **Set to -25**: from 8.5 to -21.2, and 37 of 40 reach Low, so grief reads as Low unless a crawler was already very happy. No other value or band moved.
+

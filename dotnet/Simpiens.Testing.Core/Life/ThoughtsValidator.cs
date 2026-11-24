@@ -62,7 +62,7 @@ namespace Simpiens.Testing.Life
             var talk = ThoughtTable.Get(Thought.AGoodTalk); // 2, factor 0.5, three stacks
             Assert(talk.ValueAt(3) == 3.5f, $"Three talks: 2 + 1 + 0.5 ({talk.ValueAt(3)}).");
             var death = ThoughtTable.Get(Thought.FriendDied);
-            Assert(death.ValueAt(1) == -20f && death.NamesSubject, "A friend's death: -20, naming the dead.");
+            Assert(death.ValueAt(1) == -25f && death.NamesSubject, "A friend's death: -25 (L1.3), naming the dead.");
         }
 
         private static void Assert(bool condition, string message)

@@ -154,7 +154,7 @@ namespace Simpiens.Simulation.Life
                 new ThoughtDefinition(Thought.Downed, "Downed", "Downed", -12, 48, 1, 1f, ThoughtKind.Event),
                 new ThoughtDefinition(Thought.RescuedBy, "RescuedBy", "Rescued by {0}", 10, 72, 1, 1f, ThoughtKind.Social),
                 new ThoughtDefinition(Thought.Saved, "Saved", "Saved {0}", 8, 48, 1, 1f, ThoughtKind.Social),
-                new ThoughtDefinition(Thought.FriendDied, "FriendDied", "{0} died", -20, 120, 1, 1f, ThoughtKind.Social),
+                new ThoughtDefinition(Thought.FriendDied, "FriendDied", "{0} died", -25, 120, 1, 1f, ThoughtKind.Social),
                 new ThoughtDefinition(Thought.AKill, "AKill", "A kill", 4, 24, 3, 0.5f, ThoughtKind.Event),
                 new ThoughtDefinition(Thought.GrewInMyCraft, "GrewInMyCraft", "Grew in my craft", 8, 48, 1, 1f, ThoughtKind.Event),
                 new ThoughtDefinition(Thought.EarnedAName, "EarnedAName", "Earned a name", 12, 72, 1, 1f, ThoughtKind.Event),
