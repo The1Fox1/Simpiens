@@ -26,6 +26,8 @@ namespace Simpiens.Presentation.Art
         public const string Sling = "sling";
         public const string Crossbow = "crossbow";
         public const string Book = "book";
+        public const string Mug = "mug";
+        public const string Bowl = "bowl";
 
         public const int GlyphSize = 12;
 
@@ -193,6 +195,38 @@ namespace Simpiens.Presentation.Art
                 "..1222222ab.",
                 "..33333333b.",
                 "...dddddddd.",
+            },
+            // A tankard with its foam and handle (the tavern's ale, Epic LIFE-1 plan 2, T.3)
+            [Mug] = new[]
+            {
+                "............",
+                "..abbba.....",
+                ".abbbbbba...",
+                ".12222223...",
+                ".122222233..",
+                ".12222223.3.",
+                ".12222223.3.",
+                ".122222233..",
+                ".12222223...",
+                ".12222223...",
+                "..3333334...",
+                "............",
+            },
+            // A bowl of stew (the tavern's supper, T.3)
+            [Bowl] = new[]
+            {
+                "............",
+                "............",
+                "............",
+                "............",
+                "..bbbbbbbb..",
+                ".1bbcbbcbb3.",
+                ".1222222223.",
+                "..12222223..",
+                "...122223...",
+                "....3333....",
+                "...334433...",
+                "............",
             },
             [Crossbow] = new[]
             {

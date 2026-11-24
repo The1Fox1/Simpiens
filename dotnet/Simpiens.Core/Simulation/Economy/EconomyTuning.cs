@@ -175,6 +175,10 @@ namespace Simpiens.Simulation.Economy
             items[(int)ItemType.Crossbow] = new ItemTerms(60, StallRole.Sells, 45, 0);
             // Manuals (Epic 11, S3.2, D11): primers at 25g, worth 30g to a neutral reader; the caravan brings them, none to start
             for (var primer = ItemType.MeleePrimer; primer <= ItemType.MedicinePrimer; primer++) items[(int)primer] = new ItemTerms(30, StallRole.Sells, 25, 0);
+            // The tavern's menu (Epic LIFE-1 plan 2, T.3, D19): on the stall's shelf, served at the tavern; an ale 4g, a stew supper
+            // 10g against a ration's 15g; none until the caravan brings them for a tavern that stands
+            items[(int)ItemType.Ale] = new ItemTerms(3, StallRole.Sells, 4, 0);
+            items[(int)ItemType.Stew] = new ItemTerms(6, StallRole.Sells, 10, 0);
             return items;
         }
 

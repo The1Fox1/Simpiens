@@ -24,6 +24,7 @@ namespace Simpiens.Core.Tests
             ["Simpiens.Core/Session/OutpostSession.cs"] = "the session: its seeded Gather bounty's item",
             ["Simpiens.Core/Simulation/Economy/EconomyTuning.cs"] = "the default economy: each item's base value and stall terms",
             ["Simpiens.Core/Simulation/Economy/SupplyTuning.cs"] = "the default caravan: what it exports and supplies",
+            ["Simpiens.Core/Simulation/Life/ActivityTable.cs"] = "the activities: the item each serves (an ale, a stew supper; Epic LIFE-1 plan 2, T.3)",
             ["Simpiens.Hosting/EconomySoak.cs"] = "the soak's player profiles: the prices each one sets",
             ["Simpiens.Presentation/ItemTexts.cs"] = "the client's words for items: merchant rows, stock and header",
             // Quirks kept on purpose (AGENTS.md, "Adding or removing an item")

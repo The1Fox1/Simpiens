@@ -46,7 +46,7 @@ namespace Simpiens.Testing.Economy
             foreach (var row in StationTable.All)
             {
                 Assert(WorkshopRules.StationName(row.Kind) == row.Word, $"{row.Kind}: the rules' word is its row's.");
-                ushort expected = row.Cost == StationCost.Yard ? tuning.DrillYardCost : tuning.ConstructionCost;
+                ushort expected = row.Cost == StationCost.Yard ? tuning.DrillYardCost : row.Cost == StationCost.Tavern ? tuning.TavernCost : tuning.ConstructionCost;
                 Assert(tuning.CostOf(row.Kind) == expected, $"{row.Kind}: costs its line ({tuning.CostOf(row.Kind)}g).");
             }
         }

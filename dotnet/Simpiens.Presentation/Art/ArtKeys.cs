@@ -40,6 +40,9 @@ namespace Simpiens.Presentation.Art
         /// <summary>The guildhall's drill yard (Epic 11, S3.4): a straw post on its stone, a weapon stand beside it.</summary>
         public const string PropDrillYard = "prop/drill-yard";
 
+        /// <summary>The tavern (Epic LIFE-1 plan 2, T.3): its counter, tankards and a barrel.</summary>
+        public const string PropTavern = "prop/tavern";
+
         /// <summary>A station's art: its own once built, the plot before.</summary>
         public static string Station(StationKind kind, bool built) => !built ? PropStationPlot : (int)kind < StationKeys.Length && StationKeys[(int)kind] != null ? StationKeys[(int)kind] : PropStationPlot;
 

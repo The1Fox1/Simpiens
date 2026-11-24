@@ -9,6 +9,8 @@ namespace Simpiens.Simulation.Items
         Workshop = 0,
         /// <summary>The drill yard's (<c>WorkshopTuning.DrillYardCost</c>).</summary>
         Yard = 1,
+        /// <summary>The tavern's (<c>WorkshopTuning.TavernCost</c>, Epic LIFE-1 plan 2, T.3).</summary>
+        Tavern = 2,
     }
 
     /// <summary>
@@ -77,6 +79,8 @@ namespace Simpiens.Simulation.Items
                     takesArtisan: true, hasRecipes: true, StationCost.Workshop, "still"),
                 new StationKindDefinition(StationKind.DrillYard, "drill yard", "Drill Yard", "Where guild members drill in their free hours: no artisan, no orders.",
                     takesArtisan: false, hasRecipes: false, StationCost.Yard, "drill-yard"),
+                new StationKindDefinition(StationKind.Tavern, "tavern", "Tavern", "Ale, stew and dice for the evening, kept by a keeper you hire on the hours you set.",
+                    takesArtisan: true, hasRecipes: false, StationCost.Tavern, "tavern"),
             };
             int capacity = 0;
             foreach (var row in rows) capacity = Math.Max(capacity, (int)row.Kind + 1);

@@ -150,8 +150,8 @@ namespace Simpiens.Simulation.Life
                 new ActivityDefinition(Activity.Walk, "Walk", "A walk in the Garden", 15, 0, 0, 45, ItemType.None, VarietyGroup.Outdoors, 0, 0, ActivityLean.Solitary, AgentVisualState.Walking, Thought.AWalkInTheGarden),
                 new ActivityDefinition(Activity.Browse, "Browse", "Browsing the stall", 10, 0, 0, 30, ItemType.None, VarietyGroup.Market, 0, 0, ActivityLean.Greedy, AgentVisualState.Idle, Thought.BrowsedTheMarket),
                 new ActivityDefinition(Activity.Spar, "Spar", "Sparring in the yard", 20, 5, 0, 45, ItemType.None, VarietyGroup.Games, 1, 2, ActivityLean.Bold, AgentVisualState.Rallying, Thought.AGoodBout),
-                new ActivityDefinition(Activity.Ale, "Ale", "An ale", 20, 5, 0, 45, ItemType.None, VarietyGroup.Drink, 0, 0, ActivityLean.Sociable, AgentVisualState.Idle, Thought.AnAleAtTheTavern),
-                new ActivityDefinition(Activity.Supper, "Supper", "A stew supper", 10, 0, -40, 45, ItemType.None, VarietyGroup.Meal, 0, 0, ActivityLean.None, AgentVisualState.Idle, Thought.ASupperAtTheTavern),
+                new ActivityDefinition(Activity.Ale, "Ale", "An ale", 20, 5, 0, 45, ItemType.Ale, VarietyGroup.Drink, 0, 0, ActivityLean.Sociable, AgentVisualState.Idle, Thought.AnAleAtTheTavern),
+                new ActivityDefinition(Activity.Supper, "Supper", "A stew supper", 10, 0, -40, 45, ItemType.Stew, VarietyGroup.Meal, 0, 0, ActivityLean.None, AgentVisualState.Idle, Thought.ASupperAtTheTavern),
                 new ActivityDefinition(Activity.Dice, "Dice", "Dice", 30, 10, 0, 60, ItemType.None, VarietyGroup.Games, 1, 4, ActivityLean.Bold, AgentVisualState.Idle, Thought.AGameOfDice),
             };
             var byId = new ActivityDefinition[Capacity];

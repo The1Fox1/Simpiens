@@ -44,6 +44,12 @@ namespace Simpiens.Simulation.Items
         Creature = 1u << 11,
 
         /// <summary>A manual (Epic 11, S3.2, D11): read at rest, practising the work its <see cref="ManualBlock"/> names, and used up.</summary>
-        Manual = 1u << 12
+        Manual = 1u << 12,
+
+        /// <summary>
+        /// Served at a venue (Epic LIFE-1 plan 2, T.3, D19): bought from the stall's stock as an activity begins at the tavern and
+        /// taken there and then. No resident buys one to carry, and none is eaten from a pack: it is in no group anyone buys by.
+        /// </summary>
+        Served = 1u << 13
     }
 }

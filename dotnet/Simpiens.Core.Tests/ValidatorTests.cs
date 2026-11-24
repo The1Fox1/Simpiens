@@ -72,6 +72,9 @@ namespace Simpiens.Core.Tests
         public void Stations() => new Simpiens.Testing.Economy.StationsValidator().RunAllValidationTests(); // Epic LIFE-1 plan 2, T.1
 
         [Fact]
+        public void TavernMenu() => new Simpiens.Testing.Economy.TavernMenuValidator().RunAllValidationTests(); // Epic LIFE-1 plan 2, T.3
+
+        [Fact]
         public void Look() => new Simpiens.Testing.People.LookValidator().RunAllValidationTests();
 
         [Fact]

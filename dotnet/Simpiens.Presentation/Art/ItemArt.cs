@@ -85,6 +85,9 @@ namespace Simpiens.Presentation.Art
             ["smithing-primer"] = new ItemLook(ItemShapes.Book, new Rgba32(60, 60, 68), new Rgba32(234, 120, 40)),
             ["alchemy-primer"] = new ItemLook(ItemShapes.Book, new Rgba32(110, 60, 140), new Rgba32(214, 178, 96)),
             ["medicine-primer"] = new ItemLook(ItemShapes.Book, new Rgba32(226, 222, 210), new Rgba32(200, 40, 40)),
+            // The tavern's menu (Epic LIFE-1 plan 2, T.3): a pewter tankard under its foam, a wooden bowl of stew
+            ["ale"] = new ItemLook(ItemShapes.Mug, new Rgba32(150, 152, 160), new Rgba32(244, 232, 196)),
+            ["stew"] = new ItemLook(ItemShapes.Bowl, new Rgba32(150, 98, 58), new Rgba32(204, 120, 54)),
         };
 
         public static bool TryGet(string artKey, out ItemLook look) => _looks.TryGetValue(artKey ?? string.Empty, out look);

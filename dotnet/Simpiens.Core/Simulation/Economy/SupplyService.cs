@@ -23,6 +23,9 @@ namespace Simpiens.Simulation.Economy
         /// <summary>The ledger's sink for manuals the caravan brings (Epic 11, S3.2, D11).</summary>
         public const string ManualSinkName = "ManualWholesale";
 
+        /// <summary>The ledger's sink for the tavern's menu the caravan brings (Epic LIFE-1 plan 2, T.3, D19).</summary>
+        public const string TavernSinkName = "TavernWholesale";
+
         private readonly struct DormantEntry
         {
             public readonly EntityId ResourceId;
@@ -230,6 +233,7 @@ namespace Simpiens.Simulation.Economy
                 var item = all[i].Id;
                 var terms = _tuning.Terms(item);
                 if (terms.Role != CaravanRole.Supplies || ItemCatalog.Is(item, ItemCategory.Food) != food || !stall.Trades(item)) continue;
+                if (terms.ForStation != StationKind.None && !host.StationStands(terms.ForStation)) continue; // the tavern's menu, for a tavern (T.3)
                 stall = food ? RestockFood(stall, item, terms, currentTick, host) : RestockGoods(stall, item, terms, host);
             }
             return stall;

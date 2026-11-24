@@ -24,6 +24,9 @@ namespace Simpiens.Simulation.Economy
         /// Returns the stall as it is after.
         /// </summary>
         TradeStallData PayWages(TradeStallData stall, uint currentTick);
+
+        /// <summary>Whether a station of <paramref name="kind"/> stands built (Epic LIFE-1 plan 2, T.3: the caravan brings the tavern's menu for a tavern).</summary>
+        bool StationStands(Simpiens.Simulation.Items.StationKind kind) => false;
     }
 
     /// <summary>

@@ -612,6 +612,13 @@ namespace Simpiens.Simulation
         }
 
         TradeStallData ISupplyHost.PayWages(TradeStallData stall, uint currentTick) => Workshops.PayWages(this, Guild.PayWages(this, stall, currentTick), currentTick);
+
+        bool ISupplyHost.StationStands(Simpiens.Simulation.Items.StationKind kind)
+        {
+            var workshops = Workshops;
+            for (int i = 0; i < workshops.Count; i++) if (workshops[i].Kind == kind && workshops[i].Built) return true;
+            return false;
+        }
         /// <summary>The outpost's masterpieces (Epic 11, S8.3), the workshops': the door the sale, the guild's gift and the piles share.</summary>
         public Simpiens.Simulation.Workshops.MasterpieceService Masterpieces => Workshops.Masterpieces;
 

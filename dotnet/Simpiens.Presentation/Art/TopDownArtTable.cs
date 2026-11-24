@@ -53,6 +53,7 @@ namespace Simpiens.Presentation.Art
                .Add(ArtKeys.PropStill, Sheet, new[] { "Prop_Still" }, 1f, 1f, Art)
                .Add(ArtKeys.PropStationPlot, Sheet, new[] { "Prop_StationPlot" }, 1f, 1f, Art)
                .Add(ArtKeys.PropDrillYard, Sheet, new[] { "Prop_DrillYard" }, 1f, 1f, Art) // Epic 11, S3.4
+               .Add(ArtKeys.PropTavern, Sheet, new[] { "Prop_Tavern" }, 1f, 1f, Art) // Epic LIFE-1 plan 2, T.3
                .Add(ArtKeys.SelectionRing, Sheet, new[] { "Selection_Ring" }, SelectionRingSize, SelectionRingSize, Art)
                // The trade caravan (Epic 10 Part 2, the stretch, D70): a porter and its cart, walking
                .Add(ArtKeys.PropCaravan, Sheet, HazardSprites.Names(CaravanSprites.Name, CaravanSprites.Frames), 1f, 1f, Art, framesPerSecond: CaravanFramesPerSecond)

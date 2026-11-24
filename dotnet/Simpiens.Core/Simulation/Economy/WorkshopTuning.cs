@@ -65,10 +65,14 @@ namespace Simpiens.Simulation.Economy
         /// </summary>
         public readonly ushort DrillYardCost;
 
+        /// <summary>What the tavern costs to build (Epic LIFE-1 plan 2, T.3, D18): the drill yard's price, into the same <c>Construction</c> sink.</summary>
+        public readonly ushort TavernCost;
+
         /// <summary>What a station of <paramref name="kind"/> costs to build: its row's cost line (<c>StationTable</c>), priced here.</summary>
         public ushort CostOf(Simpiens.Simulation.Items.StationKind kind) => Simpiens.Simulation.Items.StationTable.Get(kind).Cost switch
         {
             Simpiens.Simulation.Items.StationCost.Yard => DrillYardCost,
+            Simpiens.Simulation.Items.StationCost.Tavern => TavernCost,
             _ => ConstructionCost,
         };
 
@@ -76,9 +80,10 @@ namespace Simpiens.Simulation.Economy
             ushort defaultWage, ushort maxWage, uint rehireCooldownTicks, byte initialAllegiance, sbyte quitTrust, byte maxUnpaidVisits,
             TrustDelta paid, sbyte paidAllegiance, TrustDelta unpaid, sbyte unpaidAllegiance, sbyte dismissTrust,
             float breakEnergy = 15f, TrustDelta breakCost = default, float restedEnergy = 60f, uint breakAfterTicks = 10 * DayClock.TicksPerHour,
-            ushort drillYardCost = 200)
+            ushort drillYardCost = 200, ushort tavernCost = 200)
         {
             DrillYardCost = drillYardCost;
+            TavernCost = tavernCost;
             BreakAfterTicks = breakAfterTicks;
             BreakEnergy = breakEnergy;
             Break = breakCost;

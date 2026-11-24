@@ -21,7 +21,7 @@ namespace Simpiens.Presentation
         private static readonly PixelSprite _herbPatchSprite;
         private static readonly PixelSprite _glowstoneSprite;
         private static readonly PixelSprite _stallSprite;
-        private static readonly PixelSprite _forgeSprite, _stillSprite, _stationPlotSprite, _cairnSprite, _drillYardSprite;
+        private static readonly PixelSprite _forgeSprite, _stillSprite, _stationPlotSprite, _cairnSprite, _drillYardSprite, _tavernSprite;
 
         /// <summary>A body's cairn (Epic 10 Part 3, K5.8b).</summary>
         public static PixelSprite CairnSprite => _cairnSprite;
@@ -39,6 +39,7 @@ namespace Simpiens.Presentation
 
         /// <summary>The guildhall's drill yard (Epic 11, S3.4).</summary>
         public static PixelSprite DrillYardSprite => _drillYardSprite;
+        public static PixelSprite TavernSprite => _tavernSprite;
         private static readonly PixelSprite _wallSprite;
         private static readonly PixelSprite[] _campfireSprites = new PixelSprite[2];
 
@@ -324,6 +325,7 @@ namespace Simpiens.Presentation
             _stillSprite = CreateSprite(PatternStill, stationPalette, "Prop_Still");
             _stationPlotSprite = CreateSprite(PatternStationPlot, stationPalette, "Prop_StationPlot");
             _drillYardSprite = CreateSprite(PatternDrillYard, stationPalette, "Prop_DrillYard"); // Epic 11, S3.4
+            _tavernSprite = CreateSprite(PatternTavern, stationPalette, "Prop_Tavern"); // Epic LIFE-1 plan 2, T.3
 
             // A body's cairn (Epic 10 Part 3, K5.8b): stones heaped where a crawler fell
             var cairnPalette = new Dictionary<char, Rgba32>
@@ -488,6 +490,27 @@ namespace Simpiens.Presentation
             "....##wwww##.#w#",
             "....#SSssSS#.###",
             "....########....",
+        };
+
+        // The tavern (Epic LIFE-1 plan 2, T.3): its counter, two tankards foaming on it, a barrel behind
+        private static readonly string[] PatternTavern =
+        {
+            "................",
+            "..####..........",
+            ".#TwwT#.........",
+            ".#wTTw#..#hh#...",
+            ".#TwwT#..#pp#...",
+            "..####...####...",
+            "################",
+            "#TTTTTTTTTTTTTT#",
+            "#TTThhTTTTThhTT#",
+            "#TTTppTTTTTppTT#",
+            "################",
+            "#wwwwwwwwwwwwww#",
+            "#wwTwwwwwwwwTww#",
+            "#wwwwwwwwwwwwww#",
+            "################",
+            "................",
         };
 
         private static readonly string[] PatternCairn =
