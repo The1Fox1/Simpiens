@@ -89,7 +89,7 @@ Every goal declares what it is for (`Motive`) and the part of the day it belongs
   | Factor | Keyed by | From |
   | :--- | :--- | :--- |
   | The session's weight | motive | L0.5 (`LifeTuning.MotiveWeight`; 1 for every motive by default) |
-  | Mood | motive and mood's band | L1.4 |
+  | Mood | motive and mood's band; never under orders (an expedition, a shift) | L1.4: low, income 0.9; breaking, income 0.75; company held at 1 until plan 2 (F12) |
   | The want | the want's motive | plan 2 |
   | The routine | family and hour | plan 3 |
   | Satiation | work | plan 3 |
@@ -146,4 +146,11 @@ When the best goal can't be planned, the next are planned in order, up to `LifeT
 - **Average is the default:** an ordinary day sits Steady to Good (99%), from comfort (+4), a bunk's sleep and meals (+3 each) and the hearth's talk (+2, stacking to 3.5), less the odd node lost to a rival (-3).
 - **Thoughts a resident-day** (no player): a good talk 25.5 (the hearth's gossip refreshes it all evening), a good meal 2.4, beaten to it 1.9, slept in a bunk 1.0, ate at the Garden 0.2; paydays, bands and the rest rarer. With the clears, paid in full 0.7 and hurt 0.5 join them.
 - **A friend's death** (7 deaths, 40 griefs in the death run): at -20 (D7's first value), mood fell from 8.5 to -15.3 an hour after, and 28 of 40 griefs reached Low. **Set to -25**: from 8.5 to -21.2, and 37 of 40 reach Low, so grief reads as Low unless a crawler was already very happy. No other value or band moved.
+
+### 3.3 What mood changes (L1.4, 2026-11-23)
+- **Frustration on the day's pace (F6):** it eased 1 every real second (about 42 a game hour); now 10 a game hour (`DayTuning.FrustrationEasePerSecond`). Mean frustration 0.6 to 2.4 with no player, at the face's 60 for 0.14% of the time (from none). Golden and moods unchanged.
+- **Mood's frustration** (`LifeTuning.MoodFrustrationPerHour`, applied in the crawler's drives): breaking +15 a game hour, low +5, good and happy -5. It weighs against compliance, so an unhappy crawler defies orders sooner (F8); none did on the gate seeds, where moods are seldom low.
+- **Mood's weights** (`LifeTuning.MoodWeight`, in the motive model): low, income 0.9; breaking, income 0.75; nothing for a crawler under orders (an expedition or a shift: the epic's A8).
+  - **Company's first weights (low 1.25, breaking 1.5) were dropped (F12):** a crawler hurt in a fight read low, went to the hearth instead of its bunk, healed slower there and stayed low. Four live DoDs failed (`ADraughtKeepsAPartyWorking`, `EveryScenarioPlaysTogether`, `PassionBurnsBright`, `ACallingEmerges`) though their gate-seed measurements barely moved (a Warden on 1 seed to 3, draughts 15 of 23 to 13, a passion burning bright 11 to 9). With income only, all four pass on their seeds.
+- **Readings after L1.4** (`MeasureMoodOnTheGateSeeds`, `MeasureACrawlersDay`): ordinary days unchanged (rest 9.8 h, work 8.4 h, the hearth 3.1 h; moods Steady to Good 99%); with death's players, frustration at 60 for 0.16% of the time, no orders defied, and a friend's death still takes a mourner to Low in 37 of 40 griefs.
 

@@ -175,6 +175,7 @@ namespace Simpiens.Cognition
                 State.VisualState = AgentVisualState.Resting;
             }
             if (!wasCollapsed && State.IsExhaustionCollapsed) State.Think(Simpiens.Simulation.Life.Thought.SleptOnTheFloor, (uint)currentTick); // collapsed where it stood (Epic LIFE-1, L1.2)
+            FeelMood(currentTick);
 
             // Sent for a fallen mate (Epic 10 Part 3, K7.2c, D42): once its last decision has landed, it drops what it does
             var carry = State.Expedition.Carry;
@@ -277,6 +278,20 @@ namespace Simpiens.Cognition
         {
             State.TriggerTantrumVisual(timestamp);
             RecordStory(ChronicleEventType.TantrumStarted, ChronicleIntensity.Dramatic);
+        }
+
+        /// <summary>
+        /// Mood's weight on frustration (Epic LIFE-1, L1.4, D9): a breaking or low mood adds to it a game hour, a good or happy
+        /// one eases it, as the session's life tuning says; held from 0 to 100. Frustration weighs against compliance, so an
+        /// unhappy crawler defies orders sooner, and shows on its face.
+        /// </summary>
+        private void FeelMood(long currentTick)
+        {
+            var life = _simulationManager != null ? _simulationManager.Economy.Life : Simpiens.Simulation.Economy.EconomyTuning.Default.Life;
+            var band = Simpiens.Simulation.Life.MoodRules.BandOf(Simpiens.Simulation.Life.MoodRules.Of(State.Needs, State.Health, State.IsDowned, State.Life, currentTick));
+            float perHour = life.MoodFrustrationPerHour(band);
+            if (perHour == 0f) return;
+            State.Frustration = SimMath.Clamp(State.Frustration + DayClock.PerSecond(perHour) * FixedTickDeltaTime, 0f, 100f);
         }
 
         /// <summary>An exhaustion collapse, recorded in the chronicle.</summary>

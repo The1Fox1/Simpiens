@@ -24,7 +24,8 @@ namespace Simpiens.Testing.Planning
             ValidateAWeightChangesAChoice();
             ValidateTheTuning();
             ValidateUrgency();
-            TestLog.Log("<color=green>[MotiveModelValidator] ALL 4 TESTS PASSED SUCCESSFULLY!</color>");
+            ValidateMoodWeighs();
+            TestLog.Log("<color=green>[MotiveModelValidator] ALL 5 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private static AgentContext Context(in AgentNeeds needs, EconomyTuning economy = null)
@@ -40,8 +41,8 @@ namespace Simpiens.Testing.Planning
 
         private void ValidateNeutralIsExact()
         {
-            var needs = new AgentNeeds(63.7f, 31.3f, 22.9f);
-            var context = Context(needs);
+            var needs = new AgentNeeds(63.7f, 31.3f, 22.9f); // hungry and lonely: a low mood, so mood's weights are set aside here
+            var context = Context(needs, EconomyTuning.Default.WithLife(LifeTuning.Default.WithoutMood()));
             foreach (var goal in OutpostGoapDomain.BuildGoals())
             {
                 float basePriority = goal.BasePriority(context);
@@ -94,6 +95,30 @@ namespace Simpiens.Testing.Planning
             Assert(Urgency.Of(Motive.Rest, context) == 70f, "Rest's is 100 - energy.");
             Assert(Urgency.Of(Motive.Company, context) == 55f, "Company's is 100 - social.");
             Assert(Urgency.Of(Motive.Income, context) == 0f && Urgency.Of(Motive.Duty, context) == 0f, "A motive with no need behind it has none.");
+        }
+
+        private void ValidateMoodWeighs()
+        {
+            var steady = Context(new AgentNeeds(30f, 80f, 60f));      // comfortable: Steady
+            var low = Context(new AgentNeeds(65f, 25f, 20f));         // hungry, tired, lonely: -17, Low
+            Assert(steady.Mood == Simpiens.Simulation.Life.MoodBand.Steady && low.Mood == Simpiens.Simulation.Life.MoodBand.Low, $"The context reads its mood ({steady.Mood}, {low.Mood}).");
+            var socialize = new Simpiens.Cognition.Planning.Goals.SocializeGoal();
+            var earn = new Simpiens.Cognition.Planning.Goals.EarnIncomeGoal();
+            var eat = new Simpiens.Cognition.Planning.Goals.SatiateHungerGoal();
+            Assert(MotiveModel.Weight(socialize, steady) == 1f && MotiveModel.Weight(earn, steady) == 1f, "Steady, mood weighs nothing.");
+            Assert(MotiveModel.Weight(earn, low) == 0.9f && MotiveModel.Weight(socialize, low) == 1f && MotiveModel.Weight(eat, low) == 1f,
+                $"Low: income pulls 0.9; company (until plan 2's fun, F12) and hunger as ever ({MotiveModel.Weight(earn, low)}, {MotiveModel.Weight(socialize, low)}).");
+            var life = LifeTuning.Default;
+            Assert(life.MoodWeight(Simpiens.Simulation.Life.MoodBand.Breaking, (int)Motive.Income) == 0.75f && life.MoodWeight(Simpiens.Simulation.Life.MoodBand.Breaking, (int)Motive.Company) == 1f, "Breaking: income 0.75, company 1.");
+            var shift = new AgentContext(default, default, new AgentNeeds(65f, 25f, 20f), 0f, null, null, 0, station: new StationOrder(0, default, 1f));
+            Assert(shift.Mood == Simpiens.Simulation.Life.MoodBand.Low && MotiveModel.UnderOrders(shift) && MotiveModel.Weight(earn, shift) == 1f,
+                "Under orders (on shift), mood weighs nothing: the orders decide (the epic's A8).");
+            Assert(life.MoodFrustrationPerHour(Simpiens.Simulation.Life.MoodBand.Breaking) == 15f && life.MoodFrustrationPerHour(Simpiens.Simulation.Life.MoodBand.Low) == 5f
+                && life.MoodFrustrationPerHour(Simpiens.Simulation.Life.MoodBand.Steady) == 0f && life.MoodFrustrationPerHour(Simpiens.Simulation.Life.MoodBand.Happy) == -5f, "Mood's frustration: +15, +5, 0, -5.");
+            var quiet = life.WithoutMood();
+            Assert(quiet.MoodWeight(Simpiens.Simulation.Life.MoodBand.Breaking, (int)Motive.Income) == 1f && quiet.MoodFrustrationPerHour(Simpiens.Simulation.Life.MoodBand.Breaking) == 0f && quiet.FallbackDepth == 2,
+                "Without mood: no weights, no frustration, the rest kept.");
+            Assert(default(LifeTuning).MoodWeight(Simpiens.Simulation.Life.MoodBand.Low, (int)Motive.Income) == 1f, "A zeroed tuning: mood weighs nothing.");
         }
 
         private static void Assert(bool condition, string message)

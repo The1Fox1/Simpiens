@@ -50,7 +50,9 @@ namespace Simpiens.Testing.Environment
             // Ten seconds at the session's pace (before the 24-hour day 15, on it about 1)
             float expected = 10f * Simpiens.Simulation.Economy.DayTuning.Default.HungerPerSecond;
             Assert(System.Math.Abs(state.Hunger - expected) < 0.1f, $"Headless agent hunger expected ~{expected:F2}, actual: {state.Hunger}");
-            Assert(state.Frustration == 0f, $"Headless agent frustration expected 0, actual: {state.Frustration}");
+            // Frustration eases on the day's pace too (Epic LIFE-1, L1.4, F6): ten seconds is about a quarter of a game hour, 10 a game hour
+            float eased = 10f - 10f * Simpiens.Simulation.Economy.DayTuning.Default.FrustrationEasePerSecond;
+            Assert(System.Math.Abs(state.Frustration - eased) < 0.1f, $"Headless agent frustration expected ~{eased:F2}, actual: {state.Frustration}");
 
             state.TriggerTantrumVisual(0f);
             Assert(state.IsInTantrum, "Agent should be in tantrum after trigger.");

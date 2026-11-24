@@ -9,7 +9,8 @@ namespace Simpiens.Cognition.Planning
     /// priority only through here.
     /// <list type="bullet">
     /// <item><b>The weight</b> multiplies the shared factors, each exactly 1 until its milestone sets it: the session's weight
-    /// by motive (<see cref="Simpiens.Simulation.Life.LifeTuning.MotiveWeight"/>); then mood by motive (L1.4), the want
+    /// by motive (<see cref="Simpiens.Simulation.Life.LifeTuning.MotiveWeight"/>); mood by motive and band
+    /// (<see cref="Simpiens.Simulation.Life.LifeTuning.MoodWeight"/>, L1.4); then the want
     /// (plan 2), the routine by family and hour, satiation on work and the day's intention (plan 3).</item>
     /// <item><b>Exact while neutral:</b> the factors are multiplied together first, then the base by their product. A float
     /// times exactly 1 is itself, so a weight of 1 leaves every choice, and the golden hashes, as they were.</item>
@@ -44,9 +45,16 @@ namespace Simpiens.Cognition.Planning
         public static float Weight(GoapGoal goal, AgentContext context)
         {
             var life = Considerations.Economy(context).Life;
-            float weight = life.MotiveWeight((int)goal.Motive);
+            int motive = (int)goal.Motive;
+            float weight = life.MotiveWeight(motive);
+            // Mood's weight (L1.4, D9) bends free hours only: under orders (an expedition, a shift) the orders decide, and mood
+            // reaches them through frustration, which weighs against compliance (the epic's A8)
+            if (!UnderOrders(context)) weight *= life.MoodWeight(context.Mood, motive);
             return weight;
         }
+
+        /// <summary>Whether <paramref name="context"/>'s crawler is under orders now: out with the guild's party, or on its station's shift.</summary>
+        public static bool UnderOrders(AgentContext context) => context.Expedition.IsActive || context.Station.IsActive;
     }
 
     /// <summary>

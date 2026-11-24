@@ -183,6 +183,7 @@ This is a working document (AGENTS.md, Documentation Protocol 6), the first of E
     | Steady and above | ×1 | ×1 |
 
     Plan 2 adds Fun's column.
+  - **Amended at L1.4 (F12):** company's column held at 1 in plan 1, so a low mood weighs income only (low ×0.9, breaking ×0.75); and mood weighs nothing for a crawler under orders (an expedition or a shift: the epic's A8). Weighed, company sent hurt crawlers to the hearth instead of their bunks, and four live DoDs failed.
   - **How well work is done** doesn't change (Q6).
 - **D10, what the player sees** (A10; Q7; F4, F5):
   - **The day log:** `DayLogModel` in `Presentation/Dashboard/`.
@@ -271,7 +272,7 @@ This is a working document (AGENTS.md, Documentation Protocol 6), the first of E
   - **The measurement:** `MeasureMoodOnTheGateSeeds`, explicit, three days, two runs as L0.3's. It reads mood's spread by band per resident-day, how long each thought lives and stacks, and mood around a death on the guild player's run.
   - **Tuning:** D7's values and D8's bands are set from it. Results go to `docs/life-model.md`.
   - **Golden unchanged:** nothing reads mood yet.
-- [ ] **L1.4 What mood changes** (D9; F6) [Possibly Complex: a behaviour change and the soak's bands]
+- [x] **L1.4 What mood changes** (D9; F6) (done 2026-11-23: `docs/life-model.md` §3.3. F6 its own commit; D9 amended by F12: mood weighs income only, never under orders. **Deviations:** golden didn't move at either commit (nothing in its 3,000 ticks reads low), so nothing was re-recorded; the F6 commit left `AgentStateValidator`'s frustration check failing, fixed in L1.4's) [Possibly Complex: a behaviour change and the soak's bands]
   - **The commits, in order:**
     1. frustration onto the day's pace (F6), with golden re-recorded in its own commit;
     2. mood's frustration terms and weights by motive, with golden re-recorded again in its own commit.
