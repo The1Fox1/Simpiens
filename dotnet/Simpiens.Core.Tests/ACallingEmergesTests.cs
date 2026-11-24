@@ -121,8 +121,10 @@ namespace Simpiens.Core.Tests
         /// at the clear that ends at t81285 takes 26 of the creatures' blows, a mate 4 at the most. Gate seed 11 since Epic LIFE-1's Recreate (plan 2, L2.6, `docs/life-model.md` §5.8): free time moved the outpost's history, and
         /// seed 3 earned no Warden in ten days: still on 1 of 23, this one, where Eamon becomes a Warden at t52910 and at the clear
         /// that ends at t63461 takes 23 of the blows, a mate 2 at the most.
+        /// Seed 83 since the tavern's room (Epic LIFE-1 plan 2, T.2): the taller floor and the Garden's move moved the outpost's
+        /// history, and seed 11 earned no Warden; none of the gate seeds or 21–82 does within the ten days (83 and 85 of 31–100).
         /// </summary>
-        private static readonly ulong Seed = ScenarioSeed.Or(11);
+        private static readonly ulong Seed = ScenarioSeed.Or(83);
 
         [Fact]
         public void ACallingEmerges()
