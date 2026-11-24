@@ -78,8 +78,9 @@ namespace Simpiens.Core.Tests
         /// 3, 10, 18), seed 15 no longer; this one first, at t33880 (a chitin plate).
         /// Gate seed 20261010 since the techniques (Epic 11, S4.7): worn on 7 of 23 again (20261010, 2, 5, 10, 14, 15, 18; seed
         /// 2's days fail on thrashing), 424242 no longer; this one first, at t34262 (a chitin plate).
+        /// Seed 8 since variety, curiosity, wants and mood's pull on leisure (Epic LIFE-1 plan 2, L2.7, W.1-W.4, L2.8) moved the outpost's history, and seed 20261010's moment no longer came.
         /// </summary>
-        private const ulong Seed = 20261010;
+        private static readonly ulong Seed = ScenarioSeed.Or(8);
 
         [Fact]
         public void AKillsMaterialsBecomeArmourAResidentWears()

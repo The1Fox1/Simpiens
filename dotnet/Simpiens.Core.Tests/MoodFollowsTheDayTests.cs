@@ -26,7 +26,7 @@ namespace Simpiens.Core.Tests
         private const ulong DaySeed = 424242;
 
         /// <summary><c>DeathHasItsCost</c>'s seed: its two, unarmed against the beetles under the Bold rule, bring a death.</summary>
-        private static readonly ulong DeathSeed = ScenarioSeed.Or(6); // with DeathHasItsCost's, since plan 2's L2.6 (6 since T.2)
+        private static readonly ulong DeathSeed = ScenarioSeed.Or(9); // with DeathHasItsCost's, since plan 2's L2.6 (6 since T.2, 9 since L2.7-L2.8)
 
         /// <summary>
         /// The DoD (Epic LIFE-1, L1.8), the day: on the real outpost with nothing injected, residents think a good meal and a night

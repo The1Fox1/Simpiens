@@ -19,12 +19,16 @@ namespace Simpiens.Core.Tests
     /// hazard gear (Epic 10 Part 3, K1.3) takes a fifth of the harm of one in hazard gear alone; trips all in
     /// respirators bring home as much as trips with members in hazard gear. Without the guild, the forge's respirators are
     /// sold: a bold resident buys one (D53) and works the Gallery alone (D51). The ledger balances and the days' checks hold.
-    /// </summary>
+    /// Seed 424242 since variety, curiosity, wants and mood's pull on leisure (Epic LIFE-1 plan 2, L2.7, W.1-W.4, L2.8) moved the outpost's history, and the default seed's moment no longer came.
+        /// </summary>
     public class RightGearScenarioTests
     {
         // Nine days (six until Epic 10 Part 3's K3.3): with the bold buying weapons the gate seed's trip all in respirators
         // came on day 7.8, the forge's respirators shared with more buyers
         private const long Horizon = 9 * DayClock.TicksPerDay;
+
+        /// <summary>The second part's seed, without the guild: the default until a behaviour change moves it (<see cref="ScenarioSeed"/>).</summary>
+        private static readonly ulong AloneSeed = ScenarioSeed.Or(424242);
 
         [Fact]
         public void TheRightGearForTheRightHazard()
@@ -94,7 +98,7 @@ namespace Simpiens.Core.Tests
             }
 
             // Without the guild: the forge's respirators are sold, and a bold resident works the Gallery alone in one
-            using (var sim = LocalSimulation.Create(SimulationSettings.DefaultSeed))
+            using (var sim = LocalSimulation.Create(AloneSeed))
             {
                 sim.Respawn(OutpostSession.SessionId);
                 var forge = new WorkshopPlayer(sim, StationKind.Forge, ItemType.Respirator);

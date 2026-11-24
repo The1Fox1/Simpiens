@@ -222,8 +222,10 @@ namespace Simpiens.Core.Tests
         /// settles at t73545. Gate seed 20261010 since Epic LIFE-1's Recreate (plan 2, L2.6, `docs/life-model.md` §5.8): free time moved the outpost's history, and seed 8's two now live through the fortnight's first ten days.
         /// Gate seed 6 since the tavern's room (Epic LIFE-1 plan 2, T.2): the taller floor and the Garden's move moved the
         /// outpost's history, and seed 20261010's moment no longer came.
+        /// Gate seed 9 since variety, curiosity, wants and mood's pull on leisure (Epic LIFE-1 plan 2, L2.7, W.1-W.4, L2.8) moved
+        /// the outpost's history, and seed 6's moment no longer came.
         /// </summary>
-        private static readonly ulong DeathSeed = ScenarioSeed.Or(6);
+        private static readonly ulong DeathSeed = ScenarioSeed.Or(9);
 
         [Fact]
         public void DeathHasItsCost()
