@@ -206,3 +206,9 @@ When the best goal can't be planned, the next are planned in order, up to `LifeT
 
 - **Almost nothing moves:** members under orders are seldom low (a low member on a trip is mostly one just hurt, who is already turning back). Golden is unchanged (nothing in its 3,000 ticks reads low), and every live scenario passes on its seed (core 350/350).
 - **What it opens:** from L2.6 a bored, unhappy member's Recreate competes with its duty through the same weights.
+
+### 5.3 An expedition's orders judged at every stage (O.2, 2026-11-24)
+The guild issues the party's directive afresh at each stage (muster, march, work or fight, return, deliver), with the stage's tick, so each member judges it again by compliance (trust, respect, allegiance to the party and warmth, less hunger and frustration), as an artisan judges each block of its shift. `ComplyDirectiveGoal` judges a member on a trip by compliance at every choice. A member who no longer complies stays behind or deserts, by the path dispatch used; the party goes on without it (`AMemberWhoSoursOnTheWayStaysBehindAtTheNextStage`).
+
+- **On the gate seeds nothing moves:** members who stayed behind or deserted a trip, before and after, the same 2 in the clears' 69 seed-days and 1 in death's players' 230, all of them members not at the muster in time. A member willing at dispatch is still willing at the next stage unless something sours it. Golden is unchanged (no expedition in its 3,000 ticks); core 351/351.
+- **What it opens:** a member whose trust falls on a trip (a friend dying under orders costs the patron trust, Epic 10 Part 3's K5) or who grows frustrated or hungry can now walk off it.

@@ -206,11 +206,25 @@ namespace Simpiens.Core.Tests
             var tally = new MoodTally();
             var grieving = new Dictionary<EntityId, (long Since, int Before)>();
             var held = new HashSet<EntityId>();
+            var refused = new HashSet<(uint Dispatch, EntityId Member)>();
             var lastMood = new Dictionary<EntityId, int>();
             long horizon = days * (long)DayClock.TicksPerDay;
             while (sim.Clock.CurrentTick < horizon)
             {
                 watch.Run(1);
+                // Orders refused on a trip, by the stage the member judged them at (plan 2's O.2, D25): at the muster (dispatch's order) or later
+                foreach (var party in sim.Simulation.Guild.Parties)
+                {
+                    var record = party.Expedition;
+                    if (record.Stage == Simpiens.Simulation.Guild.ExpeditionStage.None) continue;
+                    for (int m = 0; m < party.Members.Count; m++)
+                    {
+                        var member = party.Members[m];
+                        if (member.Status != Simpiens.Simulation.Guild.ExpeditionMemberStatus.StayedBehind && member.Status != Simpiens.Simulation.Guild.ExpeditionMemberStatus.Deserted) continue;
+                        if (!refused.Add((record.DispatchTick, member.CrawlerId))) continue;
+                        if (record.Stage == Simpiens.Simulation.Guild.ExpeditionStage.Muster) tally.RefusedAtMuster++; else tally.RefusedOnTheWay++;
+                    }
+                }
                 long now = sim.Clock.CurrentTick;
                 foreach (var crawler in sim.Host.CrawlerStates)
                 {
@@ -255,7 +269,7 @@ namespace Simpiens.Core.Tests
         internal sealed class MoodTally
         {
             public int Seeds, Deaths;
-            public long ResidentTicks, MoodSum, FrustratedTicks, DefiantTicks, OrderedTicks, OrdersAsideTicks;
+            public long ResidentTicks, MoodSum, FrustratedTicks, DefiantTicks, OrderedTicks, OrdersAsideTicks, RefusedAtMuster, RefusedOnTheWay;
             public double FrustrationSum;
             public int Lowest = int.MaxValue, Highest = int.MinValue;
             public readonly long[] Band = new long[6];
@@ -265,7 +279,7 @@ namespace Simpiens.Core.Tests
             public void Add(MoodTally o)
             {
                 Seeds += o.Seeds; Deaths += o.Deaths; ResidentTicks += o.ResidentTicks; MoodSum += o.MoodSum;
-                FrustrationSum += o.FrustrationSum; FrustratedTicks += o.FrustratedTicks; DefiantTicks += o.DefiantTicks; OrderedTicks += o.OrderedTicks; OrdersAsideTicks += o.OrdersAsideTicks;
+                FrustrationSum += o.FrustrationSum; FrustratedTicks += o.FrustratedTicks; DefiantTicks += o.DefiantTicks; OrderedTicks += o.OrderedTicks; OrdersAsideTicks += o.OrdersAsideTicks; RefusedAtMuster += o.RefusedAtMuster; RefusedOnTheWay += o.RefusedOnTheWay;
                 if (o.Lowest < Lowest) Lowest = o.Lowest;
                 if (o.Highest > Highest) Highest = o.Highest;
                 for (int i = 0; i < Band.Length; i++) Band[i] += o.Band[i];
@@ -279,7 +293,7 @@ namespace Simpiens.Core.Tests
                 var text = new StringBuilder();
                 text.AppendLine($"{residentDays:F0} resident-days; mood mean {MoodSum / (double)ResidentTicks:F1}, lowest {Lowest}, highest {Highest}; deaths {Deaths}.");
                 text.AppendLine($"Frustration: mean {FrustrationSum / ResidentTicks:F1}; at 60 or more (the face) {100.0 * FrustratedTicks / ResidentTicks:F2}% of the time; defiant {DefiantTicks / residentDays:F1} ticks a resident-day.");
-                text.AppendLine($"Under orders: {OrderedTicks / (double)DayClock.TicksPerHour / residentDays:F2} h a resident-day, of it on a plan other than duty, aid or hunger {(OrderedTicks > 0 ? 100.0 * OrdersAsideTicks / OrderedTicks : 0):F2}% (plan 2's O.1).");
+                text.AppendLine($"Under orders: {OrderedTicks / (double)DayClock.TicksPerHour / residentDays:F2} h a resident-day, of it on a plan other than duty, aid or hunger {(OrderedTicks > 0 ? 100.0 * OrdersAsideTicks / OrderedTicks : 0):F2}% (plan 2's O.1); members who stayed behind or deserted a trip: {RefusedAtMuster} at the muster, {RefusedOnTheWay} on the way (O.2).");
                 text.AppendLine("Time in each band: " + string.Join(", ", new[] { MoodBand.Breaking, MoodBand.Low, MoodBand.Steady, MoodBand.Good, MoodBand.Happy }
                     .Select(b => $"{b} {100.0 * Band[(int)b] / ResidentTicks:F1}%")));
                 text.AppendLine("Thoughts thought a resident-day:");

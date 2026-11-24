@@ -14,9 +14,10 @@ namespace Simpiens.Cognition.Planning.Goals
         public const float StarvationThreshold = 70f;
 
         /// <summary>
-        /// A member out on the guild's expedition holds to it (Epic 10 G5): it judged the order once, at dispatch (D8), and
-        /// then follows it above the hearth (up to about 95 before personality) and earning, whatever its loyalty. The
-        /// reflexes and hunger from 70 still come first.
+        /// A member out on the guild's expedition who complies follows it above the hearth (up to about 95 before personality)
+        /// and earning (Epic 10 G5). It judges the order by compliance at every choice and at every stage, as an artisan judges
+        /// its shift (Epic LIFE-1 plan 2's O.2, D25: orders are a motive a crawler may set aside, never a rule), and its mood
+        /// weighs its duty (O.1). The reflexes and hunger from 70 still come first.
         /// </summary>
         public const float ExpeditionPriority = 120f;
 
@@ -48,11 +49,8 @@ namespace Simpiens.Cognition.Planning.Goals
                 return false;
             }
 
-            // A member out on the guild's expedition judged the order once, at dispatch (Epic 10 G5, D8): still with the party,
-            // it complied, and holds to it
-            if (context.Expedition.IsActive) return true;
-
-            // Subordinate only complies if compliance utility meets threshold (U >= 20)
+            // Subordinate only complies if compliance utility meets threshold (U >= 20): a member out with the guild's party too,
+            // at every choice (plan 2's O.2, D25)
             float utility = ComplianceUtility.CalculateUtility(context, groupData);
             return utility >= ComplianceUtility.ComplianceThreshold;
         }
@@ -62,13 +60,12 @@ namespace Simpiens.Cognition.Planning.Goals
             if (!context.DirectiveMembership.HasGroup || context.Snapshot == null) return 0f;
             if (!context.Snapshot.TryGetGroup(context.DirectiveMembership.GroupId, out var groupData)) return 0f;
             if (!groupData.ActiveDirective.IsActive(context.CurrentTick)) return 0f;
-            if (context.Expedition.IsActive) return context.Hunger >= StarvationThreshold ? 10f : ExpeditionPriority;
-
             float utility = ComplianceUtility.CalculateUtility(context, groupData);
             if (utility < ComplianceUtility.ComplianceThreshold)
             {
                 return 0f;
             }
+            if (context.Expedition.IsActive) return context.Hunger >= StarvationThreshold ? 10f : ExpeditionPriority;
             if (context.Station.IsActive) return context.Hunger >= StarvationThreshold ? 10f : ShiftPriority;
 
             var affinity = context.Memory != null
