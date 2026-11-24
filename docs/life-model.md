@@ -164,3 +164,30 @@ When the best goal can't be planned, the next are planned in order, up to `LifeT
 - **Today** (`DayLogModel`): since midnight, newest first, the thoughts begun (a thought restacked shows once, at its last time, with its stacks) and the crawler's dramatic and crisis chronicle lines; a thought begun on a line's tick tells it instead. It stores nothing.
 - **The chronicle's ring** holds 2,048 events (1,024 before L1.5): the busiest day measured brought 1,141 lines, so a day's dramatic lines are still there at night.
 
+
+## 5. Fun and the evening (plan 2)
+
+### 5.1 The day by the clock, before fun (P.1, 2026-11-24)
+`ACrawlersDayTests.MeasureACrawlersDay` with its clock-hour columns: the 23 gate seeds, three game days, residents only, on `feat/life1-tavern` at its start (behaviour as `main` at `ebc1ef2`). The day's totals are §3.1's to the tenth of an hour (rest 9.8 h, work 8.4 h, the hearth 3.1 h, leisure 0.2 h, wandering 0.1 h; no plan unfound; 0.8 flips a resident-day; 65.8 of 66 pairs meet a day).
+
+**What residents do in each game hour** (no player; a share of residents' time):
+
+| Hour | Work | Social (hearth) | Rest (asleep) | Leisure | Unweighted | Other |
+| :--- | ---: | ---: | ---: | ---: | ---: | ---: |
+| 06:00 | 65% | 10% | 20% | 0% | 1% | 3% |
+| 09:00 | 35% | 15% | 29% | 1% | 7% | 14% |
+| 11:00 | 11% | 27% | 38% | 0% | 2% | 21% |
+| 13:00 | 32% | 11% | 40% | 1% | 13% | 1% |
+| 16:00 | 22% | 10% | 49% | 1% | 4% | 15% |
+| 18:00 | 29% | 9% | 56% | 1% | 4% | 1% |
+| 20:00 | 33% | 9% | 53% | 0% | 3% | 2% |
+| 22:00 | 31% | 10% | 52% | 0% | 2% | 4% |
+| 00:00 | 36% | 11% | 45% | 1% | 5% | 3% |
+| 02:00 | 43% | 14% | 34% | 1% | 4% | 5% |
+| 04:00 | 37% | 14% | 37% | 1% | 7% | 5% |
+
+"Other" is mostly the tick between a decision and its plan, and the reflexes (a meal from the pack, a harvest's last step). With the guild player the shape is the same, a little more asleep in the evening (61% at 18:00) and less at work.
+
+- **The outpost has no night (F16).** Sleep starts when energy falls below the tired line and ends at the wake lines (`DayTuning.Wakes`), never by the clock. Every resident spawns at 06:00 rested, so the outpost sleeps together from mid-afternoon (40% at 13:00) to before midnight (56% at 18:00) and works through the small hours (43% at 02:00). The time model's "06:00 start" lines the day up once; nothing keeps it lined up.
+- **The hearth is busiest late morning** (27% at 11:00) and flat otherwise (9–15%).
+- **For plan 2:** an evening tavern (18:00–02:00) would open while half the outpost sleeps. Plan 2 stays clock-agnostic (D26): the tavern's hours are its keeper's shifts, set where residents are free; plan 3's routine (the epic's bedtime pull) brings sleep to the night.

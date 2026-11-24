@@ -17,8 +17,9 @@ namespace Simpiens.Core.Tests
     /// <summary>
     /// A crawler's day, measured (Epic LIFE-1, L0.3): what residents spend their hours on, by the motive model's families and
     /// by goal; the goals chosen and the plans not found; near-ties and flips at plans' ends (D5's question); who comes
-    /// within the gossip radius of whom; and how many chronicle lines a day brings (the day log's question, F5). Reads the
-    /// session; changes nothing. Explicit: a measurement for docs/life-model.md §3, re-run after L0.6 and at the plan's gate.
+    /// within the gossip radius of whom; and how many chronicle lines a day brings (the day log's question, F5); and, from
+    /// plan 2's P.1, the day by the clock: what residents do in each game hour, the evening's baseline for fun. Reads the
+    /// session; changes nothing. Explicit: a measurement for docs/life-model.md §3 and §5, re-run at each plan's gate.
     /// </summary>
     public sealed class ACrawlersDayTests
     {
@@ -82,6 +83,7 @@ namespace Simpiens.Core.Tests
                     };
                     tally.Bump(tally.ByCategory, category);
                     if (goalName != null) tally.Bump(tally.ByGoal, goalName);
+                    tally.Bump(tally.ByHour[DayClock.MinuteOfDay(sim.Clock.CurrentTick - 1) / 60], category);
 
                     // Its decisions: one a tick at most, told apart by the tick they were made at
                     var decision = crawler.LastDecision;
@@ -151,6 +153,7 @@ namespace Simpiens.Core.Tests
             public long ResidentTicks, Decisions, GoalsChosen, NearTies, Flips, PlansNotFound, PairTicks, ChronicleLines, ChronicleLinesAboutResidents;
             public readonly Dictionary<string, long> ByCategory = new(), ByGoal = new(), BySource = new(), NotFoundGoals = new(), AfterNotFound = new(), NearTiePairs = new(), FlipPairs = new(), ByEventType = new();
             public readonly HashSet<(int Day, EntityId A, EntityId B)> PairsMet = new();
+            public readonly Dictionary<string, long>[] ByHour = Enumerable.Range(0, 24).Select(_ => new Dictionary<string, long>()).ToArray();
             private int _seeds = 1;
             private long _distinctPairDays;
 
@@ -168,6 +171,8 @@ namespace Simpiens.Core.Tests
                 foreach (var map in new[] { (ByCategory, other.ByCategory), (ByGoal, other.ByGoal), (BySource, other.BySource), (NotFoundGoals, other.NotFoundGoals),
                                             (AfterNotFound, other.AfterNotFound), (NearTiePairs, other.NearTiePairs), (FlipPairs, other.FlipPairs), (ByEventType, other.ByEventType) })
                     foreach (var pair in map.Item2) map.Item1[pair.Key] = (map.Item1.TryGetValue(pair.Key, out long n) ? n : 0) + pair.Value;
+                for (int h = 0; h < 24; h++)
+                    foreach (var pair in other.ByHour[h]) ByHour[h][pair.Key] = (ByHour[h].TryGetValue(pair.Key, out long n) ? n : 0) + pair.Value;
             }
 
             private double ResidentDays => ResidentTicks / (double)DayClock.TicksPerDay;
@@ -200,7 +205,19 @@ namespace Simpiens.Core.Tests
                 text.AppendLine($"Flips (A, B, A again within a game hour): {PerResidentDay(Flips)} a resident-day; the commonest:");
                 foreach (var pair in FlipPairs.OrderByDescending(p => p.Value).Take(6)) text.AppendLine($"  {pair.Key}: {pair.Value}");
                 text.AppendLine($"Together (two residents within {GossipRadius} units): {_distinctPairDays / SeedDays:F1} distinct pairs a day; {PairTicks / (double)DayClock.TicksPerHour / SeedDays:F1} pair-hours a day.");
-                text.AppendLine($"Chronicle lines a day: {ChronicleLines / SeedDays:F0} outpost-wide (the ring holds 1,024), {ChronicleLinesAboutResidents / SeedDays:F0} naming a resident ({ChronicleLinesAboutResidents / ResidentDays:F1} a resident-day); by type:");
+                text.AppendLine("The day by the clock: what residents do in each game hour, as a share of their time (P.1, the evening's baseline):");
+                text.AppendLine("  hour   work social   rest leisure  unweighted  other");
+                for (int i = 0; i < 24; i++)
+                {
+                    int h = (6 + i) % 24; // from 06:00, the day's start
+                    var hour = ByHour[h];
+                    long all = hour.Values.Sum();
+                    if (all == 0) continue;
+                    string Share(string key) => (100.0 * hour.GetValueOrDefault(key) / all).ToString("F0").PadLeft(5) + "%";
+                    long known = hour.GetValueOrDefault("Work") + hour.GetValueOrDefault("Social") + hour.GetValueOrDefault("Rest") + hour.GetValueOrDefault("Leisure") + hour.GetValueOrDefault("Unweighted");
+                    text.AppendLine($"  {h:D2}:00 {Share("Work")} {Share("Social")} {Share("Rest")} {Share("Leisure")}      {Share("Unweighted")} {(100.0 * (all - known) / all).ToString("F0").PadLeft(5)}%");
+                }
+                text.AppendLine($"Chronicle lines a day: {ChronicleLines / SeedDays:F0} outpost-wide (the ring holds 2,048), {ChronicleLinesAboutResidents / SeedDays:F0} naming a resident ({ChronicleLinesAboutResidents / ResidentDays:F1} a resident-day); by type:");
                 foreach (var pair in ByEventType.OrderByDescending(p => p.Value).Take(10)) text.AppendLine($"  {pair.Key}: {pair.Value / SeedDays:F1} a day");
                 return text.ToString();
             }

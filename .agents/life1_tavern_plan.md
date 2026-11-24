@@ -2,7 +2,7 @@
 
 This is a working document (AGENTS.md, Documentation Protocol 6), the second of Epic LIFE-1's three plans. It was written 2026-11-24 at the producer's "Looks good PR, merge and close it out then draft up plan 2", after plan 1 merged as PR #28.
 - **The design** is the epic, [`docs/epics/epic-life-1.md`](../docs/epics/epic-life-1.md): its rules A1–A12, its questions Q1–Q11 (standing by exception), §2.5's sketch of wants, fun, venues and the tavern, and the findings plan 1 left open (F3, F11, F12).
-- **The decisions** below (D11–D25) are this plan's defaults; the producer answers by exception. Each moves to the epic's §0 when its step lands.
+- **The decisions** below (D11–D26) are this plan's defaults; the producer answers by exception. Each moves to the epic's §0 when its step lands.
 - **The producer's changes to the draft** (2026-11-24, with the go):
   > It is not only okay but encouraged to expand the map beyond the viewport size.
   > Crawlers can absolutely disobey orders, being a guild member does not grant the player authority to override their autonomy.
@@ -66,7 +66,7 @@ This is a working document (AGENTS.md, Documentation Protocol 6), the second of 
   - Dice and sparring need another crawler at the activity: alone at the venue, a crawler takes the venue's solo activity or none.
   - Dice carries no stakes: wagers wait for LIFE-2's social facts.
 - **D13, venues as map data** (A6): `VenueDefinition` in `MapDefinition`, as stations and lairs are: a key, its sector, its position and radius, its seats (positions), its hours (a `ShiftBlocks` mask), the activities it offers, who may come (anyone, or guild members), and the station it needs built and kept, if any.
-  - **Floor 1's:** the hearth, the stall, the Garden (06:00–22:00), the guildhall yard (members; it needs the drill yard built), and the tavern (T.2).
+  - **Floor 1's:** the hearth, the stall, the Garden (at all hours: D26), the guildhall yard (members; it needs the drill yard built), and the tavern (T.2).
   - **Open:** a venue is open in its hours, its station built, and its keeper at the counter on shift. The main thread computes which venues are open each tick, and the snapshot carries the mask (`OpenVenueMask`), as it carries `BuiltMask`.
   - **No leisure in danger:** `VenueValidator` fails a venue in a hazard sector or within a lair's reach (`LairReach`), as the epic requires.
   - **Seats aren't claimed:** a seat is free when no crawler stands within 0.4 of it in the snapshot. No contention state, nothing saved; a full venue scores 0.
@@ -88,7 +88,7 @@ This is a working document (AGENTS.md, Documentation Protocol 6), the second of 
 - **D17, station kinds as a table** (A4; the epic's "every new system is a table"; F13): `StationTable`, a row per `StationKind`: its words, description, whether it takes an artisan, whether it has recipes, whether it is a venue, and its art key. It replaces the six kind switches, behaviour-neutral, so the tavern is a row. This is the cleanup the project's "refactor and reevaluate" rule asks for: without it the tavern adds a seventh switch in each of six files.
 - **D18, the tavern as the player's building** (Q10):
   - **Built** by `BuildStationCommand` at the tavern's site, for `WorkshopTuning.TavernCost` (200g, the drill yard's price; the forge and the still cost 300g), into the `Construction` sink.
-  - **Kept** by a keeper hired by `HireArtisanCommand` on an artisan's contract and wage. The keeper's shifts are the tavern's opening hours: the station window offers the evening shift, 18:00–02:00 (blocks 3 and 4). The keeper's shift directive takes it to the counter, as an artisan to its station (Epic 8's compliance).
+  - **Kept** by a keeper hired by `HireArtisanCommand` on an artisan's contract and wage. The keeper's shifts are the tavern's opening hours, set by the player in the station window (D26: while the outpost has no night, the hours that suit are where residents are free). The keeper's shift directive takes it to the counter, as an artisan to its station (Epic 8's compliance).
   - **No recipes and no practice:** a keeper's skill waits (a new skill would move every seed's draw).
 - **D19, the menu: ale and stew** (Q10):
   - **Two items** by "Adding or removing an item": ale (a consume effect on fun) and stew (hunger −40, fun), in a new group, `ItemCategory.Served`: served at a venue, never bought to carry, never sold at the hub.
@@ -120,6 +120,12 @@ This is a working document (AGENTS.md, Documentation Protocol 6), the second of 
   - **The dossier:** Mind lists wants with their time left ("A tavern supper · 9 h left"); Today tells evenings through the activities' and wants' thoughts.
 - **D24, the DoDs' readings** (F11): `AnEveningAtTheTavern` keeps the epic's outcomes but one. "Ambient wandering falls by half" can't be read: wandering is already 0.1 h a resident-day (F11). In its place: residents' leisure at venues other than the hearth rises from 0.2 h to at least an hour a resident-day, with work's hours measured beside it (D25's band is plan 3's).
 
+- **D26, plan 2 doesn't keep the clock** (F16, found at P.1): residents sleep when tired and wake when rested, so the outpost sleeps from mid-afternoon to before midnight and works through the small hours. An evening tavern would open while half of them sleep.
+  - **Venues' hours** stay only where a place has them for its own reasons: the Garden is open at all hours (D13's 06:00–22:00 dropped), the yard with the drill yard, the tavern while its keeper is on shift.
+  - **The tavern's hours** are its keeper's shifts, which the player sets; the station window offers any two blocks, and the tavern player picks the blocks when most residents are awake and off work (measured at T.6).
+  - **The DoD** reads leisure at venues across the day, not the evening (D24).
+  - **Plan 3's routine** (the epic's bedtime pull and chronotypes) brings sleep to the night; then the evening shift is the evening, and `AnEveningAtTheTavern` is re-run at LG1 by the clock.
+  - **Alternative:** bring the bedtime pull forward into plan 2, ahead of plan 3's chronotypes. It would move every crawler's day before fun is tuned against it.
 - **D25, orders are a motive, not a rule** (the producer's change; F15):
   - **Mood reaches crawlers under orders** as anyone: `MotiveModel.UnderOrders` goes, and duty gains mood's weights (low 0.85, breaking 0.6 to start, measured at O.1). Plan 1's D9 ("nothing under orders") and the epic's A8 are amended.
   - **An expedition's orders are judged at every stage,** as a shift's are at every block: the guild issues its directive afresh when the stage changes (muster, march, work or fight, return), so each member judges it again by compliance. A member who no longer complies stays behind or deserts, by the path dispatch uses. `ComplyDirectiveGoal` no longer holds a member to a trip it judged once. Epic 10's D8 is amended.
@@ -131,7 +137,7 @@ This is a working document (AGENTS.md, Documentation Protocol 6), the second of 
 
 ### P. The hand-over (half a day)
 **Complexity:** Basic.
-- [ ] **P.1 The hand-over checked, and the evening measured** [Basic: docs and a measurement's extra columns; golden unchanged]
+- [x] **P.1 The hand-over checked, and the evening measured** (done 2026-11-24: §0 matches the code but for F15, recorded at the revision; `docs/life-model.md` §5.1; **F16: the outpost has no night**, so D26) [Basic: docs and a measurement's extra columns; golden unchanged]
   - Check §0 against the code, and record any difference as a finding (the epic's §7, F13 onward).
   - `MeasureACrawlersDay` gains hours by the hour of day (where residents are from 18:00 to 02:00) and who meets whom at the hearth, as the baseline for L2.6 and the DoDs.
   - `docs/life-model.md` gains §5, "Fun and the evening", with the baseline.
