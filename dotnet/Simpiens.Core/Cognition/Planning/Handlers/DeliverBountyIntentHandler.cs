@@ -113,6 +113,7 @@ namespace Simpiens.Cognition.Planning.Handlers
             delBounty = delBounty.WithStatus(BountyStatus.Completed);
             context.UpdateBounty(delBounty);
             if (!isScout && agentState != null) agentState.Activity.RecordBountyDelivery(currentDeliverTick);
+            if (reward > 0) agentState?.Think(Simpiens.Simulation.Life.Thought.AGoodPayday, currentDeliverTick); // a bounty paid (Epic LIFE-1, L1.2)
 
             // Trust toward the player, judged as a sale is (Epic 10 G4, D5): the reward against the claimant's own minimum
             var economy = context.Economy ?? EconomyTuning.Default;

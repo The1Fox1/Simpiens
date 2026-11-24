@@ -282,11 +282,13 @@ namespace Simpiens.Simulation.Workshops
                     if (contract.Wage < asking)
                     {
                         artisan.Memory?.RecordInteraction(WorldRegistry.PlayerEntityId, tuning.Unpaid.Warmth, tuning.Unpaid.Trust, 0, tuning.Unpaid.Respect, tick);
+                        artisan.Think(Simpiens.Simulation.Life.Thought.RaiseUnpaid, tick); // Epic LIFE-1, L1.2
                         SimLog.Economy.ZLogWarning($"{SimLog.Agent(contract.CrawlerId)} was paid {contract.Wage}g at the {_stations[contract.StationIndex].Kind}, below the {asking}g it asks");
                     }
                     else
                     {
                         artisan.Memory?.RecordInteraction(WorldRegistry.PlayerEntityId, tuning.Paid.Warmth, tuning.Paid.Trust, 0, tuning.Paid.Respect, tick);
+                        artisan.Think(Simpiens.Simulation.Life.Thought.PaidInFull, tick); // Epic LIFE-1, L1.2
                         if (crew != 0) groups?.UpdateAllegiance(contract.CrawlerId, crew, tuning.PaidAllegiance);
                     }
                     _artisans[i] = contract.WithUnpaidVisits(0);
@@ -294,6 +296,7 @@ namespace Simpiens.Simulation.Workshops
                 else
                 {
                     artisan.Memory?.RecordInteraction(WorldRegistry.PlayerEntityId, tuning.Unpaid.Warmth, tuning.Unpaid.Trust, 0, tuning.Unpaid.Respect, tick);
+                    artisan.Think(Simpiens.Simulation.Life.Thought.WageUnpaid, tick); // Epic LIFE-1, L1.2
                     if (crew != 0) groups?.UpdateAllegiance(contract.CrawlerId, crew, tuning.UnpaidAllegiance);
                     _artisans[i] = contract.WithUnpaidVisits((byte)Math.Min(byte.MaxValue, contract.UnpaidVisits + 1));
                     SimLog.Economy.ZLogWarning($"{SimLog.Agent(contract.CrawlerId)} went unpaid at the {_stations[contract.StationIndex].Kind} ({contract.Wage}g; the treasury holds {stall.TreasuryGold}g), {_artisans[i].UnpaidVisits} visit(s) in a row");
@@ -603,6 +606,7 @@ namespace Simpiens.Simulation.Workshops
             ushort id = Masterpieces.Add(record);
             if (id == 0) return;
             maker.AddDeed(Simpiens.Simulation.Skills.Deed.MasterpieceMade);
+            maker.Think(Simpiens.Simulation.Life.Thought.MadeAMasterpiece, tick); // Epic LIFE-1, L1.2
             SimLog.Economy.ZLogInformation($"{SimLog.Agent(maker.AgentId)}, inspired{(grieving ? " in grief" : "")}, made masterpiece {id} at the {kind}: {ItemCatalog.NameOf(item)}");
             host.ChronicleService?.RecordEvent(new ChronicleEvent(ChronicleEventType.MasterpieceMade, maker.AgentId, record.NamedFor,
                 host.GetSectorForPosition(_map.Stations[index].Position), tick, ChronicleIntensity.Dramatic, MasterpieceNames.Pack(record)));

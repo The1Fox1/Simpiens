@@ -167,6 +167,7 @@ namespace Simpiens.Simulation
                     {
                         agent.AddDeed(Simpiens.Simulation.Skills.Deed.DowningSurvived); // its clock stopped and it lives (Epic 11, S0.5)
                         agent.TakeScar(); // and it carries the mark (S6.2)
+                        agent.Think(Simpiens.Simulation.Life.Thought.Downed, tick); // and remembers it (Epic LIFE-1, L1.2)
                     }
                     agent.BleedsOutAt = 0;
                     continue;
@@ -250,6 +251,7 @@ namespace Simpiens.Simulation
             uint tick = (uint)(_clock?.CurrentTick ?? 0);
             ChronicleService?.RecordEvent(new ChronicleEvent(ChronicleEventType.SkillBandReached, agent.AgentId, default,
                 GetSectorForPosition(agent.Position), tick, ChronicleIntensity.Notable, (byte)skill * 256 + (byte)band));
+            agent.Think(Simpiens.Simulation.Life.Thought.GrewInMyCraft, tick); // Epic LIFE-1, L1.2
             PickTechnique(agent, skill, tick);
             JudgeCalling(agent, tick);
             TellTheAsk(agent, tick);
@@ -429,6 +431,7 @@ namespace Simpiens.Simulation
             state.StruckAtTick = tick;
             state.StruckBy = attacker;
             if (!outcome.Hit) return;
+            state.Think(Simpiens.Simulation.Life.Thought.Hurt, tick); // a blow landed (Epic LIFE-1, L1.2)
             Simpiens.Simulation.Combat.CombatRules.WearOnBlowTaken(outcome, state.Inventory);
             float before = state.Health;
             state.Health = SimMath.Max(0f, (float)(state.Health - outcome.Damage));
@@ -496,6 +499,7 @@ namespace Simpiens.Simulation
             if (killer != null)
             {
                 killer.AddDeed(Simpiens.Simulation.Skills.Deed.CreatureSlain, (byte)creature.Kind); // the kind, for its slayer's epithet (Epic 11, S6.1)
+                killer.Think(Simpiens.Simulation.Life.Thought.AKill, tick); // Epic LIFE-1, L1.2
                 if (creature.Definition != null && creature.Definition.IsBoss) killer.AddDeed(Simpiens.Simulation.Skills.Deed.BossSlain, (byte)creature.Kind);
                 if (creature.IsNamed) killer.AddDeed(Simpiens.Simulation.Skills.Deed.NamedCreatureSlain, (byte)creature.Kind, creature.Victim); // the avenger, its victim's name (Epic 11, S7.5, D35)
                 Workshops.Masterpieces.CountKill(killer.Inventory, creature.IsNamed, creature.Victim, creature.Rank); // on the masterpieces it wears (Epic 11, S8.3, D44)

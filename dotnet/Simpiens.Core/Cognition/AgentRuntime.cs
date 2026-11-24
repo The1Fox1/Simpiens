@@ -91,6 +91,7 @@ namespace Simpiens.Cognition
 
             // Advance biological drives and emotion timers on fixed logical tick dt
             var day = _simulationManager != null ? _simulationManager.Economy.Day : Simpiens.Simulation.Economy.EconomyTuning.Default.Day;
+            bool wasCollapsed = State.IsExhaustionCollapsed;
             State.Tick(FixedTickDeltaTime, day);
             if (State.Memory != null) State.Memory.TrustFadeTicks = day.TrustFadeTicks;
 
@@ -173,6 +174,7 @@ namespace Simpiens.Cognition
                 State.IsExhaustionCollapsed = true;
                 State.VisualState = AgentVisualState.Resting;
             }
+            if (!wasCollapsed && State.IsExhaustionCollapsed) State.Think(Simpiens.Simulation.Life.Thought.SleptOnTheFloor, (uint)currentTick); // collapsed where it stood (Epic LIFE-1, L1.2)
 
             // Sent for a fallen mate (Epic 10 Part 3, K7.2c, D42): once its last decision has landed, it drops what it does
             var carry = State.Expedition.Carry;
@@ -290,8 +292,11 @@ namespace Simpiens.Cognition
             var traits = State.Traits;
             if (traits.News == Simpiens.Simulation.Skills.LegendNews.None) return;
             if ((traits.News & Simpiens.Simulation.Skills.LegendNews.Epithet) != 0 && traits.Epithet != Simpiens.Simulation.Skills.Epithet.None)
+            {
+                State.Think(Simpiens.Simulation.Life.Thought.EarnedAName, (uint)currentTick); // a name earned (Epic LIFE-1, L1.2)
                 _simulationManager?.RecordStoryEvent(new ChronicleEvent(ChronicleEventType.EpithetEarned, State.AgentId, traits.EpithetSubject, 0, (uint)currentTick,
                     ChronicleIntensity.Dramatic, (byte)Simpiens.Simulation.Skills.CallingRules.BestSkill(State.Skills) * 65536 + (byte)traits.Epithet * 256 + traits.EpithetKind)); // its best skill's voice (S6.4)
+            }
             if ((traits.News & Simpiens.Simulation.Skills.LegendNews.Scar) != 0 && traits.ScarCount > 0)
             {
                 int slot = traits.ScarCount - 1;

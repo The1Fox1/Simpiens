@@ -162,6 +162,19 @@ namespace Simpiens.Cognition
         public Simpiens.Simulation.Life.CrawlerLife Life { get; set; }
 
         /// <summary>
+        /// Thinks <paramref name="thought"/> at <paramref name="tick"/>, naming <paramref name="subject"/> where its row names a
+        /// crawler (Epic LIFE-1, L1.2, D7; the epic's A5): the one entry, called where the event happens, on the main thread.
+        /// Holding, stacking and expiry are <see cref="Simpiens.Simulation.Life.ThoughtRules"/>'. Returns whether it was held.
+        /// </summary>
+        internal bool Think(Simpiens.Simulation.Life.Thought thought, uint tick, EntityId subject = default)
+        {
+            var life = Life;
+            if (!Simpiens.Simulation.Life.ThoughtRules.Think(ref life, thought, subject, tick)) return false;
+            Life = life;
+            return true;
+        }
+
+        /// <summary>
         /// Counts one <paramref name="deed"/> in its traits record (Epic 11, S0.5, A7): where the deed happens, on the main thread;
         /// then judges its legend: an epithet the count earns (S6.1, D27), naming <paramref name="kind"/> (a creature slain) or
         /// <paramref name="subject"/> (a crawler) where its form does, and a trait (S6.3, D29). The runtime tells the chronicle.

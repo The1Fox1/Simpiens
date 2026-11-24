@@ -74,6 +74,8 @@ namespace Simpiens.Cognition.Planning.Handlers
                 Rescue.Remember(node.Id, rescuer, fallen, context.CurrentTick);
                 context.Practise(rescuer, Simpiens.Simulation.Skills.SkillWork.Tend(), Simpiens.Simulation.Skills.SkillRules.RescueExperience, Simpiens.Simulation.Skills.PracticeSource.Work); // a rescue is practice (K9.2)
                 rescuer.AddDeed(Simpiens.Simulation.Skills.Deed.Rescue); // and a deed (Epic 11, S0.5)
+                rescuer.Think(Simpiens.Simulation.Life.Thought.Saved, context.CurrentTick, fallen.AgentId); // and both remember it (Epic LIFE-1, L1.2)
+                fallen.Think(Simpiens.Simulation.Life.Thought.RescuedBy, context.CurrentTick, rescuer.AgentId);
                 return IntentResult.Success;
             }
             if (result != IntentResult.InProgress)
@@ -126,6 +128,8 @@ namespace Simpiens.Cognition.Planning.Handlers
             Rescue.Remember(node.Id, rescuer, fallen, context.CurrentTick);
             context.Practise(rescuer, Simpiens.Simulation.Skills.SkillWork.Tend(), Simpiens.Simulation.Skills.SkillRules.RescueExperience, Simpiens.Simulation.Skills.PracticeSource.Work); // a rescue is practice (K9.2)
             rescuer.AddDeed(Simpiens.Simulation.Skills.Deed.Rescue); // and a deed (Epic 11, S0.5)
+            rescuer.Think(Simpiens.Simulation.Life.Thought.Saved, context.CurrentTick, fallen.AgentId); // and both remember it (Epic LIFE-1, L1.2)
+            fallen.Think(Simpiens.Simulation.Life.Thought.RescuedBy, context.CurrentTick, rescuer.AgentId);
             return IntentResult.Success;
         }
     }

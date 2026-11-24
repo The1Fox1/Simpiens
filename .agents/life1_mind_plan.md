@@ -259,7 +259,7 @@ This is a working document (AGENTS.md, Documentation Protocol 6), the first of E
   - `ThoughtsValidator`: words, values, durations and stack limits within bounds.
   - `ThoughtNamesTests`: code names a thought only in the table and at the sites listed there, and every row is thought somewhere.
   - AGENTS.md: a recipe, "Adding a thought".
-- [ ] **L1.2 Thinking** (D7) [Possibly Complex: call sites across the core, and saved state; golden re-recorded for the hash's coverage only, in its own commit]
+- [x] **L1.2 Thinking** (D7) (done 2026-11-23; behaviour unchanged, the day's measurement re-ran identical; golden re-recorded for coverage in its own commit. **Deviations:** each thought is thought at its site, not hooked onto deeds, since `AddDeed` carries no tick and a rescue's thought names the rescued; `OutpostWatch` tallies thoughts from the life records rather than an event) [Possibly Complex: call sites across the core, and saved state; golden re-recorded for the hash's coverage only, in its own commit]
   - **The entry:** `AgentState.Think`, with stacking, replacement, lazy expiry and the subjects' table.
   - **The sites:** D7's, including the deed hook in `AddDeed`, all on the main thread.
   - **Observed:** `SimulationManager.Thought` (the crawler, the thought), and `OutpostWatch` tallies thoughts by row.
