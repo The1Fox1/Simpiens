@@ -1923,3 +1923,7 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
 - **Deviations:** golden moved once, for coverage only (thoughts written into the hashed record), never for behaviour; the fallback and mood's weights needed no re-record; thoughts are thought at their sites rather than hooked on deeds; the F6 commit left `AgentStateValidator` failing until L1.4's commit; `ThoughtRules.ValueOf` and `LifeTexts.Band` were renamed to dodge the technique and skill scanners.
 - **The gate:** core 350/350, client 563/563 (and in the pinned image), golden 3/3; soak 18/18, and `guild`, `crafting`, `hunting` 20/20 on seeds 1–20; a few percent slower at 24 crawlers.
 - **Next:** the producer's look at L1, then the PR into `main`; plan 2 (L1's wants, L2 fun and the tavern) drafted when plan 1 merges.
+
+## 2026-11-24: Epic LIFE-1's plan 1 merged as PR #28
+- **The word:** "Looks good PR, merge and close it out", which passed the producer's look at L1 (the happy, low and grieving faces, the mood line's reason, the dossier's Crawler, Mind and Today tabs). The roadmap, the epic, the focus file and this log record the merge on the branch, so `main` holds the whole close-out; merged with a merge commit, as #27 was.
+- **Next:** plan 2, Wants, fun and the tavern (L1's wants, L2), drafted on a new branch from `main`.

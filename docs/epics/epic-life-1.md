@@ -1,6 +1,6 @@
 # Epic LIFE-1: The Mind and the Day
 
-- **Status**: ACTIVE (2026-11-23), at the producer's go: "Proceed with development of Life-1". Plan 1, Groundwork and the mind, was done and closed out the same day on `feat/life1-mind`; its PR into `main` waits for the producer's look at L1 (the faces, the mood line, the dossier's tabs) and their word. QUEUED from the same day, drafted at the producer's word with its first plan.
+- **Status**: ACTIVE (2026-11-23), at the producer's go: "Proceed with development of Life-1". Plan 1, Groundwork and the mind, was done and closed out the same day on `feat/life1-mind`; the producer's look at L1 (the faces, the mood line, the dossier's tabs) passed on 2026-11-24 and it merged as PR #28 ("Looks good PR, merge and close it out"). QUEUED from the same day, drafted at the producer's word with its first plan.
 - **Series**: the life core, Epic LIFE-1 to LIFE-3, all complete before Epic 12 (the producer, 2026-11-23; ROADMAP Track Rules, rule 1). This epic is the first: the proposal's L0 to L3. LIFE-2 takes L4–L6 (talk, gifts and bonds) and LIFE-3 takes L7–L8 and the series' gate (L9). Milestones keep the proposal's names, so an L-number means the same thing in every epic of the series.
 - **Plans**: three, one PR each (2026-11-23):
   1. **Groundwork and the mind**: L0, and L1's thoughts, mood, day log and the dossier's Mind and Today. Done and closed out 2026-11-23 on `feat/life1-mind`. Its decisions are D1–D10 below, its findings F8–F12 in §7, its numbers in `docs/life-model.md`, and its summary in `.agents/architecture_history.md`. The plan itself is deleted (git keeps it).
@@ -205,7 +205,7 @@ Done means crawlers live a day, in the live outpost, with nothing injected (ROAD
 - [x] One goal selector (L0.4) and the motive model (L0.5), golden unchanged; the fallback (L0.6) and commitment at 0 (L0.7), golden unchanged.
 - [x] The life record, save format 15 (L0.8), its round trip in the save validators.
 
-### L1. The mind, plan 1's part (done 2026-11-23, `feat/life1-mind`; the producer's look next)
+### L1. The mind, plan 1's part (done 2026-11-23, `feat/life1-mind`; the look passed and merged as PR #28, 2026-11-24)
 - [x] The thought table (L1.1) and thinking at 15 sites (L1.2), `ThoughtNamesTests` listing each; golden re-recorded for coverage only.
 - [x] Mood (L1.3, measured: ordinary days Steady to Good 99%; a friend's death takes a mourner to Low) and what it changes (L1.4: frustration on the day's pace; income's weight when low; F12).
 - [x] The Mind and Today models (L1.5); happy, low and grieving faces and the mood line's reason (L1.6, art pins); the dossier's tabs (L1.7, renders recorded in the pinned image).
