@@ -47,24 +47,8 @@ namespace Simpiens.Cognition.Evaluators
             // 1. Build current world state bitmask from context and memory
             var currentState = WorldStateBuilder.BuildWorldState(context);
 
-            // 2. Select the highest priority valid, unsatisfied goal
-            GoapGoal bestGoal = null;
-            float highestPriority = -1f;
-
-            int goalCount = _goals.Count;
-            for (int i = 0; i < goalCount; i++)
-            {
-                var goal = _goals[i];
-                if (!goal.IsValid(context)) continue;
-                if (goal.IsSatisfied(currentState)) continue;
-
-                float priority = goal.CalculatePriority(context);
-                if (priority > highestPriority)
-                {
-                    highestPriority = priority;
-                    bestGoal = goal;
-                }
-            }
+            // 2. Select the highest priority valid, unsatisfied goal: the one choice (Epic LIFE-1, L0.4, D3)
+            GoapGoal bestGoal = GoalSelector.Rank(_goals, context, currentState).Goal1;
 
             if (bestGoal == null)
             {

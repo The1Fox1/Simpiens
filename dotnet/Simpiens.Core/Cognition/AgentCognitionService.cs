@@ -316,47 +316,13 @@ namespace Simpiens.Cognition
                 if (intent == null && !hasPlan && goals != null && goals.Count > 0)
                 {
                     var currentState = WorldStateBuilder.BuildWorldState(context, context.Inventory);
-                    GoapGoal bestGoal = null;
-                    float highestPriority = -1f;
-
-                    int goalCount = goals.Count;
-                    for (int i = 0; i < goalCount; i++)
-                    {
-                        var goal = goals[i];
-                        if (!goal.IsValid(context))
-                        {
-                            if (trace) SimLog.Planning.ZLogTrace($"{SimLog.Agent(context.AgentId)} goal {goal.Name}: invalid");
-                            continue;
-                        }
-                        if (goal.IsSatisfied(currentState))
-                        {
-                            if (trace) SimLog.Planning.ZLogTrace($"{SimLog.Agent(context.AgentId)} goal {goal.Name}: already satisfied");
-                            continue;
-                        }
-
-                        float priority = goal.CalculatePriority(context);
-                        if (trace) SimLog.Planning.ZLogTrace($"{SimLog.Agent(context.AgentId)} goal {goal.Name}: priority {priority:F1}");
-                        if (priority > topPriority1)
-                        {
-                            topGoal3 = topGoal2; topPriority3 = topPriority2;
-                            topGoal2 = topGoal1; topPriority2 = topPriority1;
-                            topGoal1 = goal.Name; topPriority1 = priority;
-                        }
-                        else if (priority > topPriority2)
-                        {
-                            topGoal3 = topGoal2; topPriority3 = topPriority2;
-                            topGoal2 = goal.Name; topPriority2 = priority;
-                        }
-                        else if (priority > topPriority3)
-                        {
-                            topGoal3 = goal.Name; topPriority3 = priority;
-                        }
-                        if (priority > highestPriority)
-                        {
-                            highestPriority = priority;
-                            bestGoal = goal;
-                        }
-                    }
+                    // The one choice (Epic LIFE-1, L0.4, D3): the best three, the best pursued
+                    var ranked = GoalSelector.Rank(goals, context, currentState, trace);
+                    topGoal1 = ranked.Goal1?.Name; topPriority1 = ranked.Priority1;
+                    topGoal2 = ranked.Goal2?.Name; topPriority2 = ranked.Priority2;
+                    topGoal3 = ranked.Goal3?.Name; topPriority3 = ranked.Priority3;
+                    GoapGoal bestGoal = ranked.Goal1;
+                    float highestPriority = ranked.Priority1;
 
                     if (bestGoal != null)
                     {

@@ -228,7 +228,7 @@ This is a working document (AGENTS.md, Documentation Protocol 6), the first of E
     - chronicle lines a day, outpost-wide and per crawler (F5's question).
   - **The results** go to `docs/life-model.md`. A surprise becomes a finding.
   - **Re-run** after L0.6 and at the gate, beside this baseline.
-- [ ] **L0.4 One goal selector** (D3; F1) [Possibly Complex: the hot path of every decision; golden unchanged]
+- [x] **L0.4 One goal selector** (D3; F1) (done 2026-11-23; golden unchanged; `GoalSelectorValidator` proves the order, ties and no allocation) [Possibly Complex: the hot path of every decision; golden unchanged]
   - `GoalSelector.Rank`, with both evaluators calling it, and the trace lines moved with it.
   - `PlanExecutionValidator` and every test pass unchanged. Golden reproduces byte for byte, or the step doesn't land.
   - **Zero allocations:** the existing allocation checks, or a validator in the style of the planner's, prove none in the hot path.
