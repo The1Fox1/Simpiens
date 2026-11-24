@@ -85,4 +85,25 @@ Every goal declares what it is for (`Motive`) and the part of the day it belongs
 *Filled at L0.5.*
 
 ## 3. Measurements
-*L0.3: a crawler's day on the gate seeds.*
+
+### 3.1 A crawler's day before the life core (L0.3, 2026-11-23)
+`ACrawlersDayTests.MeasureACrawlersDay`, explicit: the 23 gate seeds for three game days (69 seed-days, 828 resident-days), residents only, standing, on `feat/life1-mind` after L0.2 (behaviour as `main` at `d0d2d47`). Two runs: no player, and the guild player sending expeditions to the Drowned Gallery. About 15 s in Release.
+
+**Hours a resident-day** (the active plan's goal by family; otherwise what the crawler does):
+
+| | No player | The guild player |
+| :--- | ---: | ---: |
+| Rest (`Rest`: asleep in a bunk, walks included) | 9.8 h | 9.5 h |
+| Work (`EarnIncome` 8.1 h; walks, salvage and sales included) | 8.4 h | 7.5 h |
+| Social (`GatherAtAnchor`, at the hearth) | 3.1 h | 3.6 h |
+| Between decisions (the decision lands a tick later) | 1.4 h | 1.3 h |
+| Unweighted (meals, orders) | 1.0 h | 1.4 h |
+| Leisure (`ReadManual`, `Study`) | 0.2 h | 0.3 h |
+| Wandering and idling | 0.1 h | 0.2 h |
+
+- **Idle has gone.** The proposal's 13–38% idle came from the time model's T-steps; since then, crawlers below the comfortable purse (80g) earn almost all day, and spend their free hours at the hearth. Work per seed ranges from 6.6 to 9.0 hours (walks included). Leisure will compete with `EarnIncome` itself, not with idling (F11).
+- **Choices:** about 600 decisions a resident-day, 594 of them a new plan: plans are short (the harvest's step ends every few game minutes), so goals are re-scored about every 17 ticks (F10).
+- **Plans not found: none** in either run. Tier 3 runs about twice a resident-day, each time because no goal was valid (F9).
+- **Near ties** (the best goal within 5% of the second): 3.6% of choices, 21.6 a resident-day, nearly all `EarnIncome` against `GatherAtAnchor` or `Socialize`. **Flips** (A, B, A again within a game hour): 0.8 a resident-day. Commitment (D5) stays 0 at L0.7.
+- **Together:** every pair of the 12 residents comes within the gossip radius (2.5) every day (65.8 of 66 pairs), for about 300 pair-hours a day, most of them at the hearth.
+- **The chronicle:** 592 lines a day outpost-wide (747 with the guild player), from 391 to 1,141 a seed-day, so the busiest seeds overflow the ring of 1,024 within a day (F5). 44 lines a resident-day name a resident. By type: gossip 253, trades 120, companionship 87, claims 60, regrowth 29, tantrums (contested nodes) 22.5 a day.

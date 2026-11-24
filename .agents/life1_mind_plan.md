@@ -217,7 +217,7 @@ This is a working document (AGENTS.md, Documentation Protocol 6), the first of E
   - `Motive`, `ActivityFamily`, `GoapGoal`'s constructor and `FamilyFor`, and the 21 goals' declarations.
   - Test goals in the validators keep compiling through defaults (None, Unweighted).
   - **The check:** `MotiveValidator`: every production goal declares a motive other than None, and its family is one of D1's. `docs/life-model.md` carries D1's table, written from the code.
-- [ ] **L0.3 The day measured** (F2, F3, F5) [Possibly Complex: measuring]
+- [x] **L0.3 The day measured** (F2, F3, F5) (done 2026-11-23: `docs/life-model.md` §3.1; F9–F11; the measurement reads each decision's summary, so no observed events were added to the core) [Possibly Complex: measuring]
   - **The observers:** `SimulationManager` gains observed events for a goal chosen and a plan not found, raised when the decision is applied on the main thread. No rule reads them, as Epic 11's `Practised`.
   - **The test:** `MeasureACrawlersDay`, explicit, over the 23 gate seeds and three game days. Two runs: no player, and the guild player.
   - **Per resident-day:**
