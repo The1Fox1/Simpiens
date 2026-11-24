@@ -9,11 +9,11 @@ namespace Simpiens.Cognition.Planning.Goals
     /// </summary>
     public class SocializeGoal : GoapGoal
     {
-        public SocializeGoal() : base("Socialize", WorldState.Empty.With(StateFact.HasExchangedGossip, true))
+        public SocializeGoal() : base("Socialize", WorldState.Empty.With(StateFact.HasExchangedGossip, true), Motive.Company, ActivityFamily.Social)
         {
         }
 
-        public override float CalculatePriority(AgentContext context)
+        public override float BasePriority(AgentContext context)
         {
             // The more isolated (lower social score), the higher the priority
             float priority = 100f - context.Social;

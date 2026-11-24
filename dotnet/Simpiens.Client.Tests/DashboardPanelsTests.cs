@@ -134,5 +134,27 @@ namespace Simpiens.Client.Tests
             game.RunOneFrame();
             RenderTests.CompareWithReference("render-outpost-dashboard-t300", FrameCapture.Capture(game, Width, Height), Width, Height);
         }
+
+        /// <summary>
+        /// The dossier's Mind and Today tabs (Epic LIFE-1, L1.7, D10), on the dashboard's crawler at t4000 (about 15:30, so the day
+        /// holds meals and talk): its mood with its reason and what weighs on it, then its day since midnight.
+        /// </summary>
+        [Theory]
+        [InlineData(1, "render-outpost-dossier-mind-t4000")]
+        [InlineData(2, "render-outpost-dossier-today-t4000")]
+        public void TheDossiersTabsLookAsRecorded(int tab, string name)
+        {
+            var game = Offscreen.Start(new ClientOptions { TicksPerUpdate = 100 }, frames: 40, Width, Height);
+            game.Session.Simulation.Clock.SetTimeMultiplier(1f);
+            var sectors = game.Session.Simulation.Sectors;
+            var pawns = game.Session.Simulation.Registry.ActiveEntities.Where(e => e.Type == EntityType.Pawn).ToList();
+            var crawler = pawns.FirstOrDefault(e => sectors.GetSectorAt(e.Position).Id == Floor1Layout.HubSectorId) ?? pawns[0];
+            game.Session.DashboardModel.SelectSector(sectors.GetSectorAt(crawler.Position).Id);
+            game.Session.DashboardModel.SelectCrawler(crawler.Id);
+            game.Play.Dashboard.Panels.ShowTab(tab);
+            game.Play.Dashboard.Refresh();
+            game.RunOneFrame();
+            RenderTests.CompareWithReference(name, FrameCapture.Capture(game, Width, Height), Width, Height);
+        }
     }
 }

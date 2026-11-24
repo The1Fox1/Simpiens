@@ -9,11 +9,11 @@ namespace Simpiens.Cognition.Planning.Goals
     /// </summary>
     public class SatiateHungerGoal : GoapGoal
     {
-        public SatiateHungerGoal() : base("SatiateHunger", WorldState.Empty.With(StateFact.IsHungry, false))
+        public SatiateHungerGoal() : base("SatiateHunger", WorldState.Empty.With(StateFact.IsHungry, false), Motive.Hunger, ActivityFamily.Unweighted)
         {
         }
 
-        public override float CalculatePriority(AgentContext context)
+        public override float BasePriority(AgentContext context)
         {
             // Higher hunger yields higher priority
             return context.Hunger;

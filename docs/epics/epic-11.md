@@ -16,7 +16,7 @@
   - K9.8: `SkillWork`, the effective level (`CrawlerSkills.Level`) and `PracticeSource`;
   - the equipment table (K1), creatures and lairs (K2), death and rescue (K5), hunts (K6), the guild's Clear order (K7);
   - Epic UI-Beta's portraits and dossier, and the chronicle.
-- **Following**: Epic 12, the descent (Floor 2 and moving the outpost; Milestone 6), not drafted.
+- **Following**: the life core, [Epic LIFE-1](epic-life-1.md) to LIFE-3 (Milestone 6, A Living Outpost, since 2026-11-23), then Epic 12, the descent (Floor 2 and moving the outpost; Milestone 7), not drafted.
 - **Complexity** ([rubric](../../.agents/rules/complexity-grading.md)): **Very Complex** as an epic: its size, systems with no precedent (techniques, callings, named creatures, unique items) and saved state across core and client. Each milestone is stamped in §2.4. The plan splits the Very Complex ones and names the steps the developer supervises.
 
 ---

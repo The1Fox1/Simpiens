@@ -133,6 +133,13 @@ namespace Simpiens.Testing.Environment
                     var words = System.Runtime.InteropServices.MemoryMarshal.Cast<byte, int>(Simpiens.Simulation.Skills.CrawlerTraits.BytesOf(traits));
                     for (int w = 0; w < words.Length; w++) Mix(ref h, words[w]);
                 }
+                // Who it is living as (Epic LIFE-1, L0.8): mixed once anything is written, as the traits record is
+                var life = s.Life;
+                if (!life.IsEmpty)
+                {
+                    var words = System.Runtime.InteropServices.MemoryMarshal.Cast<byte, int>(Simpiens.Simulation.Life.CrawlerLife.BytesOf(life));
+                    for (int w = 0; w < words.Length; w++) Mix(ref h, words[w]);
+                }
                 string intent = !includeWork ? "-" : s.CurrentIntent != null ? s.CurrentIntent.GetType().Name : "none";
                 string goal = !includeWork ? "-" : s.ActiveGoal != null ? s.ActiveGoal.Name : "none";
                 Mix(ref h, intent);

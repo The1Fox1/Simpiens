@@ -481,6 +481,11 @@ namespace Simpiens.Testing.Persistence
             traits.SetPassion(Simpiens.Simulation.Skills.Skill.Smithing, Simpiens.Simulation.Skills.Passion.Burning);
             traits.RecordTeacher(Simpiens.Simulation.Skills.Skill.Mining, B);
             state.Traits = traits;
+            var life = default(Simpiens.Simulation.Life.CrawlerLife); // Epic LIFE-1, L0.8: who it is living as comes back whole
+            life.SetThought(0, new Simpiens.Simulation.Life.ThoughtSlot { Thought = 5, Stacks = 1, Subject = 2, BegunAt = 90u });
+            life.SetThought(15, new Simpiens.Simulation.Life.ThoughtSlot { Thought = 9, Stacks = 3, BegunAt = 410u });
+            life.SetSubject(2, B);
+            state.Life = life;
             state.Activity.RecordSalvageHarvest(80u);
             state.Activity.RecordSalvageSale(95u);
             var record = state.CaptureRecord();
@@ -505,6 +510,8 @@ namespace Simpiens.Testing.Persistence
                 && fresh.Skills != default, "The skills came back, experience and all (Epic 10 Part 3, K9.1).");
             Assert(fresh.Traits == state.Traits && fresh.Traits.PassionFor(Simpiens.Simulation.Skills.Skill.Smithing) == Simpiens.Simulation.Skills.Passion.Burning
                 && fresh.Traits.TeacherOf(Simpiens.Simulation.Skills.Skill.Mining) == B, "The traits record came back whole: a passion and a teacher (Epic 11, S0.4).");
+            Assert(fresh.Life == state.Life && fresh.Life.ThoughtAt(15).Stacks == 3 && fresh.Life.SubjectAt(2) == B && fresh.Life.ThoughtAt(0).Subject == 2,
+                "The life record came back whole: its thoughts and the crawlers they name (Epic LIFE-1, L0.8).");
 
             bool refused = false;
             try

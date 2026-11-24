@@ -13,5 +13,11 @@ namespace Simpiens.Presentation.Art.People
         Scared = 4,
         Hurt = 5,
         Asleep = 6,
+        /// <summary>A good or happy life (Epic LIFE-1, L1.6): mood 30 or more.</summary>
+        Happy = 7,
+        /// <summary>A low or breaking life (L1.6): mood -10 or less.</summary>
+        Low = 8,
+        /// <summary>A friend lost: holding a friend's death (L1.6).</summary>
+        Grieving = 9,
     }
 }

@@ -278,6 +278,18 @@ namespace Simpiens.Presentation.Art.People
                     Open(ref c, near, y, wide: true, startled: true);
                     Open(ref c, far, y, wide: false, startled: true);
                     break;
+                case Mood.Grieving: // cast down, a tear on the near cheek (Epic LIFE-1, L1.6)
+                    for (int x = near - 1; x <= near + 1; x++) c.Set(x, y + 1, Line, 1);
+                    for (int x = far; x <= far + 1; x++) c.Set(x, y + 1, Line, 1);
+                    c.Set(near, y + 2, Sclera, 2);
+                    c.Set(near, y + 3, Sclera, 3);
+                    break;
+                case Mood.Happy: // smiling: open, the lower lids raised
+                    Open(ref c, near, y, wide: true, startled: false);
+                    Open(ref c, far, y, wide: false, startled: false);
+                    c.Set(near, y + 1, Skin, 3);
+                    c.Set(far + 1, y + 1, Skin, 3);
+                    break;
                 default:
                     Open(ref c, near, y, wide: true, startled: false);
                     Open(ref c, far, y, wide: false, startled: false);
@@ -315,8 +327,9 @@ namespace Simpiens.Presentation.Art.People
 
         private static void Brows(ref Canvas c, int near, int far, int ey, Mood mood, int rows, bool female)
         {
-            int lift = mood is Mood.Hungry or Mood.Scared ? 1 : 0;
+            int lift = mood is Mood.Hungry or Mood.Scared or Mood.Happy ? 1 : 0;
             bool knit = mood is Mood.Frustrated or Mood.Hurt; // their inner ends drawn down toward the nose
+            bool sad = mood is Mood.Low or Mood.Grieving; // their inner ends raised (Epic LIFE-1, L1.6)
             for (int r = 0; r < rows; r++)
             {
                 byte m = r == 0 ? Hair : Skin;
@@ -324,9 +337,9 @@ namespace Simpiens.Presentation.Art.People
                 for (int x = near - 1; x <= near + 2; x++)
                 {
                     if (female && r == 0 && x == near + 2) continue; // finer brows
-                    c.Set(x, top + (knit && x <= near ? 1 : 0), m, 3);
+                    c.Set(x, top + (knit && x <= near ? 1 : 0) - (sad && x <= near ? 1 : 0), m, 3);
                 }
-                for (int x = far; x <= far + 1; x++) c.Set(x, top + (knit && x == far ? 1 : 0), m, 3);
+                for (int x = far; x <= far + 1; x++) c.Set(x, top + (knit && x == far ? 1 : 0) - (sad && x == far ? 1 : 0), m, 3);
             }
         }
 
@@ -360,6 +373,24 @@ namespace Simpiens.Presentation.Art.People
                     break;
                 case Mood.Asleep: // slack
                     for (int x = cx + 3; x <= cx + 4; x++) c.Set(x, my, Lip, 4);
+                    break;
+                case Mood.Happy: // a wide grin, its corners up and the teeth showing (Epic LIFE-1, L1.6)
+                    for (int x = cx + 2; x <= cx + 5; x++) c.Set(x, my, Lip, 4);
+                    for (int x = cx + 2; x <= cx + 5; x++) c.Set(x, my - 1, Sclera, 2);
+                    c.Set(cx + 1, my - 1, Lip, 4);
+                    c.Set(cx + 6, my - 1, Lip, 4);
+                    c.Set(cx, my - 2, Lip, 4);
+                    c.Set(cx + 7, my - 2, Lip, 4);
+                    break;
+                case Mood.Low: // a small frown
+                    for (int x = cx + 3; x <= cx + 4; x++) c.Set(x, my, Lip, 4);
+                    c.Set(cx + 2, my + 1, Lip, 4);
+                    c.Set(cx + 5, my + 1, Lip, 4);
+                    break;
+                case Mood.Grieving: // pressed, its corners down
+                    for (int x = cx + 2; x <= cx + 5; x++) c.Set(x, my, Line, 1);
+                    c.Set(cx + 1, my + 1, Lip, 4);
+                    c.Set(cx + 6, my + 1, Lip, 4);
                     break;
                 default: // flat
                     for (int x = cx + 2; x <= cx + 5; x++) c.Set(x, my, Lip, 4);
@@ -713,7 +744,7 @@ namespace Simpiens.Presentation.Art.People
         /// </summary>
         public static PortraitKey Of(EntityId id, Simpiens.Cognition.AgentState agent, MoodTracker moods, long tick)
         {
-            var mood = moods.Update(id, MoodSigns.Of(agent), tick);
+            var mood = moods.Update(id, MoodSigns.Of(agent, tick), tick);
             return new PortraitKey(agent.Look, mood, WorldViewFrame.StandingOf(agent), WornLook.Of(agent.Inventory), scars: ScarMarks.Of(agent.Traits));
         }
 

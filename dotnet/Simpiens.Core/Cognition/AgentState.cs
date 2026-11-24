@@ -156,6 +156,25 @@ namespace Simpiens.Cognition
         public Simpiens.Simulation.Skills.CrawlerTraits Traits { get; set; }
 
         /// <summary>
+        /// Who it is living as (Epic LIFE-1, L0.8, D6): its thoughts and the crawlers they name, and room for wants, fun and the
+        /// day's rhythm. Written on the main thread only, saved whole in its record, copied for cognition.
+        /// </summary>
+        public Simpiens.Simulation.Life.CrawlerLife Life { get; set; }
+
+        /// <summary>
+        /// Thinks <paramref name="thought"/> at <paramref name="tick"/>, naming <paramref name="subject"/> where its row names a
+        /// crawler (Epic LIFE-1, L1.2, D7; the epic's A5): the one entry, called where the event happens, on the main thread.
+        /// Holding, stacking and expiry are <see cref="Simpiens.Simulation.Life.ThoughtRules"/>'. Returns whether it was held.
+        /// </summary>
+        internal bool Think(Simpiens.Simulation.Life.Thought thought, uint tick, EntityId subject = default)
+        {
+            var life = Life;
+            if (!Simpiens.Simulation.Life.ThoughtRules.Think(ref life, thought, subject, tick)) return false;
+            Life = life;
+            return true;
+        }
+
+        /// <summary>
         /// Counts one <paramref name="deed"/> in its traits record (Epic 11, S0.5, A7): where the deed happens, on the main thread;
         /// then judges its legend: an epithet the count earns (S6.1, D27), naming <paramref name="kind"/> (a creature slain) or
         /// <paramref name="subject"/> (a crawler) where its form does, and a trait (S6.3, D29). The runtime tells the chronicle.
@@ -189,6 +208,13 @@ namespace Simpiens.Cognition
         public GoapPlan ActivePlan { get; } = new GoapPlan(16);
         public GoapPlan ScratchPlan { get; } = new GoapPlan(16);
         public GoapGoal ActiveGoal { get; set; }
+
+        /// <summary>
+        /// The goal of the last plan adopted (Epic LIFE-1, L0.7, D5): kept when the plan ends or a reflex cuts it short, so the
+        /// next choice can commit to it. Work in progress: not saved, empty after a load. Read by the crawler's own evaluation,
+        /// which nothing writes while it runs (as <see cref="ActivePlan"/>).
+        /// </summary>
+        public GoapGoal LastGoal { get; set; }
         public bool HasActivePlan => !ActivePlan.IsEmpty && !ActivePlan.IsFinished;
 
         // Intent Execution Tracking
@@ -396,7 +422,7 @@ namespace Simpiens.Cognition
 
             float social = SimMath.Max(0f, (float)(Needs.Social - (float)(dt * day.SocialPerSecond)));
             Needs = new AgentNeeds(hunger, energy, social);
-            Frustration = SimMath.Max(0f, (float)(Frustration - (float)(dt * 1f)));
+            Frustration = SimMath.Max(0f, (float)(Frustration - (float)(dt * day.FrustrationEasePerSecond))); // on the day's pace (Epic LIFE-1, L1.4, F6)
 
             // Emergency preemption check
             bool emergencyExhaustion = energy <= MentalBreakEvaluator.ExhaustionThreshold;
@@ -551,7 +577,8 @@ namespace Simpiens.Cognition
                 DownedBy = DownedBy,
                 DownedDetail = DownedDetail,
                 Skills = Skills,
-                Traits = Traits
+                Traits = Traits,
+                Life = Life
             };
         }
 
@@ -596,10 +623,12 @@ namespace Simpiens.Cognition
             DownedDetail = record.DownedDetail;
             Skills = record.Skills;
             Traits = record.Traits;
+            Life = record.Life;
 
             ActivePlan.Clear();
             ScratchPlan.Clear();
             ActiveGoal = null;
+            LastGoal = null;
             CurrentIntent = null;
             HasActiveIntent = false;
             IsEvaluating = false;
@@ -637,7 +666,8 @@ namespace Simpiens.Cognition
                 Memberships.TryGet(Simpiens.Cognition.Groups.GroupType.TemporaryParty, out var party) ? party.GroupId : (byte)0,
                 Skills,
                 Traits,
-                Memberships.TryGet(Simpiens.Cognition.Groups.GroupType.FactionGuild, out var guild) ? guild.GroupId : (byte)0);
+                Memberships.TryGet(Simpiens.Cognition.Groups.GroupType.FactionGuild, out var guild) ? guild.GroupId : (byte)0,
+                Life);
         }
     }
 }

@@ -239,7 +239,7 @@ namespace Simpiens.Testing.Planning
         private class DummyGoal : GoapGoal
         {
             public DummyGoal(string name, in WorldState desiredState) : base(name, desiredState) { }
-            public override float CalculatePriority(AgentContext context) => 1f;
+            public override float BasePriority(AgentContext context) => 1f;
         }
     }
 }

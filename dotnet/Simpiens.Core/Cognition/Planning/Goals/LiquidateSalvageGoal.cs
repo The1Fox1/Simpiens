@@ -9,11 +9,11 @@ namespace Simpiens.Cognition.Planning.Goals
     /// </summary>
     public class LiquidateSalvageGoal : GoapGoal
     {
-        public LiquidateSalvageGoal() : base("LiquidateSalvage", WorldState.Empty.With(StateFact.HasSalvageInInventory, false))
+        public LiquidateSalvageGoal() : base("LiquidateSalvage", WorldState.Empty.With(StateFact.HasSalvageInInventory, false), Motive.Income, ActivityFamily.Work)
         {
         }
 
-        public override float CalculatePriority(AgentContext context)
+        public override float BasePriority(AgentContext context)
         {
             // Base priority 30, scaled higher if inventory is constrained
             int occupiedSlots = 0;

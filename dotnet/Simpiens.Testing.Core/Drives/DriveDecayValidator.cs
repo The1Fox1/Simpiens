@@ -68,9 +68,9 @@ namespace Simpiens.Testing.Drives
 
             // Scenario A: Starving agent (Hunger = 85, Energy = 90, Social = 70)
             var contextA = new AgentContext(dummyGuid, Vec2.Zero, new AgentNeeds(85f, 90f, 70f), 0f, null, null, 0);
-            float hungerPriA = hungerGoal.CalculatePriority(contextA);
-            float restPriA = restGoal.CalculatePriority(contextA);
-            float socialPriA = socialGoal.CalculatePriority(contextA);
+            float hungerPriA = hungerGoal.BasePriority(contextA);
+            float restPriA = restGoal.BasePriority(contextA);
+            float socialPriA = socialGoal.BasePriority(contextA);
 
             Assert(hungerPriA == 85f, $"Hunger priority is 85 (actual: {hungerPriA})");
             Assert(restPriA == 10f, $"Rest priority is 10 (actual: {restPriA})");
@@ -79,17 +79,17 @@ namespace Simpiens.Testing.Drives
 
             // Scenario B: Exhausted agent (Hunger = 30, Energy = 10, Social = 80)
             var contextB = new AgentContext(dummyGuid, Vec2.Zero, new AgentNeeds(30f, 10f, 80f), 0f, null, null, 0);
-            float hungerPriB = hungerGoal.CalculatePriority(contextB);
-            float restPriB = restGoal.CalculatePriority(contextB);
+            float hungerPriB = hungerGoal.BasePriority(contextB);
+            float restPriB = restGoal.BasePriority(contextB);
 
             Assert(restPriB == 90f, $"Rest priority is 90 (actual: {restPriB})");
             Assert(restPriB > hungerPriB, "RestGoal dominates when exhausted.");
 
             // Scenario C: Isolated agent (Hunger = 20, Energy = 85, Social = 5)
             var contextC = new AgentContext(dummyGuid, Vec2.Zero, new AgentNeeds(20f, 85f, 5f), 0f, null, null, 0);
-            float socialPriC = socialGoal.CalculatePriority(contextC);
+            float socialPriC = socialGoal.BasePriority(contextC);
             Assert(socialPriC == 95f, $"Social priority is 95 (actual: {socialPriC})");
-            Assert(socialPriC > hungerGoal.CalculatePriority(contextC), "SocializeGoal dominates when lonely.");
+            Assert(socialPriC > hungerGoal.BasePriority(contextC), "SocializeGoal dominates when lonely.");
 
             TestLog.Log("[PASS] Test 2: Dynamic GOAP goal priority flipping verified.");
         }
@@ -140,7 +140,7 @@ namespace Simpiens.Testing.Drives
             for (int i = 0; i < 100; i++)
             {
                 var warmupContext = new AgentContext(dummyGuid, Vec2.Zero, new AgentNeeds(50f, 30f, 50f), 0f, null, null, 0);
-                goal.CalculatePriority(warmupContext);
+                goal.BasePriority(warmupContext);
                 WorldStateBuilder.BuildWorldState(warmupContext);
             }
 
@@ -153,7 +153,7 @@ namespace Simpiens.Testing.Drives
             for (int i = 0; i < 1000; i++)
             {
                 var context = new AgentContext(dummyGuid, Vec2.Zero, new AgentNeeds(50f, 30f, 50f), 0f, null, null, 0);
-                float priority = goal.CalculatePriority(context);
+                float priority = goal.BasePriority(context);
                 var state = WorldStateBuilder.BuildWorldState(context);
             }
 

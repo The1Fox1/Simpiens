@@ -69,13 +69,13 @@ namespace Simpiens.Testing.Planning
             var context = CreateContext(AgentPersonality.Neutral, hunger: 20f, gold: 10, snapshot: null);
             int comfortable = Simpiens.Simulation.Economy.EconomyTuning.Default.ComfortablePurse;
             float expected = SimMath.Max(5f, 25f + SimMath.Clamp(comfortable - 10, 0, comfortable) * (20f / comfortable) - 20f * 0.2f);
-            Assert(SimMath.Approximately(new EarnIncomeGoal().CalculatePriority(context), expected), "Neutral EarnIncome priority must equal the pre-personality formula.");
+            Assert(SimMath.Approximately(new EarnIncomeGoal().BasePriority(context), expected), "Neutral EarnIncome priority must equal the pre-personality formula.");
 
             var social = CreateContext(AgentPersonality.Neutral, hunger: 20f, gold: 10, snapshot: null, social: 30f);
-            Assert(SimMath.Approximately(new SocializeGoal().CalculatePriority(social), 70f), "Neutral Socialize priority must equal 100 - social.");
+            Assert(SimMath.Approximately(new SocializeGoal().BasePriority(social), 70f), "Neutral Socialize priority must equal 100 - social.");
 
             var sociable = CreateContext(new AgentPersonality(0f, 0f, 1f, 0f, 0f), hunger: 20f, gold: 10, snapshot: null, social: 30f);
-            Assert(new SocializeGoal().CalculatePriority(sociable) > 70f, "A sociable agent must want company more than a neutral one.");
+            Assert(new SocializeGoal().BasePriority(sociable) > 70f, "A sociable agent must want company more than a neutral one.");
 
             TestLog.Log("[PASS] Test 2: Neutral personalities reproduce the pre-personality priorities; traits move them.");
         }

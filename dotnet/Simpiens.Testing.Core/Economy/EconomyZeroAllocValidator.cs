@@ -250,7 +250,7 @@ namespace Simpiens.Testing.Economy
 
                 for (int g = 0; g < goals.Count; g++)
                 {
-                    if (goals[g].IsValid(context)) checksum += goals[g].CalculatePriority(context);
+                    if (goals[g].IsValid(context)) checksum += goals[g].BasePriority(context);
                 }
                 for (int a = 0; a < actions.Count; a++)
                 {

@@ -79,6 +79,8 @@ namespace Simpiens.Simulation.Social
                                 // Fulfill biological social need
                                 agentA.Social = SimMath.Min(100f, agentA.Social + 25f);
                                 agentB.Social = SimMath.Min(100f, agentB.Social + 25f);
+                                agentA.Think(Simpiens.Simulation.Life.Thought.AGoodTalk, (uint)currentTick); // a good talk, both (Epic LIFE-1, L1.2)
+                                agentB.Think(Simpiens.Simulation.Life.Thought.AGoodTalk, (uint)currentTick);
 
                                 agentA.TriggerGossipVisual(currentTick);
                                 agentB.TriggerGossipVisual(currentTick);
@@ -184,6 +186,8 @@ namespace Simpiens.Simulation.Social
                                 agentB.RelieveFrustration(15f);
                                 agentA.Social = SimMath.Min(100f, agentA.Social + 25f);
                                 agentB.Social = SimMath.Min(100f, agentB.Social + 25f);
+                                agentA.Think(Simpiens.Simulation.Life.Thought.AGoodTalk, (uint)currentTick); // a good talk, both (Epic LIFE-1, L1.2)
+                                agentB.Think(Simpiens.Simulation.Life.Thought.AGoodTalk, (uint)currentTick);
                                 agentA.TriggerGossipVisual(currentTick);
                                 agentB.TriggerGossipVisual(currentTick);
 

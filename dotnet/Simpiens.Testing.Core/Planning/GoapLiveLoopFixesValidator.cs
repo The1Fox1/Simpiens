@@ -56,7 +56,7 @@ namespace Simpiens.Testing.Planning
             var starving = SnapshotWithPeer(peerId, new Vec2(2f, 0f), peerHunger: 92f);
             var needContext = Context(helperId, Vec2.Zero, hunger: 20f, starving, memory);
             Assert(goal.IsValid(needContext), "AidCompanion valid for a sated helper with a starving warm companion in view.");
-            Assert(goal.CalculatePriority(needContext) >= AltruismTargeting.AltruismThreshold, "Priority is the companion's altruism score.");
+            Assert(goal.BasePriority(needContext) >= AltruismTargeting.AltruismThreshold, "Priority is the companion's altruism score.");
             var intent = share.CreateIntent(needContext) as ShareResourceIntent;
             Assert(intent != null && intent.TargetPawnId == peerId, "ShareFood targets the distressed companion.");
 

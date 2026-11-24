@@ -10,11 +10,11 @@ namespace Simpiens.Cognition.Planning.Goals
     /// </summary>
     public class AidCompanionGoal : GoapGoal
     {
-        public AidCompanionGoal() : base("AidCompanion", WorldState.Empty.With(StateFact.HasAidedPeer, true))
+        public AidCompanionGoal() : base("AidCompanion", WorldState.Empty.With(StateFact.HasAidedPeer, true), Motive.Aid, ActivityFamily.Unweighted)
         {
         }
 
-        public override float CalculatePriority(AgentContext context)
+        public override float BasePriority(AgentContext context)
         {
             return AltruismTargeting.TrySelectDistressedPeer(context, out _, out _, out float utility) ? utility : -1f;
         }

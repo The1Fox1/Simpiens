@@ -10,11 +10,11 @@ namespace Simpiens.Cognition.Planning.Goals
     /// </summary>
     public class HuntGoal : GoapGoal
     {
-        public HuntGoal() : base("Hunt", WorldState.Empty.With(StateFact.LairHunted, true))
+        public HuntGoal() : base("Hunt", WorldState.Empty.With(StateFact.LairHunted, true), Motive.Income, ActivityFamily.Work)
         {
         }
 
-        public override float CalculatePriority(AgentContext context)
+        public override float BasePriority(AgentContext context)
         {
             float priority = 35f;
             ushort reward = 0;

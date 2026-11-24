@@ -10,11 +10,11 @@ namespace Simpiens.Cognition.Planning.Goals
     /// </summary>
     public class EarnIncomeGoal : GoapGoal
     {
-        public EarnIncomeGoal() : base("EarnIncome", WorldState.Empty.With(StateFact.HasSoldSalvage, true))
+        public EarnIncomeGoal() : base("EarnIncome", WorldState.Empty.With(StateFact.HasSoldSalvage, true), Motive.Income, ActivityFamily.Work)
         {
         }
 
-        public override float CalculatePriority(AgentContext context)
+        public override float BasePriority(AgentContext context)
         {
             int gold = context.Inventory != null ? context.Inventory.Gold : 0;
             int comfortable = Considerations.Economy(context).ComfortablePurse;

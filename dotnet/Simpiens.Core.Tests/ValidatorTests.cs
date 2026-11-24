@@ -39,6 +39,24 @@ namespace Simpiens.Core.Tests
         public void Personality() => new Simpiens.Testing.Planning.PersonalityValidator().RunAllValidationTests();
 
         [Fact]
+        public void Motives() => new Simpiens.Testing.Planning.MotiveValidator().RunAllValidationTests(); // Epic LIFE-1, L0.2
+
+        [Fact]
+        public void GoalSelector() => new Simpiens.Testing.Planning.GoalSelectorValidator().RunAllValidationTests(); // Epic LIFE-1, L0.4
+
+        [Fact]
+        public void MotiveModel() => new Simpiens.Testing.Planning.MotiveModelValidator().RunAllValidationTests(); // Epic LIFE-1, L0.5
+
+        [Fact]
+        public void Thoughts() => new Simpiens.Testing.Life.ThoughtsValidator().RunAllValidationTests(); // Epic LIFE-1, L1.1
+
+        [Fact]
+        public void ThoughtRules() => new Simpiens.Testing.Life.ThoughtRulesValidator().RunAllValidationTests(); // Epic LIFE-1, L1.2
+
+        [Fact]
+        public void Mood() => new Simpiens.Testing.Life.MoodValidator().RunAllValidationTests(); // Epic LIFE-1, L1.3
+
+        [Fact]
         public void Look() => new Simpiens.Testing.People.LookValidator().RunAllValidationTests();
 
         [Fact]

@@ -18,8 +18,15 @@ namespace Simpiens.Cognition.Contracts
         public readonly string Goal3;
         public readonly float Priority3;
 
-        public DecisionSummary(string source, uint tick, string goal1, float priority1, string goal2, float priority2, string goal3, float priority3)
+        /// <summary>The best goal's own number and the shared weight the motive model multiplied it by (Epic LIFE-1, L0.5, D2): the "why" of its priority.</summary>
+        public readonly float Base1;
+        public readonly float Weight1;
+
+        public DecisionSummary(string source, uint tick, string goal1, float priority1, string goal2, float priority2, string goal3, float priority3,
+                               float base1 = 0f, float weight1 = 1f)
         {
+            Base1 = base1;
+            Weight1 = weight1;
             Source = source;
             Tick = tick;
             Goal1 = goal1;

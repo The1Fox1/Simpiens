@@ -470,6 +470,7 @@ namespace Simpiens.Simulation.Guild
                             ? host.EconomyLedger.TryPayFromStall(stall.StallEntityId, ref stall, crawler.Inventory, share, StallPayment.GuildShare)
                             : PayDirect(ref stall, crawler, share);
                         if (!paid) SimLog.Economy.ZLogWarning($"{SimLog.Agent(member.CrawlerId)}'s {share}g share went unpaid (the treasury holds {stall.TreasuryGold}g)");
+                        else if (share > 0) crawler.Think(Simpiens.Simulation.Life.Thought.AGoodPayday, tick); // an expedition's share (Epic LIFE-1, L1.2)
                     }
                 }
                 host.UpdateStall(stall);

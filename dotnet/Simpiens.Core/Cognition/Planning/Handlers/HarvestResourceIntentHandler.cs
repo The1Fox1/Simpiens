@@ -50,6 +50,7 @@ namespace Simpiens.Cognition.Planning.Handlers
                 {
                     // Symmetrical Rivalry Defeat: Tantrum, frustration, and negative relational hit
                     agent.Frustration = SimMath.Min(100f, agent.Frustration + 25f);
+                    agent.Think(Simpiens.Simulation.Life.Thought.BeatenToIt, currentTick); // a node lost to a rival (Epic LIFE-1, L1.2)
                     agent.VisualState = AgentVisualState.Panicking;
                     agent.TriggerTantrumVisual();
                     // The chronicle entry the crawler's view used to add (Epic CORE C5 moved the agent off the view)

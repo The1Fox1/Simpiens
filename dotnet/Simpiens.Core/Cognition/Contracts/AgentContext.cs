@@ -78,6 +78,12 @@ namespace Simpiens.Cognition.Contracts
         /// <summary>Who it has become (Epic 11, A3): a copy of its traits record, for what its passions weigh (S1).</summary>
         public readonly Simpiens.Simulation.Skills.CrawlerTraits Traits;
 
+        /// <summary>Its life record, a copy (Epic LIFE-1, L0.8, D6): thoughts and, later, wants and the day's rhythm.</summary>
+        public readonly Simpiens.Simulation.Life.CrawlerLife Life;
+
+        /// <summary>Its mood's band now (Epic LIFE-1, L1.4, D9), read once from its needs, health and thoughts as the main thread reads it (<see cref="Simpiens.Simulation.Life.MoodRules"/>).</summary>
+        public readonly Simpiens.Simulation.Life.MoodBand Mood;
+
         /// <summary>The player's guild it belongs to, its group id, or 0 (Epic 11, S3.4: a member may drill at the guildhall's yard).</summary>
         public readonly byte GuildGroupId;
         public bool IsGuildMember => GuildGroupId != 0;
@@ -106,8 +112,10 @@ namespace Simpiens.Cognition.Contracts
                             byte partyGroupId = 0,
                             in Simpiens.Simulation.Skills.SkillSet skills = default,
                             in Simpiens.Simulation.Skills.CrawlerTraits traits = default,
-                            byte guildGroupId = 0)
+                            byte guildGroupId = 0,
+                            in Simpiens.Simulation.Life.CrawlerLife life = default)
         {
+            Life = life;
             GuildGroupId = guildGroupId;
             Skills = skills;
             Traits = traits;
@@ -133,6 +141,7 @@ namespace Simpiens.Cognition.Contracts
             DirectiveMembership = directiveMembership;
             Identity = identity;
             Inventory = inventory;
+            Mood = Simpiens.Simulation.Life.MoodRules.BandOf(Simpiens.Simulation.Life.MoodRules.Of(Needs, Health, IsDowned, Life, CurrentTick)); // after every field it reads
         }
 
         // Backward-compatible constructor

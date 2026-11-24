@@ -137,6 +137,7 @@ namespace Simpiens.Simulation
                 {
                     living.Memory.EventLedger?.AddEvent(new Simpiens.Cognition.Memory.MemoryEvent(Simpiens.Cognition.Memory.MemoryEventType.Grieved, dead.Id, at, tick));
                     living.Frustration = SimMath.Min(100f, (float)(living.Frustration + GriefFrustration));
+                    living.Think(Simpiens.Simulation.Life.Thought.FriendDied, tick, dead.Id); // a friend lost, for days (Epic LIFE-1, L1.2)
                     grieving++;
                 }
                 if (underOrders && Guild.IsMember(living.AgentId))

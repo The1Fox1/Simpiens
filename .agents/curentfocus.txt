@@ -7,7 +7,7 @@
 # "Done" = emerges in the live simulation: a live scenario on the real session with
 # nothing injected, headless in dotnet test since 2026-10-23 (ROADMAP §1B).
 # Keep this file short: history lives in the epic docs, .agents/architecture_history.md and git.
-# Last reconciled: 2026-11-23 (Epic 11 COMPLETED at the producer's play session: "All of this is a pass"; plans 3 and 4 merged as one PR, #27, at "merge and close it out"). 2026-11-22 (Epic 11's plan 4 Masterworks and the gate done on feat/epic11-masterworks, drafted before plan 3 merged: "Write up the implementation plan for Masterworks and proceed on work once it's ready"; the play session and the merges next). 2026-11-22 (Epic 11's plan 3 Legend done and closed out on feat/epic11-legend: "Let's finish up the legend plan"; S6's look read as passed; its PR waits for S7's look, the review of S7.1-S7.3 and the merge). 2026-11-20 (Epic 11's plan 3: S6 first legends done on feat/epic11-legend, its look next). 2026-11-20 (Epic 11's plan 2 merged as PR #26 after the S4 look and its technique tree: "This is great. PR plan 2 into main and then draft up plan3"; plan 3 Legend drafted on feat/epic11-legend, waiting for the go). 2026-11-19 (Epic 11's plan 2 Technique and Calling done and closed out on feat/epic11-technique, the producer away; its PR and S4's look wait for their return. Earlier the same day plan 1 Craft merged as PR #25). 2026-11-18 (Epic 11's plan 1 Craft closed out: the review passed, "This looks good. Let's wrap it up with C.1 and C.2"; its PR into main waits for the producer's merge). 2026-11-17 (Epic 11's plan 1 Craft: S0-S3 done on feat/epic11-craft, unpushed; the producer's review next). 2026-11-16 (Epic 11 ACTIVE, plan 1 Craft under way; Epic 10 COMPLETED: "Part 3 passes. Close out Epic 10"; Parts 2 and 3 closed out together, Milestones 3 and 4 COMPLETED, Epics UI-4 and UI-5 delivered; the close-out merged as PR #24; Epic 11 next, QUEUED until the producer's go)
+# Last reconciled: 2026-11-24 (Epic LIFE-1's plan 1 merged as PR #28: "Looks good PR, merge and close it out"; plan 2 drafted next). 2026-11-23 (Epic LIFE-1's plan 1 done and closed out on feat/life1-mind; its PR waits for the producer's look at L1). 2026-11-23 (Epic LIFE-1 ACTIVE: "Proceed with development of Life-1"; plan 1 under way on feat/life1-mind, rebased onto main after PR #27 merged). 2026-11-23 (the life core: Epic LIFE-1, The Mind and the Day, drafted with plan 1 on feat/life1-mind; all life core epics before Epic 12; Milestone 6 is A Living Outpost, the descent Milestone 7). 2026-11-23 (Epic 11 COMPLETED at the producer's play session: "All of this is a pass"; plans 3 and 4 merged as one PR, #27, at "merge and close it out"). 2026-11-22 (Epic 11's plan 4 Masterworks and the gate done on feat/epic11-masterworks, drafted before plan 3 merged: "Write up the implementation plan for Masterworks and proceed on work once it's ready"; the play session and the merges next). 2026-11-22 (Epic 11's plan 3 Legend done and closed out on feat/epic11-legend: "Let's finish up the legend plan"; S6's look read as passed; its PR waits for S7's look, the review of S7.1-S7.3 and the merge). 2026-11-20 (Epic 11's plan 3: S6 first legends done on feat/epic11-legend, its look next). 2026-11-20 (Epic 11's plan 2 merged as PR #26 after the S4 look and its technique tree: "This is great. PR plan 2 into main and then draft up plan3"; plan 3 Legend drafted on feat/epic11-legend, waiting for the go). 2026-11-19 (Epic 11's plan 2 Technique and Calling done and closed out on feat/epic11-technique, the producer away; its PR and S4's look wait for their return. Earlier the same day plan 1 Craft merged as PR #25). 2026-11-18 (Epic 11's plan 1 Craft closed out: the review passed, "This looks good. Let's wrap it up with C.1 and C.2"; its PR into main waits for the producer's merge). 2026-11-17 (Epic 11's plan 1 Craft: S0-S3 done on feat/epic11-craft, unpushed; the producer's review next). 2026-11-16 (Epic 11 ACTIVE, plan 1 Craft under way; Epic 10 COMPLETED: "Part 3 passes. Close out Epic 10"; Parts 2 and 3 closed out together, Milestones 3 and 4 COMPLETED, Epics UI-4 and UI-5 delivered; the close-out merged as PR #24; Epic 11 next, QUEUED until the producer's go)
 # ------------------------------------------------------------------------------
 
 CURRENT FOCUS
@@ -62,8 +62,15 @@ CURRENT FOCUS
     merged as one PR, #27, from feat/epic11-masterworks (two would have been stacked), on 2026-11-23.
   - Open from Epic 11: F11 and F13 (design, the producer's); F15 and F19 (to trace, in Epic 12's groundwork by default);
     the economy under every player (F3, F6, F9 with Epic 10's F14), the producer's.
-- NOW: nothing drafted. Next on the producer's word: Epic 12, the descent (Milestone 6, not drafted), Epic UI-Beta's B6,
-  or the economy under every player. The MCP narrative is Epic N, unscheduled.
+- NOW: the life core (Milestone 6, A Living Outpost), three epics in Track A, all complete before Epic 12 (the producer,
+  2026-11-23). Source: the Living Crawlers proposal (Claude Doc, 2026-11-15).
+  - Epic LIFE-1, The Mind and the Day [ACTIVE 2026-11-23] (docs/epics/epic-life-1.md): L0-L3 and its gate LG1, in
+    three plans. Plan 1, Groundwork and the mind (L0: the motive model, one goal selector, the fallback, the life record,
+    format 15; L1's thoughts, mood, faces, the dossier's Mind and Today) done and closed out on feat/life1-mind (from main
+    at d0d2d47): DoD MoodFollowsTheDay live; soak 18/18 and 3x20/20; F8-F12. L1's look passed and plan 1 merged as
+    PR #28 on 2026-11-24. Next: plan 2 (L1's wants, L2 fun and the tavern), drafted from the epic's 2.5 and F3, F11, F12.
+  - Epic LIFE-2, Talk, Gifts and Bonds (L4-L6) and Epic LIFE-3, Life Goals and a Living World (L7-L9) [QUEUED], not drafted.
+  - Also on the producer's word: Epic UI-Beta's B6, the economy under every player. The MCP narrative is Epic N, unscheduled.
 
 - Epic UI-Beta, Crawler Identity and the Interface Pass [ACTIVE 2026-11-02] (docs/epics/epic-ui-beta.md): B0 and B1
   (every crawler's look and given name, saved; save format 7) merged as PR #17; B2-B5 and the UI polish merged as
@@ -93,7 +100,8 @@ TRACK A: CORE SIMULATION & COGNITION (Epics 1-12, and Epic N unscheduled)
   Part 2 Workshops and the Guildhall and Part 3 Creatures, Combat and the Gatekeeper [COMPLETED 2026-11-16]
 - Epic 11: Skills, the Heart and Engine of a Crawler (Milestone 5) [COMPLETED 2026-11-23] (docs/epics/epic-11.md): Craft,
   Technique, Calling and Legend over K9's foundation, S0-S9; Doctrine and careers later
-- Epic 12: The Descent (Floor 2, the move; Milestone 6) [QUEUED], not drafted (Epic 10 Part 4 until 2026-11-15)
+- The life core (Milestone 6): Epic LIFE-1 [ACTIVE], LIFE-2 and LIFE-3 [QUEUED, not drafted]
+- Epic 12: The Descent (Floor 2, the move; Milestone 7 since 2026-11-23) [QUEUED], not drafted, after the life core (Epic 10 Part 4 until 2026-11-15)
 - Epic N: The Agentic Narrative Engine (MCP) [QUEUED, unscheduled] (Epic 11 until 2026-11-15)
 - Milestone 1 (the outpost loop) [COMPLETED 2026-10-15]; the producer's save/load check passed.
 - Milestone 2 (guild roster and expeditions) [COMPLETED 2026-11-01]; the producer's play session passed.

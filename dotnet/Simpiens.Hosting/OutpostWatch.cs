@@ -276,6 +276,7 @@ namespace Simpiens.Hosting
                     FirstAloneInTheChamber ??= $"t{rel}: {_sim.Host.CrawlerNames[i]} at {state.Position}";
                 }
                 ObserveBudget(state, rel, _sim.Host.CrawlerNames[i]);
+                ObserveThoughts(state);
                 if (!LookCatalog.IsValid(state.Look) || string.IsNullOrEmpty(state.GivenName))
                 {
                     Faceless++;
@@ -319,6 +320,26 @@ namespace Simpiens.Hosting
                     ConservationViolations++;
                     if (SimMath.Abs(discrepancy) > SimMath.Abs(WorstDiscrepancy)) WorstDiscrepancy = discrepancy;
                 }
+            }
+        }
+
+        /// <summary>
+        /// Thoughts thought, by thought id (Epic LIFE-1, L1.2), across every crawler the watch saw: a slot begun on the tick just
+        /// run (a new thought, or a stack restarted). Observed from the life records; no rule reads it.
+        /// </summary>
+        public readonly int[] ThoughtsThought = new int[Simpiens.Simulation.Life.ThoughtTable.Capacity];
+
+        /// <summary>How many times <paramref name="thought"/> was thought while the watch ran.</summary>
+        public int Thought(Simpiens.Simulation.Life.Thought thought) => (ushort)thought < ThoughtsThought.Length ? ThoughtsThought[(ushort)thought] : 0;
+
+        private void ObserveThoughts(Simpiens.Cognition.AgentState state)
+        {
+            uint justRun = (uint)System.Math.Max(0L, _sim.Clock.CurrentTick - 1);
+            var life = state.Life;
+            for (int t = 0; t < Simpiens.Simulation.Life.CrawlerLife.ThoughtCapacity; t++)
+            {
+                var slot = life.ThoughtAt(t);
+                if (slot.Thought != 0 && slot.BegunAt == justRun && slot.Thought < ThoughtsThought.Length) ThoughtsThought[slot.Thought]++;
             }
         }
 

@@ -256,6 +256,7 @@ namespace Simpiens.Cognition
             // Top three goals considered this evaluation ("Why?" groundwork); names are cached strings, no allocation
             string topGoal1 = null, topGoal2 = null, topGoal3 = null;
             float topPriority1 = -1f, topPriority2 = -1f, topPriority3 = -1f;
+            float topBase1 = 0f, topWeight1 = 1f; // the best goal's parts (Epic LIFE-1, L0.5)
             bool trace = SimLog.Traces(context.AgentId);
 
             // Emergency rest if in exhaustion collapse
@@ -316,54 +317,25 @@ namespace Simpiens.Cognition
                 if (intent == null && !hasPlan && goals != null && goals.Count > 0)
                 {
                     var currentState = WorldStateBuilder.BuildWorldState(context, context.Inventory);
-                    GoapGoal bestGoal = null;
-                    float highestPriority = -1f;
-
-                    int goalCount = goals.Count;
-                    for (int i = 0; i < goalCount; i++)
-                    {
-                        var goal = goals[i];
-                        if (!goal.IsValid(context))
-                        {
-                            if (trace) SimLog.Planning.ZLogTrace($"{SimLog.Agent(context.AgentId)} goal {goal.Name}: invalid");
-                            continue;
-                        }
-                        if (goal.IsSatisfied(currentState))
-                        {
-                            if (trace) SimLog.Planning.ZLogTrace($"{SimLog.Agent(context.AgentId)} goal {goal.Name}: already satisfied");
-                            continue;
-                        }
-
-                        float priority = goal.CalculatePriority(context);
-                        if (trace) SimLog.Planning.ZLogTrace($"{SimLog.Agent(context.AgentId)} goal {goal.Name}: priority {priority:F1}");
-                        if (priority > topPriority1)
-                        {
-                            topGoal3 = topGoal2; topPriority3 = topPriority2;
-                            topGoal2 = topGoal1; topPriority2 = topPriority1;
-                            topGoal1 = goal.Name; topPriority1 = priority;
-                        }
-                        else if (priority > topPriority2)
-                        {
-                            topGoal3 = topGoal2; topPriority3 = topPriority2;
-                            topGoal2 = goal.Name; topPriority2 = priority;
-                        }
-                        else if (priority > topPriority3)
-                        {
-                            topGoal3 = goal.Name; topPriority3 = priority;
-                        }
-                        if (priority > highestPriority)
-                        {
-                            highestPriority = priority;
-                            bestGoal = goal;
-                        }
-                    }
+                    // The one choice (Epic LIFE-1, L0.4, D3): the best three, the best pursued
+                    var life = Considerations.Economy(context).Life;
+                    var ranked = GoalSelector.Rank(goals, context, currentState, trace, agent.LastGoal, life.Commitment); // the last goal, committed to (L0.7, D5)
+                    topGoal1 = ranked.Goal1?.Name; topPriority1 = ranked.Priority1;
+                    topGoal2 = ranked.Goal2?.Name; topPriority2 = ranked.Priority2;
+                    topGoal3 = ranked.Goal3?.Name; topPriority3 = ranked.Priority3;
+                    if (ranked.Goal1 != null) { topBase1 = ranked.Base1; topWeight1 = ranked.Weight1; }
+                    GoapGoal bestGoal = ranked.Goal1;
+                    float highestPriority = ranked.Priority1;
 
                     if (bestGoal != null)
                     {
+                        // The best, or the next two when it can't be planned (Epic LIFE-1, L0.6, D4)
                         var plan = agent.ScratchPlan;
-                        bool planFound = planner.Plan(currentState, bestGoal, actionGraph, context, plan);
-                        if (planFound && !plan.IsEmpty)
+                        int place = GoalSelector.PlanFirst(ranked, life.FallbackDepth, planner, currentState, actionGraph, context, plan, trace);
+                        if (place >= 0)
                         {
+                            bestGoal = ranked.GoalAt(place);
+                            highestPriority = ranked.PriorityAt(place);
                             result.AdoptScratchPlan = true;
                             result.Goal = bestGoal;
 
@@ -376,12 +348,8 @@ namespace Simpiens.Cognition
                             if (firstAction != null && firstAction.IsValid(context))
                             {
                                 intent = await firstAction.CreateIntentAsync(context, ct);
-                                source = "GOAP new plan";
+                                source = place == 0 ? "GOAP new plan" : "GOAP fallback";
                             }
-                        }
-                        else if (trace)
-                        {
-                            SimLog.Planning.ZLogDebug($"{SimLog.Agent(context.AgentId)} found NO plan for {bestGoal.Name} (priority {highestPriority:F1}) from {currentState}");
                         }
                     }
                 }
@@ -406,7 +374,7 @@ namespace Simpiens.Cognition
             }
 
             intent.Decision = new DecisionSummary(source, context.CurrentTick,
-                topGoal1, topPriority1, topGoal2, topPriority2, topGoal3, topPriority3);
+                topGoal1, topPriority1, topGoal2, topPriority2, topGoal3, topPriority3, topBase1, topWeight1);
 
             result.Intent = intent;
             return result;
@@ -424,6 +392,7 @@ namespace Simpiens.Cognition
             {
                 agent.ActivePlan.CopyFrom(agent.ScratchPlan);
                 agent.ActiveGoal = result.Goal;
+                agent.LastGoal = result.Goal; // kept through the plan's end or a reflex, for commitment (Epic LIFE-1, L0.7)
             }
 
             var intent = result.Intent;

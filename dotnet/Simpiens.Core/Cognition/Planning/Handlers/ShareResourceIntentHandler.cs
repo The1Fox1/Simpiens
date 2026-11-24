@@ -58,6 +58,7 @@ namespace Simpiens.Cognition.Planning.Handlers
                 {
                     agent.Hunger = SimMath.Min(100f, agent.Hunger + 15f);
                     agent.HasFoodInInventory = false;
+                    agent.Think(Simpiens.Simulation.Life.Thought.SharedMyFood, context.CurrentTick); // Epic LIFE-1, L1.2
                 }
 
                 var receiverAgent = targetNode.Agent;
@@ -65,6 +66,7 @@ namespace Simpiens.Cognition.Planning.Handlers
                 {
                     receiverAgent.Hunger = SimMath.Max(0f, receiverAgent.Hunger - share.FoodAmount);
                     if (receiverAgent != null) receiverAgent.Activity.RecordMeal(context.CurrentTick);
+                    receiverAgent.Think(Simpiens.Simulation.Life.Thought.FedBy, context.CurrentTick, node.Id); // fed by the giver (Epic LIFE-1, L1.2)
                     if (receiverAgent.Hunger < 85f)
                     {
                         receiverAgent.TriggerReliefVisual();

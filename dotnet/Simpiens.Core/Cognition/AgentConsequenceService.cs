@@ -20,6 +20,9 @@ namespace Simpiens.Cognition
     /// </summary>
     public class AgentConsequenceService : IAgentConsequenceService
     {
+        /// <summary>A meal that takes this much off hunger is a good one (Epic LIFE-1, L1.2, D7): a ration's 40, not a nibble.</summary>
+        public const float GoodMeal = 30f;
+
         private readonly IGroupRegistry _groupRegistry;
         private readonly ISpatialPartition _spatialPartition;
         private readonly INarrativeChronicleService _chronicleService;
@@ -66,9 +69,11 @@ namespace Simpiens.Cognition
                 agent.NavigationalStalls = 0;
 
                 // Eating carried food, whoever chose it: a plan step or a hunger reflex
+                float hungerBefore = agent.Hunger;
                 if (intent is EatCarriedFoodIntent && ItemUse.Consume(agent, agent.Inventory.FirstHeld(Simpiens.Simulation.Items.ItemCategory.Food)))
                 {
                     agent.Activity.RecordMeal(currentTick);
+                    if (hungerBefore - agent.Hunger >= GoodMeal) agent.Think(Simpiens.Simulation.Life.Thought.AGoodMeal, currentTick); // a thought (Epic LIFE-1, L1.2)
                 }
 
                 if (agent.HasActivePlan)
@@ -79,6 +84,7 @@ namespace Simpiens.Cognition
                         agent.Hunger = SimMath.Max(0f, agent.Hunger - 50f);
                         agent.HasFoodInInventory = true;
                         agent.Activity.RecordMeal(currentTick);
+                        agent.Think(Simpiens.Simulation.Life.Thought.AteAtTheGarden, currentTick); // the Garden plot's meal (Epic LIFE-1, L1.2)
                     }
                     else if (completedAction is RestAction)
                     {
@@ -87,6 +93,7 @@ namespace Simpiens.Cognition
                     else if (completedAction is SleepAtBunkAction && intent is SleepAtBunkIntent)
                     {
                         agent.Energy = SimMath.Min(100f, agent.Energy + Day.SleepBonus);
+                        agent.Think(Simpiens.Simulation.Life.Thought.SleptInABunk, currentTick); // woke in a bunk (Epic LIFE-1, L1.2)
                     }
                     else if (completedAction is TravelToPeerAction)
                     {

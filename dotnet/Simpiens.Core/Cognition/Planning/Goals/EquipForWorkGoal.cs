@@ -15,11 +15,11 @@ namespace Simpiens.Cognition.Planning.Goals
         /// <summary>Above selling salvage (30) and earning (25 and up), under outfitting for danger (40): it equips before its next round of work.</summary>
         public const float Priority = 35f;
 
-        public EquipForWorkGoal() : base("EquipForWork", WorldState.Empty.With(StateFact.HasTool, true))
+        public EquipForWorkGoal() : base("EquipForWork", WorldState.Empty.With(StateFact.HasTool, true), Motive.Gear, ActivityFamily.Work)
         {
         }
 
-        public override float CalculatePriority(AgentContext context) => Priority;
+        public override float BasePriority(AgentContext context) => Priority;
 
         public override bool IsValid(AgentContext context)
         {

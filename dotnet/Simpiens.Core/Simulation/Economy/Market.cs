@@ -559,7 +559,11 @@ namespace Simpiens.Simulation.Economy
                 SimLog.Economy.ZLogInformation($"Hunt #{hunt.BountyId} done: {(hunt.Quarry != default ? "its quarry slain" : $"lair {hunt.LairIndex} emptied")}; {reward}g paid to {hunt.Count} hunter(s) by damage dealt");
                 for (int c = 0; c < hunt.Count; c++)
                 {
-                    if (agents != null && agents.TryGetAgent(hunt.ClaimantAt(c), out var hunter)) hunter.AddDeed(Simpiens.Simulation.Skills.Deed.HuntPaid); // a deed (Epic 11, S0.5)
+                    if (agents != null && agents.TryGetAgent(hunt.ClaimantAt(c), out var hunter))
+                    {
+                        hunter.AddDeed(Simpiens.Simulation.Skills.Deed.HuntPaid); // a deed (Epic 11, S0.5)
+                        if (shares[c] > 0) hunter.Think(Simpiens.Simulation.Life.Thought.AGoodPayday, currentTick); // and a payday (Epic LIFE-1, L1.2)
+                    }
                     _chronicleService?.RecordEvent(new ChronicleEvent(ChronicleEventType.BountyFulfilled, hunt.ClaimantAt(c), SimulationManager.PlayerEntityId,
                         bounty.TargetSectorId, currentTick, ChronicleIntensity.Notable, shares[c]));
                 }

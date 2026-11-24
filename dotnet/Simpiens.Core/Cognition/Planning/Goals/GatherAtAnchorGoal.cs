@@ -12,11 +12,11 @@ namespace Simpiens.Cognition.Planning.Goals
         public const float StarvationCrisisThreshold = 60f;
         public const float ExhaustionCrisisThreshold = 20f;
 
-        public GatherAtAnchorGoal() : base("GatherAtAnchor", WorldState.Empty.With(StateFact.IsGatheredAtAnchor, true))
+        public GatherAtAnchorGoal() : base("GatherAtAnchor", WorldState.Empty.With(StateFact.IsGatheredAtAnchor, true), Motive.Company, ActivityFamily.Social)
         {
         }
 
-        public override float CalculatePriority(AgentContext context)
+        public override float BasePriority(AgentContext context)
         {
             // If in biological crisis (starving or exhausted), anchor gathering is completely suppressed
             if (context.Hunger >= StarvationCrisisThreshold || context.Energy <= ExhaustionCrisisThreshold)

@@ -50,6 +50,17 @@ namespace Simpiens.Client.Ui
         private const float AffinitiesHeight = 68f, HeldLineHeight = 18f;
         private readonly SkillLine _skills; // Epic 10 Part 3, K9.5; with passions' flames since Epic 11, S1.6
         private readonly TextRuntime _description, _moodLine; // Epic UI-Beta B3
+
+        // The dossier's tabs (Epic LIFE-1, L1.7, D10): Crawler (its sections before the tabs), Mind and Today
+        private readonly ContainerRuntime _crawlerTab, _mindTab, _todayTab;
+        private readonly TextRuntime _mindMood, _todayEmpty;
+        private readonly GraphicalUiElement _mindList, _todayList;
+        private readonly List<TextRuntime> _mindRows = new List<TextRuntime>(24), _todayRows = new List<TextRuntime>(32);
+        private int _tab;
+
+        /// <summary>The Mind and Today tabs' lists: at 720 rows they end above the frame, as the Crawler tab's sway does.</summary>
+        public const float MindListHeight = 290f, TodayListHeight = 330f;
+        private const float TabHeight = 18f;
         private readonly PortraitAtlas _portraits;
         private readonly ContainerRuntime _detail, _dossier, _who;
         private readonly GraphicalUiElement _residentsScroll;
@@ -147,34 +158,49 @@ namespace Simpiens.Client.Ui
             who.Children.Add(_dossierName);
             _description = Wrapped(string.Empty, UiStyle.TextSecondary, UiText.Small);
             who.Children.Add(_description);
+            // The state's badge, and beside it the dossier's tabs (Epic LIFE-1, L1.7, D10): on the badge's line, so they cost the
+            // dossier no height at 720 rows (F4)
+            var badgeRow = new ContainerRuntime { ChildrenLayout = ChildrenLayout.LeftToRightStack, StackSpacing = 4f, WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, HeightUnits = DimensionUnitType.RelativeToChildren, Height = 0f };
             var badge = Badge(out _dossierBadge, out _dossierBadgeFill);
             badge.YUnits = GeneralUnitType.PixelsFromSmall; // in the stack, not centred
             badge.YOrigin = VerticalAlignment.Top;
             badge.Y = 0f;
-            who.Children.Add(badge);
+            badgeRow.Children.Add(badge);
+            badgeRow.Children.Add(new ContainerRuntime { Width = 4f, Height = 1f });
+            CrawlerTabButton = TabButton("Crawler", 56f, 0);
+            MindTabButton = TabButton("Mind", 42f, 1);
+            TodayTabButton = TabButton("Today", 46f, 2);
+            badgeRow.Children.Add(CrawlerTabButton.Visual);
+            badgeRow.Children.Add(MindTabButton.Visual);
+            badgeRow.Children.Add(TodayTabButton.Visual);
+            who.Children.Add(badgeRow);
             _moodLine = UiParts.Text(string.Empty, UiStyle.TextLight, UiText.Small);
             who.Children.Add(_moodLine);
             header.Children.Add(who);
             _dossierDetails.Children.Add(header);
+            // The Crawler tab: everything the dossier showed before its tabs
+            _crawlerTab = UiParts.Column(4f);
+            _crawlerTab.WidthUnits = DimensionUnitType.RelativeToParent;
+            _crawlerTab.Width = 0f;
             // No gap under the header, and none of their own before the sections below (the column's spacing breaks them): the
             // skills' line took those 18 pixels, and at 720 rows the dossier has none to spare (Epic 10 Part 3, K9.5)
-            _dossierDetails.Children.Add(Window.SubHeader("NEEDS"));
-            _health = new DriveBar(_dossierDetails, "Health:", UiStyle.DriveHealth);
-            _hunger = new DriveBar(_dossierDetails, "Hunger:", UiStyle.DriveHunger);
-            _energy = new DriveBar(_dossierDetails, "Energy:", UiStyle.DriveEnergy);
-            _social = new DriveBar(_dossierDetails, "Social:", UiStyle.DriveSocial);
-            _frustration = new DriveBar(_dossierDetails, "Frustration:", UiStyle.Danger);
+            _crawlerTab.Children.Add(Window.SubHeader("NEEDS"));
+            _health = new DriveBar(_crawlerTab, "Health:", UiStyle.DriveHealth);
+            _hunger = new DriveBar(_crawlerTab, "Hunger:", UiStyle.DriveHunger);
+            _energy = new DriveBar(_crawlerTab, "Energy:", UiStyle.DriveEnergy);
+            _social = new DriveBar(_crawlerTab, "Social:", UiStyle.DriveSocial);
+            _frustration = new DriveBar(_crawlerTab, "Frustration:", UiStyle.Danger);
             // What it wears (Epic 10 G3's gear, W1.6b's tool; every slot from the table since Epic 10 Part 3, K1.5): each piece's
             // icon at 1x (graphics V4) and its words, on one line: the dossier has no height to spare at 720 rows
             var gearLine = _gearLine = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = IconAtlas.SmallSize, HasEvents = true };
             Equipment = new WornLine(icons);
             gearLine.Children.Add(Equipment.Visual);
-            _dossierDetails.Children.Add(gearLine);
+            _crawlerTab.Children.Add(gearLine);
             // Its skills, the best first (Epic 10 Part 3, K9.5): one line, as the gear's, a flame on each skill it loves (Epic 11, S1.6)
             var skillLine = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, HeightUnits = DimensionUnitType.RelativeToChildren, Height = 0f };
             _skills = new SkillLine();
             skillLine.Children.Add(_skills.Visual);
-            _dossierDetails.Children.Add(skillLine);
+            _crawlerTab.Children.Add(skillLine);
             // Who taught it (Epic 11, S3.5: "Mining taught by Bram"), then a skill the mastery budget holds (S2.5, D7: "Foraging
             // held at 5: two crafts past Apprentice"). Shown only when there is either, taking its line from the feelings' list,
             // so the dossier keeps its height at 720 rows
@@ -184,16 +210,16 @@ namespace Simpiens.Client.Ui
             _techniquesLine.Click += (_, _) => { if (_model.Dossier.HasCrawler && !_model.Dossier.IsDead) OpenTechniques?.Invoke(_model.Dossier.CrawlerId); }; // anyone's tree (S4.11, D25)
             _techniques = UiParts.Text(string.Empty, UiStyle.TextSecondary, UiText.Small);
             _techniquesLine.Children.Add(_techniques);
-            _dossierDetails.Children.Add(_techniquesLine);
+            _crawlerTab.Children.Add(_techniquesLine);
             // Its legend (Epic 11, S6.6, D36): "Beetlebane, 3 creatures slain · Battle-Hardened · a scar", what each is in the tip;
             // shown only when it has any, its line from the feelings' list as the techniques' is
             _legendLine = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, HeightUnits = DimensionUnitType.RelativeToChildren, Height = 0f, HasEvents = true, Visible = false };
             _legend = UiParts.Text(string.Empty, UiStyle.Accent, UiText.Small);
             _legendLine.Children.Add(_legend);
-            _dossierDetails.Children.Add(_legendLine);
+            _crawlerTab.Children.Add(_legendLine);
             _held = UiParts.Text(string.Empty, UiStyle.TextMuted, UiText.Small);
             _held.Visible = false;
-            _dossierDetails.Children.Add(_held);
+            _crawlerTab.Children.Add(_held);
             // Its groups (Epic 10 G4): "Settlement: led by Mara · Guild: member, 5g a visit", and in amber what it asks above
             // that wage (Epic 11, S2.5, D8): "asks 7g"
             var groupsLine = UiParts.Row(6f);
@@ -205,25 +231,25 @@ namespace Simpiens.Client.Ui
             _asks.Visible = false;
             groupsLine.Children.Add(_groups);
             groupsLine.Children.Add(_asks);
-            _dossierDetails.Children.Add(groupsLine);
-            _dossierDetails.Children.Add(Window.Gap(0f));
-            _dossierDetails.Children.Add(Window.SubHeader("WHAT THEY'RE DOING"));
+            _crawlerTab.Children.Add(groupsLine);
+            _crawlerTab.Children.Add(Window.Gap(0f));
+            _crawlerTab.Children.Add(Window.SubHeader("WHAT THEY'RE DOING"));
             var intent = new ContainerRuntime { WidthUnits = DimensionUnitType.RelativeToParent, Width = 0f, Height = 44f };
             UiParts.AddInset(intent);
             _goal = IntentRow(intent, "Goal:", 6f);
             _action = IntentRow(intent, "Action:", 24f);
-            _dossierDetails.Children.Add(intent);
-            _dossierDetails.Children.Add(Window.Gap(0f));
-            _dossierDetails.Children.Add(Window.SubHeader("FEELINGS (WARMTH / TRUST / FEAR / RESPECT)"));
+            _crawlerTab.Children.Add(intent);
+            _crawlerTab.Children.Add(Window.Gap(0f));
+            _crawlerTab.Children.Add(Window.SubHeader("FEELINGS (WARMTH / TRUST / FEAR / RESPECT)"));
             _affinitiesEmpty = UiParts.Text("No relationships yet.", UiStyle.TextMuted, UiText.Small);
-            _dossierDetails.Children.Add(_affinitiesEmpty);
-            _affinitiesList = Scroll(_dossierDetails, AffinitiesHeight, 2f, out _affinitiesViewer); // two rows with faces (UI-Beta B4); it scrolls. Unity's max-height was 120: the guild's lines and the portrait's header took the rest
-            _dossierDetails.Children.Add(Window.Gap(0f));
-            _dossierDetails.Children.Add(Window.SubHeader("YOUR SWAY"));
+            _crawlerTab.Children.Add(_affinitiesEmpty);
+            _affinitiesList = Scroll(_crawlerTab, AffinitiesHeight, 2f, out _affinitiesViewer); // two rows with faces (UI-Beta B4); it scrolls. Unity's max-height was 120: the guild's lines and the portrait's header took the rest
+            _crawlerTab.Children.Add(Window.Gap(0f));
+            _crawlerTab.Children.Add(Window.SubHeader("YOUR SWAY"));
             // Whether it would sign on with the guild, then Recruit (Epic 10 G4, D6). Calm Frustration stood beside it until the
             // producer named it a debug action (2026-11-21): it is one of the playtest tools now
             _recruitText = UiParts.Text(string.Empty, UiStyle.TextLight, UiText.Small);
-            _dossierDetails.Children.Add(_recruitText);
+            _crawlerTab.Children.Add(_recruitText);
             // In the dossier's stack, so not UiParts.Row, which centres itself in its parent
             var actions = new ContainerRuntime
             {
@@ -242,7 +268,7 @@ namespace Simpiens.Client.Ui
                 else _model.Dossier.Recruit();
             };
             actions.Children.Add(RecruitButton.Visual);
-            _dossierDetails.Children.Add(actions);
+            _crawlerTab.Children.Add(actions);
             // The playtest tools (ClientOptions.PlaytestTools: development builds, or --playtest), a row under the sway marked as
             // such; built only when asked for, so the dossier tests and renders see nothing of them
             if (playtest)
@@ -271,8 +297,32 @@ namespace Simpiens.Client.Ui
                 tools.Children.Add(CalmButton.Visual);
                 tools.Children.Add(MaxTrustButton.Visual);
                 tools.Children.Add(DownButton.Visual);
-                _dossierDetails.Children.Add(tools);
+                _crawlerTab.Children.Add(tools);
             }
+            _dossierDetails.Children.Add(_crawlerTab);
+            // The Mind tab (Epic LIFE-1, L1.7, D10): the mood, its reason, then its terms and thoughts, the largest first
+            _mindTab = UiParts.Column(4f);
+            _mindTab.WidthUnits = DimensionUnitType.RelativeToParent;
+            _mindTab.Width = 0f;
+            _mindTab.Visible = false;
+            _mindTab.Children.Add(Window.SubHeader("MOOD"));
+            _mindMood = Wrapped(string.Empty, UiStyle.TextLight, UiText.Body);
+            _mindTab.Children.Add(_mindMood);
+            _mindTab.Children.Add(Window.Gap(0f));
+            _mindTab.Children.Add(Window.SubHeader("WHAT WEIGHS ON IT"));
+            _mindList = Scroll(_mindTab, MindListHeight, 2f);
+            _dossierDetails.Children.Add(_mindTab);
+            // The Today tab: its day since midnight, newest first
+            _todayTab = UiParts.Column(4f);
+            _todayTab.WidthUnits = DimensionUnitType.RelativeToParent;
+            _todayTab.Width = 0f;
+            _todayTab.Visible = false;
+            _todayTab.Children.Add(Window.SubHeader("TODAY"));
+            _todayEmpty = UiParts.Text(DayLogModel.EmptyText, UiStyle.TextMuted, UiText.Small);
+            _todayTab.Children.Add(_todayEmpty);
+            _todayList = Scroll(_todayTab, TodayListHeight, 2f);
+            _dossierDetails.Children.Add(_todayTab);
+            ShowTab(0);
             dossierBody.Children.Add(_dossierDetails);
             dossier.Children.Add(dossierBody);
             Root.Children.Add(dossier);
@@ -343,6 +393,65 @@ namespace Simpiens.Client.Ui
         private bool _playtestTipped;
         private float _playtestTakes; // what the playtest tools' row takes from the feelings' list
         public Button RecruitButton { get; }
+
+        /// <summary>The dossier's tabs (Epic LIFE-1, L1.7): Crawler, Mind and Today; the open one is lit.</summary>
+        public Button CrawlerTabButton { get; }
+        public Button MindTabButton { get; }
+        public Button TodayTabButton { get; }
+
+        /// <summary>The open tab: 0 Crawler, 1 Mind, 2 Today.</summary>
+        public int TabShown => _tab;
+
+        /// <summary>The Mind tab's mood line as shown.</summary>
+        public string MindMoodShown => _mindMood.Text;
+
+        /// <summary>The Mind tab's lines as shown.</summary>
+        public IEnumerable<string> MindLinesShown { get { for (int i = 0; i < _mindRows.Count; i++) if (_mindRows[i].Visible) yield return _mindRows[i].Text; } }
+
+        /// <summary>The Today tab's lines as shown, newest first.</summary>
+        public IEnumerable<string> TodayLinesShown { get { for (int i = 0; i < _todayRows.Count; i++) if (_todayRows[i].Visible) yield return _todayRows[i].Text; } }
+
+        /// <summary>The Today tab's list, for the fit test.</summary>
+        public GraphicalUiElement TodayList => _todayList.Parent as GraphicalUiElement ?? _todayList;
+
+        /// <summary>The Mind tab's list, for the fit test.</summary>
+        public GraphicalUiElement MindList => _mindList.Parent as GraphicalUiElement ?? _mindList;
+
+        private Button TabButton(string text, float width, int tab)
+        {
+            var button = UiParts.Button(text, width, TabHeight, UiText.Badge);
+            button.Click += (_, _) => ShowTab(tab);
+            return button;
+        }
+
+        /// <summary>Opens tab <paramref name="tab"/> (0 Crawler, 1 Mind, 2 Today): only it shows, and its button is lit.</summary>
+        public void ShowTab(int tab)
+        {
+            _tab = tab < 0 || tab > 2 ? 0 : tab;
+            _crawlerTab.Visible = _tab == 0;
+            _mindTab.Visible = _tab == 1;
+            _todayTab.Visible = _tab == 2;
+            StoneSkin.SetActive(CrawlerTabButton, _tab == 0);
+            StoneSkin.SetActive(MindTabButton, _tab == 1);
+            StoneSkin.SetActive(TodayTabButton, _tab == 2);
+        }
+
+        // A tab's lines, each a wrapped row from the pool: as many shown as there are lines, the rest hidden
+        private static void ShowLines(GraphicalUiElement list, List<TextRuntime> rows, int count, System.Func<int, string> line, Color color)
+        {
+            for (int i = 0; i < count; i++)
+            {
+                if (i == rows.Count)
+                {
+                    var row = Wrapped(string.Empty, color, UiText.Small);
+                    rows.Add(row);
+                    list.Children.Add(row);
+                }
+                UiParts.SetText(rows[i], line(i));
+                if (!rows[i].Visible) rows[i].Visible = true;
+            }
+            for (int i = count; i < rows.Count; i++) if (rows[i].Visible) rows[i].Visible = false;
+        }
         public string GroupsShown => _groups.Text;
 
         /// <summary>A skill the budget holds, and the asking wage above the wage, as shown (Epic 11, S2.5); empty when hidden.</summary>
@@ -514,6 +623,19 @@ namespace Simpiens.Client.Ui
             else if (_portraitBadge.Visible) _portraitBadge.Visible = false;
             UiParts.SetText(_dossierBadge, dossier.Badge);
             _dossierBadgeFill.FillColor = UiStyle.StateColor(dossier.State);
+            if (_tab == 1)
+            {
+                var mind = dossier.Mind;
+                UiParts.SetText(_mindMood, mind.Headline);
+                ShowLines(_mindList, _mindRows, mind.Lines.Count, i => mind.Lines[i].Text, UiStyle.TextLight);
+            }
+            else if (_tab == 2)
+            {
+                var today = dossier.Today;
+                ShowLines(_todayList, _todayRows, today.Lines.Count, i => today.Lines[i].Shown, UiStyle.TextLight);
+                bool empty = today.Lines.Count == 0;
+                if (_todayEmpty.Visible != empty) _todayEmpty.Visible = empty;
+            }
             _health.Set(dossier.Health);
             Equipment.Show(dossier.Equipment);
             if (!string.Equals(_gearTip, dossier.GearTip, System.StringComparison.Ordinal))

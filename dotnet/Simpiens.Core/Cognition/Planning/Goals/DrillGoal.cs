@@ -11,11 +11,11 @@ namespace Simpiens.Cognition.Planning.Goals
         /// <summary>Above earning's floor (25) and reading (27), under selling salvage (30): a member's free hours, once its purse allows.</summary>
         public const float Priority = 28f;
 
-        public DrillGoal() : base("Drill", WorldState.Empty.With(StateFact.Drilled, true))
+        public DrillGoal() : base("Drill", WorldState.Empty.With(StateFact.Drilled, true), Motive.Growth, ActivityFamily.Leisure)
         {
         }
 
-        public override float CalculatePriority(AgentContext context) => Priority;
+        public override float BasePriority(AgentContext context) => Priority;
 
         public override bool IsValid(AgentContext context) => Drill.WouldDrill(context);
     }

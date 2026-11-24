@@ -67,11 +67,18 @@ namespace Simpiens.Simulation.Economy
         /// <summary>Ticks per step of 5 a remembered affinity (trust toward the player included) fades toward neutral since the last dealing (T4.3).</summary>
         public readonly uint TrustFadeTicks;
 
+        /// <summary>
+        /// How fast frustration eases, a game second at a time (Epic LIFE-1, L1.4, F6): 10 a game hour, on the day's pace like
+        /// every need. It fell 1 every real second (about 42 a game hour) before, which drowned any hourly term mood adds.
+        /// </summary>
+        public readonly float FrustrationEasePerSecond;
+
         public DayTuning(float hungerPerSecond, float energyStandingPerSecond, float energyWalkingPerSecond, float socialPerSecond,
             float bunkRecoveryPerSecond, float restRecoveryPerSecond, float sleepSeconds, float wakeEnergy, float wakeHunger, float bedtimeHunger, float sleepBonus,
             float restSeconds, float restBonus, float relaxEnergyBonus, float energyWorkingPerSecond, float energyCraftingPerSecond, in ActionTuning actions,
-            float restingHealPerSecond, float bunkHealPerSecond, uint trustFadeTicks)
+            float restingHealPerSecond, float bunkHealPerSecond, uint trustFadeTicks, float frustrationEasePerSecond)
         {
+            FrustrationEasePerSecond = frustrationEasePerSecond;
             HungerPerSecond = hungerPerSecond;
             EnergyStandingPerSecond = energyStandingPerSecond;
             EnergyWalkingPerSecond = energyWalkingPerSecond;
@@ -133,7 +140,8 @@ namespace Simpiens.Simulation.Economy
             actions: ActionTuning.Default,
             restingHealPerSecond: 0.05f,
             bunkHealPerSecond: DayClock.PerSecond(10f),
-            trustFadeTicks: DayClock.Hours(12));
+            trustFadeTicks: DayClock.Hours(12),
+            frustrationEasePerSecond: DayClock.PerSecond(10f));
     }
 
     /// <summary>

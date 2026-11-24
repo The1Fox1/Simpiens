@@ -9,11 +9,11 @@ namespace Simpiens.Cognition.Planning.Goals
     /// </summary>
     public class RestGoal : GoapGoal
     {
-        public RestGoal() : base("Rest", WorldState.Empty.With(StateFact.IsResting, true))
+        public RestGoal() : base("Rest", WorldState.Empty.With(StateFact.IsResting, true), Motive.Rest, ActivityFamily.Rest)
         {
         }
 
-        public override float CalculatePriority(AgentContext context)
+        public override float BasePriority(AgentContext context)
         {
             // The more exhausted (lower energy), the higher the priority
             return 100f - context.Energy;

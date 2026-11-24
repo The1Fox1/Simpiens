@@ -238,6 +238,9 @@ namespace Simpiens.Simulation.Economy
         /// <summary>The pace of a crawler's day: needs, sleep and rest (Epic 10 Part 2, milestone T).</summary>
         public DayTuning Day { get; private set; } = DayTuning.Default;
 
+        /// <summary>The life core's numbers (Epic LIFE-1, the epic's A11): the motive model's weights, commitment and the fallback. The default changes nothing.</summary>
+        public Simpiens.Simulation.Life.LifeTuning Life { get; private set; } = Simpiens.Simulation.Life.LifeTuning.Default;
+
         public TradeTrustTuning TradeTrust { get; private set; } = new TradeTrustTuning(
             generousBuyRatio: 0.6f,
             fairBuyRatio: 1.0f,
@@ -301,6 +304,13 @@ namespace Simpiens.Simulation.Economy
         {
             var copy = Copy();
             copy.Day = day;
+            return copy;
+        }
+
+        public EconomyTuning WithLife(in Simpiens.Simulation.Life.LifeTuning life)
+        {
+            var copy = Copy();
+            copy.Life = life;
             return copy;
         }
 

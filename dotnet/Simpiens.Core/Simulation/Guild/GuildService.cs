@@ -200,11 +200,13 @@ namespace Simpiens.Simulation.Guild
                     if (contract.Wage < asking)
                     {
                         member.Memory?.RecordInteraction(WorldRegistry.PlayerEntityId, tuning.Unpaid.Warmth, tuning.Unpaid.Trust, 0, tuning.Unpaid.Respect, tick);
+                        member.Think(Simpiens.Simulation.Life.Thought.RaiseUnpaid, tick); // Epic LIFE-1, L1.2
                         SimLog.Economy.ZLogWarning($"{SimLog.Agent(contract.CrawlerId)} was paid {contract.Wage}g, below the {asking}g it asks");
                     }
                     else
                     {
                         member.Memory?.RecordInteraction(WorldRegistry.PlayerEntityId, tuning.Paid.Warmth, tuning.Paid.Trust, 0, tuning.Paid.Respect, tick);
+                        member.Think(Simpiens.Simulation.Life.Thought.PaidInFull, tick); // Epic LIFE-1, L1.2
                         groups?.UpdateAllegiance(contract.CrawlerId, _groupId, tuning.PaidAllegiance);
                     }
                     _members[i] = contract.WithUnpaidVisits(0);
@@ -212,6 +214,7 @@ namespace Simpiens.Simulation.Guild
                 else
                 {
                     member.Memory?.RecordInteraction(WorldRegistry.PlayerEntityId, tuning.Unpaid.Warmth, tuning.Unpaid.Trust, 0, tuning.Unpaid.Respect, tick);
+                    member.Think(Simpiens.Simulation.Life.Thought.WageUnpaid, tick); // Epic LIFE-1, L1.2
                     groups?.UpdateAllegiance(contract.CrawlerId, _groupId, tuning.UnpaidAllegiance);
                     _members[i] = contract.WithUnpaidVisits((byte)Math.Min(byte.MaxValue, contract.UnpaidVisits + 1));
                     SimLog.Economy.ZLogWarning($"{SimLog.Agent(contract.CrawlerId)} went unpaid ({contract.Wage}g; the treasury holds {stall.TreasuryGold}g), {_members[i].UnpaidVisits} visit(s) in a row");

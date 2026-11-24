@@ -17,11 +17,11 @@ namespace Simpiens.Cognition.Planning.Goals
         /// <summary>Above selling salvage (30) and earning (25 and up): a crawler gears up before it goes back in; real hunger still comes first.</summary>
         public const float Priority = 40f;
 
-        public OutfitForDangerGoal() : base("OutfitForDanger", WorldState.Empty.With(StateFact.HasHazardGear, true))
+        public OutfitForDangerGoal() : base("OutfitForDanger", WorldState.Empty.With(StateFact.HasHazardGear, true), Motive.Gear, ActivityFamily.Work)
         {
         }
 
-        public override float CalculatePriority(AgentContext context) => Priority;
+        public override float BasePriority(AgentContext context) => Priority;
 
         public override bool IsValid(AgentContext context)
         {
