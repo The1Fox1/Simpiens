@@ -4,7 +4,8 @@ namespace Simpiens.Cognition.Planning
 {
     /// <summary>
     /// The motive model (Epic LIFE-1, L0.5, D2; the epic's A1): one rule for every goal's priority, the goal's own number (its
-    /// base, <see cref="GoapGoal.BasePriority"/>) times the weights every goal shares. The goal selector reaches a goal's
+    /// base, <see cref="GoapGoal.BasePriority"/>) times the weights every goal shares, plus commitment to the goal just
+    /// pursued (L0.7). The goal selector reaches a goal's
     /// priority only through here.
     /// <list type="bullet">
     /// <item><b>The weight</b> multiplies the shared factors, each exactly 1 until its milestone sets it: the session's weight
@@ -22,10 +23,21 @@ namespace Simpiens.Cognition.Planning
 
         /// <summary>The priority, with its parts: <paramref name="basePriority"/>, the goal's own number, and <paramref name="weight"/>, the shared factors' product.</summary>
         public static float Score(GoapGoal goal, AgentContext context, out float basePriority, out float weight)
+            => Score(goal, context, null, 0f, out basePriority, out weight);
+
+        /// <summary>
+        /// The priority with commitment (Epic LIFE-1, L0.7, D5): <paramref name="commitment"/> is added when
+        /// <paramref name="goal"/> is <paramref name="committed"/>, the goal whose plan just ended, and only when it isn't 0,
+        /// so a commitment of 0 leaves every priority to the bit. Only a valid, unsatisfied goal is scored, so it holds a crawler
+        /// to a goal it can still pursue.
+        /// </summary>
+        public static float Score(GoapGoal goal, AgentContext context, GoapGoal committed, float commitment, out float basePriority, out float weight)
         {
             basePriority = goal.BasePriority(context);
             weight = Weight(goal, context);
-            return basePriority * weight;
+            float priority = basePriority * weight;
+            if (commitment != 0f && goal == committed) priority += commitment;
+            return priority;
         }
 
         /// <summary>The product of the factors every goal of <paramref name="goal"/>'s motive and family shares, for <paramref name="context"/>.</summary>

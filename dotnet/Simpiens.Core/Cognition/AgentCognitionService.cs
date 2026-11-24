@@ -318,7 +318,8 @@ namespace Simpiens.Cognition
                 {
                     var currentState = WorldStateBuilder.BuildWorldState(context, context.Inventory);
                     // The one choice (Epic LIFE-1, L0.4, D3): the best three, the best pursued
-                    var ranked = GoalSelector.Rank(goals, context, currentState, trace);
+                    var life = Considerations.Economy(context).Life;
+                    var ranked = GoalSelector.Rank(goals, context, currentState, trace, agent.LastGoal, life.Commitment); // the last goal, committed to (L0.7, D5)
                     topGoal1 = ranked.Goal1?.Name; topPriority1 = ranked.Priority1;
                     topGoal2 = ranked.Goal2?.Name; topPriority2 = ranked.Priority2;
                     topGoal3 = ranked.Goal3?.Name; topPriority3 = ranked.Priority3;
@@ -330,7 +331,7 @@ namespace Simpiens.Cognition
                     {
                         // The best, or the next two when it can't be planned (Epic LIFE-1, L0.6, D4)
                         var plan = agent.ScratchPlan;
-                        int place = GoalSelector.PlanFirst(ranked, Considerations.Economy(context).Life.FallbackDepth, planner, currentState, actionGraph, context, plan, trace);
+                        int place = GoalSelector.PlanFirst(ranked, life.FallbackDepth, planner, currentState, actionGraph, context, plan, trace);
                         if (place >= 0)
                         {
                             bestGoal = ranked.GoalAt(place);
@@ -391,6 +392,7 @@ namespace Simpiens.Cognition
             {
                 agent.ActivePlan.CopyFrom(agent.ScratchPlan);
                 agent.ActiveGoal = result.Goal;
+                agent.LastGoal = result.Goal; // kept through the plan's end or a reflex, for commitment (Epic LIFE-1, L0.7)
             }
 
             var intent = result.Intent;

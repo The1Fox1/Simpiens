@@ -21,7 +21,8 @@ namespace Simpiens.Testing.Planning
             ValidateWhatIsNeverRanked();
             ValidateNoAllocation();
             ValidateTheFallback();
-            TestLog.Log("<color=green>[GoalSelectorValidator] ALL 5 TESTS PASSED SUCCESSFULLY!</color>");
+            ValidateCommitment();
+            TestLog.Log("<color=green>[GoalSelectorValidator] ALL 6 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private static AgentContext Context() => new AgentContext(default, default, AgentNeeds.Default, 0f, null, null, 0);
@@ -94,6 +95,21 @@ namespace Simpiens.Testing.Planning
             Assert(GoalSelector.PlanFirst(ranked, 0, noDepth, WorldState.Empty, graph, Context(), plan) == -1 && noDepth.Asked == 1, "A depth of 0 is today's rule: the best or nothing.");
             var two = GoalSelector.Rank(new List<GoapGoal> { new Fixed("Best", 40f) }, Context(), WorldState.Empty);
             Assert(GoalSelector.PlanFirst(two, 2, new Planner("Best"), WorldState.Empty, graph, Context(), plan) == -1, "No goal after the best: nothing more to try.");
+        }
+
+        private void ValidateCommitment()
+        {
+            var kept = new Fixed("Kept", 30f);
+            var rival = new Fixed("Rival", 33f);
+            var goals = new List<GoapGoal> { rival, kept };
+            var free = GoalSelector.Rank(goals, Context(), WorldState.Empty, committed: kept, commitment: 0f);
+            Assert(free.Goal1 == rival && free.Priority2 == 30f, "A commitment of 0 changes nothing: the rival wins, the kept goal keeps its 30 to the bit.");
+            var held = GoalSelector.Rank(goals, Context(), WorldState.Empty, committed: kept, commitment: 5f);
+            Assert(held.Goal1 == kept && held.Priority1 == 35f && held.Priority2 == 33f, $"Committed, the goal just pursued holds against a near-equal rival, 35 to 33 ({held.Goal1?.Name}, {held.Priority1}).");
+            var beaten = GoalSelector.Rank(new List<GoapGoal> { new Fixed("Far ahead", 40f), kept }, Context(), WorldState.Empty, committed: kept, commitment: 5f);
+            Assert(beaten.Goal1.Name == "Far ahead", "A rival well ahead still wins.");
+            var gone = GoalSelector.Rank(new List<GoapGoal> { rival, new Fixed("Kept, now invalid", 30f, valid: false) }, Context(), WorldState.Empty, committed: kept, commitment: 5f);
+            Assert(gone.Goal1 == rival && gone.Count == 1, "A goal it can no longer pursue gains nothing.");
         }
 
         /// <summary>A planner that plans every goal but those named, one step each.</summary>

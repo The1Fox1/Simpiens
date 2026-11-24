@@ -42,8 +42,10 @@ namespace Simpiens.Cognition.Planning
         /// <summary>
         /// Ranks <paramref name="goals"/> for <paramref name="context"/> in <paramref name="state"/>: the best three, highest
         /// first, by each goal's priority. <paramref name="trace"/> logs each goal's verdict (the planning channel, at trace).
+        /// <paramref name="committed"/>, the goal whose plan just ended, gains <paramref name="commitment"/> (L0.7, D5; nothing at 0).
         /// </summary>
-        public static RankedGoals Rank(IReadOnlyList<GoapGoal> goals, AgentContext context, in WorldState state, bool trace = false)
+        public static RankedGoals Rank(IReadOnlyList<GoapGoal> goals, AgentContext context, in WorldState state, bool trace = false,
+                                       GoapGoal committed = null, float commitment = 0f)
         {
             var ranked = RankedGoals.Empty;
             if (goals == null) return ranked;
@@ -63,7 +65,7 @@ namespace Simpiens.Cognition.Planning
                 }
 
                 // The motive model (L0.5, D2): the goal's own number times the weights every goal shares
-                float priority = MotiveModel.Score(goal, context, out float basePriority, out float weight);
+                float priority = MotiveModel.Score(goal, context, committed, commitment, out float basePriority, out float weight);
                 if (trace) SimLog.Planning.ZLogTrace($"{SimLog.Agent(context.AgentId)} goal {goal.Name}: priority {priority:F1} (base {basePriority:F1} x weight {weight:F2})");
                 if (priority > ranked.Priority1)
                 {

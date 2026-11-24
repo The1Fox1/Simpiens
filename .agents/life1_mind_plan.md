@@ -242,7 +242,7 @@ This is a working document (AGENTS.md, Documentation Protocol 6), the first of E
   - **Its commits:** the fallback, then golden re-recorded in its own commit.
   - **The checks:** the gate seeds' day holds; every DoD keeps its seed or is re-picked in its own commit, with the reason; the soak's bands are measured and any move goes to the producer by exception.
   - **Re-run** L0.3's measurement, and record plans not found and wandering's share before and after.
-- [ ] **L0.7 Commitment** (D5; F3) [Possibly Complex: cognition; golden unchanged at 0]
+- [x] **L0.7 Commitment** (D5; F3) (done 2026-11-23: built at 0, since L0.3 measured 0.8 flips a resident-day; golden unchanged) [Possibly Complex: cognition; golden unchanged at 0]
   - **The rule:** the goal whose plan just ended reaches the next evaluation through the cognition job, unsaved.
   - **Its value:** if L0.3 measured switching that matters, its value is set here, with golden re-recorded in its own commit. Otherwise it stays 0 and plan 2 sets it.
   - **The check:** a validator that a commitment set in a test tuning keeps a crawler on its goal against a near-equal rival.

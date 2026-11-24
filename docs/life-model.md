@@ -100,7 +100,10 @@ Every goal declares what it is for (`Motive`) and the part of the day it belongs
 - **Urgency** (`Urgency.Of`) is a motive's shared need: hunger, 100 − energy, 100 − social; 0 for a motive with no need behind it. New goals build their base from it.
 - **The "why":** `DecisionSummary` keeps the best goal's base and weight beside the top three.
 
-### 2.3 The fallback (L0.6, D4)
+### 2.3 Commitment (L0.7, D5)
+The goal of the last plan adopted (`AgentState.LastGoal`, kept through the plan's end or a reflex, unsaved) gains `LifeTuning.Commitment` at the next choice, if it is still valid and unsatisfied (`MotiveModel.Score`). It is 0: L0.3 measured near ties at 3.6% of choices and 0.8 flips a resident-day, too few to tune against. Plan 2 sets it when leisure options compete.
+
+### 2.4 The fallback (L0.6, D4)
 When the best goal can't be planned, the next are planned in order, up to `LifeTuning.FallbackDepth` more (2 in the live game), before Tier 3's wandering (`GoalSelector.PlanFirst`; a decision's source reads "GOAP fallback"). Today it never runs: no plan goes unfound (§3.1), golden didn't move, and the day's measurement re-ran identical. It is there for plan 2's goals, whose venue or friend may be out of reach.
 
 ## 3. Measurements

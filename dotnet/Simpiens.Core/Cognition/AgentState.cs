@@ -189,6 +189,13 @@ namespace Simpiens.Cognition
         public GoapPlan ActivePlan { get; } = new GoapPlan(16);
         public GoapPlan ScratchPlan { get; } = new GoapPlan(16);
         public GoapGoal ActiveGoal { get; set; }
+
+        /// <summary>
+        /// The goal of the last plan adopted (Epic LIFE-1, L0.7, D5): kept when the plan ends or a reflex cuts it short, so the
+        /// next choice can commit to it. Work in progress: not saved, empty after a load. Read by the crawler's own evaluation,
+        /// which nothing writes while it runs (as <see cref="ActivePlan"/>).
+        /// </summary>
+        public GoapGoal LastGoal { get; set; }
         public bool HasActivePlan => !ActivePlan.IsEmpty && !ActivePlan.IsFinished;
 
         // Intent Execution Tracking
@@ -600,6 +607,7 @@ namespace Simpiens.Cognition
             ActivePlan.Clear();
             ScratchPlan.Clear();
             ActiveGoal = null;
+            LastGoal = null;
             CurrentIntent = null;
             HasActiveIntent = false;
             IsEvaluating = false;
