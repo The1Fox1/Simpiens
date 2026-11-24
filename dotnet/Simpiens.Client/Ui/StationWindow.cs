@@ -392,9 +392,11 @@ namespace Simpiens.Client.Ui
 
             _built.Visible = _model.Built;
             // The drill yard takes no artisan and no orders (Epic 11, S3.5): its members in the artisan's place, no order section
-            string header = _model.TakesWork ? "ARTISAN" : "WHO DRILLS";
+            // The tavern takes a keeper and no orders (Epic LIFE-1 plan 2, T.7): its keeper in the artisan's place, no order section
+            string header = !_model.TakesWork ? "WHO DRILLS" : _model.TakesOrders ? "ARTISAN" : "KEEPER";
             if (_artisanHeader.Text != header) _artisanHeader.Text = header;
-            for (int i = 0; i < _orderParts.Count; i++) if (_orderParts[i].Visible != _model.TakesWork) _orderParts[i].Visible = _model.TakesWork;
+            bool orders = _model.TakesWork && _model.TakesOrders;
+            for (int i = 0; i < _orderParts.Count; i++) if (_orderParts[i].Visible != orders) _orderParts[i].Visible = orders;
             _artisanCard.Visible = _model.HasArtisan;
             _shifts.Visible = _model.HasArtisan;
             _candidates.Visible = !_model.HasArtisan;

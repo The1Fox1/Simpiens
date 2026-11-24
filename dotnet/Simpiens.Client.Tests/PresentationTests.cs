@@ -81,7 +81,7 @@ namespace Simpiens.Client.Tests
         {
             // 12 crawler states x 2 frames, berry bush, ore vein, herb patch, wall, campfire x 2, bunk, floor, rock,
             // and the selection ring (M1.5)
-            Assert.Equal(41, ProceduralSprites.All.Count); // 34, plus Epic 10 G2's glowstone, graphics V5's stall, Part 2's forge, still and plot, Part 3's cairn (K5.8b) and Epic 11's drill yard (S3.4)
+            Assert.Equal(42, ProceduralSprites.All.Count); // 34, plus Epic 10 G2's glowstone, graphics V5's stall, Part 2's forge, still and plot, Part 3's cairn (K5.8b), Epic 11's drill yard (S3.4) and Epic LIFE-1's tavern (plan 2, T.3)
             for (int i = 0; i < ProceduralSprites.All.Count; i++)
             {
                 var sprite = ProceduralSprites.All[i];
@@ -193,8 +193,9 @@ namespace Simpiens.Client.Tests
         // wing into the Sump and the Glow Caves, so Floor 1 had no rock tiles; Epic 10 G5 added the Drowned Gallery below the
         // Sump (80 floor tiles) and a block of rock beside it, 32 by 6; Epic 10 Part 2 (W0.4) turned that rock into the
         // workshop row and the guildhall; Epic 10 Part 3 (K10.1b) added the Old Stair west of the Deep Seam (170 floor tiles, 38 of
-        // wall) and the solid rock below it, 16 by 30 (527 rock tiles)
-        internal const int PinnedFloor = 1924, PinnedRock = 527, PinnedWalls = 391;
+        // wall) and the solid rock below it, 16 by 30 (527 rock tiles); Epic LIFE-1 plan 2 (T.2) grew the floor 12 units north: the
+        // Garden a room further on (170 floor tiles more), the rock beside it, 48 by 12 (650 rock tiles more), and their walls
+        internal const int PinnedFloor = 2094, PinnedRock = 1177, PinnedWalls = 425;
     }
 
     public class TopDownProjectionTests

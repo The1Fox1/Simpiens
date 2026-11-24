@@ -123,6 +123,9 @@ namespace Simpiens.Presentation.Dashboard
         /// <summary>The station takes an artisan and orders (the forge, the still); the drill yard takes neither (Epic 11, S3.4, D10).</summary>
         public bool TakesWork { get; private set; } = true;
 
+        /// <summary>Whether it makes to order (its row's recipes): the tavern takes a keeper but no orders (Epic LIFE-1 plan 2, T.7).</summary>
+        public bool TakesOrders { get; private set; } = true;
+
         /// <summary>The drill yard's members who drilled today (Epic 11, S3.5): "Drilled today: Bram, Ione", or that nobody has.</summary>
         public string DrilledToday { get; private set; } = string.Empty;
 
@@ -178,10 +181,11 @@ namespace Simpiens.Presentation.Dashboard
             Description = row.Description;
             Built = state.Built;
             TakesWork = row.TakesArtisan;
+            TakesOrders = row.HasRecipes;
             ushort cost = tuning.CostOf(state.Kind);
             DrilledToday = TakesWork ? string.Empty : DrilledTodayText();
             Status = !Built ? Invariant($"An empty plot · {cost}g to build")
-                : TakesWork ? Invariant($"Standing · {state.Made} made") : "Standing · " + DrilledToday;
+                : TakesOrders ? Invariant($"Standing · {state.Made} made") : TakesWork ? "Standing · open while its keeper keeps it" : "Standing · " + DrilledToday;
 
             var host = _context.Simulation as IWorkshopHost;
             var build = host != null ? workshops.CanBuild(host, Index) : WorkshopRules.Check.NoStall;
