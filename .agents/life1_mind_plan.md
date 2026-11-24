@@ -282,7 +282,7 @@ This is a working document (AGENTS.md, Documentation Protocol 6), the first of E
   - **The models:** `DayLogModel`, `MindModel` and `LifeTexts` (thoughts' and bands' words, Latin-1 only), read through `DashboardContext`.
   - **F5's decision** from L0.3's count: the ring as it is, or a per-crawler window saved in the chronicle's block (a saved-state change inside format 15).
   - **The check:** presentation tests for each model, in `Simpiens.Client.Tests`.
-- [ ] **L1.6 Faces: happy, low and grieving** (D10) [Possibly Complex: art; the people sheet looked at, and the art pins re-recorded in their own commit]
+- [x] **L1.6 Faces: happy, low and grieving** (D10) (done 2026-11-23: happy grins with raised brows and lower lids, low frowns under sad brows, grieving looks down with a tear and a pressed mouth; the people sheet looked at; the art pins re-recorded in their own commit; the producer's look follows L1.7) [Possibly Complex: art; the people sheet looked at, and the art pins re-recorded in their own commit]
   - **The code:** `Mood`'s three values, `MoodSigns`, `MoodRule`'s order, `PortraitKit`'s features, and the mood line's reason.
   - **The checks:** `MoodRule`'s tests gain the new moods' thresholds and their way back. Look at the people sheet, then re-record the art pins.
 - [ ] **L1.7 The dossier's tabs** (D10; Q7; F4) [Possibly Complex: Gum UI; renders re-recorded in the pinned image after a look]

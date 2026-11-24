@@ -16,12 +16,16 @@ namespace Simpiens.Presentation.Dashboard
         /// <summary>One line of the mind: its words, its value to mood, and for a thought the time it has left.</summary>
         public readonly struct Line
         {
-            public Line(string words, float value, string left)
+            public Line(string words, float value, string left, bool startsWithName = false)
             {
                 Words = words;
                 Value = value;
                 Left = left;
+                StartsWithName = startsWithName;
             }
+
+            /// <summary>Whether its words open with a crawler's name ("Ama died"), which keeps its capital inside a line.</summary>
+            public bool StartsWithName { get; }
 
             public string Words { get; }
             public float Value { get; }
@@ -48,6 +52,9 @@ namespace Simpiens.Presentation.Dashboard
         /// <summary>What weighs most in the mood's direction: "Rescued by Bram", "Ama died", "Hungry"; empty when nothing does.</summary>
         public string Reason { get; private set; } = string.Empty;
 
+        /// <summary>The reason as it reads inside a line: "rescued by Bram", "Ama died", "hungry".</summary>
+        public string ReasonInLine { get; private set; } = string.Empty;
+
         /// <summary>The need terms, then the thoughts, each by size, the largest first.</summary>
         public IReadOnlyList<Line> Lines => _lines;
 
@@ -58,7 +65,7 @@ namespace Simpiens.Presentation.Dashboard
             HasCrawler = agent != null;
             Mood = 0;
             Band = MoodBand.None;
-            MoodText = Reason = string.Empty;
+            MoodText = Reason = ReasonInLine = string.Empty;
             if (agent == null) return;
 
             var life = agent.Life;
@@ -79,11 +86,23 @@ namespace Simpiens.Presentation.Dashboard
             {
                 var slot = life.ThoughtAt(i);
                 if (!ThoughtRules.IsLive(slot, tick)) continue;
-                _lines.Add(new Line(LifeTexts.Thought(slot, life, nameOf), ThoughtRules.Worth(slot, tick), LifeTexts.Left(ThoughtRules.EndsAt(slot) - tick)));
+                var row = ThoughtTable.Get((Thought)slot.Thought);
+                var subject = life.SubjectAt(slot.Subject);
+                bool named = row != null && row.Words.StartsWith("{0}", StringComparison.Ordinal) && subject != default && !string.IsNullOrEmpty(nameOf?.Invoke(subject));
+                _lines.Add(new Line(LifeTexts.Thought(slot, life, nameOf), ThoughtRules.Worth(slot, tick), LifeTexts.Left(ThoughtRules.EndsAt(slot) - tick), named));
             }
             _lines.Sort(0, needLines, BySize.Instance);
             _lines.Sort(firstThought, _lines.Count - firstThought, BySize.Instance);
-            Reason = ReasonOf(_lines, Band);
+            int reason = ReasonIndex(_lines, Band);
+            Reason = reason < 0 ? string.Empty : WithoutStacks(_lines[reason].Words);
+            ReasonInLine = Reason.Length == 0 ? string.Empty
+                : _lines[reason].StartsWithName ? Reason : char.ToLowerInvariant(Reason[0]) + Reason.Substring(1);
+        }
+
+        private static string WithoutStacks(string words)
+        {
+            int stacks = words.IndexOf(" ×", StringComparison.Ordinal);
+            return stacks >= 0 ? words.Substring(0, stacks) : words;
         }
 
         /// <summary>
@@ -91,6 +110,12 @@ namespace Simpiens.Presentation.Dashboard
         /// a good or happy one, the largest either way for a steady one. "Comfortable" is never a reason on its own.
         /// </summary>
         public static string ReasonOf(IReadOnlyList<Line> lines, MoodBand band)
+        {
+            int best = ReasonIndex(lines, band);
+            return best < 0 ? string.Empty : WithoutStacks(lines[best].Words);
+        }
+
+        private static int ReasonIndex(IReadOnlyList<Line> lines, MoodBand band)
         {
             int best = -1;
             float bestScore = 0f;
@@ -103,10 +128,7 @@ namespace Simpiens.Presentation.Dashboard
                     : Math.Abs(line.Value);
                 if (score > bestScore) { bestScore = score; best = i; }
             }
-            if (best < 0) return string.Empty;
-            string words = lines[best].Words;
-            int stacks = words.IndexOf(" ×", StringComparison.Ordinal);
-            return stacks >= 0 ? words.Substring(0, stacks) : words;
+            return best;
         }
 
         private sealed class BySize : IComparer<Line>

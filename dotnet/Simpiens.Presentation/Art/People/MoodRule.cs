@@ -7,8 +7,11 @@ namespace Simpiens.Presentation.Art.People
     /// <summary>What a crawler's face reads from it (Epic UI-Beta B3): its shown state, health and needs, as plain data.</summary>
     public readonly struct MoodSigns
     {
-        public MoodSigns(AgentVisualState state, bool downed, bool tantrum, float health, float hunger, float energy, float frustration)
+        public MoodSigns(AgentVisualState state, bool downed, bool tantrum, float health, float hunger, float energy, float frustration,
+                         int lifeMood = 0, bool grieving = false)
         {
+            LifeMood = lifeMood;
+            Grieving = grieving;
             State = state;
             Downed = downed;
             Tantrum = tantrum;
@@ -26,14 +29,22 @@ namespace Simpiens.Presentation.Art.People
         public float Energy { get; }
         public float Frustration { get; }
 
-        /// <summary>The signs of <paramref name="agent"/> now. Reads it; writes nothing.</summary>
-        public static MoodSigns Of(AgentState agent)
-            => new MoodSigns(agent.VisualState, agent.IsDowned, agent.IsInTantrum, agent.Health, agent.Hunger, agent.Energy, agent.Frustration);
+        /// <summary>Its mood in the life core's sense, -100 to 100 (Epic LIFE-1, L1.6): needs and thoughts (<see cref="Simpiens.Simulation.Life.MoodRules"/>).</summary>
+        public int LifeMood { get; }
+
+        /// <summary>Whether it holds a friend's death (L1.6).</summary>
+        public bool Grieving { get; }
+
+        /// <summary>The signs of <paramref name="agent"/> at <paramref name="tick"/>. Reads it; writes nothing.</summary>
+        public static MoodSigns Of(AgentState agent, long tick)
+            => new MoodSigns(agent.VisualState, agent.IsDowned, agent.IsInTantrum, agent.Health, agent.Hunger, agent.Energy, agent.Frustration,
+                Simpiens.Simulation.Life.MoodRules.Of(agent.Needs, agent.Health, agent.IsDowned, agent.Life, tick),
+                Simpiens.Simulation.Life.ThoughtRules.Holds(agent.Life, Simpiens.Simulation.Life.Thought.FriendDied, tick));
     }
 
     /// <summary>
     /// The mood a crawler's portrait shows (Epic UI-Beta B3, D1), by priority: asleep, hurt, frustrated (a tantrum),
-    /// scared, frustrated, hungry, tired, content. Each threshold has a way back past it (hysteresis), so a need hovering
+    /// scared, grieving, frustrated, hungry, tired, low, happy, content (the life core's three since Epic LIFE-1, L1.6). Each threshold has a way back past it (hysteresis), so a need hovering
     /// at a threshold doesn't flicker the face; <see cref="MoodTracker"/> holds a mood a few seconds besides.
     /// </summary>
     public static class MoodRule
@@ -46,6 +57,10 @@ namespace Simpiens.Presentation.Art.People
         public const float HungryAt = 70f, HungryUntil = 60f;
         public const float TiredAt = 25f, TiredUntil = 35f;
 
+        /// <summary>The life core's mood lines (L1.6): low from its band's top (-10) until 3 above it; happy from 30 until 3 below.</summary>
+        public const int LowAt = Simpiens.Simulation.Life.MoodRules.LowAtMost, LowUntil = LowAt + 3;
+        public const int HappyAt = Simpiens.Simulation.Life.MoodRules.HappyFrom, HappyUntil = HappyAt - 3;
+
         /// <summary>The mood <paramref name="signs"/> show, given the mood shown now (its threshold is crossed back further).</summary>
         public static Mood Of(in MoodSigns signs, Mood shown)
         {
@@ -53,9 +68,12 @@ namespace Simpiens.Presentation.Art.People
             if (signs.Downed || signs.Health < (shown == Mood.Hurt ? HurtUntil : HurtBelow)) return Mood.Hurt;
             if (signs.Tantrum || signs.State == AgentVisualState.Defiant) return Mood.Frustrated;
             if (signs.State == AgentVisualState.Panicking) return Mood.Scared;
+            if (signs.Grieving) return Mood.Grieving;
             if (signs.Frustration >= (shown == Mood.Frustrated ? FrustratedUntil : FrustratedAt)) return Mood.Frustrated;
             if (signs.Hunger >= (shown == Mood.Hungry ? HungryUntil : HungryAt)) return Mood.Hungry;
             if (signs.Energy <= (shown == Mood.Tired ? TiredUntil : TiredAt)) return Mood.Tired;
+            if (signs.LifeMood <= (shown == Mood.Low ? LowUntil : LowAt)) return Mood.Low;
+            if (signs.LifeMood >= (shown == Mood.Happy ? HappyUntil : HappyAt)) return Mood.Happy;
             return Mood.Content;
         }
     }

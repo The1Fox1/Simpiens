@@ -37,6 +37,7 @@ namespace Simpiens.Presentation.Dashboard
         private CrawlerStanding _describedStanding;
         private Mood _moodShown;
         private int _healthShown = -1;
+        private string _reasonShown = string.Empty;
         private readonly List<string> _affinities = new List<string>(32);
         private readonly List<AffinityRow> _rows = new List<AffinityRow>(32);
         private readonly List<AffinityRow> _shownRows = new List<AffinityRow>(32);
@@ -64,8 +65,17 @@ namespace Simpiens.Presentation.Dashboard
         public string MoodLine { get; private set; } = string.Empty;
 
         /// <summary>How a crawler feels and its health, in words: "Content. Health 100%.", or "Hurt. Downed."</summary>
-        public static string MoodText(Mood mood, float health, bool downed)
-            => downed ? $"{mood}. Downed." : Invariant($"{mood}. Health {(int)System.MathF.Round(health)}%.");
+        public static string MoodText(Mood mood, float health, bool downed) => MoodText(mood, health, downed, string.Empty);
+
+        /// <summary>
+        /// How it feels, with the reason a life's mood reads as it does (Epic LIFE-1, L1.6, D10): "Low: Ama died. Health 100%.",
+        /// "Happy: rescued by Bram. Health 100%."; the body's moods keep their plain words.
+        /// </summary>
+        public static string MoodText(Mood mood, float health, bool downed, string reason)
+        {
+            string feeling = (mood is Mood.Happy or Mood.Low or Mood.Grieving) && reason.Length > 0 ? $"{mood}: {reason}" : mood.ToString();
+            return downed ? $"{feeling}. Downed." : Invariant($"{feeling}. Health {(int)System.MathF.Round(health)}%.");
+        }
 
         /// <summary>A standing in words.</summary>
         public static string StandingText(CrawlerStanding standing) => standing switch
@@ -519,11 +529,12 @@ namespace Simpiens.Presentation.Dashboard
                     : StandingText(standing) + ".";
             }
             int health = (int)System.MathF.Round(agent.Health);
-            if (Mood != _moodShown || health != _healthShown || MoodLine.Length == 0)
+            if (Mood != _moodShown || health != _healthShown || MoodLine.Length == 0 || Mind.ReasonInLine != _reasonShown)
             {
                 _moodShown = Mood;
                 _healthShown = health;
-                MoodLine = MoodText(Mood, agent.Health, agent.IsDowned);
+                _reasonShown = Mind.ReasonInLine;
+                MoodLine = MoodText(Mood, agent.Health, agent.IsDowned, Mind.ReasonInLine);
             }
         }
 

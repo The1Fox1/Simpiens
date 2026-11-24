@@ -13,8 +13,8 @@ namespace Simpiens.Client.Tests.People
     public class MoodRuleTests
     {
         private static MoodSigns Signs(AgentVisualState state = AgentVisualState.Idle, bool downed = false, bool tantrum = false,
-            float health = 100f, float hunger = 10f, float energy = 90f, float frustration = 0f)
-            => new MoodSigns(state, downed, tantrum, health, hunger, energy, frustration);
+            float health = 100f, float hunger = 10f, float energy = 90f, float frustration = 0f, int lifeMood = 0, bool grieving = false)
+            => new MoodSigns(state, downed, tantrum, health, hunger, energy, frustration, lifeMood, grieving);
 
         [Fact]
         public void EachMoodComesFromItsSigns()
@@ -29,6 +29,13 @@ namespace Simpiens.Client.Tests.People
             Assert.Equal(Mood.Frustrated, MoodRule.Of(Signs(frustration: 60f, hunger: 90f), Mood.Content));
             Assert.Equal(Mood.Hungry, MoodRule.Of(Signs(hunger: 70f, energy: 10f), Mood.Content));
             Assert.Equal(Mood.Tired, MoodRule.Of(Signs(energy: 25f), Mood.Content));
+            // The life core's (Epic LIFE-1, L1.6): grieving above every need but below fear; low and happy below the needs
+            Assert.Equal(Mood.Grieving, MoodRule.Of(Signs(grieving: true, frustration: 70f, hunger: 90f, lifeMood: 40), Mood.Content));
+            Assert.Equal(Mood.Scared, MoodRule.Of(Signs(AgentVisualState.Panicking, grieving: true), Mood.Content));
+            Assert.Equal(Mood.Low, MoodRule.Of(Signs(lifeMood: MoodRule.LowAt), Mood.Content));
+            Assert.Equal(Mood.Hungry, MoodRule.Of(Signs(hunger: 80f, lifeMood: -30), Mood.Content));
+            Assert.Equal(Mood.Happy, MoodRule.Of(Signs(lifeMood: MoodRule.HappyAt), Mood.Content));
+            Assert.Equal(Mood.Content, MoodRule.Of(Signs(lifeMood: MoodRule.HappyAt - 1), Mood.Content));
         }
 
         [Theory]
@@ -36,6 +43,8 @@ namespace Simpiens.Client.Tests.People
         [InlineData(Mood.Tired)]
         [InlineData(Mood.Frustrated)]
         [InlineData(Mood.Hurt)]
+        [InlineData(Mood.Low)]
+        [InlineData(Mood.Happy)]
         public void ANeedHoveringAtItsThresholdDoesntFlicker(Mood mood)
         {
             // Back and forth across the way in, short of the way back: once shown, the mood stays
@@ -44,6 +53,8 @@ namespace Simpiens.Client.Tests.People
                 Mood.Hungry => Signs(hunger: past ? MoodRule.HungryAt : MoodRule.HungryAt - 1f),
                 Mood.Tired => Signs(energy: past ? MoodRule.TiredAt : MoodRule.TiredAt + 1f),
                 Mood.Frustrated => Signs(frustration: past ? MoodRule.FrustratedAt : MoodRule.FrustratedAt - 1f),
+                Mood.Low => Signs(lifeMood: past ? MoodRule.LowAt : MoodRule.LowAt + 1),
+                Mood.Happy => Signs(lifeMood: past ? MoodRule.HappyAt : MoodRule.HappyAt - 1),
                 _ => Signs(health: past ? MoodRule.HurtBelow - 1f : MoodRule.HurtBelow + 1f),
             };
             var tracker = new MoodTracker();

@@ -44,6 +44,8 @@ namespace Simpiens.Client.Tests
             Assert.Equal(MoodBand.Low, mind.Band);
             Assert.Equal("Low (-15)", mind.MoodText);
             Assert.Equal("Bram died", mind.Reason);
+            Assert.Equal("Bram died", mind.ReasonInLine); // a name keeps its capital
+            Assert.Equal("Low: Bram died. Health 100%.", DossierModel.MoodText(Simpiens.Presentation.Art.People.Mood.Low, 100f, false, mind.ReasonInLine));
             Assert.Equal("Comfortable +4", mind.Lines[0].Text); // the need terms first
             Assert.Equal("Bram died -25 · 4 days left", mind.Lines[1].Text);
             Assert.Equal("A good talk ×2 +3 · 5 h left", mind.Lines[2].Text);
@@ -54,6 +56,9 @@ namespace Simpiens.Client.Tests
             good.Refresh(Crawler(new AgentNeeds(30f, 80f, 60f), (Thought.RescuedBy, Bram, (uint)now), (Thought.AGoodMeal, default, (uint)now)), now, Names);
             Assert.Equal(MoodBand.Good, good.Band);
             Assert.Equal("Rescued by Bram", good.Reason);
+            Assert.Equal("rescued by Bram", good.ReasonInLine);
+            Assert.Equal("Happy: rescued by Bram. Health 100%.", DossierModel.MoodText(Simpiens.Presentation.Art.People.Mood.Happy, 100f, false, good.ReasonInLine));
+            Assert.Equal("Hungry. Health 80%.", DossierModel.MoodText(Simpiens.Presentation.Art.People.Mood.Hungry, 80f, false, "hungry")); // the body's moods keep their words
 
             var hungry = new MindModel();
             hungry.Refresh(Crawler(new AgentNeeds(90f, 80f, 60f)), now, Names);
