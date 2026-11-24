@@ -55,6 +55,9 @@ namespace Simpiens.Presentation.Dashboard
         /// <summary>The reason as it reads inside a line: "rescued by Bram", "Ama died", "hungry".</summary>
         public string ReasonInLine { get; private set; } = string.Empty;
 
+        /// <summary>The Mind tab's first line: "Low (-15): Bram died", or the mood alone when nothing weighs.</summary>
+        public string Headline { get; private set; } = string.Empty;
+
         /// <summary>The need terms, then the thoughts, each by size, the largest first.</summary>
         public IReadOnlyList<Line> Lines => _lines;
 
@@ -65,7 +68,7 @@ namespace Simpiens.Presentation.Dashboard
             HasCrawler = agent != null;
             Mood = 0;
             Band = MoodBand.None;
-            MoodText = Reason = ReasonInLine = string.Empty;
+            MoodText = Reason = ReasonInLine = Headline = string.Empty;
             if (agent == null) return;
 
             var life = agent.Life;
@@ -97,6 +100,7 @@ namespace Simpiens.Presentation.Dashboard
             Reason = reason < 0 ? string.Empty : WithoutStacks(_lines[reason].Words);
             ReasonInLine = Reason.Length == 0 ? string.Empty
                 : _lines[reason].StartsWithName ? Reason : char.ToLowerInvariant(Reason[0]) + Reason.Substring(1);
+            Headline = Reason.Length > 0 ? MoodText + ": " + Reason : MoodText;
         }
 
         private static string WithoutStacks(string words)

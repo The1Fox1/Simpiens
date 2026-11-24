@@ -103,11 +103,33 @@ namespace Simpiens.Presentation.Dashboard
         /// <summary>False: the empty state shows instead.</summary>
         public bool HasCrawler { get; private set; }
 
-        /// <summary>Its mind (Epic LIFE-1, L1.5, D10): mood, band, its terms and thoughts; the dossier's Mind tab.</summary>
-        public MindModel Mind { get; } = new MindModel();
+        /// <summary>Its mind (Epic LIFE-1, L1.5, D10): mood, band, its terms and thoughts; the dossier's Mind tab. Read when asked for, once a tick.</summary>
+        public MindModel Mind
+        {
+            get
+            {
+                if (_mindAt != _lifeTick) { _mind.Refresh(_lifeAgent, _lifeTick, _context.GivenNameOf); _mindAt = _lifeTick; }
+                return _mind;
+            }
+        }
 
-        /// <summary>Its day (Epic LIFE-1, L1.5, D10): the thoughts it began and the chronicle's dramatic lines about it since midnight; the dossier's Today tab.</summary>
-        public DayLogModel Today { get; } = new DayLogModel();
+        /// <summary>
+        /// Its day (Epic LIFE-1, L1.5, D10): the thoughts it began and the chronicle's dramatic lines about it since midnight; the
+        /// dossier's Today tab. Read when asked for, once a tick, so a closed tab never scans the chronicle.
+        /// </summary>
+        public DayLogModel Today
+        {
+            get
+            {
+                if (_todayAt != _lifeTick) { _today.Refresh(_lifeAgent, _lifeTick, _context.Chronicle, _context.Formatter, _context.GivenNameOf); _todayAt = _lifeTick; }
+                return _today;
+            }
+        }
+
+        private readonly MindModel _mind = new MindModel();
+        private readonly DayLogModel _today = new DayLogModel();
+        private Simpiens.Cognition.AgentState _lifeAgent;
+        private long _lifeTick = -1, _mindAt = -2, _todayAt = -2;
 
         /// <summary>
         /// The crawler shown is dead (Epic 10 Part 3, K5.8c): its dossier from the departed list, its portrait greyed, its
@@ -263,8 +285,9 @@ namespace Simpiens.Presentation.Dashboard
             IsOurs = false;
             Role = Simpiens.Simulation.Skills.PartyRole.None;
             long now = _context.Clock?.CurrentTick ?? 0;
-            Mind.Refresh(agent, now, _context.GivenNameOf);
-            Today.Refresh(agent, now, _context.Chronicle, _context.Formatter, _context.GivenNameOf);
+            if (!ReferenceEquals(agent, _lifeAgent)) _mindAt = _todayAt = -2; // another crawler: read afresh
+            _lifeAgent = agent;
+            _lifeTick = now;
             if (!HasCrawler)
             {
                 if (crawler != default) ShowTheDead(crawler);
