@@ -278,7 +278,7 @@ This is a working document (AGENTS.md, Documentation Protocol 6), the first of E
     2. mood's frustration terms and weights by motive, with golden re-recorded again in its own commit.
   - **The checks:** the gate seeds' day holds; every DoD keeps its seed or is re-picked with the reason; frustration's spread and orders defied a day are measured before and after.
   - **The soak's bands:** measured, and any move goes to the producer by exception.
-- [ ] **L1.5 The day log and the mind, as models** (D10; F5) [Possibly Complex: presentation models and the chronicle's words about one crawler]
+- [x] **L1.5 The day log and the mind, as models** (D10; F5) (done 2026-11-23. **F5 decided:** Today is the thoughts begun since midnight plus the crawler's dramatic and crisis chronicle lines that no same-tick thought tells, and the chronicle's ring grows from 1,024 to 2,048, past the busiest day measured (1,141); no per-crawler window was needed. `ThoughtRules.ValueOf` became `Worth` and `LifeTexts.Band` `BandWord`: the technique and skill scanners read those names) [Possibly Complex: presentation models and the chronicle's words about one crawler]
   - **The models:** `DayLogModel`, `MindModel` and `LifeTexts` (thoughts' and bands' words, Latin-1 only), read through `DashboardContext`.
   - **F5's decision** from L0.3's count: the ring as it is, or a per-crawler window saved in the chronicle's block (a saved-state change inside format 15).
   - **The check:** presentation tests for each model, in `Simpiens.Client.Tests`.

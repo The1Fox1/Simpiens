@@ -93,6 +93,12 @@ namespace Simpiens.Presentation.Dashboard
         /// <summary>False: the empty state shows instead.</summary>
         public bool HasCrawler { get; private set; }
 
+        /// <summary>Its mind (Epic LIFE-1, L1.5, D10): mood, band, its terms and thoughts; the dossier's Mind tab.</summary>
+        public MindModel Mind { get; } = new MindModel();
+
+        /// <summary>Its day (Epic LIFE-1, L1.5, D10): the thoughts it began and the chronicle's dramatic lines about it since midnight; the dossier's Today tab.</summary>
+        public DayLogModel Today { get; } = new DayLogModel();
+
         /// <summary>
         /// The crawler shown is dead (Epic 10 Part 3, K5.8c): its dossier from the departed list, its portrait greyed, its
         /// death in place of its description; nothing to do for it.
@@ -246,6 +252,9 @@ namespace Simpiens.Presentation.Dashboard
             Techniques = TechniquesTip = SponsorText = Legend = LegendTip = string.Empty;
             IsOurs = false;
             Role = Simpiens.Simulation.Skills.PartyRole.None;
+            long now = _context.Clock?.CurrentTick ?? 0;
+            Mind.Refresh(agent, now, _context.GivenNameOf);
+            Today.Refresh(agent, now, _context.Chronicle, _context.Formatter, _context.GivenNameOf);
             if (!HasCrawler)
             {
                 if (crawler != default) ShowTheDead(crawler);

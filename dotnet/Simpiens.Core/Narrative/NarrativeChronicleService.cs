@@ -76,7 +76,7 @@ namespace Simpiens.Narrative
     /// </summary>
     public class NarrativeChronicleService : INarrativeChronicleService
     {
-        public const int DefaultGlobalCapacity = 1024;
+        public const int DefaultGlobalCapacity = 2048; // 1,024 until Epic LIFE-1's L1.5 (F5): the busiest day measured brought 1,141 lines, and a crawler's day log reads its day from here
         public const int DefaultSectorCapacity = 100;
 
         private readonly CircularEventBuffer _globalBuffer;

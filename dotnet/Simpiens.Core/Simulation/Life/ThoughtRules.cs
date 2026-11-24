@@ -25,8 +25,8 @@ namespace Simpiens.Simulation.Life
         /// <summary>Whether <paramref name="slot"/> holds a thought still live at <paramref name="tick"/>.</summary>
         public static bool IsLive(in ThoughtSlot slot, long tick) => slot.Thought != 0 && slot.Stacks > 0 && tick < EndsAt(slot);
 
-        /// <summary>What <paramref name="slot"/> adds to mood at <paramref name="tick"/>: its stacks' value while live, else 0.</summary>
-        public static float ValueOf(in ThoughtSlot slot, long tick)
+        /// <summary>What <paramref name="slot"/> is worth to mood at <paramref name="tick"/>: its stacks' value while live, else 0.</summary>
+        public static float Worth(in ThoughtSlot slot, long tick)
         {
             if (!IsLive(slot, tick)) return 0f;
             return ThoughtTable.Get((Thought)slot.Thought).ValueAt(slot.Stacks);
@@ -36,7 +36,7 @@ namespace Simpiens.Simulation.Life
         public static float Sum(in CrawlerLife life, long tick)
         {
             float sum = 0f;
-            for (int i = 0; i < CrawlerLife.ThoughtCapacity; i++) sum += ValueOf(life.ThoughtAt(i), tick);
+            for (int i = 0; i < CrawlerLife.ThoughtCapacity; i++) sum += Worth(life.ThoughtAt(i), tick);
             return sum;
         }
 
@@ -105,7 +105,7 @@ namespace Simpiens.Simulation.Life
             {
                 var slot = life.ThoughtAt(i);
                 if (slot.Thought == 0) { place = i; break; }
-                float worth = System.Math.Abs(ValueOf(slot, tick)) * (EndsAt(slot) - tick);
+                float worth = System.Math.Abs(Worth(slot, tick)) * (EndsAt(slot) - tick);
                 if (worth < least) { least = worth; place = i; }
             }
             life.SetThought(place, new ThoughtSlot { Thought = (ushort)thought, Stacks = 1, Subject = subjectSlot, BegunAt = tick });
@@ -131,7 +131,7 @@ namespace Simpiens.Simulation.Life
                 for (int i = 0; i < CrawlerLife.ThoughtCapacity; i++)
                 {
                     var slot = life.ThoughtAt(i);
-                    if (slot.Subject == s) weight += System.Math.Abs(ValueOf(slot, tick));
+                    if (slot.Subject == s) weight += System.Math.Abs(Worth(slot, tick));
                 }
                 if (weight < least) { least = weight; take = s; }
             }

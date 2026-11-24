@@ -154,3 +154,8 @@ When the best goal can't be planned, the next are planned in order, up to `LifeT
   - **Company's first weights (low 1.25, breaking 1.5) were dropped (F12):** a crawler hurt in a fight read low, went to the hearth instead of its bunk, healed slower there and stayed low. Four live DoDs failed (`ADraughtKeepsAPartyWorking`, `EveryScenarioPlaysTogether`, `PassionBurnsBright`, `ACallingEmerges`) though their gate-seed measurements barely moved (a Warden on 1 seed to 3, draughts 15 of 23 to 13, a passion burning bright 11 to 9). With income only, all four pass on their seeds.
 - **Readings after L1.4** (`MeasureMoodOnTheGateSeeds`, `MeasureACrawlersDay`): ordinary days unchanged (rest 9.8 h, work 8.4 h, the hearth 3.1 h; moods Steady to Good 99%); with death's players, frustration at 60 for 0.16% of the time, no orders defied, and a friend's death still takes a mourner to Low in 37 of 40 griefs.
 
+## 4. What the player reads (L1.5)
+- **Mind** (`MindModel`): the mood and its band ("Low (-15)"), the need terms, then the live thoughts, each by size with its value and the time it has left ("Bram died -25 · 4 days left"); ties by their words. The reason is the line that weighs most in the mood's direction (the most negative when low, the most positive when good), never comfort alone.
+- **Today** (`DayLogModel`): since midnight, newest first, the thoughts begun (a thought restacked shows once, at its last time, with its stacks) and the crawler's dramatic and crisis chronicle lines; a thought begun on a line's tick tells it instead. It stores nothing.
+- **The chronicle's ring** holds 2,048 events (1,024 before L1.5): the busiest day measured brought 1,141 lines, so a day's dramatic lines are still there at night.
+
