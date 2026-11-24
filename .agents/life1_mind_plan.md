@@ -285,7 +285,7 @@ This is a working document (AGENTS.md, Documentation Protocol 6), the first of E
 - [x] **L1.6 Faces: happy, low and grieving** (D10) (done 2026-11-23: happy grins with raised brows and lower lids, low frowns under sad brows, grieving looks down with a tear and a pressed mouth; the people sheet looked at; the art pins re-recorded in their own commit; the producer's look follows L1.7) [Possibly Complex: art; the people sheet looked at, and the art pins re-recorded in their own commit]
   - **The code:** `Mood`'s three values, `MoodSigns`, `MoodRule`'s order, `PortraitKit`'s features, and the mood line's reason.
   - **The checks:** `MoodRule`'s tests gain the new moods' thresholds and their way back. Look at the people sheet, then re-record the art pins.
-- [ ] **L1.7 The dossier's tabs** (D10; Q7; F4) [Possibly Complex: Gum UI; renders re-recorded in the pinned image after a look]
+- [x] **L1.7 The dossier's tabs** (D10; Q7; F4) (done 2026-11-23: the tabs sit on the state badge's line, costing no height at 720 rows; Mind and Today read lazily, once a tick and only when open; renders recorded in the pinned image in their own commit, two new ones of Mind and Today at t4000 for the look) [Possibly Complex: Gum UI; renders re-recorded in the pinned image after a look]
   - **The code:** the tab row, and Crawler, Mind and Today in `DashboardPanels`.
   - **The checks:** the window-size test confirms the dossier fits at every offered size from 720 rows. Look at the renders, then re-record them in the pinned image (`scripts/test-client-in-container.sh --record`), committed on their own.
   - **The producer's look** at L1 follows this step.
