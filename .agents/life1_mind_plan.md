@@ -254,7 +254,7 @@ This is a working document (AGENTS.md, Documentation Protocol 6), the first of E
 
 ### L1. The mind (5–7 days; L1's wants are plan 2's)
 **Complexity:** Very Complex as a phase by bundling (call sites across the core, a rule cognition reads, a behaviour change, art and Gum). Split into eight steps, each Basic or Possibly Complex.
-- [ ] **L1.1 The thought table** (D7) [Basic: a table with its validator and names test, as `DeedTable`; nothing reads it yet]
+- [x] **L1.1 The thought table** (D7) (done 2026-11-23. **Deviation:** `ThoughtNamesTests` lands with L1.2's sites, since every row must be thought somewhere) [Basic: a table with its validator and names test, as `DeedTable`; nothing reads it yet]
   - `Thought`, `ThoughtDefinition`, and `ThoughtTable` with D7's rows.
   - `ThoughtsValidator`: words, values, durations and stack limits within bounds.
   - `ThoughtNamesTests`: code names a thought only in the table and at the sites listed there, and every row is thought somewhere.

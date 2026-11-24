@@ -223,6 +223,14 @@ CI (`.github/workflows/dotnet.yml`) runs the tests (the client's in the pinned i
 - **The checks:** the round trip in `SessionCaptureValidator` and `SessionRestoreValidator`; the world hash mixes the record once anything is written.
 - **The rules and numbers** are in [`docs/life-model.md`](docs/life-model.md).
 
+### Adding a thought
+- **A thought is a row and a place** (Epic LIFE-1, L1.1, D7):
+  1. A `Thought` value (a `ushort`, under `ThoughtTable.Capacity`). Never reuse one: the id is what a thought slot in the life record holds, and its save.
+  2. Its row in `ThoughtTable`: the player's words ("{0}" for the crawler it names, if it names one; Latin-1 only), its value to mood, how long it lasts in game hours, its stack limit and factor, and its kind.
+  3. One `AgentState.Think(thought, tick, subject)` where its event happens, on the main thread, with the event's tick. Never rebuilt from the chronicle.
+- **Nothing else:** holding, stacking, expiry, mood, the face, the mood line, the dossier's Mind and Today follow.
+- **The checks:** `ThoughtsValidator` (the table and its bounds); `ThoughtNamesTests` (code names a thought only in the table and at the places listed there, and every row is thought somewhere: list the new place).
+
 ### Passions, challenge and the cost of mastery
 - **A passion** (Epic 11, S1): a step of `PassionTable` (none, keen, burning), saved in the traits record. A new step is a `Passion` value and a row: its practice multiplier, the frustration it eases, its weight in the work's choice and its UI kit glyph (`UiKit`, then the art pins). The draw's odds are `PassionTable`'s constants.
 - **The mastery budget** (Epic 11, S2): at most two skills past Apprentice and one at Master, held in practice's one entry beside the source's ceiling (`SkillRules.BudgetCeiling`). `OutpostWatch` fails a live scenario's day on any breach.
