@@ -166,7 +166,9 @@ namespace Simpiens.Testing.Persistence
                         Kind = Simpiens.Simulation.Items.StationKind.Still, Built = true, Order = (ItemType)9, HeldOutput = 1, HeldGrade = 1, Made = 2
                     },
                     // The guildhall's drill yard, built (Epic 11, S3.4): no order, no artisan
-                    new Simpiens.Simulation.Workshops.StationState { Kind = Simpiens.Simulation.Items.StationKind.DrillYard, Built = true }
+                    new Simpiens.Simulation.Workshops.StationState { Kind = Simpiens.Simulation.Items.StationKind.DrillYard, Built = true },
+                    // The tavern, built (Epic LIFE-1 plan 2, T.4): no recipes, kept by a keeper on its shifts
+                    new Simpiens.Simulation.Workshops.StationState { Kind = Simpiens.Simulation.Items.StationKind.Tavern, Built = true }
                 },
                 // The forge's artisan, unpaid once, on the day shift and off on a break (W1.2, W1.3), and a crawler who can't
                 // be hired again yet

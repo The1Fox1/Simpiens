@@ -391,7 +391,26 @@ namespace Simpiens.Simulation.Workshops
         {
             if (contract.OnBreak || contract.StationIndex >= _stations.Length) return false;
             var station = _stations[contract.StationIndex];
-            return station.Built && station.HasOrder && ShiftBlocks.Covers(contract.Shifts, tick);
+            // A station with no recipes (the tavern, Epic LIFE-1 plan 2, T.4) is kept on shift without an order: its keeper keeps the counter
+            bool work = station.HasOrder || !Simpiens.Simulation.Items.StationTable.Get(station.Kind).HasRecipes;
+            return station.Built && work && ShiftBlocks.Covers(contract.Shifts, tick);
+        }
+
+        /// <summary>
+        /// Which stations are kept now (bit i = station i, Epic LIFE-1 plan 2, T.4): an artisan on shift standing within its
+        /// station's reach. A venue at a station that takes an artisan (the tavern) is open only while it is kept.
+        /// </summary>
+        public ulong KeptMask(IWorkshopHost host, uint tick)
+        {
+            ulong mask = 0;
+            for (int i = 0; i < _artisans.Count; i++)
+            {
+                var contract = _artisans[i];
+                if (contract.StationIndex >= 64 || !IsOnShift(contract, tick) || host == null || !host.TryGetCrawler(contract.CrawlerId, out var crawler)) continue;
+                var place = _map.Stations[contract.StationIndex];
+                if ((crawler.Position - place.Position).SqrMagnitude <= place.Radius * place.Radius) mask |= 1UL << contract.StationIndex;
+            }
+            return mask;
         }
 
         /// <summary>

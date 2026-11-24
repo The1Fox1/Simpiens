@@ -61,6 +61,9 @@ namespace Simpiens.Testing.World
             Assert(Find(map, Floor1Layout.GardenVenue).Offers(Activity.Walk) && Find(map, Floor1Layout.StallVenue).Offers(Activity.Browse)
                 && Find(map, Floor1Layout.HearthVenue).Offers(Activity.Fireside) && Find(map, Floor1Layout.YardVenue).Offers(Activity.Spar), "Each offers its own.");
             Assert(Find(map, Floor1Layout.YardVenue).Access == VenueAccess.GuildMembers, "The yard is the guild's members'.");
+            var tavern = Find(map, Floor1Layout.TavernVenue);
+            Assert(tavern.Offers(Activity.Ale) && tavern.Offers(Activity.Supper) && tavern.Offers(Activity.Dice) && tavern.Station == Floor1Layout.Tavern
+                && tavern.SectorId == Floor1Layout.TavernSectorId && tavern.Seats.Count == 8, "The tavern: ale, supper and dice at eight seats, at its counter, in its room (T.4).");
         }
 
         private void ValidateWhichAreOpen()
@@ -76,6 +79,11 @@ namespace Simpiens.Testing.World
                 Assert((none & (1u << yard)) == 0 && (built & (1u << yard)) != 0, "The yard is open only while the drill yard stands.");
             }
             Assert(VenueRules.OpenMask(null, 0, 0UL) == 0u, "No map, no venues.");
+            int tavern = Index(map, Floor1Layout.TavernVenue), counter = -1;
+            for (int s = 0; s < map.Stations.Count; s++) if (map.Stations[s].Key == Floor1Layout.Tavern) counter = s;
+            Assert((VenueRules.OpenMask(map, 0, 0UL, 0UL) & (1u << tavern)) == 0, "No tavern standing: shut.");
+            Assert((VenueRules.OpenMask(map, 0, 1UL << counter, 0UL) & (1u << tavern)) == 0, "Standing but not kept: shut.");
+            Assert((VenueRules.OpenMask(map, 0, 1UL << counter, 1UL << counter) & (1u << tavern)) != 0, "Standing and kept: open.");
         }
 
         private static VenueDefinition Find(MapDefinition map, string key) => map.Venues[Index(map, key)];

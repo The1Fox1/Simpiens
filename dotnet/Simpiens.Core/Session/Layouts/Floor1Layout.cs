@@ -97,8 +97,11 @@ namespace Simpiens.Core.Session.Layouts
         /// <summary>The guildhall's drill yard (Epic 11, S3.4, D10): in the hall's west half, inside the door.</summary>
         public const string DrillYard = "guildhall.yard";
 
+        /// <summary>The tavern's counter (Epic LIFE-1 plan 2, T.4, D16): its station site, at the room's east wall, clear of the way to the Garden.</summary>
+        public const string Tavern = "tavern.counter";
+
         /// <summary>The venues' keys (Epic LIFE-1 plan 2, L2.3, D13): where free time goes.</summary>
-        public const string HearthVenue = "venue.hearth", StallVenue = "venue.stall", GardenVenue = "venue.garden", YardVenue = "venue.yard";
+        public const string HearthVenue = "venue.hearth", StallVenue = "venue.stall", GardenVenue = "venue.garden", YardVenue = "venue.yard", TavernVenue = "venue.tavern";
         public const float StationRadius = 1.5f;
 
         public const int SpawnPointCount = 12;
@@ -267,6 +270,8 @@ namespace Simpiens.Core.Session.Layouts
             b.Station(Still, StationKind.Still, new Vec2(-1f, -21f), StationRadius);
             // --- The guildhall's yard (Epic 11, S3.4, D10): a drill yard may be built there, west of the barracks ---
             b.Station(DrillYard, StationKind.DrillYard, new Vec2(12f, -21.5f), StationRadius);
+            // The tavern's counter (Epic LIFE-1 plan 2, T.4), against the room's east wall; its tables stand in the west half
+            b.Station(Tavern, StationKind.Tavern, new Vec2(6f, 12f), StationRadius);
 
             // --- Venues (Epic LIFE-1 plan 2, L2.3, D13): where free time goes, what each offers, its seats. The hearth's
             // fireside is GatherAtAnchor's; Recreate takes the rest. Open at all hours (D26), the yard while the drill yard
@@ -279,6 +284,15 @@ namespace Simpiens.Core.Session.Layouts
                 new[] { Simpiens.Simulation.Life.Activity.Walk });
             b.Venue(YardVenue, new Vec2(12f, -21.5f), 2f, new[] { new Vec2(10.8f, -21.5f), new Vec2(13.2f, -21.5f) },
                 new[] { Simpiens.Simulation.Life.Activity.Spar }, access: VenueAccess.GuildMembers, station: DrillYard);
+            // The tavern (T.4): two tables of four in the room's west half; open while it stands and its keeper is at the counter on shift
+            b.Venue(TavernVenue, new Vec2(-4.5f, 12f), 4f,
+                new[]
+                {
+                    new Vec2(-5.7f, 9.5f), new Vec2(-3.3f, 9.5f), new Vec2(-4.5f, 8.3f), new Vec2(-4.5f, 10.7f),
+                    new Vec2(-5.7f, 14.5f), new Vec2(-3.3f, 14.5f), new Vec2(-4.5f, 13.3f), new Vec2(-4.5f, 15.7f),
+                },
+                new[] { Simpiens.Simulation.Life.Activity.Ale, Simpiens.Simulation.Life.Activity.Supper, Simpiens.Simulation.Life.Activity.Dice },
+                station: Tavern);
 
             // --- Road Gate spawn points: two rows of six ---
             for (int i = 0; i < SpawnPointCount; i++)
