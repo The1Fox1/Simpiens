@@ -94,7 +94,7 @@ namespace Simpiens.Core.Tests
         /// The only gate seed with all seven in two weeks: a scar and a name need a downing on a clear (9 and 8 seeds), a
         /// masterpiece a Journeyman at the forge (4 seeds with these players); see F19 for the trust check most fail.
         /// </summary>
-        private const ulong Seed = 5;
+        private static readonly ulong Seed = ScenarioSeed.Or(5);
 
         [Fact]
         public void EpicElevenPlaysTogether()

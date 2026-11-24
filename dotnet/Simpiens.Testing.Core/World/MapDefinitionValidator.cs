@@ -286,9 +286,19 @@ namespace Simpiens.Testing.World
             for (int i = 0; i < def.Sectors.Count; i++)
             {
                 var s = def.Sectors[i];
-                bool facility = s.Id == Floor1Layout.WorkshopRowSectorId || s.Id == Floor1Layout.GuildhallSectorId;
+                bool facility = s.Id == Floor1Layout.WorkshopRowSectorId || s.Id == Floor1Layout.GuildhallSectorId || s.Id == Floor1Layout.TavernSectorId;
                 Assert(s.Facility == facility, $"(i) {s.Name} {(facility ? "must" : "must not")} be a facility.");
                 if (!facility) Assert(DoorWidth(grid, guildhall.Bounds, s.Bounds) == 0, $"(i) The guildhall must open only onto the workshop row, not {s.Name}.");
+            }
+            // (t) The tavern's room (Epic LIFE-1 plan 2, T.2, D16): off the hub, charted and safe, a facility; the Garden moved
+            // north of it opens onto it alone
+            Assert(def.TryGetSector(Floor1Layout.TavernSectorId, out var tavern) && tavern.StartsExplored && !tavern.Hazard.IsHazardous, "(t) The tavern is charted and safe.");
+            Assert(DoorWidth(grid, hub.Bounds, tavern.Bounds) >= 3 && DoorWidth(grid, tavern.Bounds, garden.Bounds) >= 3, "(t) The tavern opens onto the hub and the Garden.");
+            for (int i = 0; i < def.Sectors.Count; i++)
+            {
+                var s = def.Sectors[i];
+                if (s.Id == Floor1Layout.TavernSectorId || s.Id == Floor1Layout.GardenSectorId) continue;
+                Assert(DoorWidth(grid, garden.Bounds, s.Bounds) == 0, $"(t) The Garden opens onto the tavern alone, not {s.Name}.");
             }
             var kinds = new HashSet<StationKind>();
             for (int i = 0; i < def.Stations.Count; i++)

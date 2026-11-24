@@ -18,9 +18,9 @@ namespace Simpiens.Core.Tests
     /// </summary>
     public class OutpostScenarioTests
     {
-        private static LocalSimulation Outpost()
+        private static LocalSimulation Outpost(ulong seed = SimulationSettings.DefaultSeed)
         {
-            var sim = LocalSimulation.Create(SimulationSettings.DefaultSeed);
+            var sim = LocalSimulation.Create(seed);
             sim.Respawn(OutpostSession.SessionId);
             return sim;
         }
@@ -153,10 +153,13 @@ namespace Simpiens.Core.Tests
         /// without; its gear wears; the caravan restocks the stall's gear under its own sink, and the ledger balances; the
         /// day's checks still hold.
         /// </summary>
+        /// <summary>The gear scenario's seed: the default until a deliberate behaviour change moves it (re-picked with <see cref="ScenarioSeed"/>).</summary>
+        private static readonly ulong GearSeed = ScenarioSeed.Or(SimulationSettings.DefaultSeed);
+
         [Fact]
         public void TheGearedTakeLessDamageInTheSameSector()
         {
-            using var sim = Outpost();
+            using var sim = Outpost(GearSeed);
             var watch = new OutpostWatch(sim);
             var map = sim.Host.World.Map;
             // Per hazard sector: ticks and damage, bare and geared, from each crawler's tallies tick by tick

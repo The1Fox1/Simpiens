@@ -52,12 +52,12 @@ namespace Simpiens.Core.Tests
             Assert.True(quiet > 0f && Math.Abs(quiet / sociable - 3f) < 0.01f, $"Solitary 1.5 against sociable 0.5 ({quiet:F3}, {sociable:F3}).");
             crawler.Personality = new AgentPersonality(0f, 0f, 0f, 0f, 0f);
 
-            // The walk there: from the bunkhouse, and from the Garden's door
+            // The walk there: from the bunkhouse, and from the Garden's door (in the tavern, since T.2)
             crawler.Position = new Vec2(-4f, -9f);
             sim.Step(1);
             crawler.Position = new Vec2(-4f, -9f);
             float far = Leisure.Score(Context(sim, crawler), garden, Activity.Walk, out _);
-            crawler.Position = new Vec2(0f, 5f);
+            crawler.Position = new Vec2(4f, 17f);
             float near = Leisure.Score(Context(sim, crawler), garden, Activity.Walk, out _);
             Assert.True(near > far, $"Nearer scores higher ({near:F3} against {far:F3}).");
 
@@ -65,9 +65,9 @@ namespace Simpiens.Core.Tests
             var friend = sim.Host.CrawlerStates.First(c => !c.IsDrifter && c != crawler);
             crawler.Memory.SetAffinity(friend.AgentId, new AffinityRecord(40, 40, 0, 0, 1, (uint)sim.Clock.CurrentTick));
             float alone = Leisure.Score(Context(sim, crawler), garden, Activity.Walk, out _);
-            friend.Position = new Vec2(-3f, 13f);
+            friend.Position = new Vec2(-3f, 25f);
             sim.Step(1);
-            crawler.Position = new Vec2(0f, 5f);
+            crawler.Position = new Vec2(4f, 17f);
             float withFriend = Leisure.Score(Context(sim, crawler), garden, Activity.Walk, out _);
             Assert.True(Math.Abs(withFriend / alone - Leisure.FriendsPresent) < 0.01f, $"A friend there: x{Leisure.FriendsPresent} ({withFriend:F3} against {alone:F3}).");
         }

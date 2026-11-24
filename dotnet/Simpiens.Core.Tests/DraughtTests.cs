@@ -63,7 +63,7 @@ namespace Simpiens.Core.Tests
         /// Gate seed 424242 since Epic 11's S5.6 (<see cref="MeasureTheBoldBuyingOnTheGateSeeds"/>): the bold buy a draught to carry,
         /// and only they, on 15 of 23 gate seeds; the default seed's no longer since Leadership moved every draw.
         /// </summary>
-        private const ulong BoldBuySeed = 424242;
+        private static readonly ulong BoldBuySeed = ScenarioSeed.Or(424242);
 
         /// <summary>The measurement behind the seed (Epic 11, S5.6): who buys a draught to carry on each gate seed. Explicit.</summary>
         [Fact(Explicit = true)]
