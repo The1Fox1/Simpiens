@@ -124,8 +124,9 @@ namespace Simpiens.Core.Tests
         /// Seed 83 since the tavern's room (Epic LIFE-1 plan 2, T.2): the taller floor and the Garden's move moved the outpost's
         /// history, and seed 11 earned no Warden; none of the gate seeds or 21–82 does within the ten days (83 and 85 of 31–100).
         /// Seed 46 since variety, curiosity, wants and mood's pull on leisure (Epic LIFE-1 plan 2, L2.7, W.1-W.4, L2.8) moved the outpost's history, and seed 83's moment no longer came.
+        /// Seed 7 since Epic LIFE-1 plan 3's rhythm (nights, routines, weights by the hour and days off, R.2-R.9) moved the outpost's history, and seed 46's moment no longer came.
         /// </summary>
-        private static readonly ulong Seed = ScenarioSeed.Or(46);
+        private static readonly ulong Seed = ScenarioSeed.Or(7);
 
         [Fact]
         public void ACallingEmerges()

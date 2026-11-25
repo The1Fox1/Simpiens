@@ -156,7 +156,8 @@ namespace Simpiens.Core.Tests
         /// outpost's history, and the default seed's moment no longer came.
         /// </summary>
         /// <summary>The gear scenario's seed: the default until a deliberate behaviour change moves it (re-picked with <see cref="ScenarioSeed"/>).</summary>
-        private static readonly ulong GearSeed = ScenarioSeed.Or(424242);
+        // Seed 20261009 since Epic LIFE-1 plan 3's rhythm (nights, routines, weights by the hour and days off, R.2-R.9) moved the outpost's history, and seed 424242's moment no longer came.
+        private static readonly ulong GearSeed = ScenarioSeed.Or(20261009);
 
         [Fact]
         public void TheGearedTakeLessDamageInTheSameSector()

@@ -108,8 +108,9 @@ namespace Simpiens.Core.Tests
         /// named, focused by the guild's clear and avenged on 10 of the 23 gate seeds, the days holding on all 10. On this one, the
         /// seed of <c>TheOutpostRemembers</c>, the beetle that downs Kwame is Kwame's Bane at t19052, the party's focus at once, and
         /// Lane slays it at t19218: Kwame's Avenger.
+        /// Seed 1 since Epic LIFE-1 plan 3's rhythm (nights, routines, weights by the hour and days off, R.2-R.9) moved the outpost's history, and seed 3's moment no longer came.
         /// </summary>
-        private const ulong Seed = 3;
+        private static readonly ulong Seed = ScenarioSeed.Or(1);
 
         [Fact]
         public void TheBeetleThatRemembers()

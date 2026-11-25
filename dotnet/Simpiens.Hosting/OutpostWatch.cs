@@ -497,7 +497,9 @@ namespace Simpiens.Hosting
             var starved = living.Where(c => c.Starved).Select(c => $"{c.Name} ({c.LongestHungry} ticks)").ToList();
 
             if (noCycle.Count > 0) failures.Add($"{noCycle.Count} crawlers never closed a harvest -> sell cycle: {string.Join(", ", noCycle)}");
-            if (sleepers < 3) failures.Add($"only {sleepers} crawlers slept in a bunk (need 3)");
+            // Asked of a run that holds a night (Epic LIFE-1 plan 3): residents sleep at night now, so a scenario that ends with its
+            // moment before the first one has seen nobody sleep
+            if (sleepers < 3 && ObservedTicks >= DayTicks) failures.Add($"only {sleepers} crawlers slept in a bunk (need 3)");
             if (eaters < 3) failures.Add($"only {eaters} crawlers ate (need 3)");
             if (gatherings == 0) failures.Add("no hearth gathering");
             if (ScoutTick < 0 || !ScoutCharted) failures.Add($"the Scout bounty was not fulfilled with the Deep Seam charted (t{ScoutTick}, charted {ScoutCharted})");

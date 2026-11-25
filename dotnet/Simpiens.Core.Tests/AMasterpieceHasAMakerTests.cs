@@ -101,8 +101,9 @@ namespace Simpiens.Core.Tests
         /// Lantern Shell on day 4 and it is worn at once.
         /// Gate seed 424242 since the tavern's room (Epic LIFE-1 plan 2, T.2): the taller floor and the Garden's move moved the
         /// outpost's history, and seed 12's moment no longer came.
+        /// Seed 5 since Epic LIFE-1 plan 3's rhythm (nights, routines, weights by the hour and days off, R.2-R.9) moved the outpost's history, and seed 424242's moment no longer came.
         /// </summary>
-        private static readonly ulong Seed = ScenarioSeed.Or(424242);
+        private static readonly ulong Seed = ScenarioSeed.Or(5);
 
         [Fact]
         public void AMasterpieceHasAMaker()

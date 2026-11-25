@@ -122,8 +122,9 @@ namespace Simpiens.Core.Tests
         /// in the week: all three rise with the days holding on 9 of 23; on this one Ellis's melee 0 to 1 on day 3.5.
         /// Gate seed 1 since the tavern's room (Epic LIFE-1 plan 2, T.2): the taller floor and the Garden's move moved the
         /// outpost's history, and seed 20261010's moment no longer came.
+        /// Seed 2 since Epic LIFE-1 plan 3's rhythm (nights, routines, weights by the hour and days off, R.2-R.9) moved the outpost's history, and seed 1's moment no longer came.
         /// </summary>
-        private static readonly ulong Seed = ScenarioSeed.Or(1);
+        private static readonly ulong Seed = ScenarioSeed.Or(2);
 
         private const long Horizon = 7 * DayClock.TicksPerDay;
 

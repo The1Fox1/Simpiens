@@ -49,8 +49,11 @@ namespace Simpiens.Core.Tests
         /// <summary>
         /// Every scenario's seed (the default, measured with K11.1a: see the epic's K11 entry), and the bleeding saves'. Every
         /// scenario's is gate seed 424242 since Epic LIFE-1's Recreate (plan 2, L2.6, `docs/life-model.md` §5.8): free time moved the outpost's history, and on the default not every scenario came about within its days.
+        /// Together, seed 8 since Epic LIFE-1 plan 3's rhythm (nights, routines, weights by the hour and days off, R.2-R.9) moved the outpost's history, and seed 424242's moment no longer came.
+        /// Bleeding, seed 1 since Epic LIFE-1 plan 3's rhythm (nights, routines, weights by the hour and days off, R.2-R.9) moved the outpost's history, and seed 3's moment no longer came.
+        /// Mid-fight, seed 424242 since Epic LIFE-1 plan 3's rhythm (nights, routines, weights by the hour and days off, R.2-R.9) moved the outpost's history, and the default seed (20261009)'s moment no longer came.
         /// </summary>
-        private static readonly ulong TogetherSeed = ScenarioSeed.Or(424242), BleedingSeed = ScenarioSeed.Or(3);
+        private static readonly ulong TogetherSeed = ScenarioSeed.Or(8), BleedingSeed = ScenarioSeed.Or(1), MidFightSeed = ScenarioSeed.Or(424242);
 
         /// <summary>The default seed (measured with K11.1a: see the epic's K11 entry).</summary>
         [Fact]
@@ -93,7 +96,7 @@ namespace Simpiens.Core.Tests
         [Fact]
         public void ASaveMidFightLoadsByteForByteAndPlaysOn()
         {
-            using var played = LocalSimulation.Create(SimulationSettings.DefaultSeed);
+            using var played = LocalSimulation.Create(MidFightSeed);
             played.Respawn(OutpostSession.SessionId);
             Players(played, hunts: false);
             var party = played.Simulation.Guild.Parties[0];
@@ -103,7 +106,7 @@ namespace Simpiens.Core.Tests
                 && creatures.TryGet(creatures.Lairs[gate].MemberIn(0), out var k) && k.Mode == CreatureMode.Chase && k.Health < k.Definition.MaxHealth;
             while (played.Clock.CurrentTick < 16 * DayClock.TicksPerDay && !MidFight()) played.Step(1);
             Assert.True(MidFight(), "The guild came to blows at the gate.");
-            var loaded = SaveAndLoad(played, SimulationSettings.DefaultSeed, out long tick);
+            var loaded = SaveAndLoad(played, MidFightSeed, out long tick);
             using (loaded)
             {
                 var lp = loaded.Simulation.Guild.Parties[0];
