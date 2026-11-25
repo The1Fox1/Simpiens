@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Simpiens.Cognition.Contracts;
 using Simpiens.Cognition.Planning;
 using Simpiens.Cognition.Planning.Domain;
+using Simpiens.Simulation;
 using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.Life;
 using Simpiens.Simulation.Spatial;
@@ -25,7 +26,8 @@ namespace Simpiens.Testing.Planning
             ValidateTheTuning();
             ValidateUrgency();
             ValidateMoodWeighs();
-            TestLog.Log("<color=green>[MotiveModelValidator] ALL 5 TESTS PASSED SUCCESSFULLY!</color>");
+            ValidateTheRoutineWeighs();
+            TestLog.Log("<color=green>[MotiveModelValidator] ALL 6 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private static AgentContext Context(in AgentNeeds needs, EconomyTuning economy = null)
@@ -42,7 +44,7 @@ namespace Simpiens.Testing.Planning
         private void ValidateNeutralIsExact()
         {
             var needs = new AgentNeeds(63.7f, 31.3f, 22.9f); // hungry and lonely: a low mood, so mood's weights are set aside here
-            var context = Context(needs, EconomyTuning.Default.WithLife(LifeTuning.Default.WithoutMood()));
+            var context = Context(needs, EconomyTuning.Default.WithLife(LifeTuning.Default.WithoutMood().WithoutRoutine()));
             foreach (var goal in OutpostGoapDomain.BuildGoals())
             {
                 float basePriority = goal.BasePriority(context);
@@ -123,6 +125,36 @@ namespace Simpiens.Testing.Planning
             Assert(quiet.MoodWeight(Simpiens.Simulation.Life.MoodBand.Breaking, (int)Motive.Income) == 1f && quiet.MoodFrustrationPerHour(Simpiens.Simulation.Life.MoodBand.Breaking) == 0f && quiet.FallbackDepth == 2,
                 "Without mood: no weights, no frustration, the rest kept.");
             Assert(default(LifeTuning).MoodWeight(Simpiens.Simulation.Life.MoodBand.Low, (int)Motive.Income) == 1f, "A zeroed tuning: mood weighs nothing.");
+        }
+
+        /// <summary>
+        /// The routine's weights (Epic LIFE-1 plan 3, R.3, D31): in its night rest weighs 1.5 (the bedtime pull) and is valid
+        /// from the bedtime line; outside the night rest weighs 1 and waits for the tired line; the unweighted family is never
+        /// scaled; and a tuning without the routine weighs nothing by the hour.
+        /// </summary>
+        private void ValidateTheRoutineWeighs()
+        {
+            var routine = Routine.Of(Chronotype.Average, 0f, default, DayClock.TicksPerDay + DayClock.Hours(4));
+            uint working = (uint)(routine.WorkFrom + 7), leisure = (uint)(routine.WorkUntil + 7), night = (uint)(routine.NightFrom + 7);
+            AgentContext At(uint tick, float energy) => new AgentContext(default, default, new AgentNeeds(20f, energy, 80f), 0f, null, null, tick);
+            Assert(At(working, 60f).Block == RoutineBlock.Working && At(leisure, 60f).Block == RoutineBlock.Leisure && At(night, 60f).Block == RoutineBlock.Night,
+                "The contexts are in the blocks the routine says.");
+            var rest = new Simpiens.Cognition.Planning.Goals.RestGoal();
+            var eat = new Simpiens.Cognition.Planning.Goals.SatiateHungerGoal();
+            var comply = new Simpiens.Cognition.Planning.Goals.ComplyDirectiveGoal();
+            Assert(MotiveModel.Weight(rest, At(night, 60f)) == 1.5f && MotiveModel.Weight(rest, At(working, 60f)) == 1f && MotiveModel.Weight(rest, At(leisure, 60f)) == 1f,
+                "Rest weighs 1.5 in the night, 1 by day.");
+            Assert(MotiveModel.Weight(eat, At(night, 60f)) == 1f && MotiveModel.Weight(comply, At(night, 60f)) == 1f, "Hunger and orders are unweighted at any hour.");
+            Assert(rest.IsValid(At(night, 60f)) && !rest.IsValid(At(night, 75f)) && !rest.IsValid(At(leisure, 60f)) && rest.IsValid(At(leisure, 35f)),
+                "In the night rest is valid below the bedtime line (70); by day only below the tired line (40).");
+            Assert(Considerations.IsBedtime(At(night, 69f)) && !Considerations.IsBedtime(At(night, 70f)) && !Considerations.IsBedtime(At(leisure, 30f)), "Bedtime is the night below 70.");
+            var life = LifeTuning.Default;
+            Assert(life.RoutineWeight(RoutineBlock.Night, (int)ActivityFamily.Unweighted) == 1f && life.RoutineWeight(RoutineBlock.None, (int)ActivityFamily.Rest) == 1f,
+                "The unweighted family and no block weigh 1.");
+            Assert(life.WithoutRoutine().RoutineWeight(RoutineBlock.Night, (int)ActivityFamily.Rest) == 1f && life.WithoutRoutine().MoodWeight(MoodBand.Low, (int)Motive.Income) == 0.9f,
+                "Without the routine: no weight by the hour, mood's kept.");
+            Assert(life.WithRoutineWeight(RoutineBlock.Night, (int)ActivityFamily.Unweighted, 2f).RoutineWeight(RoutineBlock.Night, (int)ActivityFamily.Unweighted) == 1f,
+                "The unweighted family can't be given a routine weight.");
         }
 
         private static void Assert(bool condition, string message)

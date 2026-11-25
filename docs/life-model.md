@@ -306,3 +306,30 @@ At 2 boredom settles near 40 (fun 60), so the Bored term seldom holds and Recrea
 - **A cycle of about 18.7 game hours:** 10.7 awake and 8 asleep, so a resident's sleep drifts about five hours earlier each day and the outpost's sleep is smeared over the clock (F16). Its peak (53% at 17:00–21:00) is the first day's: every resident spawns rested at 06:00 and tires together.
 - **Work is mostly walking to it:** of 8.3 hours on the Work family's plans, 3.1 are hands-on; the rest is the walk, the trade and the board.
 - **For R.2:** full to the tired line (60 energy) in 10.7 hours is a drain of about 5.6 an hour awake, a mix of standing, walking and work. D27's factor of 0.6 makes it about 18 hours, and the bedtime pull (R.3) sends a crawler to bed before then.
+
+### 6.2 One waking and one night (R.2, D27, 2026-11-24)
+The awake drains are scaled by `DayTuning.WakingDayFactor`, 0.6 (standing 1.65 an hour, walking and working 4.95, a station's work 3.6); a bunk still restores 8 an hour. `MeasureACrawlersDay`, before the bedtime pull:
+
+| | Before (§6.1) | At 0.6 |
+| :--- | ---: | ---: |
+| Hours awake between sleeps, mean (p10, p50, p90) | 10.7 (9.1, 10.0, 14.0) | 18.2 (15.2, 16.7, 24.5) |
+| A sleep's length, mean | 8.0 h | 7.8 h |
+| Work (the family's plans), hands-on | 8.3 h, 3.1 h | 9.6 h, 3.5 h |
+| Rest over three days, a resident-day | 10.0 h | 6.5 h (the first sleep now comes near midnight) |
+
+- **A cycle of about 26 hours** on its own: the waking day is now longer than the clock leaves room for, so without the bedtime pull a resident's sleep would drift later each day.
+- **The day's checks:** a night's sleep now runs past the day's 06:00 end, so `OutpostWatch`'s "slept in a bunk" and `TiredCrawlersSleepInTheBunkhouse` count crawlers seen asleep in a bunk rather than sleeps finished. The gate seeds' day holds on all 23.
+
+### 6.3 The bedtime pull (R.3, D31, 2026-11-24)
+In its routine's night a crawler's `RestGoal` is valid below the bedtime line (energy 70, `Considerations.BedtimeEnergy`) and weighs 1.5 (`LifeTuning`'s routine weight for the Rest family in the Night block, the first of D30's table); the hearth costs like sleeping rough at bedtime, so a crawler goes to a bunk. A sleeper in its night dozes on at full energy until its waking hour (`AgentState.WakesAt`); hunger's line still wakes it, and the longest sleep (12 hours) still ends it.
+
+**The day by the clock** (the 23 gate seeds, three days, no player; asleep, a share of residents' time):
+
+| Hour | 06:00 | 08:00 | 10:00 | 12:00 | 16:00 | 19:00 | 21:00 | 22:00 | 23:00 | 00:00 | 02:00 | 04:00 |
+| :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Before (§6.1) | 20% | 24% | 34% | 40% | 47% | 53% | 52% | 50% | 48% | 44% | 35% | 36% |
+| With the bedtime pull | 49% | 12% | 4% | 1% | 0% | 0% | 13% | 29% | 56% | 82% | 93% | 98% |
+
+- **F16 resolved:** the outpost sleeps at night, 82–99% asleep from midnight to 05:00 and nobody from noon to 19:00. Hours awake between sleeps: mean 16.1 (p10 15.0, p50 16.2, p90 17.0); a sleep 7.9 h (p10 7.0, p90 9.1).
+- **The rest of the day:** work 9.2 h (hands-on 3.3), the hearth 3.2 h, leisure 0.9 h, rest 7.8 h; flips 0.9 a resident-day; no plan unfound. With the guild player: work 8.2 h, leisure 1.2 h.
+- **Golden unchanged:** its 3,000 ticks end at 13:08 on day 1, before anyone's bedtime.

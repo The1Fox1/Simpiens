@@ -16,6 +16,13 @@ namespace Simpiens.Simulation.Life
         private float _first;
     }
 
+    /// <summary>A bias for each routine block and activity family (4 x 8): a goal's routine weight is 1 plus its block's bias for its family.</summary>
+    [InlineArray(LifeTuning.BlockCapacity * LifeTuning.FamilyCapacity)]
+    public struct RoutineBiases
+    {
+        private float _first;
+    }
+
     /// <summary>What each mood band adds to frustration a game hour (a value for each of 6 bands).</summary>
     [InlineArray(LifeTuning.BandCapacity)]
     public struct BandValues
@@ -37,9 +44,16 @@ namespace Simpiens.Simulation.Life
         /// <summary>Mood bands below this have weights (<see cref="MoodBand"/>, with None at 0).</summary>
         public const int BandCapacity = 6;
 
+        /// <summary>Routine blocks below this have weights (<see cref="RoutineBlock"/>, with None at 0; plan 3's D30).</summary>
+        public const int BlockCapacity = 4;
+
+        /// <summary>Activity families below this have routine weights (the family enum is a byte; Unweighted, 0, is never scaled).</summary>
+        public const int FamilyCapacity = 8;
+
         private readonly MotiveBiases _motiveBiases;
         private readonly MoodBiases _moodBiases;
         private readonly BandValues _moodFrustration;
+        private readonly RoutineBiases _routineBiases;
 
         /// <summary>
         /// What the goal whose plan just ended, still valid and unsatisfied, gains at the next choice (L0.7, D5): 0 adds
@@ -55,15 +69,17 @@ namespace Simpiens.Simulation.Life
             _motiveBiases = default;
             _moodBiases = default;
             _moodFrustration = default;
+            _routineBiases = default;
             Commitment = commitment;
             FallbackDepth = fallbackDepth;
         }
 
-        private LifeTuning(float commitment, byte fallbackDepth, in MotiveBiases motives, in MoodBiases moods, in BandValues frustration)
+        private LifeTuning(float commitment, byte fallbackDepth, in MotiveBiases motives, in MoodBiases moods, in BandValues frustration, in RoutineBiases routine)
         {
             _motiveBiases = motives;
             _moodBiases = moods;
             _moodFrustration = frustration;
+            _routineBiases = routine;
             Commitment = commitment;
             FallbackDepth = fallbackDepth;
         }
@@ -77,7 +93,8 @@ namespace Simpiens.Simulation.Life
         /// stayed low (the epic's F12). Duty (plan 2's O.1, D25): low 0.85, breaking 0.6, under orders as anywhere, since orders
         /// are a motive a crawler may set aside. Fun (L2.8, D21): low 1.25, breaking 1.5, safe since Recreate is never chosen hungry,
         /// tired or hurt (F12);</item>
-        /// <item>mood's frustration a game hour (L1.4, D9): breaking +15, low +5, good and happy -5 (eased faster).</item>
+        /// <item>mood's frustration a game hour (L1.4, D9): breaking +15, low +5, good and happy -5 (eased faster);</item>
+        /// <item>the routine's weights by block and family (plan 3): in its night, rest weighs 1.5, the bedtime pull (R.3, D31).</item>
         /// </list>
         /// </summary>
         public static LifeTuning Default => new LifeTuning(commitment: 0f, fallbackDepth: 2)
@@ -88,8 +105,10 @@ namespace Simpiens.Simulation.Life
             .WithMoodWeight(MoodBand.Low, Fun, 1.25f)
             .WithMoodWeight(MoodBand.Breaking, Fun, 1.5f)
             .WithMoodFrustration(MoodBand.Breaking, 15f).WithMoodFrustration(MoodBand.Low, 5f)
-            .WithMoodFrustration(MoodBand.Good, -5f).WithMoodFrustration(MoodBand.Happy, -5f);
+            .WithMoodFrustration(MoodBand.Good, -5f).WithMoodFrustration(MoodBand.Happy, -5f)
+            .WithRoutineWeight(RoutineBlock.Night, RestFamily, 1.5f);
 
+        private const int RestFamily = (int)Simpiens.Cognition.Planning.ActivityFamily.Rest;
         private const int Income = (int)Simpiens.Cognition.Planning.Motive.Income;
         private const int Duty = (int)Simpiens.Cognition.Planning.Motive.Duty;
         private const int Fun = (int)Simpiens.Cognition.Planning.Motive.Fun;
@@ -101,6 +120,13 @@ namespace Simpiens.Simulation.Life
         public float MoodWeight(MoodBand band, int motiveId) =>
             (int)band < BandCapacity && motiveId >= 0 && motiveId < MotiveCapacity ? 1f + _moodBiases[(int)band * MotiveCapacity + motiveId] : 1f;
 
+        /// <summary>
+        /// The weight the routine's <paramref name="block"/> puts on every goal of <paramref name="familyId"/> (plan 3's D30, D31):
+        /// 1 unless set, and always 1 for the unweighted family (hunger, orders, rescue, leaving) and outside any block.
+        /// </summary>
+        public float RoutineWeight(RoutineBlock block, int familyId) =>
+            block != RoutineBlock.None && (int)block < BlockCapacity && familyId > 0 && familyId < FamilyCapacity ? 1f + _routineBiases[(int)block * FamilyCapacity + familyId] : 1f;
+
         /// <summary>What a mood of <paramref name="band"/> adds to frustration a game hour (L1.4, D9): 0 unless set; negative eases it.</summary>
         public float MoodFrustrationPerHour(MoodBand band) => (int)band < BandCapacity ? _moodFrustration[(int)band] : 0f;
 
@@ -110,7 +136,7 @@ namespace Simpiens.Simulation.Life
             if (motiveId < 0 || motiveId >= MotiveCapacity) return this;
             var biases = _motiveBiases;
             biases[motiveId] = weight - 1f;
-            return new LifeTuning(Commitment, FallbackDepth, biases, _moodBiases, _moodFrustration);
+            return new LifeTuning(Commitment, FallbackDepth, biases, _moodBiases, _moodFrustration, _routineBiases);
         }
 
         /// <summary>A copy in which a mood of <paramref name="band"/> weighs every goal of <paramref name="motiveId"/> by <paramref name="weight"/>.</summary>
@@ -119,7 +145,7 @@ namespace Simpiens.Simulation.Life
             if ((int)band >= BandCapacity || motiveId < 0 || motiveId >= MotiveCapacity) return this;
             var biases = _moodBiases;
             biases[(int)band * MotiveCapacity + motiveId] = weight - 1f;
-            return new LifeTuning(Commitment, FallbackDepth, _motiveBiases, biases, _moodFrustration);
+            return new LifeTuning(Commitment, FallbackDepth, _motiveBiases, biases, _moodFrustration, _routineBiases);
         }
 
         /// <summary>A copy in which a mood of <paramref name="band"/> adds <paramref name="perHour"/> frustration a game hour.</summary>
@@ -128,14 +154,26 @@ namespace Simpiens.Simulation.Life
             if ((int)band >= BandCapacity) return this;
             var values = _moodFrustration;
             values[(int)band] = perHour;
-            return new LifeTuning(Commitment, FallbackDepth, _motiveBiases, _moodBiases, values);
+            return new LifeTuning(Commitment, FallbackDepth, _motiveBiases, _moodBiases, values, _routineBiases);
+        }
+
+        /// <summary>A copy in which the routine's <paramref name="block"/> weighs every goal of <paramref name="familyId"/> by <paramref name="weight"/> (never the unweighted family).</summary>
+        public LifeTuning WithRoutineWeight(RoutineBlock block, int familyId, float weight)
+        {
+            if (block == RoutineBlock.None || (int)block >= BlockCapacity || familyId <= 0 || familyId >= FamilyCapacity) return this;
+            var biases = _routineBiases;
+            biases[(int)block * FamilyCapacity + familyId] = weight - 1f;
+            return new LifeTuning(Commitment, FallbackDepth, _motiveBiases, _moodBiases, _moodFrustration, biases);
         }
 
         /// <summary>A copy with neither mood's weights nor its frustration: mood read, and acting on nothing.</summary>
-        public LifeTuning WithoutMood() => new LifeTuning(Commitment, FallbackDepth, _motiveBiases, default, default);
+        public LifeTuning WithoutMood() => new LifeTuning(Commitment, FallbackDepth, _motiveBiases, default, default, _routineBiases);
 
-        public LifeTuning WithCommitment(float commitment) => new LifeTuning(commitment, FallbackDepth, _motiveBiases, _moodBiases, _moodFrustration);
+        /// <summary>A copy with no routine's weights: the block read, and weighing nothing.</summary>
+        public LifeTuning WithoutRoutine() => new LifeTuning(Commitment, FallbackDepth, _motiveBiases, _moodBiases, _moodFrustration, default);
 
-        public LifeTuning WithFallbackDepth(byte depth) => new LifeTuning(Commitment, depth, _motiveBiases, _moodBiases, _moodFrustration);
+        public LifeTuning WithCommitment(float commitment) => new LifeTuning(commitment, FallbackDepth, _motiveBiases, _moodBiases, _moodFrustration, _routineBiases);
+
+        public LifeTuning WithFallbackDepth(byte depth) => new LifeTuning(Commitment, depth, _motiveBiases, _moodBiases, _moodFrustration, _routineBiases);
     }
 }

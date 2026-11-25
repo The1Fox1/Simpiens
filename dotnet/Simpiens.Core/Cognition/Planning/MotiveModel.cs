@@ -48,8 +48,9 @@ namespace Simpiens.Cognition.Planning
             int motive = (int)goal.Motive;
             // Mood's weight (L1.4, D9) reaches every crawler, under orders too: orders are duty, a motive weighed like the rest,
             // and a member's mood weighs its duty as it weighs its earning (the producer, 2026-11-24: "Crawlers can absolutely
-            // disobey orders"; plan 2's D25, amending the epic's A8)
-            return life.MotiveWeight(motive) * life.MoodWeight(context.Mood, motive);
+            // disobey orders"; plan 2's D25, amending the epic's A8). The routine's weight by block and family (plan 3's D30) never
+            // scales the unweighted family, so orders, hunger, rescue and leaving keep their pull at any hour (D36)
+            return life.MotiveWeight(motive) * life.MoodWeight(context.Mood, motive) * life.RoutineWeight(context.Block, (int)goal.FamilyFor(context));
         }
     }
 

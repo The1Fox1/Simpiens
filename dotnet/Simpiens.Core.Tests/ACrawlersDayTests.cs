@@ -102,6 +102,9 @@ namespace Simpiens.Core.Tests
                     bool asleep = crawler.VisualState == AgentVisualState.Sleeping || crawler.VisualState == AgentVisualState.Resting || crawler.IsExhaustionCollapsed;
                     if (asleep) tally.AsleepByHour[clockHour]++;
                     tally.AllByHour[clockHour]++;
+                    int chronotype = (int)crawler.Life.Chronotype;
+                    if (asleep) tally.AsleepByChronotype[chronotype, clockHour]++;
+                    tally.AllByChronotype[chronotype, clockHour]++;
                     if (crawler.VisualState == AgentVisualState.Harvesting) tally.HandsOnTicks++;
                     long now = (long)sim.Clock.CurrentTick;
                     if (!sleeping.TryGetValue(crawler.AgentId, out var spell)) sleeping[crawler.AgentId] = (asleep, now, -1);
@@ -186,6 +189,7 @@ namespace Simpiens.Core.Tests
         {
             public int Days, Residents;
             public readonly long[] AsleepByHour = new long[24], AllByHour = new long[24];
+            public readonly long[,] AsleepByChronotype = new long[3, 24], AllByChronotype = new long[3, 24];
             public readonly List<long> SleepLengths = new(), AwakeSpans = new();
             public long HandsOnTicks;
             public long ResidentTicks, Decisions, GoalsChosen, NearTies, Flips, PlansNotFound, PairTicks, ChronicleLines, ChronicleLinesAboutResidents;
@@ -204,6 +208,8 @@ namespace Simpiens.Core.Tests
                 _seeds++;
                 Residents += other.Residents;
                 for (int h = 0; h < 24; h++) { AsleepByHour[h] += other.AsleepByHour[h]; AllByHour[h] += other.AllByHour[h]; }
+                for (int c = 0; c < 3; c++)
+                    for (int h = 0; h < 24; h++) { AsleepByChronotype[c, h] += other.AsleepByChronotype[c, h]; AllByChronotype[c, h] += other.AllByChronotype[c, h]; }
                 SleepLengths.AddRange(other.SleepLengths);
                 AwakeSpans.AddRange(other.AwakeSpans);
                 HandsOnTicks += other.HandsOnTicks;
@@ -263,6 +269,11 @@ namespace Simpiens.Core.Tests
                 text.AppendLine($"Hands-on work (harvesting or a station's work): {Hours(HandsOnTicks)} a resident-day.");
                 text.AppendLine($"Sleeps (asleep {SleepAtLeast / DayClock.TicksPerHour} h or more): {SleepLengths.Count / ResidentDays:F2} a resident-day; length {Spread(SleepLengths)}.");
                 text.AppendLine($"Hours awake between sleeps: {Spread(AwakeSpans)} ({AwakeSpans.Count} waking days).");
+                text.AppendLine("Asleep by chronotype (plan 3's R.3), the share at each hour:");
+                text.AppendLine("  chronotype  " + string.Join(" ", new[] { 0, 3, 5, 6, 7, 9, 10, 12, 18, 21, 22, 23 }.Select(h => $"{h:D2}:00")));
+                foreach (var (c, name) in new[] { (1, "lark      "), (0, "average   "), (2, "owl       ") })
+                    text.AppendLine($"  {name}  " + string.Join(" ", new[] { 0, 3, 5, 6, 7, 9, 10, 12, 18, 21, 22, 23 }.Select(h =>
+                        AllByChronotype[c, h] > 0 ? (100.0 * AsleepByChronotype[c, h] / AllByChronotype[c, h]).ToString("F0").PadLeft(4) + "%" : "    -")));
                 text.AppendLine("The day by the clock: what residents do in each game hour, as a share of their time (plan 2's P.1; asleep, plan 3's P.1):");
                 text.AppendLine("  hour   work social   rest leisure  unweighted  other  asleep");
                 for (int i = 0; i < 24; i++)

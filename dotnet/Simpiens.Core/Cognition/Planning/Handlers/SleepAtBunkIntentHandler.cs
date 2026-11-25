@@ -45,7 +45,7 @@ namespace Simpiens.Cognition.Planning.Handlers
             var agent = node.Agent;
             if (agent != null) agent.VisualState = AgentVisualState.Sleeping;
 
-            bool awake = agent != null && !agent.IsDowned && (context.Economy.Day.Wakes(agent.Energy, agent.Hunger) || agent.IsCalledFromSleep);
+            bool awake = agent != null && !agent.IsDowned && (agent.WakesAt(context.Economy.Day, context.CurrentTick) || agent.IsCalledFromSleep);
             if (state.ElapsedTime >= sleep.Duration || awake)
             {
                 context.ReleaseBunk(sleep.BunkId, node.Id);

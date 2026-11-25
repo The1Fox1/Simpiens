@@ -108,6 +108,21 @@ namespace Simpiens.Cognition
         /// mustering. On the 24-hour day a party sent at night or at dawn found its members asleep; as RimWorld's drafted
         /// colonists wake, a member who is rested enough answers. One below the tired line sleeps on, needs first (Part 1's Q6).
         /// </summary>
+        /// <summary>
+        /// The part of its day its routine is in at <paramref name="tick"/> (Epic LIFE-1 plan 3, R.1, D29), as its context computes
+        /// it: from its chronotype, its diligence and an artisan's shifts.
+        /// </summary>
+        public Simpiens.Simulation.Life.RoutineBlock RoutineBlockAt(uint tick) =>
+            Simpiens.Simulation.Life.Routine.BlockAt(_life.Chronotype, Personality.Diligence, AgentId, tick, Station.Shifts);
+
+        /// <summary>
+        /// Whether a sleeper (in a bunk or rough) is up at <paramref name="tick"/>: rested or too hungry to sleep on, at the
+        /// session's lines; in its routine's night it dozes on at full energy until its waking hour, and only hunger's line wakes
+        /// it (Epic LIFE-1 plan 3, R.3, D31). The longest sleep is the intent's.
+        /// </summary>
+        public bool WakesAt(in Simpiens.Simulation.Economy.DayTuning day, uint tick) =>
+            RoutineBlockAt(tick) == Simpiens.Simulation.Life.RoutineBlock.Night ? Hunger >= day.WakeHunger : day.Wakes(Energy, Hunger);
+
         public bool IsCalledFromSleep => Expedition.Stage == Simpiens.Simulation.Guild.ExpeditionStage.Muster && Energy >= Considerations.TiredEnergy;
         public IdentityTag Identity { get; set; } = IdentityTag.Default;
 
