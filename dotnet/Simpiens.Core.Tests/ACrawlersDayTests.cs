@@ -106,6 +106,12 @@ namespace Simpiens.Core.Tests
                     if (asleep) tally.AsleepByChronotype[chronotype, clockHour]++;
                     tally.AllByChronotype[chronotype, clockHour]++;
                     if (crawler.VisualState == AgentVisualState.Harvesting) tally.HandsOnTicks++;
+                    // Work by purse (plan 3's R.6): under the comfortable purse, up to twice it, and beyond
+                    int gold = crawler.Inventory != null ? crawler.Inventory.Gold : 0, purse = sim.Simulation.Economy.ComfortablePurse;
+                    int band = gold <= purse ? 0 : gold <= 2 * purse ? 1 : 2;
+                    tally.ByPurse[band]++;
+                    if (category == "Work") tally.WorkByPurse[band]++;
+                    tally.WearinessSum += crawler.Life.Weariness;
                     long now = (long)sim.Clock.CurrentTick;
                     if (!sleeping.TryGetValue(crawler.AgentId, out var spell)) sleeping[crawler.AgentId] = (asleep, now, -1);
                     else if (spell.Asleep != asleep)
@@ -192,6 +198,8 @@ namespace Simpiens.Core.Tests
             public readonly long[,] AsleepByChronotype = new long[3, 24], AllByChronotype = new long[3, 24];
             public readonly List<long> SleepLengths = new(), AwakeSpans = new();
             public long HandsOnTicks;
+            public readonly long[] ByPurse = new long[3], WorkByPurse = new long[3];
+            public double WearinessSum;
             public long ResidentTicks, Decisions, GoalsChosen, NearTies, Flips, PlansNotFound, PairTicks, ChronicleLines, ChronicleLinesAboutResidents;
             public readonly Dictionary<string, long> ByCategory = new(), ByGoal = new(), BySource = new(), NotFoundGoals = new(), AfterNotFound = new(), NearTiePairs = new(), FlipPairs = new(), ByEventType = new();
             public readonly HashSet<(int Day, EntityId A, EntityId B)> PairsMet = new();
@@ -213,6 +221,8 @@ namespace Simpiens.Core.Tests
                 SleepLengths.AddRange(other.SleepLengths);
                 AwakeSpans.AddRange(other.AwakeSpans);
                 HandsOnTicks += other.HandsOnTicks;
+                for (int b = 0; b < 3; b++) { ByPurse[b] += other.ByPurse[b]; WorkByPurse[b] += other.WorkByPurse[b]; }
+                WearinessSum += other.WearinessSum;
                 ResidentTicks += other.ResidentTicks; Decisions += other.Decisions; GoalsChosen += other.GoalsChosen; NearTies += other.NearTies;
                 Flips += other.Flips; PlansNotFound += other.PlansNotFound; PairTicks += other.PairTicks;
                 ChronicleLines += other.ChronicleLines; ChronicleLinesAboutResidents += other.ChronicleLinesAboutResidents;
@@ -267,6 +277,10 @@ namespace Simpiens.Core.Tests
                 text.AppendLine($"Together (two residents within {GossipRadius} units): {_distinctPairDays / SeedDays:F1} distinct pairs a day; {PairTicks / (double)DayClock.TicksPerHour / SeedDays:F1} pair-hours a day.");
                 text.AppendLine("Boredom at each day's end, the mean resident: " + string.Join(", ", Enumerable.Range(0, Days).Select(d => (BoredomAtDayEnd[d] / _seeds).ToString("F1"))));
                 text.AppendLine($"Hands-on work (harvesting or a station's work): {Hours(HandsOnTicks)} a resident-day.");
+                string[] bands = { "at most the comfortable purse", "up to twice it", "beyond" };
+                text.AppendLine("Work by purse (plan 3's R.6): " + string.Join("; ", Enumerable.Range(0, 3).Select(b =>
+                    $"{bands[b]} {(ResidentTicks > 0 ? 100.0 * ByPurse[b] / ResidentTicks : 0):F0}% of the time, at work {(ByPurse[b] > 0 ? 100.0 * WorkByPurse[b] / ByPurse[b] : 0):F0}% of it")));
+                text.AppendLine($"Weariness, the mean resident over the run: {(ResidentTicks > 0 ? WearinessSum / ResidentTicks : 0):F1}.");
                 text.AppendLine($"Sleeps (asleep {SleepAtLeast / DayClock.TicksPerHour} h or more): {SleepLengths.Count / ResidentDays:F2} a resident-day; length {Spread(SleepLengths)}.");
                 text.AppendLine($"Hours awake between sleeps: {Spread(AwakeSpans)} ({AwakeSpans.Count} waking days).");
                 text.AppendLine("Asleep by chronotype (plan 3's R.3), the share at each hour:");

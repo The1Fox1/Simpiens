@@ -27,7 +27,8 @@ namespace Simpiens.Testing.Planning
             ValidateUrgency();
             ValidateMoodWeighs();
             ValidateTheRoutineWeighs();
-            TestLog.Log("<color=green>[MotiveModelValidator] ALL 6 TESTS PASSED SUCCESSFULLY!</color>");
+            ValidateTheRhythmWeighsWork();
+            TestLog.Log("<color=green>[MotiveModelValidator] ALL 7 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         /// <summary>
@@ -180,6 +181,40 @@ namespace Simpiens.Testing.Planning
                 "Without the routine: no weight by the hour, mood's kept.");
             Assert(life.WithRoutineWeight(RoutineBlock.Night, (int)ActivityFamily.Unweighted, 2f).RoutineWeight(RoutineBlock.Night, (int)ActivityFamily.Unweighted) == 1f,
                 "The unweighted family can't be given a routine weight.");
+        }
+
+        /// <summary>
+        /// Satiation and weariness on work (Epic LIFE-1 plan 3, R.6, D32, D33): work weighs 1 up to the purse target (the
+        /// comfortable purse by greed), falling to 0.6 at twice it; weariness takes up to 0.3 off; neither touches another family;
+        /// and a zeroed rhythm weighs nothing.
+        /// </summary>
+        private void ValidateTheRhythmWeighsWork()
+        {
+            int purse = EconomyTuning.Default.ComfortablePurse;
+            var earn = new Simpiens.Cognition.Planning.Goals.FulfillBountyGoal();
+            var socialize = new Simpiens.Cognition.Planning.Goals.SocializeGoal();
+            var quiet = EconomyTuning.Default.WithLife(LifeTuning.Default.WithoutRoutine().WithoutMood());
+            AgentContext Rich(int gold, float greed = 0f, float weariness = 0f, EconomyTuning economy = null)
+            {
+                var snapshot = new SharedWorldSnapshot(10, 10, 1f, 4, _ => { });
+                snapshot.SetEconomy(economy ?? quiet);
+                var life = default(CrawlerLife);
+                life.Weary(weariness);
+                return new AgentContext(default, default, new AgentNeeds(20f, 80f, 80f), 0f, snapshot, null, 0,
+                    inventory: new Simpiens.Cognition.Inventory.AgentInventory(4, startingGold: gold), personality: new AgentPersonality(greed, 0f, 0f, 0f, 0f), life: life);
+            }
+            Assert(Rhythm.PurseTarget(Rich(0)) == purse && Rhythm.PurseTarget(Rich(0, greed: 1f)) == (int)(purse * 1.5f) && Rhythm.PurseTarget(Rich(0, greed: -1f)) == purse / 2,
+                $"The purse target: the comfortable purse ({purse}g), by greed half to one and a half times it.");
+            Assert(MotiveModel.Weight(earn, Rich(purse)) == 1f && MotiveModel.Weight(earn, Rich(purse / 2)) == 1f, "Up to the target, work weighs 1.");
+            Assert(Math.Abs(MotiveModel.Weight(earn, Rich(purse + purse / 2)) - 0.8f) < 1e-5f, $"Half again over it, 0.8 ({MotiveModel.Weight(earn, Rich(purse + purse / 2))}).");
+            Assert(Math.Abs(MotiveModel.Weight(earn, Rich(2 * purse)) - 0.6f) < 1e-5f && Math.Abs(MotiveModel.Weight(earn, Rich(5 * purse)) - 0.6f) < 1e-5f, "At twice it and beyond, 0.6.");
+            Assert(MotiveModel.Weight(earn, Rich(purse + purse / 2, greed: 1f)) == 1f, "The greedy work on: their target is higher.");
+            Assert(Math.Abs(MotiveModel.Weight(earn, Rich(10, weariness: 100f)) - 0.7f) < 1e-5f && Math.Abs(MotiveModel.Weight(earn, Rich(10, weariness: 50f)) - 0.85f) < 1e-5f,
+                "Weariness at its height takes 0.3 off work, half of it 0.15.");
+            Assert(Math.Abs(MotiveModel.Weight(earn, Rich(2 * purse, weariness: 100f)) - 0.42f) < 1e-5f, "Rich and weary: the two multiply (0.6 x 0.7).");
+            Assert(MotiveModel.Weight(socialize, Rich(5 * purse, weariness: 100f)) == 1f, "Company is untouched by the purse and weariness.");
+            var none = EconomyTuning.Default.WithLife(LifeTuning.Default.WithoutRoutine().WithoutMood().WithRhythm(default));
+            Assert(MotiveModel.Weight(earn, Rich(5 * purse, weariness: 100f, economy: none)) == 1f, "A zeroed rhythm weighs nothing.");
         }
 
         private static void Assert(bool condition, string message)

@@ -11,7 +11,7 @@ namespace Simpiens.Cognition.Planning
     /// <item><b>The weight</b> multiplies the shared factors, each exactly 1 until its milestone sets it: the session's weight
     /// by motive (<see cref="Simpiens.Simulation.Life.LifeTuning.MotiveWeight"/>); mood by motive and band
     /// (<see cref="Simpiens.Simulation.Life.LifeTuning.MoodWeight"/>, L1.4); then the want
-    /// (plan 2), the routine by family and hour, satiation on work and the day's intention (plan 3).</item>
+    /// (plan 2), the routine by family and hour (plan 3's R.3-R.4), satiation and weariness on work (<see cref="Rhythm"/>, R.6) and the day's intention (R.7).</item>
     /// <item><b>Exact while neutral:</b> the factors are multiplied together first, then the base by their product. A float
     /// times exactly 1 is itself, so a weight of 1 leaves every choice, and the golden hashes, as they were.</item>
     /// </list>
@@ -50,7 +50,11 @@ namespace Simpiens.Cognition.Planning
             // and a member's mood weighs its duty as it weighs its earning (the producer, 2026-11-24: "Crawlers can absolutely
             // disobey orders"; plan 2's D25, amending the epic's A8). The routine's weight by block and family (plan 3's D30) never
             // scales the unweighted family, so orders, hunger, rescue and leaving keep their pull at any hour (D36)
-            return life.MotiveWeight(motive) * life.MoodWeight(context.Mood, motive) * life.RoutineWeight(context.Block, (int)goal.FamilyFor(context));
+            var family = goal.FamilyFor(context);
+            float weight = life.MotiveWeight(motive) * life.MoodWeight(context.Mood, motive) * life.RoutineWeight(context.Block, (int)family);
+            // Satiation and weariness on work (plan 3's R.6, D32, D33): exactly 1 under the purse target and unwearied
+            if (family == ActivityFamily.Work) weight *= Rhythm.OnWork(context);
+            return weight;
         }
     }
 
