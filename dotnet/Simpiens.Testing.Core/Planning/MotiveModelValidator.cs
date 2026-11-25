@@ -152,7 +152,7 @@ namespace Simpiens.Testing.Planning
             var recreate = new Simpiens.Cognition.Planning.Goals.RecreateGoal();
             var socialize = new Simpiens.Cognition.Planning.Goals.SocializeGoal();
             var gather = new Simpiens.Cognition.Planning.Goals.GatherAtAnchorGoal();
-            (uint Tick, float Work, float Leisure, float Social)[] table = { (working, 1.2f, 0.8f, 0.9f), (leisure, 0.8f, 1.2f, 1.15f), (night, 0.6f, 0.7f, 0.8f) };
+            (uint Tick, float Work, float Leisure, float Social)[] table = { (working, 1.2f, 0.8f, 1f), (leisure, 0.8f, 1.2f, 1f), (night, 0.6f, 0.7f, 0.8f) }; // company 1 by day (D30 amended)
             foreach (var row in table)
             {
                 var context = At(row.Tick, 80f);

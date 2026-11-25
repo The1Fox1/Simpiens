@@ -94,9 +94,11 @@ namespace Simpiens.Simulation.Life
         /// are a motive a crawler may set aside. Fun (L2.8, D21): low 1.25, breaking 1.5, safe since Recreate is never chosen hungry,
         /// tired or hurt (F12);</item>
         /// <item>mood's frustration a game hour (L1.4, D9): breaking +15, low +5, good and happy -5 (eased faster);</item>
-        /// <item>the routine's weights by block and family (plan 3, D30): in the working block work 1.2, leisure 0.8, company 0.9;
-        /// in the leisure block work 0.8, leisure 1.2, company 1.15; in the night work 0.6, leisure 0.7, company 0.8 and rest 1.5,
-        /// the bedtime pull (R.3, D31); rest 1 by day; the unweighted family never.</item>
+        /// <item>the routine's weights by block and family (plan 3, D30): in the working block work 1.2, leisure 0.8; in the
+        /// leisure block work 0.8, leisure 1.2; in the night work 0.6, leisure 0.7, company 0.8 and rest 1.5, the bedtime pull (R.3,
+        /// D31); company and rest 1 by day; the unweighted family never. Company was 0.9 and 1.15 by day at first (D30 amended by
+        /// measurement): the hearth, already the strongest pull on free time, took 5.2 hours a resident-day, and over the gate
+        /// scenario's 16 days sales fell by half, trust toward the patron faded and the guild never reached the gate.</item>
         /// </list>
         /// </summary>
         public static LifeTuning Default => new LifeTuning(commitment: 0f, fallbackDepth: 2)
@@ -109,9 +111,7 @@ namespace Simpiens.Simulation.Life
             .WithMoodFrustration(MoodBand.Breaking, 15f).WithMoodFrustration(MoodBand.Low, 5f)
             .WithMoodFrustration(MoodBand.Good, -5f).WithMoodFrustration(MoodBand.Happy, -5f)
             .WithRoutineWeight(RoutineBlock.Working, WorkFamily, 1.2f).WithRoutineWeight(RoutineBlock.Working, LeisureFamily, 0.8f)
-            .WithRoutineWeight(RoutineBlock.Working, SocialFamily, 0.9f)
             .WithRoutineWeight(RoutineBlock.Leisure, WorkFamily, 0.8f).WithRoutineWeight(RoutineBlock.Leisure, LeisureFamily, 1.2f)
-            .WithRoutineWeight(RoutineBlock.Leisure, SocialFamily, 1.15f)
             .WithRoutineWeight(RoutineBlock.Night, WorkFamily, 0.6f).WithRoutineWeight(RoutineBlock.Night, LeisureFamily, 0.7f)
             .WithRoutineWeight(RoutineBlock.Night, SocialFamily, 0.8f).WithRoutineWeight(RoutineBlock.Night, RestFamily, 1.5f);
 
