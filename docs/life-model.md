@@ -288,3 +288,21 @@ At 2 boredom settles near 40 (fun 60), so the Bored term seldom holds and Recrea
 - **Moods** (`MeasureMoodOnTheGateSeeds`): no player, mean 8.3, Steady 51%, Good 47%, Low 1.4%; with the guild's clears, mean 9.2, Happy 1.6%; no member stayed behind or deserted on the gate seeds.
 - **F17** (`MeasurePassionsOnTheGateSeeds`): a passion burned bright on 7 of 23 seeds; harder foes taught Apprentices more on none (no blow by an Apprentice on a rat). Still the producer's call.
 - **Cost** (`PopulationScalingProbe`, Release, alternating twice with `main` at `ebc1ef2`, load about 4): 16 crawlers 16.9–20.4k ticks a second against 17.6–18.7k; 24 crawlers 18.4–18.8k against 16.9–17.5k. The 12-crawler case ran first and read 6–9k on both. Free time costs nothing measurable at this noise: leisure's scoring is offset by fewer plans (552 decisions a resident-day, from about 600 at L0.3, §3.1).
+
+## 6. Rhythm (plan 3)
+
+### 6.1 Sleep by the clock, before rhythm (P.1, 2026-11-24)
+`MeasureACrawlersDay` gained sleep's columns: the share asleep by clock hour (in a bunk, resting where it stands or collapsed), each sleep's length (a spell asleep two game hours or more), the hours awake between sleeps, and hands-on work (harvesting or a station's work). The 23 gate seeds, three days, residents, on `feat/life1-rhythm` at its start (behaviour as plan 2's close-out, `d266b86`; plan 2 not yet merged, so the hand-over was checked against that branch). The day's totals are §5.11's.
+
+| | No player | The guild player |
+| :--- | ---: | ---: |
+| Sleeps a resident-day | 1.04 | 1.03 |
+| A sleep's length, mean (p10–p90) | 8.0 h (7.7–8.5) | 8.0 h (7.7–8.7) |
+| Hours awake between sleeps, mean (p10, p50, p90) | 10.7 h (9.1, 10.0, 14.0) | 11.1 h (9.1, 10.3, 15.2) |
+| Work, all of the family's plans | 8.3 h | 7.5 h |
+| Hands-on work (harvesting, a station) | 3.1 h | 2.9 h |
+| Asleep at 02:00 / 06:00 / 12:00 / 18:00 | 35% / 20% / 40% / 53% | 29% / 16% / 41% / 58% |
+
+- **A cycle of about 18.7 game hours:** 10.7 awake and 8 asleep, so a resident's sleep drifts about five hours earlier each day and the outpost's sleep is smeared over the clock (F16). Its peak (53% at 17:00–21:00) is the first day's: every resident spawns rested at 06:00 and tires together.
+- **Work is mostly walking to it:** of 8.3 hours on the Work family's plans, 3.1 are hands-on; the rest is the walk, the trade and the board.
+- **For R.2:** full to the tired line (60 energy) in 10.7 hours is a drain of about 5.6 an hour awake, a mix of standing, walking and work. D27's factor of 0.6 makes it about 18 hours, and the bedtime pull (R.3) sends a crawler to bed before then.

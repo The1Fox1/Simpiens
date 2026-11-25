@@ -8,6 +8,7 @@ using Simpiens.Core.Session;
 using Simpiens.Hosting;
 using Simpiens.Narrative;
 using Simpiens.Core.Session.Layouts;
+using Simpiens.Entities;
 using Simpiens.Simulation;
 using Simpiens.Simulation.Guild;
 using Xunit;
@@ -18,8 +19,10 @@ namespace Simpiens.Core.Tests
     /// A crawler's day, measured (Epic LIFE-1, L0.3): what residents spend their hours on, by the motive model's families and
     /// by goal; the goals chosen and the plans not found; near-ties and flips at plans' ends (D5's question); who comes
     /// within the gossip radius of whom; and how many chronicle lines a day brings (the day log's question, F5); and, from
-    /// plan 2's P.1, the day by the clock: what residents do in each game hour, the evening's baseline for fun. Reads the
-    /// session; changes nothing. Explicit: a measurement for docs/life-model.md §3 and §5, re-run at each plan's gate.
+    /// plan 2's P.1, the day by the clock: what residents do in each game hour, the evening's baseline for fun; and, from plan
+    /// 3's P.1, sleep: the share asleep by clock hour, each sleep's length, the hours awake between sleeps, and the hours at
+    /// hands-on work (harvesting or a station's work). Reads the session; changes nothing. Explicit: a measurement for
+    /// docs/life-model.md §3, §5 and §6, re-run at each plan's gate.
     /// </summary>
     public sealed class ACrawlersDayTests
     {
@@ -58,6 +61,7 @@ namespace Simpiens.Core.Tests
             ulong lastEvent = 0;
             long horizon = days * (long)DayClock.TicksPerDay;
             var residents = new List<AgentState>(32);
+            var sleeping = new Dictionary<EntityId, (bool Asleep, long Since, long LastSleepEnd)>();
             while (sim.Clock.CurrentTick < horizon)
             {
                 watch.Run(1);
@@ -91,7 +95,27 @@ namespace Simpiens.Core.Tests
                     };
                     tally.Bump(tally.ByCategory, category);
                     if (goalName != null) tally.Bump(tally.ByGoal, goalName);
-                    tally.Bump(tally.ByHour[DayClock.MinuteOfDay(sim.Clock.CurrentTick - 1) / 60], category);
+                    int clockHour = DayClock.MinuteOfDay(sim.Clock.CurrentTick - 1) / 60;
+                    tally.Bump(tally.ByHour[clockHour], category);
+
+                    // Sleep (plan 3's P.1): asleep in a bunk, resting where it stands, or collapsed
+                    bool asleep = crawler.VisualState == AgentVisualState.Sleeping || crawler.VisualState == AgentVisualState.Resting || crawler.IsExhaustionCollapsed;
+                    if (asleep) tally.AsleepByHour[clockHour]++;
+                    tally.AllByHour[clockHour]++;
+                    if (crawler.VisualState == AgentVisualState.Harvesting) tally.HandsOnTicks++;
+                    long now = (long)sim.Clock.CurrentTick;
+                    if (!sleeping.TryGetValue(crawler.AgentId, out var spell)) sleeping[crawler.AgentId] = (asleep, now, -1);
+                    else if (spell.Asleep != asleep)
+                    {
+                        if (spell.Asleep && now - spell.Since >= SleepAtLeast)
+                        {
+                            // A sleep ended: its length, and the waking day before it (from the last sleep's end, if any)
+                            tally.SleepLengths.Add(now - spell.Since);
+                            if (spell.LastSleepEnd >= 0) tally.AwakeSpans.Add(spell.Since - spell.LastSleepEnd);
+                            sleeping[crawler.AgentId] = (asleep, now, now);
+                        }
+                        else sleeping[crawler.AgentId] = (asleep, spell.Asleep ? spell.Since : now, spell.LastSleepEnd);
+                    }
 
                     // Its decisions: one a tick at most, told apart by the tick they were made at
                     var decision = crawler.LastDecision;
@@ -155,9 +179,15 @@ namespace Simpiens.Core.Tests
             return tally;
         }
 
+        /// <summary>A spell asleep this long or more is a sleep; shorter ones (a doze where it stands) don't end a waking day.</summary>
+        private static readonly long SleepAtLeast = DayClock.Hours(2);
+
         internal sealed class DayTally
         {
             public int Days, Residents;
+            public readonly long[] AsleepByHour = new long[24], AllByHour = new long[24];
+            public readonly List<long> SleepLengths = new(), AwakeSpans = new();
+            public long HandsOnTicks;
             public long ResidentTicks, Decisions, GoalsChosen, NearTies, Flips, PlansNotFound, PairTicks, ChronicleLines, ChronicleLinesAboutResidents;
             public readonly Dictionary<string, long> ByCategory = new(), ByGoal = new(), BySource = new(), NotFoundGoals = new(), AfterNotFound = new(), NearTiePairs = new(), FlipPairs = new(), ByEventType = new();
             public readonly HashSet<(int Day, EntityId A, EntityId B)> PairsMet = new();
@@ -173,6 +203,10 @@ namespace Simpiens.Core.Tests
                 if (Days == 0) { _seeds = 0; Days = other.Days; }
                 _seeds++;
                 Residents += other.Residents;
+                for (int h = 0; h < 24; h++) { AsleepByHour[h] += other.AsleepByHour[h]; AllByHour[h] += other.AllByHour[h]; }
+                SleepLengths.AddRange(other.SleepLengths);
+                AwakeSpans.AddRange(other.AwakeSpans);
+                HandsOnTicks += other.HandsOnTicks;
                 ResidentTicks += other.ResidentTicks; Decisions += other.Decisions; GoalsChosen += other.GoalsChosen; NearTies += other.NearTies;
                 Flips += other.Flips; PlansNotFound += other.PlansNotFound; PairTicks += other.PairTicks;
                 ChronicleLines += other.ChronicleLines; ChronicleLinesAboutResidents += other.ChronicleLinesAboutResidents;
@@ -190,7 +224,17 @@ namespace Simpiens.Core.Tests
             private string PerResidentDay(long count) => (count / ResidentDays).ToString("F1");
             private string Hours(long ticks) => (ticks / (double)DayClock.TicksPerHour / ResidentDays).ToString("F1") + " h";
 
+            /// <summary>Hours: the mean, and the 10th, 50th and 90th percentiles.</summary>
+            private static string Spread(List<long> ticks)
+            {
+                if (ticks.Count == 0) return "none";
+                var sorted = ticks.OrderBy(t => t).ToArray();
+                double H(long t) => t / (double)DayClock.TicksPerHour;
+                return $"mean {sorted.Average(t => H(t)):F1} h (p10 {H(sorted[sorted.Length / 10]):F1}, p50 {H(sorted[sorted.Length / 2]):F1}, p90 {H(sorted[sorted.Length * 9 / 10]):F1})";
+            }
+
             public string Line() =>
+                $"asleep at 02:00 {(AllByHour[2] > 0 ? 100.0 * AsleepByHour[2] / AllByHour[2] : 0):F0}%, at 18:00 {(AllByHour[18] > 0 ? 100.0 * AsleepByHour[18] / AllByHour[18] : 0):F0}%; awake between sleeps {Spread(AwakeSpans)}; " +
                 $"work {Hours(ByCategory.GetValueOrDefault("Work"))}, wandering {Hours(ByCategory.GetValueOrDefault("wandering"))}, idle {Hours(ByCategory.GetValueOrDefault("idle"))}; " +
                 $"{PerResidentDay(GoalsChosen)} goals and {PerResidentDay(PlansNotFound)} plans not found a resident-day; {Flips} flips; " +
                 $"{PairsMet.Count / (double)Days:F0} pairs met a day; {ChronicleLines / (double)Days:F0} chronicle lines a day";
@@ -216,8 +260,11 @@ namespace Simpiens.Core.Tests
                 foreach (var pair in FlipPairs.OrderByDescending(p => p.Value).Take(6)) text.AppendLine($"  {pair.Key}: {pair.Value}");
                 text.AppendLine($"Together (two residents within {GossipRadius} units): {_distinctPairDays / SeedDays:F1} distinct pairs a day; {PairTicks / (double)DayClock.TicksPerHour / SeedDays:F1} pair-hours a day.");
                 text.AppendLine("Boredom at each day's end, the mean resident: " + string.Join(", ", Enumerable.Range(0, Days).Select(d => (BoredomAtDayEnd[d] / _seeds).ToString("F1"))));
-                text.AppendLine("The day by the clock: what residents do in each game hour, as a share of their time (P.1, the evening's baseline):");
-                text.AppendLine("  hour   work social   rest leisure  unweighted  other");
+                text.AppendLine($"Hands-on work (harvesting or a station's work): {Hours(HandsOnTicks)} a resident-day.");
+                text.AppendLine($"Sleeps (asleep {SleepAtLeast / DayClock.TicksPerHour} h or more): {SleepLengths.Count / ResidentDays:F2} a resident-day; length {Spread(SleepLengths)}.");
+                text.AppendLine($"Hours awake between sleeps: {Spread(AwakeSpans)} ({AwakeSpans.Count} waking days).");
+                text.AppendLine("The day by the clock: what residents do in each game hour, as a share of their time (plan 2's P.1; asleep, plan 3's P.1):");
+                text.AppendLine("  hour   work social   rest leisure  unweighted  other  asleep");
                 for (int i = 0; i < 24; i++)
                 {
                     int h = (6 + i) % 24; // from 06:00, the day's start
@@ -226,7 +273,8 @@ namespace Simpiens.Core.Tests
                     if (all == 0) continue;
                     string Share(string key) => (100.0 * hour.GetValueOrDefault(key) / all).ToString("F0").PadLeft(5) + "%";
                     long known = hour.GetValueOrDefault("Work") + hour.GetValueOrDefault("Social") + hour.GetValueOrDefault("Rest") + hour.GetValueOrDefault("Leisure") + hour.GetValueOrDefault("Unweighted");
-                    text.AppendLine($"  {h:D2}:00 {Share("Work")} {Share("Social")} {Share("Rest")} {Share("Leisure")}      {Share("Unweighted")} {(100.0 * (all - known) / all).ToString("F0").PadLeft(5)}%");
+                    string asleepShare = AllByHour[h] > 0 ? (100.0 * AsleepByHour[h] / AllByHour[h]).ToString("F0").PadLeft(6) + "%" : "      -";
+                    text.AppendLine($"  {h:D2}:00 {Share("Work")} {Share("Social")} {Share("Rest")} {Share("Leisure")}      {Share("Unweighted")} {(100.0 * (all - known) / all).ToString("F0").PadLeft(5)}% {asleepShare}");
                 }
                 text.AppendLine($"Chronicle lines a day: {ChronicleLines / SeedDays:F0} outpost-wide (the ring holds 2,048), {ChronicleLinesAboutResidents / SeedDays:F0} naming a resident ({ChronicleLinesAboutResidents / ResidentDays:F1} a resident-day); by type:");
                 foreach (var pair in ByEventType.OrderByDescending(p => p.Value).Take(10)) text.AppendLine($"  {pair.Key}: {pair.Value / SeedDays:F1} a day");
