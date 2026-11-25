@@ -130,6 +130,26 @@ namespace Simpiens.Testing.Life
             var wanting = With(DayIntention.Want, routine.Day);
             Assert(Near(MotiveModel.Weight(fulfil, wanting), MotiveModel.Weight(fulfil, work) * 1.5f) && MotiveModel.Weight(recreate, wanting) == MotiveModel.Weight(recreate, work),
                 "A want's day: the want 1.5, the rest as a work day.");
+            // Duty on a day off (R.9, D36): 0.8, though the routine never weighs it
+            var comply = new Simpiens.Cognition.Planning.Goals.ComplyDirectiveGoal();
+            Assert(Near(MotiveModel.Weight(comply, rest), 0.8f) && MotiveModel.Weight(comply, work) == 1f && MotiveModel.Weight(comply, training) == 1f,
+                "Duty weighs 0.8 on a rest day, 1 on any other.");
+
+            // Called in (D36): a rest day turned to a work day; weariness kept
+            var life = default(CrawlerLife);
+            life.Weary(40f);
+            IntentionRules.Begin(ref life, DayIntention.Rest, 9);
+            IntentionRules.CallIn(ref life, 9);
+            Assert(life.IntentionFor(9) == DayIntention.Work && life.Weariness == 20f, "Called in: a work day, weariness as the day off left it.");
+            IntentionRules.CallIn(ref life, 10);
+            Assert(life.IntentionFor(10) == DayIntention.Work && life.IntentionDay == 10, "Calling in on another day changes nothing.");
+
+            // Q11's switch (D37): every seventh day a rest day for everyone, whatever the odds
+            var outpost = RhythmTuning.Default with { OutpostRestDay = true };
+            Assert(IntentionRules.IsOutpostRestDay(outpost, 6) && IntentionRules.IsOutpostRestDay(outpost, 13) && !IntentionRules.IsOutpostRestDay(outpost, 7)
+                && !IntentionRules.IsOutpostRestDay(RhythmTuning.Default, 6), "Days 7, 14, ... under the switch; never without it.");
+            var resident = new AgentState(Ama);
+            Assert(resident.DrawIntention(6, 1000u, 424242UL, outpost with { RestBase = 0f }, 80) == DayIntention.Rest, "The switch's day is a rest day even at no odds.");
         }
 
         private static bool Near(float a, float b) => Math.Abs(a - b) < 1e-5f;

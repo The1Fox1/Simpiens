@@ -201,6 +201,9 @@ namespace Simpiens.Cognition
                     State.HasActiveIntent = false;
                 }
             }
+            // A member keeping to its orders on its day off is called in (plan 3's R.9, D36)
+            if (State.CallInIfKeepingOrders((uint)currentTick))
+                SimLog.Cognition.ZLogDebug($"{SimLog.Agent(State.AgentId)} was called in from its day off to keep its orders");
 
             // Sent for a fallen mate (Epic 10 Part 3, K7.2c, D42): once its last decision has landed, it drops what it does
             var carry = State.Expedition.Carry;

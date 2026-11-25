@@ -131,6 +131,20 @@ namespace Simpiens.Cognition
         /// <summary>Its routine day at <paramref name="tick"/> (Epic LIFE-1 plan 3, R.7), as its context computes it.</summary>
         public Simpiens.Simulation.Life.Routine RoutineAt(uint tick) => Simpiens.Simulation.Life.Routine.Of(_life.Chronotype, Personality.Diligence, AgentId, tick);
 
+        /// <summary>
+        /// Called in from its day off (Epic LIFE-1 plan 3, R.9, D36): a member keeping to its orders on a rest day (its plan its
+        /// orders', under an expedition's stage or on shift) has a work day instead, so the day off's safe zones never fight its
+        /// orders. True when it was called in.
+        /// </summary>
+        public bool CallInIfKeepingOrders(uint tick)
+        {
+            if (!(Expedition.IsActive || Station.IsActive) || !HasActivePlan || ActiveGoal == null || ActiveGoal.Motive != Simpiens.Cognition.Planning.Motive.Duty) return false;
+            var routine = RoutineAt(tick);
+            if (_life.IntentionFor(routine.Day) != Simpiens.Simulation.Life.DayIntention.Rest) return false;
+            Simpiens.Simulation.Life.IntentionRules.CallIn(ref _life, routine.Day);
+            return true;
+        }
+
         /// <summary>The intention it holds for its routine day at <paramref name="tick"/>: a work day before one is drawn (D34).</summary>
         public Simpiens.Simulation.Life.DayIntention IntentionAt(uint tick) => _life.IntentionFor(RoutineAt(tick).Day);
 
@@ -165,7 +179,8 @@ namespace Simpiens.Cognition
             int gold = Inventory != null ? Inventory.Gold : 0;
             var odds = Simpiens.Simulation.Life.IntentionRules.For(rhythm, _life.Weariness, Simpiens.Simulation.Life.IntentionRules.WindfallWithinADay(_life.LastWindfall, tick),
                 purseTarget > 0 && gold > purseTarget, passion, want);
-            var intention = Simpiens.Simulation.Life.IntentionRules.Draw(odds, seed, AgentId, day);
+            var intention = Simpiens.Simulation.Life.IntentionRules.IsOutpostRestDay(rhythm, day) ? Simpiens.Simulation.Life.DayIntention.Rest // Q11's switch (D37)
+                : Simpiens.Simulation.Life.IntentionRules.Draw(odds, seed, AgentId, day);
             Simpiens.Simulation.Life.IntentionRules.Begin(ref _life, intention, day);
             return intention;
         }

@@ -52,6 +52,9 @@ namespace Simpiens.Simulation.Life
         /// <summary>Whether a windfall at <paramref name="windfall"/> (0 for none) fell within the game day before <paramref name="tick"/>.</summary>
         public static bool WindfallWithinADay(uint windfall, uint tick) => windfall != 0 && tick >= windfall && tick - windfall <= DayClock.TicksPerDay;
 
+        /// <summary>Whether routine day <paramref name="day"/> (0 for day 1) is the outpost's rest day under Q11's switch (D37): every seventh.</summary>
+        public static bool IsOutpostRestDay(in RhythmTuning tuning, long day) => tuning.OutpostRestDay && day >= 0 && (day + 1) % 7 == 0;
+
         /// <summary>The intention drawn for <paramref name="crawler"/> on routine day <paramref name="day"/>, by <paramref name="odds"/>.</summary>
         public static DayIntention Draw(in Odds odds, ulong seed, EntityId crawler, long day)
         {
@@ -68,6 +71,18 @@ namespace Simpiens.Simulation.Life
         /// weariness (D33): a rest day halves it, and a rest day after a rest day clears it.
         /// </summary>
         public static void Begin(ref CrawlerLife life, DayIntention intention, long day)
+            => Begin(ref life, intention, day, calledIn: false);
+
+        /// <summary>
+        /// A member called in from its day off (D36): it kept to its orders, so its day is a work day; weariness stays as the day off
+        /// left it.
+        /// </summary>
+        public static void CallIn(ref CrawlerLife life, long day)
+        {
+            if (life.IntentionFor(day) == DayIntention.Rest) life.SetIntention(DayIntention.Work, day);
+        }
+
+        private static void Begin(ref CrawlerLife life, DayIntention intention, long day, bool calledIn)
         {
             if (intention == DayIntention.Rest)
             {

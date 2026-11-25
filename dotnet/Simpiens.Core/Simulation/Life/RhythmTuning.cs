@@ -42,6 +42,18 @@ namespace Simpiens.Simulation.Life
         public float RestDayLeisure { get; init; }
         public float RestDaySocial { get; init; }
 
+        /// <summary>
+        /// A rest day's weight on duty (D36): orders weigh less on a day off, so compliance decides whether a member answers; one
+        /// who keeps to them is called in, its day a work day again. The routine itself never weighs duty.
+        /// </summary>
+        public float RestDayDuty { get; init; }
+
+        /// <summary>
+        /// Q11's switch (D37): every seventh game day is a rest day for every resident, whatever its odds; off in the live game.
+        /// Artisans' shifts that day are the player's to keep or clear.
+        /// </summary>
+        public bool OutpostRestDay { get; init; }
+
         /// <summary>A training day's weights on growth and work; a want's day's on its want (D34).</summary>
         public float TrainingDayGrowth { get; init; }
         public float TrainingDayWork { get; init; }
@@ -49,10 +61,11 @@ namespace Simpiens.Simulation.Life
 
         /// <summary>
         /// The day's intention's weight on a goal of <paramref name="family"/> and <paramref name="motive"/> (D34): 1 on a work day,
-        /// for the unweighted family, and for any weight left unset.
+        /// for the unweighted family (but duty on a rest day, D36), and for any weight left unset.
         /// </summary>
         public float IntentionWeight(DayIntention intention, Simpiens.Cognition.Planning.ActivityFamily family, Simpiens.Cognition.Planning.Motive motive)
         {
+            if (intention == DayIntention.Rest && motive == Simpiens.Cognition.Planning.Motive.Duty) return Set(RestDayDuty); // D36
             if (family == Simpiens.Cognition.Planning.ActivityFamily.Unweighted) return 1f;
             switch (intention)
             {
@@ -81,7 +94,7 @@ namespace Simpiens.Simulation.Life
         /// weariness at its height weighs work 0.7 (D33); the day's intention (D34): a rest day 5%, plus 40% at weariness's height,
         /// 50% after a windfall in the last game day and 15% with the purse above its target; a training day 15% with a passion;
         /// a want's day 25% with a want held; a rest day weighs work 0.4 and leisure 1.3, a training day growth 1.5 and work 0.8,
-        /// a want's day its want 1.5. A rest day weighed company 1.2 at first (D34 amended by measurement, as D30 was): over six days
+        /// a want's day its want 1.5; a rest day weighs duty 0.8 (D36); no outpost rest day (D37). A rest day weighed company 1.2 at first (D34 amended by measurement, as D30 was): over six days
         /// on the gate seeds the freed hours went to the hearth (4.9 to 5.7 h a resident-day) and leisure fell.
         /// </summary>
         public static RhythmTuning Default => new RhythmTuning
@@ -98,6 +111,7 @@ namespace Simpiens.Simulation.Life
             RestDayWork = 0.4f,
             RestDayLeisure = 1.3f,
             RestDaySocial = 1f,
+            RestDayDuty = 0.8f,
             TrainingDayGrowth = 1.5f,
             TrainingDayWork = 0.8f,
             WantDayWant = 1.5f,
