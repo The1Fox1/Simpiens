@@ -75,18 +75,22 @@ namespace Simpiens.Hosting
         /// option A): the forge's respirators wait on glowstone the expeditions bring home near the horizon's edge, so a seed
         /// alone is timing; measured 18 of seeds 1-20 with hunting off and on. 0.8 until Epic LIFE-1 plan 2: with free time,
         /// variety, wants and mood's pull on leisure (L2.6-L2.8) the stations made goods on 31 of seeds 1-40, so the share was
-        /// lowered to 0.75 by exception (the epic's F19).
+        /// lowered to 0.75 by exception (the epic's F19). Back to 0.8 at plan 3's R.10: with nights, routines and days off the
+        /// stations made goods on 37 of seeds 1-40 (F19 resolved).
         /// </summary>
-        public const float CraftingMadeShare = 0.75f;
+        public const float CraftingMadeShare = 0.8f;
 
         /// <summary>
         /// The share of seeds on which someone may quit the crafting profile's loop for want of pay (Epic 10 Part 3, F3's
         /// option A): a stall that has just bought its salvage can be empty at a caravan's visit; measured on seeds 1-20 and
         /// 20261009, one seed with hunting off (13) and two with it on (2 and 3). 0.25 since Epic 10 Part 3's K10.2a (F12): the
         /// rate sits at the old 0.15 by itself (6 of seeds 1-40 at K10.1b, 8 with the Matriarch; seeds 21-40 alike at 3), and
-        /// which seeds quit moves with any change of the creatures' timing.
+        /// which seeds quit moves with any change of the creatures' timing. 0.35 since Epic LIFE-1 plan 3's R.10, by exception:
+        /// with nights, routines and days off residents work and sell less (work 8.3 to about 7.4 hours a resident-day over six
+        /// days), the generous players' treasury runs dry at a visit more often, and a quit for pay came on 13 of seeds 1-40
+        /// (the epic's F20).
         /// </summary>
-        public const float CraftingUnpaidQuitShare = 0.25f;
+        public const float CraftingUnpaidQuitShare = 0.35f;
 
         /// <summary>
         /// The hunting profile (Epic 10 Part 3, K11.2): fair prices, the forge making blades and ring coats and the still
