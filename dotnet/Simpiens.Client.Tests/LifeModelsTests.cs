@@ -160,6 +160,23 @@ namespace Simpiens.Client.Tests
             Assert.Equal($"{night.Asleep} asleep · {night.Working} at work · {night.Leisure} at leisure", night.Words);
         }
 
+        /// <summary>
+        /// What the frames say a crawler is doing (Epic LIFE-1 plan 3, V.4, D38): a begun spell's activity, nothing on its way there,
+        /// so the scene hangs the spell's icon over it once it sits down to it.
+        /// </summary>
+        [Fact]
+        public void TheFramesCarryWhatACrawlerIsDoing()
+        {
+            var state = new AgentState(Ama);
+            Assert.Equal(Activity.None, Simpiens.Presentation.WorldViewFrame.ActivityOf(state));
+            var spell = new Simpiens.Cognition.Contracts.RecreateIntent(Ama, 0, Activity.Ale, 0, null);
+            state.CurrentIntent = spell;
+            Assert.Equal(Activity.None, Simpiens.Presentation.WorldViewFrame.ActivityOf(state)); // still walking there
+            spell.Begun = true;
+            Assert.Equal(Activity.Ale, Simpiens.Presentation.WorldViewFrame.ActivityOf(state));
+            Assert.Equal("activity/ale", Simpiens.Presentation.Art.ArtKeys.Activity(Activity.Ale));
+        }
+
         private static List<string> Shown(DayLogModel today)
         {
             var shown = new List<string>();

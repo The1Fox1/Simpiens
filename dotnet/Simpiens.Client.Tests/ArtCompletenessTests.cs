@@ -123,6 +123,8 @@ namespace Simpiens.Client.Tests
             foreach (Simpiens.Simulation.Skills.PartyRole role in System.Enum.GetValues(typeof(Simpiens.Simulation.Skills.PartyRole)))
                 if (ArtKeys.Badge(role) != null) used.Add(catalog.Id(ArtKeys.Badge(role))); // a guild member's role badge (Epic 11, S5.8)
             used.Add(catalog.Id(ArtKeys.BadgeNamed)); // a named creature's mark (Epic 11, S7.7)
+            foreach (Simpiens.Simulation.Life.Activity activity in System.Enum.GetValues(typeof(Simpiens.Simulation.Life.Activity)))
+                if (activity != Simpiens.Simulation.Life.Activity.None) used.Add(catalog.Id(ArtKeys.Activity(activity))); // every activity has its icon (Epic LIFE-1 plan 3, V.4)
             used.Add(catalog.Id(ArtKeys.PropGate)); // the descent gate, sealed and breached (K10.5c)
             used.Add(catalog.Id(ArtKeys.PropGateOpen));
             foreach (Simpiens.Simulation.World.HazardKind kind in System.Enum.GetValues(typeof(Simpiens.Simulation.World.HazardKind)))

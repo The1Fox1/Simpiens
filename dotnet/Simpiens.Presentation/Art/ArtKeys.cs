@@ -84,6 +84,10 @@ namespace Simpiens.Presentation.Art
         /// <summary>A named creature's mark over it (Epic 11, S7.7, D37).</summary>
         public const string BadgeNamed = "badge/named";
 
+        /// <summary>What a crawler is doing with its free time, over its head (Epic LIFE-1 plan 3, V.4): "activity/ale"; null for none.</summary>
+        public static string Activity(Simpiens.Simulation.Life.Activity activity) =>
+            activity == Simpiens.Simulation.Life.Activity.None ? null : "activity/" + activity.ToString().ToLowerInvariant();
+
         /// <summary>The badge's key for <paramref name="role"/>; null for none.</summary>
         public static string Badge(Simpiens.Simulation.Skills.PartyRole role) => role switch
         {

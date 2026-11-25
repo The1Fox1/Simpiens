@@ -62,6 +62,11 @@ namespace Simpiens.Presentation
                     _badges[r] = badge != null && value.TryId(badge, out var id) ? id : ArtId.None;
                 }
                 _namedBadge = value.TryId(ArtKeys.BadgeNamed, out var named) ? named : ArtId.None;
+                for (int a = 0; a < _activities.Length; a++)
+                {
+                    string key = ArtKeys.Activity((Simpiens.Simulation.Life.Activity)a);
+                    _activities[a] = key != null && value.TryId(key, out var icon) ? icon : ArtId.None;
+                }
                 _gate = value.TryId(ArtKeys.PropGate, out var gate) ? gate : ArtId.None;
                 _gateOpen = value.TryId(ArtKeys.PropGateOpen, out var open) ? open : ArtId.None;
                 _caravan = value.TryId(ArtKeys.PropCaravan, out var caravan) ? caravan : ArtId.None;
@@ -89,6 +94,7 @@ namespace Simpiens.Presentation
         private ArtId _floor, _rock, _wall, _lowWall, _ring, _shadow, _caravan, _bar, _gate, _gateOpen;
         private readonly ArtId[] _badges = new ArtId[5]; // by PartyRole (Epic 11, S5.8)
         private ArtId _namedBadge; // a named creature's mark (Epic 11, S7.7)
+        private readonly ArtId[] _activities = new ArtId[Simpiens.Simulation.Life.ActivityTable.Capacity]; // what a crawler is doing with its free time, by Activity (Epic LIFE-1 plan 3, V.4)
         private readonly ArtId[] _hazards = new ArtId[4]; // by HazardKind
 
         /// <summary>Where and when the hazards' animations play (Epic 10 Part 2, the stretch, D69).</summary>
@@ -267,6 +273,14 @@ namespace Simpiens.Presentation
                 ref var badge = ref Add(DrawRole.Crawler, depth, _catalog.Piece(_badges[role], viewSeconds), position + _catalog.BadgeOffset, Shown(White, shown));
                 badge.Z = _catalog.BadgeHeight;
                 badge.Pick = pick;
+            }
+            // What it is doing with its free time (Epic LIFE-1 plan 3, V.4, D38): its icon, where the catalogue hangs it
+            int activity = (int)entity.Activity;
+            if (activity > 0 && activity < _activities.Length && !_activities[activity].IsNone && !lying)
+            {
+                ref var thought = ref Add(DrawRole.Crawler, depth, _catalog.Piece(_activities[activity], viewSeconds), position + _catalog.ThoughtOffset, Shown(White, shown));
+                thought.Z = _catalog.ThoughtHeight;
+                thought.Pick = pick;
             }
             if (entity.Carried == ItemType.None) return;
             // What it carries hangs over it, drawn after it at its depth; a click on it picks the carrier
