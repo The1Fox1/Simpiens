@@ -116,8 +116,10 @@ namespace Simpiens.Simulation.Economy
         /// The 24-hour day (milestone T, RimWorld-paced; <c>docs/time-model.md</c>):
         /// <list type="bullet">
         /// <item>hunger fills over a day (D19) and social empties over 16 hours (T2.1);</item>
-        /// <item>energy falls about 2.75 an hour standing and three times that walking, so a day of mostly standing reaches the
-        /// tired line (40) after about 16 hours (D20, T2.2);</item>
+        /// <item>energy falls 2.75 an hour standing and three times that walking, working (and 6 at a station's work), each
+        /// times <see cref="WakingDayFactor"/> (Epic LIFE-1 plan 3, R.2, D27), so a day's mix of them lasts a waking day of about
+        /// 16 hours and a night's sleep about 8 (D20, T2.2: a day of standing alone once reached the tired line (40) after
+        /// about 22 hours; at the factor, the mix of a working day took about 10.7);</item>
         /// <item>a sleeper gains 8 an hour in a bunk and half that sleeping rough, for up to 12 hours, until rested (100) or
         /// starving (85): about 8 hours from the tired line;</item>
         /// <item>no bonus at a sleep's end, and the hearth restores company, not energy;</item>
@@ -129,10 +131,17 @@ namespace Simpiens.Simulation.Economy
         /// trust rose for 8 of 12 residents on all but one gate seed; at 12, on all of them).</item>
         /// </list>
         /// </summary>
+        /// <summary>
+        /// What the awake drains are scaled by (Epic LIFE-1 plan 3, R.2, D27): at 1, a crawler of a working day's mix reached the
+        /// tired line about 10.7 game hours after waking, so the outpost slept about every 18.7 hours and had no night (the epic's
+        /// F16). Recovery in a bunk is unscaled.
+        /// </summary>
+        public const float WakingDayFactor = 0.6f;
+
         public static DayTuning Default => new DayTuning(
             hungerPerSecond: DayClock.PerSecond(100f / DayClock.HoursPerDay),
-            energyStandingPerSecond: DayClock.PerSecond(2.75f),
-            energyWalkingPerSecond: DayClock.PerSecond(8.25f),
+            energyStandingPerSecond: DayClock.PerSecond(2.75f * WakingDayFactor),
+            energyWalkingPerSecond: DayClock.PerSecond(8.25f * WakingDayFactor),
             socialPerSecond: DayClock.PerSecond(100f / 16f),
             bunkRecoveryPerSecond: DayClock.PerSecond(8f),
             restRecoveryPerSecond: DayClock.PerSecond(4f),
@@ -144,8 +153,8 @@ namespace Simpiens.Simulation.Economy
             restSeconds: 12 * DayClock.SecondsPerHour,
             restBonus: 0f,
             relaxEnergyBonus: 0f,
-            energyWorkingPerSecond: DayClock.PerSecond(8.25f),
-            energyCraftingPerSecond: DayClock.PerSecond(6f),
+            energyWorkingPerSecond: DayClock.PerSecond(8.25f * WakingDayFactor),
+            energyCraftingPerSecond: DayClock.PerSecond(6f * WakingDayFactor),
             actions: ActionTuning.Default,
             restingHealPerSecond: 0.05f,
             bunkHealPerSecond: DayClock.PerSecond(10f),

@@ -53,6 +53,12 @@ namespace Simpiens.Hosting
             /// <summary>It died (Epic 10 Part 3, K5): the day judges the living; deaths are counted apart.</summary>
             public bool Died;
 
+            /// <summary>
+            /// It was seen asleep in a bunk (Epic LIFE-1 plan 3, R.2): a night's sleep now runs past the day's 06:00 end, so the day
+            /// counts the sleepers it saw, not the sleeps finished.
+            /// </summary>
+            public bool SleptInABunk;
+
             /// <summary>Danger (Epic 10 G2): the lowest health seen, and whether it came back to full after being hurt.</summary>
             public float LowestHealth = 100f;
             public bool HurtThenRecovered;
@@ -292,6 +298,7 @@ namespace Simpiens.Hosting
             {
                 var c = Crawlers[i];
                 c.ObserveHealth(c.State.Health);
+                if (c.State.VisualState == Simpiens.Entities.AgentVisualState.Sleeping) c.SleptInABunk = true;
                 float hunger = c.State.Hunger;
                 if (hunger > c.PeakHunger) c.PeakHunger = hunger;
                 if (hunger >= StarvingHunger)
@@ -447,7 +454,7 @@ namespace Simpiens.Hosting
             var living = Crawlers.Where(c => !c.Died).ToList();
             if (living.Count == 0) { failures.Add("no crawlers"); return failures; }
             var noCycle = living.Where(c => c.State.Activity.Cycles == 0).Select(c => c.Name).ToList();
-            int sleepers = living.Count(c => c.State.Activity.BunkSleeps > 0);
+            int sleepers = living.Count(c => c.SleptInABunk || c.State.Activity.BunkSleeps > 0);
             int eaters = living.Count(c => c.State.Activity.Meals > 0);
             int gatherings = living.Sum(c => c.State.Activity.HearthGatherings);
             int trustRose = living.Count(c => c.TrustEnd > c.TrustStart);

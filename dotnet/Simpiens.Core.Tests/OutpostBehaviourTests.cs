@@ -28,8 +28,9 @@ namespace Simpiens.Core.Tests
 
         /// <summary>
         /// The rest anchor (Epic MAP Phase 3): crawlers start rested at the Road Gate and find the Bunkhouse on their own.
-        /// On the 24-hour day they tire after about 16 hours, so by the next dawn at least 8 distinct crawlers have slept in a
-        /// bunk (the gate seeds: 9 to 12, the eighth by t8926 at the latest; Epic 10 Part 2, T5); no bunk ever holds two
+        /// On the 24-hour day they tire after about 16 hours, so by the next dawn at least 8 distinct crawlers have gone to sleep
+        /// in a bunk (the gate seeds: 9 to 12, the eighth by t8926 at the latest; Epic 10 Part 2, T5; counted asleep rather than
+        /// finished since Epic LIFE-1 plan 3's R.2, when a night's sleep began running past the dawn); no bunk ever holds two
         /// sleepers; every sleeper lies on its bunk and is shown asleep; nobody starves; nobody stacks.
         /// </summary>
         [Fact]
@@ -67,6 +68,8 @@ namespace Simpiens.Core.Tests
                 foreach (var pair in ((IIntentExecutionContext)manager).ActiveIntents)
                 {
                     if (!(pair.Value.Intent is SleepAtBunkIntent sleep) || pair.Value.ElapsedTime <= 0f) continue;
+                    // Asleep in its bunk counts (Epic LIFE-1 plan 3, R.2): a night's sleep now runs past the next dawn
+                    if (sleepers.Add(pair.Key) && sleepers.Count == RequiredSleepers) lastSleeperTick = rel;
                     perBunk.TryGetValue(sleep.BunkId, out int n);
                     perBunk[sleep.BunkId] = n + 1;
                     if (n + 1 > 1) { doubleOccupancy++; firstDouble ??= $"t{rel}: bunk {sleep.BunkId}"; }

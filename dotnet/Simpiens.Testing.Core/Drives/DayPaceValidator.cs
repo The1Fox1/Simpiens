@@ -48,14 +48,18 @@ namespace Simpiens.Testing.Drives
             TestLog.Log("[PASS] Test 2: social empties over sixteen hours.");
         }
 
-        // D20, T2.2: standing, a rested crawler reaches the tired line (40) after a waking day of about 16 hours (walking tires
-        // three times as fast); a collapse (energy 0), recovering where it fell at half a bunk's rate, is up at 30 after 7.5 hours
+        // D20, T2.2; Epic LIFE-1 plan 3, R.2, D27: a waking day of 16 hours, a third of it walking or at work, takes a rested
+        // crawler past the bedtime line (70) but not to the tired line (40); standing alone, sixteen hours take 26.4 (walking
+        // tires three times as fast); a collapse (energy 0), recovering where it fell at half a bunk's rate, is up at 30 after
+        // 7.5 hours
         private void ValidateEnergyLastsAWakingDay()
         {
             var day = DayTuning.Default;
             var state = Crawler(hunger: 0f);
             Run(state, day, 16 * DayClock.TicksPerHour);
-            Assert(Math.Abs(state.Energy - 56f) < Tolerance, $"Sixteen hours standing take energy from 100 to 56 (actual: {state.Energy:F2})");
+            Assert(Math.Abs(state.Energy - 73.6f) < Tolerance, $"Sixteen hours standing take energy from 100 to 73.6 (actual: {state.Energy:F2})");
+            float mixed = 100f - 16f * (2f / 3f * 2.75f + 1f / 3f * 8.25f) * DayTuning.WakingDayFactor;
+            Assert(mixed < 70f && mixed > Simpiens.Cognition.Planning.Considerations.TiredEnergy, $"A waking day's mix ends between the bedtime line and the tired line ({mixed:F1})");
             Assert(SimMath.Approximately(day.EnergyWalkingPerSecond, 3f * day.EnergyStandingPerSecond), "Walking tires three times as fast as standing");
             Assert(SimMath.Approximately(day.BunkRecoveryPerSecond * 8f * DayClock.SecondsPerHour, 64f), "Eight hours in a bunk restore 64");
 
