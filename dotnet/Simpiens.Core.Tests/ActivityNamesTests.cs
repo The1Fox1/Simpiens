@@ -20,6 +20,8 @@ namespace Simpiens.Core.Tests
             ["Simpiens.Core/Simulation/Life/WantTable.cs"] = "the wants: the activity each is for (plan 2, W.1, D20)",
             ["Simpiens.Core/Session/Layouts/Floor1Layout.cs"] = "the outpost's venues: what each offers (map data, D13)",
             ["Simpiens.Core/Cognition/AgentState.cs"] = "the hearth's relax fills fun at the fireside's rate (GatherAtAnchor's, not Recreate's)",
+            ["Simpiens.Presentation/Art/ActivitySprites.cs"] = "each activity's icon over a crawler at it, a line an activity (plan 3, V.4, D38)",
+            ["Simpiens.Presentation/WorldViewFrame.cs"] = "the hearth's relax shown as the fireside's icon (plan 3, V.4)",
         };
 
         private static readonly string[] Projects = { "Simpiens.Core", "Simpiens.Presentation", "Simpiens.Client", "Simpiens.Hosting" };

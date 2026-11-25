@@ -106,73 +106,73 @@ This is a working document (AGENTS.md, Documentation Protocol 6), the last of Ep
 
 ### P. The hand-over (half a day)
 **Complexity:** Basic.
-- [ ] **P.1 The hand-over checked, and the day's pace measured** [Basic: docs and a measurement's extra columns; golden unchanged]
+- [x] **P.1 The hand-over checked, and the day's pace measured** [Basic: docs and a measurement's extra columns; golden unchanged]
   - Check §0 against `main` after plan 2's merge, and record any difference as a finding (the epic's §7, F20 onward).
   - `MeasureACrawlersDay` gains the hours awake between sleeps, the share asleep by clock hour, and work hours a resident-day: the baseline for R.2 and the DoD.
   - `docs/life-model.md` gains §6, "Rhythm", with the baseline.
 
 ### R1. The night and the routine (4–6 days)
 **Complexity:** Very Complex as a phase by bundling: the day's pace, a saved draw and weights on every goal. Split into four steps, each Basic or Possibly Complex. R.1 leaves golden unchanged; R.2, R.3 and R.4 each re-record it in their own commits.
-- [ ] **R.1 Chronotypes and the routine as data** (D28, D29) [Possibly Complex: a saved draw on its own salt and a pure function that cognition reads; golden re-recorded for coverage only if the hash mixes the byte]
+- [x] **R.1 Chronotypes and the routine as data** (D28, D29) [Possibly Complex: a saved draw on its own salt and a pure function that cognition reads; golden re-recorded for coverage only if the hash mixes the byte]
   - The chronotype's draw at spawn into byte 279, `Routine.Of` (waking hour, working block, leisure block, night) and `AgentContext.Block`, with every routine weight 1.
   - **The checks:** `RoutineValidator` (the draw's odds, blocks covering the day, an artisan's block from its shifts, the same inputs giving the same routine); the round trip; a seed's earlier draws unchanged.
-- [ ] **R.2 One waking and one night** (D27) [Possibly Complex: a pace change that moves every crawler's day; golden re-recorded and seeds re-picked in their own commits; the producer by exception]
+- [x] **R.2 One waking and one night** (D27) [Possibly Complex: a pace change that moves every crawler's day; golden re-recorded and seeds re-picked in their own commits; the producer by exception]
   - Scale the awake drains in `DayTuning`, measured so that the waking day is about 16 hours and the night about 8, before the bedtime pull lines them up with the clock.
   - **The checks:** the gate seeds' day holds (nobody starves, nobody collapses); `MeasureACrawlersDay`'s hours of work, which go to the producer by exception with the soak's bands; every live scenario on its seed or re-picked with the reason.
-- [ ] **R.3 The bedtime pull** (D31; F16) [Possibly Complex: sleep's validity and waking on the hot path; golden re-recorded in its own commit]
+- [x] **R.3 The bedtime pull** (D31; F16) [Possibly Complex: sleep's validity and waking on the hot path; golden re-recorded in its own commit]
   - Rest's validity and weight in the night; dozing on until the waking hour; the night's block read from the routine.
   - **The checks:** `MeasureACrawlersDay` by the clock (most asleep between midnight and 05:00, most awake at 18:00); a lark up at dawn and an owl awake at midnight on the gate seeds; F16 resolved.
-- [ ] **R.4 Weights by family and hour** (D30) [Possibly Complex: a new factor in the motive model; golden re-recorded in its own commit]
+- [x] **R.4 Weights by family and hour** (D30) [Possibly Complex: a new factor in the motive model; golden re-recorded in its own commit]
   - The routine's factor in `MotiveModel.Weight`, from `LifeTuning`'s table; `MotiveModelValidator` gains a working and a leisure block's weights, and unweighted goals untouched.
   - **The checks:** work hours fall in the leisure block and rise in the working block (`MeasureACrawlersDay`); the gate seeds' day holds; leisure at venues re-read against §5.10.
 
 ### R2. Satiation, weariness and the day's intention (4–5 days)
 **Complexity:** Very Complex as a phase by bundling: saved fields, a daily draw, the motive model, and where a crawler may go. Split into six steps, each Basic or Possibly Complex.
-- [ ] **R.5 Weariness and the windfall** (D33) [Possibly Complex: two saved fields written where work and pay happen, and a thought; golden re-recorded for coverage only if a choice moves]
+- [x] **R.5 Weariness and the windfall** (D33) [Possibly Complex: two saved fields written where work and pay happen, and a thought; golden re-recorded for coverage only if a choice moves]
   - Weariness written each game hour at work (in `AgentRuntime`, on the day's pace); the windfall's tick at a payment of half the comfortable purse or more; "Earned a rest" in `ThoughtTable`, thought at the payment.
   - **The checks:** the round trip; `ThoughtsValidator` and `ThoughtNamesTests` (the new place); weariness after a measured day's work.
-- [ ] **R.6 Satiation on work** (D32; F11) [Possibly Complex: a factor in the motive model; golden re-recorded in its own commit]
+- [x] **R.6 Satiation on work** (D32; F11) [Possibly Complex: a factor in the motive model; golden re-recorded in its own commit]
   - The purse target (the comfortable purse by greed, plus what held wants ask for) and the Work family's weight; `MotiveModelValidator` gains a rich crawler whose work weighs less.
   - **The checks:** work hours by purse on the gate seeds; F11 and F18 re-read; the gate seeds' day holds.
-- [ ] **R.7 The day's intention** (D34) [Possibly Complex: a daily draw on its own salt, a saved field and weights on motives and families; golden re-recorded in its own commit]
+- [x] **R.7 The day's intention** (D34) [Possibly Complex: a daily draw on its own salt, a saved field and weights on motives and families; golden re-recorded in its own commit]
   - The draw on waking from the night's sleep, its odds from weariness, the windfall, the purse, passions and wants; its weights in the motive model; the day's clearing of weariness.
   - **The checks:** `IntentionValidator` (the odds by input, one draw a day, a work day by default, a save before plan 3 reading a work day); rest days measured on the gate seeds (how often, and after what).
-- [ ] **R.8 A rest day keeps to safe zones** (D35) [Possibly Complex: danger's judgement in `Vitality`, read by every work goal's targeting]
+- [x] **R.8 A rest day keeps to safe zones** (D35) [Possibly Complex: danger's judgement in `Vitality`, read by every work goal's targeting]
   - The lone danger limit at 0 on a rest day, through `LoneDanger`, `WouldEnterAt` and `WouldWalk`; `OutpostWatch` gains the reading.
   - **The checks:** a validator that a resting crawler skips a seam in a hazard and a lair's reach, and still rescues; the gate seeds' day holds with no breach.
-- [ ] **R.9 Duty under the routine and the intention** (D36), **and Q11's switch** (D37) [Possibly Complex: orders and a day off, in cognition and the guild]
+- [x] **R.9 Duty under the routine and the intention** (D36), **and Q11's switch** (D37) [Possibly Complex: orders and a day off, in cognition and the guild]
   - A rest day's weight on duty; the member who keeps to its orders is called in (its intention set to a work day on the main thread); `LifeTuning.OutpostRestDay`.
   - **The checks:** a live test with the guild player that a member on its day off may stay behind at the muster, and one called in goes; Epic 10's and 11's guild scenarios on their seeds; the switch's rest day for everyone in a validator.
-- [ ] **R.10 The economy with rhythm** [Possibly Complex: measuring and setting soak bands, by exception]
+- [x] **R.10 The economy with rhythm** [Possibly Complex: measuring and setting soak bands, by exception]
   - Every soak profile with nights, routines, satiation and days off; D25's work hours (6–8 a resident-day) measured beside them; F19's crafting share re-read.
   - The bands go to the producer by exception, with the numbers in `docs/life-model.md` §6 and `docs/economy-model.md`.
 
 ### V. What the player sees (3–4 days)
 **Complexity:** Possibly Complex: a dossier line, Gum, a new pose's frames in every body, and icons drawn by the scene. Each look's art pins and renders are re-recorded after a look, in their own commits.
-- [ ] **V.1 The intention in the dossier and the day log** (D38) [Basic: a model's line and the day log's first line; presentation tests]
+- [x] **V.1 The intention in the dossier and the day log** (D38) [Basic: a model's line and the day log's first line; presentation tests]
   - `DashboardModel`'s Crawler tab gains "Today: a day off" under the mood line; `DayLogModel` opens with the waking and the intention.
   - **The checks:** `LifeModelsTests`; the dossier's renders in the pinned image.
-- [ ] **V.2 The outpost's pulse** (D38) [Possibly Complex: Gum in the header at every offered size; a model from the frames]
+- [x] **V.2 The outpost's pulse** (D38) [Possibly Complex: Gum in the header at every offered size; a model from the frames]
   - A pulse model (asleep, at work, at leisure, from the frames' visual states and activities), and its bar beside the clock in `HeaderBar`.
   - **The checks:** the header's test at every offered size; renders in the pinned image.
-- [ ] **V.3 The seated pose** (D38, from plan 2's T.7) [Possibly Complex: a new visual state with body frames in every look; art pins re-recorded]
+- [x] **V.3 The seated pose** (D38, from plan 2's T.7) [Possibly Complex: a new visual state with body frames in every look; art pins re-recorded]
   - `AgentVisualState.Seated`, its frames in `BodyKit` and `HeadAnchors`, the body slots, `CrawlerAppearance`; the Recreate handler sits a crawler at a seat.
   - **The checks:** the people sheet looked at; art pins; `ThrashingTests`; renders.
-- [ ] **V.4 Thought icons over crawlers** (D38, from plan 2's T.7) [Possibly Complex: a field the frames carry, art and the scene]
+- [x] **V.4 Thought icons over crawlers** (D38, from plan 2's T.7) [Possibly Complex: a field the frames carry, art and the scene]
   - `EntityView.Activity` captured from the crawler's intent; glyphs (a mug, a bowl, dice, a leaf, a purse) in the UI kit or a sprite set; `WorldScene` draws one over a crawler at an activity.
   - **The checks:** `ArtCompletenessTests` (every activity has its icon); art pins; renders; the producer's look at L3 after this step.
 
 ### D. The Definition of Done (1–2 days)
 **Complexity:** Possibly Complex: live scenarios with nothing injected.
-- [ ] **D.1 The DoD: `ADayOffAfterAWindfall`** [Possibly Complex: a live scenario]
+- [x] **D.1 The DoD: `ADayOffAfterAWindfall`** [Possibly Complex: a live scenario]
   - On a seed with the hunt or guild player, nothing injected: a resident paid a windfall takes a rest day on its next waking. It stays out of every hazard and lair's reach all day, spends an hour or more at venues, and returns to work the day after. Three-day work hours stay in the soak's band, and D25's hours are measured.
   - A save on the rest day loads with the intention, weariness and the windfall kept.
-- [ ] **D.2 `AnEveningAtTheTavern` by the clock** (F16's re-read) [Basic: a re-run with the evening's hours]
+- [x] **D.2 `AnEveningAtTheTavern` by the clock** (F16's re-read) [Basic: a re-run with the evening's hours]
   - With the tavern's keeper on the evening shift (18:00–02:00), most of its takings come in the evening, and the tavern player picks the evening blocks.
 
 ### G. The gate: LG1 (2–3 days)
 **Complexity:** Possibly Complex: a scenario of every scenario, measuring, and the producer's session.
-- [ ] **G.1 `LifeOneTogether`** [Possibly Complex: every DoD on one seed, with a save mid-day]
+- [x] **G.1 `LifeOneTogether`** [Possibly Complex: every DoD on one seed, with a save mid-day]
   - `MoodFollowsTheDay`'s beats, `AWantComesTrue`, `AnEveningAtTheTavern` and `ADayOffAfterAWindfall` on one seed with the tavern and guild players; saved mid-day and played on, with the same outcomes.
 - [ ] **G.2 The gate** [Possibly Complex: measuring]
   - **The tests:** every test, the golden check, the gate seeds' day, and the client's tests in the pinned image.

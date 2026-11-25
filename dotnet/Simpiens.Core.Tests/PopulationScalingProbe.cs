@@ -9,8 +9,8 @@ using Xunit;
 namespace Simpiens.Core.Tests
 {
     /// <summary>
-    /// Measurement only (Epic MAP Phase 3; Unity's PopulationScalingProbe, Epic CLIENT M2.8): the outpost with 12, 16 and
-    /// 24 crawlers, stepped as fast as the machine allows. Prints ticks a second and checks integrity (the ledger
+    /// Measurement only (Epic MAP Phase 3; Unity's PopulationScalingProbe, Epic CLIENT M2.8): the outpost with 12, 16, 24 and
+    /// 48 crawlers (48 since Epic LIFE-1 plan 3's gate), stepped as fast as the machine allows. Prints ticks a second and checks integrity (the ledger
     /// balances). Unity also sampled cognition latency in flight; headless every decision lands on the next tick
     /// (CognitionScheduler), so there is no latency to sample. Run it with
     /// <c>dotnet dotnet/Simpiens.Core.Tests/bin/Release/net10.0/Simpiens.Core.Tests.dll -method "*PopulationScaling*" -explicit only -showLiveOutput</c>.
@@ -21,6 +21,7 @@ namespace Simpiens.Core.Tests
         [InlineData(12)]
         [InlineData(16)]
         [InlineData(24)]
+        [InlineData(48)] // Epic LIFE-1 plan 3's gate (G.2): twice the largest outpost measured before
         public void MeasurePopulationScaling(int crawlers)
         {
             const long WarmupTicks = 200, MeasuredTicks = 20000;

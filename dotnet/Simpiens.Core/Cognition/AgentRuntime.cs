@@ -46,6 +46,9 @@ namespace Simpiens.Cognition
         /// <summary>The fallen mate the guild last sent it for that it answered (Epic 10 Part 3, K7.2c): it drops what it does once per order.</summary>
         private EntityId _answeredCarry;
 
+        /// <summary>The tick before which its intention needn't be looked at again (Epic LIFE-1 plan 3, G.2): the next waking once drawn.</summary>
+        private long _intentionCheckAt;
+
         /// <summary>True once it answered its clear's fight (Epic 10 Part 3, K8.2b): it drops its march once, to fight as its weapon fights.</summary>
         private bool _answeredFight;
 
@@ -185,7 +188,7 @@ namespace Simpiens.Cognition
             }
             // Its intention for the day (Epic LIFE-1 plan 3, R.7, D34): once a routine day, awake outside its night, after a new
             // want may have arisen
-            if (_simulationManager != null && State.IntentionDue((uint)currentTick, out long routineDay))
+            if (_simulationManager != null && currentTick >= _intentionCheckAt && State.IntentionDue((uint)currentTick, out long routineDay))
             {
                 var economy = _simulationManager.Economy ?? Simpiens.Simulation.Economy.EconomyTuning.Default;
                 int target = Simpiens.Cognition.Planning.Rhythm.PurseTarget(economy, State.Personality, State.Life, _spatialPartition?.GetActiveSnapshot());
@@ -200,6 +203,13 @@ namespace Simpiens.Cognition
                     State.CurrentIntent = null;
                     State.HasActiveIntent = false;
                 }
+            }
+            // Drawn for this routine day (or none due): not looked at again until the next waking, a cache of what the routine says (unsaved,
+            // so a load looks again and finds the same)
+            if (_simulationManager != null && currentTick >= _intentionCheckAt && State.Life.IntentionDay != 0)
+            {
+                var routine = State.RoutineAt((uint)currentTick);
+                if (State.Life.IntentionDay == routine.Day + 1) _intentionCheckAt = routine.NextWake;
             }
             // A member keeping to its orders on its day off is called in (plan 3's R.9, D36)
             if (State.CallInIfKeepingOrders((uint)currentTick))

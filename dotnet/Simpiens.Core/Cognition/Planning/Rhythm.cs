@@ -41,9 +41,12 @@ namespace Simpiens.Cognition.Planning
         /// </summary>
         public static float Satiation(in AgentContext context)
         {
-            float floor = Considerations.Economy(context).Life.Rhythm.SatiationFloor;
+            var economy = Considerations.Economy(context);
+            float floor = economy.Life.Rhythm.SatiationFloor;
             if (floor <= 0f || context.Inventory == null) return 1f;
             int gold = context.Inventory.Gold;
+            // Under the lowest target any greed gives (the wants add, never take away), it weighs 1 without the full count
+            if (gold <= (int)(economy.ComfortablePurse * (1f - System.Math.Abs(economy.Life.Rhythm.PurseGreed)))) return 1f;
             int target = PurseTarget(context);
             if (target <= 0 || gold <= target) return 1f;
             float over = System.Math.Min(1f, (gold - target) / (float)target);
