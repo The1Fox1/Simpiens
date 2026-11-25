@@ -142,6 +142,24 @@ namespace Simpiens.Client.Tests
             Assert.Equal(DayIntention.Rest, state.IntentionAt((uint)now));
         }
 
+        /// <summary>
+        /// The outpost's pulse (Epic LIFE-1 plan 3, V.2, D38), on the real outpost: at 09:00 most residents are at work and none
+        /// asleep; at 03:00 most are asleep; its words count them.
+        /// </summary>
+        [Fact]
+        public void TheOutpostsPulseTurnsWithTheDay()
+        {
+            using var sim = Simpiens.Hosting.LocalSimulation.Create(Simpiens.Simulation.SimulationSettings.DefaultSeed);
+            sim.Respawn(Simpiens.Core.Session.OutpostSession.SessionId);
+            for (int t = 0; t < 3 * DayClock.TicksPerHour; t++) sim.Step(1); // 09:00 on day 1, a tick at a time as cognition lands
+            var morning = OutpostPulse.Of(sim.Registry.ActiveEntities);
+            Assert.True(morning.Residents >= 10 && morning.Asleep == 0 && morning.Working * 2 > morning.Residents, $"09:00: {morning.Words} of {morning.Residents}");
+            for (int t = 0; t < 18 * DayClock.TicksPerHour; t++) sim.Step(1); // 03:00 on day 2
+            var night = OutpostPulse.Of(sim.Registry.ActiveEntities);
+            Assert.True(night.Asleep * 2 > night.Residents, $"03:00: {night.Words}");
+            Assert.Equal($"{night.Asleep} asleep · {night.Working} at work · {night.Leisure} at leisure", night.Words);
+        }
+
         private static List<string> Shown(DayLogModel today)
         {
             var shown = new List<string>();

@@ -20,6 +20,55 @@ namespace Simpiens.Presentation.Dashboard
     }
 
     /// <summary>
+    /// The outpost's pulse (Epic LIFE-1 plan 3, V.2, D38): how many of its residents are asleep, at work and at leisure now, so the
+    /// header shows the outpost's day turning. A resident walking to its work is at work; at the hearth or a venue, at leisure.
+    /// </summary>
+    public readonly struct OutpostPulse
+    {
+        public OutpostPulse(int asleep, int working, int leisure, int residents)
+        {
+            Asleep = asleep;
+            Working = working;
+            Leisure = leisure;
+            Residents = residents;
+        }
+
+        public int Asleep { get; }
+        public int Working { get; }
+        public int Leisure { get; }
+        public int Residents { get; }
+
+        /// <summary>A part's share of the residents, 0 to 1.</summary>
+        public float Share(int part) => Residents > 0 ? part / (float)Residents : 0f;
+
+        /// <summary>In words: "4 asleep · 5 at work · 2 at leisure".</summary>
+        public string Words => Invariant($"{Asleep} asleep · {Working} at work · {Leisure} at leisure");
+
+        /// <summary>
+        /// The pulse of <paramref name="crawlers"/> (residents only): asleep in a bunk, resting where it stands or collapsed; at
+        /// work on a plan of the Work family, at a harvest or a station's work, or under orders; at leisure on a plan of the
+        /// Leisure or Social family.
+        /// </summary>
+        public static OutpostPulse Of(IReadOnlyList<Simpiens.Simulation.WorldEntity> entities)
+        {
+            int asleep = 0, working = 0, leisure = 0, residents = 0;
+            if (entities == null) return default;
+            for (int i = 0; i < entities.Count; i++)
+            {
+                var agent = entities[i]?.Agent;
+                if (agent == null || agent.IsDrifter) continue;
+                residents++;
+                var visual = agent.VisualState;
+                if (agent.IsExhaustionCollapsed || visual == Simpiens.Entities.AgentVisualState.Sleeping || visual == Simpiens.Entities.AgentVisualState.Resting) { asleep++; continue; }
+                var family = agent.HasActivePlan && agent.ActiveGoal != null ? agent.ActiveGoal.Family : Simpiens.Cognition.Planning.ActivityFamily.Unweighted;
+                if (visual == Simpiens.Entities.AgentVisualState.Harvesting || family == Simpiens.Cognition.Planning.ActivityFamily.Work || agent.Expedition.IsActive || agent.Station.IsActive) working++;
+                else if (family == Simpiens.Cognition.Planning.ActivityFamily.Leisure || family == Simpiens.Cognition.Planning.ActivityFamily.Social) leisure++;
+            }
+            return new OutpostPulse(asleep, working, leisure, residents);
+        }
+    }
+
+    /// <summary>
     /// The header over the map (Unity's header bar; Lantern &amp; Stone's clusters since the UI polish plan, U4): who and
     /// where, the outpost's gold, stock and bounties as figures, the guild's count, the time of day, and the pause and speed
     /// controls, whose clicks and keys leave as host commands (review D3).
@@ -75,6 +124,9 @@ namespace Simpiens.Presentation.Dashboard
         /// <summary>The guild button's words: "Guild 2/4" (Epic 10 G4, D6).</summary>
         public string Guild { get; private set; } = "Guild 0/8";
         public string Tick { get; private set; } = "TICK: 00000";
+
+        /// <summary>The outpost's pulse beside the clock (Epic LIFE-1 plan 3, V.2, D38).</summary>
+        public OutpostPulse Pulse { get; private set; }
 
         /// <summary>The time of day (Epic UI-Beta B5): "Day 1 · 06:30". The header shows it, or the tick in development builds.</summary>
         public string TimeOfDay { get; private set; } = OutpostClock.Text(0);
@@ -144,6 +196,8 @@ namespace Simpiens.Presentation.Dashboard
             Bounties = active == 1 ? "1 active bounty" : Invariant($"{active} active bounties");
             int members = _context.Simulation?.Guild?.Members.Count ?? 0;
             Guild = Invariant($"Guild {members}/{(_context.Simulation?.Economy?.Guild ?? Simpiens.Simulation.Economy.GuildTuning.Default).MaxMembers}");
+
+            Pulse = OutpostPulse.Of(_context.Registry?.ActiveEntities); // plan 3's V.2
 
             var clock = _context.Clock;
             if (clock != null)

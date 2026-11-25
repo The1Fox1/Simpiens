@@ -31,6 +31,29 @@ namespace Simpiens.Client.Ui
 
         private readonly TextRuntime _place, _gold, _bounties, _saveStatus, _tick, _confirmText, _mapLabel, _ledgerLabel;
         private readonly SpriteRuntime _merchantGlyph, _bountiesGlyph, _guildGlyph, _workshopGlyph, _pauseGlyph, _clockGlyph, _coin;
+
+        /// <summary>The outpost's pulse beside the clock (Epic LIFE-1 plan 3, V.2): its width, its parts, and its words for tests.</summary>
+        public const float PulseWidth = 30f;
+        public ContainerRuntime Pulse { get; }
+        public string PulseWords { get; private set; } = string.Empty;
+        private readonly RectangleRuntime _pulseAsleep, _pulseWorking, _pulseLeisure;
+
+        private RectangleRuntime PulsePart(Microsoft.Xna.Framework.Color colour)
+        {
+            var part = new RectangleRuntime { IsFilled = true, StrokeWidth = 0, FillColor = colour, Width = 0f, Height = 6f, Visible = false };
+            Pulse.Children.Add(part);
+            return part;
+        }
+
+        private static void SetPart(RectangleRuntime part, float x, float width)
+        {
+            bool visible = width >= 1f;
+            if (part.Visible != visible) part.Visible = visible;
+            if (part.X != x) part.X = x;
+            if (part.Width != width) part.Width = width;
+        }
+
+        private static float SimpiensRound(float value) => System.MathF.Round(value);
         private static readonly Microsoft.Xna.Framework.Color CoinPulse = UiStyle.Hex(0xffd28a);
         private long _goldTarget = -1;
         private float _goldFrom, _goldRoll = -1f;
@@ -121,6 +144,14 @@ namespace Simpiens.Client.Ui
             _tick = UiParts.Text("Day 1 · 06:00", UiStyle.Text, UiText.BodyBold);
             UiParts.CentreVertically(_tick);
             time.Children.Add(_tick);
+            // The outpost's pulse (Epic LIFE-1 plan 3, V.2, D38): asleep, at work, at leisure, a share of the residents each
+            Pulse = new ContainerRuntime { Width = PulseWidth, Height = 6f };
+            UiParts.CentreVertically(Pulse);
+            Pulse.Children.Add(new RectangleRuntime { IsFilled = true, StrokeWidth = 0, FillColor = UiStyle.Inset, Width = PulseWidth, Height = 6f });
+            _pulseAsleep = PulsePart(UiStyle.DriveEnergy);
+            _pulseWorking = PulsePart(UiStyle.Accent);
+            _pulseLeisure = PulsePart(UiStyle.DriveSocial);
+            time.Children.Add(Pulse);
             time.Children.Add(new ContainerRuntime { Width = 2f, Height = 1f });
             PauseButton = UiParts.GlyphButton(string.Empty, UiKit.Pause, 26f, out _pauseGlyph, 22f);
             _pauseGlyph.Color = UiStyle.Text;
@@ -347,6 +378,13 @@ namespace Simpiens.Client.Ui
             BindStock(header.Stock);
             UiParts.SetText(_bounties, header.BountyCount);
             UiParts.SetText(_tick, header.Clock);
+            // The pulse's parts, left to right in whole pixels
+            var pulse = header.Pulse;
+            float asleep = SimpiensRound(pulse.Share(pulse.Asleep) * PulseWidth), working = SimpiensRound(pulse.Share(pulse.Working) * PulseWidth), leisure = SimpiensRound(pulse.Share(pulse.Leisure) * PulseWidth);
+            SetPart(_pulseAsleep, 0f, asleep);
+            SetPart(_pulseWorking, asleep, working);
+            SetPart(_pulseLeisure, asleep + working, leisure);
+            PulseWords = pulse.Words;
             UiParts.SetGlyph(_clockGlyph, header.Night ? UiKit.Moon : UiKit.Sun);
             if (GuildButton.Text != header.Guild) GuildButton.Text = header.Guild;
 
