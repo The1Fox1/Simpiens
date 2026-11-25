@@ -39,10 +39,10 @@ namespace Simpiens.Core.Tests
             public int Residents, AtVenuesAnHour;
             public double VenueHoursPerResidentDay;
             public int WantsArisen, WantsFulfilled, WantsMissed;
-            public uint Wholesale, ArtisanWages, Takings;
+            public uint Wholesale, ArtisanWages, Takings, EveningTakings;
 
             public override string ToString() =>
-                $"built t{BuiltTick}, kept t{KeptTick}, served {Player.Served} ({Player.Ales} ales, {Player.Suppers} suppers) for {Takings}g on days [{string.Join(",", ServedDays.OrderBy(d => d))}]; "
+                $"built t{BuiltTick}, kept t{KeptTick}, served {Player.Served} ({Player.Ales} ales, {Player.Suppers} suppers) for {Takings}g ({EveningTakings}g in the evening) on days [{string.Join(",", ServedDays.OrderBy(d => d))}]; "
                 + $"{AtVenuesAnHour} of {Residents} an hour at a venue, {VenueHoursPerResidentDay:F2} h a resident-day; wants arisen {WantsArisen}, come true {WantsFulfilled}, missed {WantsMissed}; "
                 + $"wholesale {Wholesale}g, artisans' wages {ArtisanWages}g";
         }
@@ -52,7 +52,13 @@ namespace Simpiens.Core.Tests
             var sim = LocalSimulation.Create(seed);
             sim.Respawn(OutpostSession.SessionId);
             var run = new Run { Player = new TavernPlayer(sim, reserve: EconomySoak.TavernReserve), Watch = new OutpostWatch(sim) };
-            sim.Simulation.Served += (crawler, item, price) => { run.ServedDays.Add((int)DayClock.Day(sim.Clock.CurrentTick)); run.Takings += price; };
+            sim.Simulation.Served += (crawler, item, price) =>
+            {
+                run.ServedDays.Add((int)DayClock.Day(sim.Clock.CurrentTick));
+                run.Takings += price;
+                int hour = DayClock.HourOfDay(sim.Clock.CurrentTick);
+                if (hour >= 18 || hour < 2) run.EveningTakings += price; // the evening, 18:00 to 02:00 (plan 3's D.2)
+            };
             var map = sim.Host.Current.Map;
             int hearth = map.Venues.ToList().FindIndex(v => v.Key == Floor1Layout.HearthVenue);
             var atVenues = new Dictionary<EntityId, long>();
@@ -110,6 +116,7 @@ namespace Simpiens.Core.Tests
                 Assert.True(run.BuiltTick >= 0 && run.KeptTick >= 0, "The tavern was built and kept.");
                 Assert.True(run.ServedDays.Count >= 2 && run.Player.Served >= 3, $"It served on two days at least ({run}).");
                 Assert.Equal(run.Player.Takings, run.Takings);
+                Assert.True(run.EveningTakings * 2 >= run.Takings, $"Most of its takings came in the evening, 18:00 to 02:00 (plan 3's D.2: {run.EveningTakings}g of {run.Takings}g).");
                 Assert.True(run.AtVenuesAnHour * 2 >= run.Residents, $"Half the residents spent an hour at a venue other than the hearth ({run.AtVenuesAnHour} of {run.Residents}).");
                 Assert.True(run.Wholesale > 0 && run.ArtisanWages > 0, "The caravan's wholesale for the menu and the keeper's wage are in the ledger.");
                 Assert.Equal(0, run.Watch.ConservationViolations);

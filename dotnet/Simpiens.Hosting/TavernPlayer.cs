@@ -22,10 +22,11 @@ namespace Simpiens.Hosting
         private readonly ushort _wage;
         private readonly uint _reserve;
 
-        /// <param name="shifts">The blocks the keeper keeps the counter (<see cref="ShiftBlocks"/>): its opening hours.</param>
+        /// <param name="shifts">The blocks the keeper keeps the counter (<see cref="ShiftBlocks"/>): its opening hours, the evening's by
+        /// default since the outpost sleeps at night (Epic LIFE-1 plan 3, D.2; the day shift before).</param>
         /// <param name="wage">The keeper's wage; the session's default wage when 0.</param>
         /// <param name="reserve">Gold it keeps in the treasury: it builds only when the stall holds the price and this besides.</param>
-        public TavernPlayer(LocalSimulation sim, byte shifts = ShiftBlocks.DayShift, ushort wage = 0, uint reserve = 0)
+        public TavernPlayer(LocalSimulation sim, byte shifts = ShiftBlocks.EveningShift, ushort wage = 0, uint reserve = 0)
         {
             _sim = sim;
             _commands = (IPlayerInterventionService)sim.Services.GetService(typeof(IPlayerInterventionService));
