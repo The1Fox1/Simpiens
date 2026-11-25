@@ -174,7 +174,7 @@ This is a working document (AGENTS.md, Documentation Protocol 6), the last of Ep
 **Complexity:** Possibly Complex: a scenario of every scenario, measuring, and the producer's session.
 - [x] **G.1 `LifeOneTogether`** [Possibly Complex: every DoD on one seed, with a save mid-day]
   - `MoodFollowsTheDay`'s beats, `AWantComesTrue`, `AnEveningAtTheTavern` and `ADayOffAfterAWindfall` on one seed with the tavern and guild players; saved mid-day and played on, with the same outcomes.
-- [ ] **G.2 The gate** [Possibly Complex: measuring]
+- [x] **G.2 The gate** [Possibly Complex: measuring]
   - **The tests:** every test, the golden check, the gate seeds' day, and the client's tests in the pinned image.
   - **The soak:** every profile's band on the final build (R.10's, set by the producer).
   - **Measurements:** the day by the clock, moods, rest days, leisure at venues, F17's harder foes.
