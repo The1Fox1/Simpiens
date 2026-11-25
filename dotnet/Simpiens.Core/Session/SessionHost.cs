@@ -458,6 +458,8 @@ namespace Simpiens.Core.Session
             var curious = SimRandom.For(seed, state.AgentId, 0, SimRandomSalt.Curiosity);
             var life = state.Life;
             life.SetCuriosity((curious.Range(-1f, 1f) + curious.Range(-1f, 1f)) * 0.5f);
+            // Its chronotype (Epic LIFE-1 plan 3, R.1, D28): a lark, the average or an owl, on its own salt after every earlier draw
+            life.SetChronotype(Simpiens.Simulation.Life.Routine.Draw(seed, state.AgentId));
             state.Life = life;
             // Its calling, from its best skill and the technique it took there (Epic 11, S5.3, D21); not told
             var traits = state.Traits;

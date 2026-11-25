@@ -84,6 +84,8 @@ namespace Simpiens.Simulation.Life
     /// <item><b>Rhythm</b> (plan 3): weariness and the last windfall at 268, the day's intention at 276; reserved until then.</item>
     /// <item><b>Curiosity</b> (plan 2's L2.7, Q8): a sixth trait at 277, drawn at spawn (0 unset, read as neutral); the venues
     /// a crawler has tried at 278, a bit a venue.</item>
+    /// <item><b>Chronotype</b> (plan 3's R.1, D28): a lark, an average sleeper or an owl, at 279, drawn at spawn (0 reads as
+    /// average, so a record written before it keeps today's hours).</item>
     /// <item><b>Variety</b> (L2.7, D15): eight bytes at 280, a variety group each.</item>
     /// <item><b>Spare</b>, at 288: taste and keepsakes (LIFE-2) and an aspiration (LIFE-3), with about 100 bytes left. A field
     /// laid here later reads 0 as "none", so a save made before it loads unchanged.</item>
@@ -107,7 +109,7 @@ namespace Simpiens.Simulation.Life
         public const int VarietyGroups = 8;
 
         /// <summary>What's left of <see cref="Size"/> after the thoughts, their subjects, the wants, boredom, the rhythm's room,
-        /// the intention, curiosity, the tried venues, a byte of padding and variety.</summary>
+        /// the intention, curiosity, the tried venues, the chronotype and variety.</summary>
         public const int SpareBytes = Size - ThoughtCapacity * 8 - SubjectCapacity * 16 - WantBytes - sizeof(float) - 8 - 4 - VarietyGroups;
 
         /// <summary>The most boredom holds: fun at 0.</summary>
@@ -121,7 +123,7 @@ namespace Simpiens.Simulation.Life
         private byte _intention;           // 276 (plan 3)
         private byte _curiosity;           // 277
         private byte _venuesTried;         // 278
-        private byte _pad279;              // 279
+        private byte _chronotype;          // 279 (plan 3's R.1)
         private LifeVariety _variety;      // 280: 8
         private LifeSpare _spare;          // 288: 224
 
@@ -196,6 +198,13 @@ namespace Simpiens.Simulation.Life
         {
             for (int g = 0; g < VarietyGroups; g++) _variety[g] = (byte)Math.Max(0, _variety[g] - amount);
         }
+
+        // --- Rhythm (plan 3) ---
+
+        /// <summary>Its chronotype (plan 3's R.1, D28): when its day starts. 0, a record with none drawn, reads as average.</summary>
+        public readonly Chronotype Chronotype => (Chronotype)_chronotype;
+
+        public void SetChronotype(Chronotype chronotype) => _chronotype = (byte)chronotype;
 
         // --- The record as bytes ---
 

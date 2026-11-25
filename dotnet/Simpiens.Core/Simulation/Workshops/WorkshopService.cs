@@ -377,14 +377,16 @@ namespace Simpiens.Simulation.Workshops
 
         /// <summary>
         /// <paramref name="crawlerId"/>'s part in its station's work at <paramref name="tick"/> (D13): on shift when it is an
-        /// artisan, not on a break, its station stands with an order, and the tick falls in one of its blocks. Default otherwise.
+        /// artisan, not on a break, its station stands with an order, and the tick falls in one of its blocks. An artisan off
+        /// shift gets its shifts alone (Epic LIFE-1 plan 3, R.1: its routine's working block); default for anyone else.
         /// </summary>
         public Simpiens.Cognition.Contracts.StationOrder OrderFor(EntityId crawlerId, uint tick)
         {
             int i = IndexOfArtisan(crawlerId);
-            if (i < 0 || !IsOnShift(_artisans[i], tick)) return default;
+            if (i < 0) return default;
+            if (!IsOnShift(_artisans[i], tick)) return Simpiens.Cognition.Contracts.StationOrder.OffShift(_artisans[i].Shifts);
             var place = _map.Stations[_artisans[i].StationIndex];
-            return new Simpiens.Cognition.Contracts.StationOrder(_artisans[i].StationIndex, place.Position, place.Radius);
+            return new Simpiens.Cognition.Contracts.StationOrder(_artisans[i].StationIndex, place.Position, place.Radius, _artisans[i].Shifts);
         }
 
         private bool IsOnShift(in ArtisanContract contract, uint tick)

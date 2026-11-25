@@ -75,5 +75,6 @@ namespace Simpiens.Simulation
         public const uint Inspiration = 19; // whether a Masterwork make is a masterpiece, and its name's words (Epic 11, S8.2, D41)
         public const uint Curiosity = 20; // a crawler's curiosity, a sixth trait drawn at spawn (Epic LIFE-1 plan 2, L2.7, Q8)
         public const uint Wants = 21; // whether a want arises on waking, and which (Epic LIFE-1 plan 2, W.2, D20)
+        public const uint Chronotype = 22; // a crawler's chronotype at spawn, and its waking hour's shift each day (Epic LIFE-1 plan 3, R.1, D28, D29)
     }
 }

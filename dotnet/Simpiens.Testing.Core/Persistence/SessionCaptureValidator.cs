@@ -216,6 +216,7 @@ namespace Simpiens.Testing.Persistence
             state.TriggerGossipVisual(11f);
             var life = default(Simpiens.Simulation.Life.CrawlerLife); // Epic LIFE-1, L0.8
             life.SetThought(3, new Simpiens.Simulation.Life.ThoughtSlot { Thought = 7, Stacks = 2, Subject = 1, BegunAt = 1234u });
+            life.SetChronotype(Simpiens.Simulation.Life.Chronotype.Owl); // plan 3's R.1, D28
             life.SetSubject(1, B);
             state.Life = life;
 
@@ -232,6 +233,7 @@ namespace Simpiens.Testing.Persistence
             Assert(r.Look == state.Look && r.Look.IsComplete, "The look is captured (Epic UI-Beta B1).");
             Assert(r.Skills == state.Skills && r.Skills != default, "The skills are captured (Epic 10 Part 3, K9.1).");
             Assert(r.Life == state.Life && r.Life.ThoughtAt(3).BegunAt == 1234u && r.Life.SubjectAt(1) == B, "The life record is captured (Epic LIFE-1, L0.8).");
+            Assert(r.Life.Chronotype == Simpiens.Simulation.Life.Chronotype.Owl, "Its chronotype is captured (plan 3's R.1, D28).");
 
             TestLog.Log("[PASS] Test 6: a crawler's record copies every saved field.");
         }
