@@ -76,6 +76,8 @@ namespace Simpiens.Simulation.Life
         /// <summary>It never saw the friend it wanted to (names the friend).</summary>
         MissedAFriend = 35,
         TriedSomewhereNew = 36,
+        /// <summary>A windfall paid: a single payment of half the comfortable purse or more (plan 3's R.5, D33).</summary>
+        EarnedARest = 37,
     }
 
     /// <summary>What a thought is about: a need met or missed, an event in its life, or another crawler.</summary>
@@ -200,6 +202,7 @@ namespace Simpiens.Simulation.Life
                 new ThoughtDefinition(Thought.SawAFriend, "SawAFriend", "Saw {0}", 4, 24, 1, 1f, ThoughtKind.Social),
                 new ThoughtDefinition(Thought.MissedAFriend, "MissedAFriend", "Missed {0}", -3, 24, 1, 1f, ThoughtKind.Social),
                 new ThoughtDefinition(Thought.TriedSomewhereNew, "TriedSomewhereNew", "Somewhere new", 4, 24, 1, 1f, ThoughtKind.Event),
+                new ThoughtDefinition(Thought.EarnedARest, "EarnedARest", "Earned a rest", 4, 24, 1, 1f, ThoughtKind.Event), // plan 3's R.5, D33
             };
             var byId = new ThoughtDefinition[Capacity];
             foreach (var row in rows)

@@ -109,6 +109,19 @@ namespace Simpiens.Cognition
         /// colonists wake, a member who is rested enough answers. One below the tired line sleeps on, needs first (Part 1's Q6).
         /// </summary>
         /// <summary>
+        /// A payment of <paramref name="amount"/> at <paramref name="tick"/> (a bounty, a hunt's share, an expedition's share): at
+        /// half <paramref name="comfortablePurse"/> or more it is a windfall (Epic LIFE-1 plan 3, R.5, D33), recorded in its life
+        /// record with the thought that it earned a rest. True for a windfall.
+        /// </summary>
+        public bool NoteWindfall(uint amount, uint tick, int comfortablePurse)
+        {
+            if (comfortablePurse <= 0 || amount < (uint)(comfortablePurse / 2)) return false;
+            _life.RecordWindfall(tick);
+            Think(Simpiens.Simulation.Life.Thought.EarnedARest, tick);
+            return true;
+        }
+
+        /// <summary>
         /// The part of its day its routine is in at <paramref name="tick"/> (Epic LIFE-1 plan 3, R.1, D29), as its context computes
         /// it: from its chronotype, its diligence and an artisan's shifts.
         /// </summary>
@@ -515,6 +528,11 @@ namespace Simpiens.Cognition
                 _life.Bore(fireside ? -(float)(dt * Simpiens.Simulation.DayClock.PerSecond(Simpiens.Simulation.Life.ActivityTable.Get(Simpiens.Simulation.Life.Activity.Fireside).FunPerHour))
                     : (float)(dt * day.BoredomPerSecond));
             }
+
+            // Weariness (Epic LIFE-1 plan 3, R.5, D33): rises at work (a harvest, a station's work, a fight or a hunt, an
+            // expedition's work among them) on the day's pace; only a day off clears it (R.7)
+            if (!asleep && (VisualState == AgentVisualState.Harvesting || CurrentIntent is FightIntent || CurrentIntent is HuntIntent))
+                _life.Weary((float)(dt * day.WearinessPerSecond));
 
             // Emergency preemption check
             bool emergencyExhaustion = energy <= MentalBreakEvaluator.ExhaustionThreshold;

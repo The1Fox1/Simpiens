@@ -79,12 +79,19 @@ namespace Simpiens.Simulation.Economy
         /// </summary>
         public readonly float BoredomPerSecond;
 
+        /// <summary>
+        /// How fast a crawler grows weary of work, a game second at it (Epic LIFE-1 plan 3, R.5, D33): 1 a game hour at a harvest,
+        /// a station's work or a fight; only a day off clears it.
+        /// </summary>
+        public readonly float WearinessPerSecond;
+
         public DayTuning(float hungerPerSecond, float energyStandingPerSecond, float energyWalkingPerSecond, float socialPerSecond,
             float bunkRecoveryPerSecond, float restRecoveryPerSecond, float sleepSeconds, float wakeEnergy, float wakeHunger, float bedtimeHunger, float sleepBonus,
             float restSeconds, float restBonus, float relaxEnergyBonus, float energyWorkingPerSecond, float energyCraftingPerSecond, in ActionTuning actions,
             float restingHealPerSecond, float bunkHealPerSecond, uint trustFadeTicks, float frustrationEasePerSecond,
-            float boredomPerSecond)
+            float boredomPerSecond, float wearinessPerSecond = -1f)
         {
+            WearinessPerSecond = wearinessPerSecond >= 0f ? wearinessPerSecond : DayClock.PerSecond(1f);
             FrustrationEasePerSecond = frustrationEasePerSecond;
             BoredomPerSecond = boredomPerSecond;
             HungerPerSecond = hungerPerSecond;
@@ -127,6 +134,7 @@ namespace Simpiens.Simulation.Economy
         /// <item>a bunk heals 10 an hour, a night 80, and awake about 50 a day (T3.2a; hazards' damage is the map's, gear's
         /// life the catalog's);</item>
         /// <item>boredom rises 2 a game hour awake (Epic LIFE-1 plan 2, L2.1; 3 until L2.6 measured where it settles); what entertains is each activity's row (L2.2);</item>
+        /// <item>weariness rises 1 a game hour at work (Epic LIFE-1 plan 3, R.5, D33);</item>
         /// <item>trust and the other affinities fade 5 every 12 game hours since the last dealing, not every 2.4 (T4.3, D27: at 6
         /// trust rose for 8 of 12 residents on all but one gate seed; at 12, on all of them).</item>
         /// </list>
@@ -160,7 +168,8 @@ namespace Simpiens.Simulation.Economy
             bunkHealPerSecond: DayClock.PerSecond(10f),
             trustFadeTicks: DayClock.Hours(12),
             frustrationEasePerSecond: DayClock.PerSecond(10f),
-            boredomPerSecond: DayClock.PerSecond(2f));
+            boredomPerSecond: DayClock.PerSecond(2f),
+            wearinessPerSecond: DayClock.PerSecond(1f));
     }
 
     /// <summary>

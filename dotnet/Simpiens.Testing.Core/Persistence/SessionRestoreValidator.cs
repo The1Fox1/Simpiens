@@ -488,6 +488,8 @@ namespace Simpiens.Testing.Persistence
             life.SetThought(15, new Simpiens.Simulation.Life.ThoughtSlot { Thought = 9, Stacks = 3, BegunAt = 410u });
             life.SetSubject(2, B);
             life.SetChronotype(Simpiens.Simulation.Life.Chronotype.Lark); // plan 3's R.1, D28
+            life.Weary(12.25f); // plan 3's R.5, D33
+            life.RecordWindfall(77u);
             state.Life = life;
             state.Activity.RecordSalvageHarvest(80u);
             state.Activity.RecordSalvageSale(95u);

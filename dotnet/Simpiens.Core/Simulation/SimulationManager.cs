@@ -134,7 +134,7 @@ namespace Simpiens.Simulation
             Creatures.Tick(this, tick);
             Piles.Tick(this, tick);
             TickTheFallen(tick);
-            _market.SettleHunts(Creatures, _agentRegistry, tick); // a hunted lair emptied, or a hunt's quarry slain, pays its hunters (K6.1; Epic 11, S7.4)
+            _market.SettleHunts(Creatures, _agentRegistry, tick, (_economy ?? EconomyTuning.Default).ComfortablePurse); // a hunted lair emptied, or a hunt's quarry slain, pays its hunters (K6.1; Epic 11, S7.4)
         }
 
         /// <summary>

@@ -24,7 +24,7 @@ namespace Simpiens.Testing.Life
         private void ValidateTheTable()
         {
             var all = ThoughtTable.All;
-            Assert(all.Count == 36, $"D7's 21 thoughts, plan 2's six activities' and nine wants' ({all.Count} in the table).");
+            Assert(all.Count == 37, $"D7's 21 thoughts, plan 2's six activities' and nine wants', plan 3's windfall ({all.Count} in the table).");
             var names = new HashSet<string>();
             ushort last = 0;
             foreach (var row in all)
