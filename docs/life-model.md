@@ -366,3 +366,11 @@ Drawn once a routine day, at the first tick awake outside the night, on `SimRand
 
 - **A rest day by the fire:** a rest day's hours are 57% at the hearth, 29% asleep, 3–6% at venues and 3–4% at work. D34's company weight on a rest day (1.2) is amended to 1, as D30's was, though with it at 1 the hearth still takes the freed hours: its base is high whenever company runs low, and leisure's is small while the hearth keeps boredom near 15 (F11).
 - **Training days** come with a passion (most residents have one), 12% of days.
+
+### 6.8 A rest day keeps to safe zones (R.8, D35, 2026-11-24)
+On its day off a crawler's lone danger limit is 0 (`Vitality.Resting`): it ventures nowhere (`WouldVenture`), enters no hazard sector and walks no charted lair's reach, not even one it would clear (`WouldEnterAt`, `LairDangerFor`, `WouldWalk`), and doesn't hunt (`Hunting.IsHunter`). Rescue judges a day off as a working day (`WouldEnterAt(..., restDay: false)`): a friend still goes for the fallen. `OutpostWatch` fails a day on any resident-tick on a rest day in a hazard or a charted lair's reach but to rescue or under orders, and a day off asks no harvest-and-sell cycle of a resident.
+
+- **Two findings of the watch's first runs:**
+  - a resident awake at its waking hour (every resident on the first morning, waking at 06:00 at the session's start) drew a day off with a working day's plan in hand and walked it into the Sump: a day off begun with a Work-family plan now drops it (orders are kept);
+  - a scout that took up the seeded scout bounty that morning drew a day off at its waking hour and left it unfinished (gate seed 15): the outpost's first routine day has no night's sleep before it, so it is a work day for everyone (D34's "on waking from its night's sleep").
+- **The gate seeds' day holds on 22 of 23,** the 23rd (seed 1) on one early jitter at t883 near the Garden (Epic 10's F5 kind), which R.4's change of choices moved onto it.

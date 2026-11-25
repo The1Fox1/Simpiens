@@ -136,7 +136,10 @@ namespace Simpiens.Cognition
 
         /// <summary>
         /// Whether its intention for its routine day at <paramref name="tick"/> is due (Epic LIFE-1 plan 3, R.7, D34): once a routine
-        /// day, at its first tick awake outside its night (on waking from its night's sleep, most days). A drifter draws none.
+        /// day, at its first tick awake outside its night (on waking from its night's sleep, most days). The outpost's first
+        /// routine day (0) has no night's sleep before it, everyone waking at 06:00 at the session's start, so it is a work day
+        /// (R.8: a resident who took up a bounty that morning and drew a day off at its waking hour left it unfinished). A drifter
+        /// draws none.
         /// </summary>
         public bool IntentionDue(uint tick, out long day)
         {
@@ -144,7 +147,7 @@ namespace Simpiens.Cognition
             if (IsDrifter || IsExhaustionCollapsed || VisualState == AgentVisualState.Sleeping || VisualState == AgentVisualState.Resting) return false;
             var routine = RoutineAt(tick);
             day = routine.Day;
-            return routine.Day >= 0 && _life.IntentionDay != routine.Day + 1 && routine.BlockAt(tick) != Simpiens.Simulation.Life.RoutineBlock.Night;
+            return routine.Day >= 1 && _life.IntentionDay != routine.Day + 1 && routine.BlockAt(tick) != Simpiens.Simulation.Life.RoutineBlock.Night;
         }
 
         /// <summary>

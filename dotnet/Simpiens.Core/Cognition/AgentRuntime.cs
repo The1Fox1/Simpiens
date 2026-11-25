@@ -189,7 +189,17 @@ namespace Simpiens.Cognition
             {
                 var economy = _simulationManager.Economy ?? Simpiens.Simulation.Economy.EconomyTuning.Default;
                 int target = Simpiens.Cognition.Planning.Rhythm.PurseTarget(economy, State.Personality, State.Life, _spatialPartition?.GetActiveSnapshot());
-                State.DrawIntention(routineDay, (uint)currentTick, _simulationManager.Seed, economy.Life.Rhythm, target);
+                var intention = State.DrawIntention(routineDay, (uint)currentTick, _simulationManager.Seed, economy.Life.Rhythm, target);
+                // A day off begun with a work plan in hand (awake at its waking hour, as on the first morning) drops it, so it chooses
+                // afresh under the day off and walks into no danger on a working day's plan (plan 3's R.8, D35); orders are kept
+                if (intention == Simpiens.Simulation.Life.DayIntention.Rest && State.HasActivePlan && State.ActiveGoal != null
+                    && State.ActiveGoal.Family == Simpiens.Cognition.Planning.ActivityFamily.Work && !State.IsEvaluating)
+                {
+                    _simulationManager.AbortIntent(State.AgentId);
+                    State.AbortActivePlan();
+                    State.CurrentIntent = null;
+                    State.HasActiveIntent = false;
+                }
             }
 
             // Sent for a fallen mate (Epic 10 Part 3, K7.2c, D42): once its last decision has landed, it drops what it does

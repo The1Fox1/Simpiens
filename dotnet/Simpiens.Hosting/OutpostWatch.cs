@@ -59,6 +59,9 @@ namespace Simpiens.Hosting
             /// </summary>
             public bool SleptInABunk;
 
+            /// <summary>It had a day off in the run (Epic LIFE-1 plan 3, R.8): the day doesn't ask it for a harvest to sell.</summary>
+            public bool HadRestDay;
+
             /// <summary>Danger (Epic 10 G2): the lowest health seen, and whether it came back to full after being hurt.</summary>
             public float LowestHealth = 100f;
             public bool HurtThenRecovered;
@@ -96,6 +99,16 @@ namespace Simpiens.Hosting
         /// </summary>
         public int AloneInTheChamber;
         public string FirstAloneInTheChamber;
+
+        /// <summary>
+        /// Crawler-ticks a resident on its day off stood in a hazard sector or a charted lair's reach, but to rescue someone or under
+        /// orders (Epic LIFE-1 plan 3, R.8, D35): a rest day keeps to safe zones.
+        /// </summary>
+        public int RestDayInDanger;
+        public string FirstRestDayInDanger;
+
+        /// <summary>Resident-ticks on a rest day, and rest days begun (plan 3's R.7-R.8).</summary>
+        public long RestDayTicks;
         public long ObservedTicks;
 
         /// <summary>
@@ -281,6 +294,7 @@ namespace Simpiens.Hosting
                     AloneInTheChamber++;
                     FirstAloneInTheChamber ??= $"t{rel}: {_sim.Host.CrawlerNames[i]} at {state.Position}";
                 }
+                ObserveRestDay(state, rel, (uint)tick, map, _sim.Host.CrawlerNames[i]);
                 ObserveBudget(state, rel, _sim.Host.CrawlerNames[i]);
                 ObserveThoughts(state);
                 if (!LookCatalog.IsValid(state.Look) || string.IsNullOrEmpty(state.GivenName))
@@ -299,6 +313,7 @@ namespace Simpiens.Hosting
                 var c = Crawlers[i];
                 c.ObserveHealth(c.State.Health);
                 if (c.State.VisualState == Simpiens.Entities.AgentVisualState.Sleeping) c.SleptInABunk = true;
+                if (c.State.IntentionAt((uint)tick) == Simpiens.Simulation.Life.DayIntention.Rest) c.HadRestDay = true;
                 float hunger = c.State.Hunger;
                 if (hunger > c.PeakHunger) c.PeakHunger = hunger;
                 if (hunger >= StarvingHunger)
@@ -431,6 +446,26 @@ namespace Simpiens.Hosting
         public string CreatureSummary() =>
             $"creatures: {Blows} blows ({Hits} hit) on {Struck.Count} crawlers, {Flights} flights{(FirstFlight != null ? $" (first {FirstFlight})" : "")}, {DownedByCreatures} downed by them; lairs charted at [{string.Join(", ", LairChartedAt.Select(t => t < 0 ? "never" : "t" + t))}]; lone entries into a known lair {EntriesIntoKnownLairs}{(FirstEntryIntoKnownLair != null ? $" (first {FirstEntryIntoKnownLair})" : "")}; armed at most {MostArmed}, fights {Fights}, kills {Kills}; deaths {Deaths}{(FirstDeath != null ? $" (first {FirstDeath})" : "")}";
 
+        /// <summary>A resident on its day off, judged by D35: out of every hazard and charted lair's reach but to rescue or under orders.</summary>
+        private void ObserveRestDay(AgentState state, long rel, uint tick, Simpiens.Simulation.World.MapDefinition map, string name)
+        {
+            if (state.IsDrifter || state.IsDowned || state.IntentionAt(tick) != Simpiens.Simulation.Life.DayIntention.Rest) return;
+            RestDayTicks++;
+            if (state.Expedition.IsActive || state.Station.IsActive) return; // under orders it kept (D36)
+            if (state.CurrentIntent is Simpiens.Cognition.Contracts.CarryIntent || state.CurrentIntent is Simpiens.Cognition.Contracts.GiveMedicineIntent) return; // a rescue
+            bool hazard = Vitality.HazardAt(map, state.Position).IsHazardous;
+            bool lair = false;
+            for (int l = 0; map != null && l < map.Lairs.Count && l < LairChartedAt.Length && !lair; l++)
+            {
+                float deep = Simpiens.Simulation.Creatures.LairReach.Of(map.Lairs[l]) - LairEdgeBand;
+                lair = LairChartedAt[l] >= 0 && rel - LairChartedAt[l] >= KnownLairGraceTicks && deep > 0f && (state.Position - map.Lairs[l].Position).SqrMagnitude <= deep * deep;
+            }
+            if (lair && Vitality.StruckRecently(state.StruckAtTick, tick)) lair = false; // fleeing a blow out of it
+            if (!hazard && !lair) return;
+            RestDayInDanger++;
+            FirstRestDayInDanger ??= $"t{rel}: {name} at {state.Position} ({(hazard ? "a hazard" : "a lair's reach")})";
+        }
+
         /// <summary>Steps <paramref name="ticks"/> ticks, observing after each.</summary>
         public void Run(long ticks)
         {
@@ -453,7 +488,7 @@ namespace Simpiens.Hosting
             // The living residents (Epic 10 Part 3, K5): a death is counted apart, and TheCarefulLoseFew bands it
             var living = Crawlers.Where(c => !c.Died).ToList();
             if (living.Count == 0) { failures.Add("no crawlers"); return failures; }
-            var noCycle = living.Where(c => c.State.Activity.Cycles == 0).Select(c => c.Name).ToList();
+            var noCycle = living.Where(c => c.State.Activity.Cycles == 0 && !c.HadRestDay).Select(c => c.Name).ToList(); // a day off asks for no work (plan 3's R.8)
             int sleepers = living.Count(c => c.SleptInABunk || c.State.Activity.BunkSleeps > 0);
             int eaters = living.Count(c => c.State.Activity.Meals > 0);
             int gatherings = living.Sum(c => c.State.Activity.HearthGatherings);
@@ -468,6 +503,7 @@ namespace Simpiens.Hosting
             if (ScoutTick < 0 || !ScoutCharted) failures.Add($"the Scout bounty was not fulfilled with the Deep Seam charted (t{ScoutTick}, charted {ScoutCharted})");
             if (FogLeaks > 0) failures.Add($"crawlers knew Deep Seam landmarks before the scout reported ({FogLeaks}; first {FirstFogLeak})");
             if (EntriesIntoKnownLairs > 0) failures.Add($"crawlers went alone into a known lair ({EntriesIntoKnownLairs}; first {FirstEntryIntoKnownLair})");
+            if (RestDayInDanger > 0) failures.Add($"residents on their day off went into danger ({RestDayInDanger} crawler-ticks; first {FirstRestDayInDanger})");
             if (AloneInTheChamber > 0) failures.Add($"crawlers went alone where only an expedition goes ({AloneInTheChamber} crawler-ticks; first {FirstAloneInTheChamber})");
             if (GatherTick < 0 || !GatherEscrowReleased) failures.Add($"the Gather bounty was not fulfilled and paid from escrow (t{GatherTick}, released {GatherEscrowReleased})");
             if (trustRose < requiredTrustRose) failures.Add($"trust toward the player rose for only {trustRose} of {living.Count} (need {requiredTrustRose})");

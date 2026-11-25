@@ -88,6 +88,8 @@ namespace Simpiens.Testing.Life
             state.Life = life;
             var routine = Routine.Of(Chronotype.Average, 0f, Ama, DayClock.TicksPerDay + DayClock.Hours(4));
             uint night = (uint)(routine.WakesAt - 7), morning = (uint)(routine.WakesAt + 7);
+            var first = Routine.Of(Chronotype.Average, 0f, Ama, DayClock.Hours(4));
+            Assert(first.Day == 0 && !state.IntentionDue((uint)(first.WakesAt + 7), out _), "The outpost's first routine day is a work day: no night's sleep came before it.");
             Assert(!state.IntentionDue(night, out _), "Not in its night.");
             state.VisualState = AgentVisualState.Sleeping;
             Assert(!state.IntentionDue(morning, out _), "Not asleep.");
