@@ -94,7 +94,9 @@ namespace Simpiens.Simulation.Life
         /// are a motive a crawler may set aside. Fun (L2.8, D21): low 1.25, breaking 1.5, safe since Recreate is never chosen hungry,
         /// tired or hurt (F12);</item>
         /// <item>mood's frustration a game hour (L1.4, D9): breaking +15, low +5, good and happy -5 (eased faster);</item>
-        /// <item>the routine's weights by block and family (plan 3): in its night, rest weighs 1.5, the bedtime pull (R.3, D31).</item>
+        /// <item>the routine's weights by block and family (plan 3, D30): in the working block work 1.2, leisure 0.8, company 0.9;
+        /// in the leisure block work 0.8, leisure 1.2, company 1.15; in the night work 0.6, leisure 0.7, company 0.8 and rest 1.5,
+        /// the bedtime pull (R.3, D31); rest 1 by day; the unweighted family never.</item>
         /// </list>
         /// </summary>
         public static LifeTuning Default => new LifeTuning(commitment: 0f, fallbackDepth: 2)
@@ -106,8 +108,16 @@ namespace Simpiens.Simulation.Life
             .WithMoodWeight(MoodBand.Breaking, Fun, 1.5f)
             .WithMoodFrustration(MoodBand.Breaking, 15f).WithMoodFrustration(MoodBand.Low, 5f)
             .WithMoodFrustration(MoodBand.Good, -5f).WithMoodFrustration(MoodBand.Happy, -5f)
-            .WithRoutineWeight(RoutineBlock.Night, RestFamily, 1.5f);
+            .WithRoutineWeight(RoutineBlock.Working, WorkFamily, 1.2f).WithRoutineWeight(RoutineBlock.Working, LeisureFamily, 0.8f)
+            .WithRoutineWeight(RoutineBlock.Working, SocialFamily, 0.9f)
+            .WithRoutineWeight(RoutineBlock.Leisure, WorkFamily, 0.8f).WithRoutineWeight(RoutineBlock.Leisure, LeisureFamily, 1.2f)
+            .WithRoutineWeight(RoutineBlock.Leisure, SocialFamily, 1.15f)
+            .WithRoutineWeight(RoutineBlock.Night, WorkFamily, 0.6f).WithRoutineWeight(RoutineBlock.Night, LeisureFamily, 0.7f)
+            .WithRoutineWeight(RoutineBlock.Night, SocialFamily, 0.8f).WithRoutineWeight(RoutineBlock.Night, RestFamily, 1.5f);
 
+        private const int WorkFamily = (int)Simpiens.Cognition.Planning.ActivityFamily.Work;
+        private const int LeisureFamily = (int)Simpiens.Cognition.Planning.ActivityFamily.Leisure;
+        private const int SocialFamily = (int)Simpiens.Cognition.Planning.ActivityFamily.Social;
         private const int RestFamily = (int)Simpiens.Cognition.Planning.ActivityFamily.Rest;
         private const int Income = (int)Simpiens.Cognition.Planning.Motive.Income;
         private const int Duty = (int)Simpiens.Cognition.Planning.Motive.Duty;
