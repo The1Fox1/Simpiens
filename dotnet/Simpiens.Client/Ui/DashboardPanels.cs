@@ -605,7 +605,7 @@ namespace Simpiens.Client.Ui
             if (!dossier.HasCrawler) return;
             UiParts.SetText(_dossierName, dossier.Name);
             UiParts.SetText(_description, dossier.Description);
-            UiParts.SetText(_moodLine, dossier.MoodLine);
+            UiParts.SetText(_moodLine, dossier.IntentionLine.Length > 0 ? dossier.MoodLine + " " + dossier.IntentionLine : dossier.MoodLine); // the day's intention on the mood's line, no row of its own (plan 3's V.1)
             bool portrait = dossier.HasPortrait && _portraits != null;
             if (Portrait.Visible != portrait) Portrait.Visible = portrait;
             if (portrait)

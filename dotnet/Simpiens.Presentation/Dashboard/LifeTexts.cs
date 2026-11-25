@@ -64,6 +64,27 @@ namespace Simpiens.Presentation.Dashboard
             return Invariant($"{minute / 60:D2}:{minute % 60:D2}");
         }
 
+        /// <summary>
+        /// What the dossier says of a crawler's day under its mood (Epic LIFE-1 plan 3, V.1, D38): "Today: a day off." for a day it
+        /// means to spend otherwise than at work; nothing on a working day.
+        /// </summary>
+        public static string TodayLine(DayIntention intention) => intention switch
+        {
+            DayIntention.Rest => "Today: a day off.",
+            DayIntention.Training => "Today: practice.",
+            DayIntention.Want => "Today: what it wants.",
+            _ => string.Empty,
+        };
+
+        /// <summary>The day log's first line, at its waking hour (D38): "Woke, meaning to rest".</summary>
+        public static string WokeMeaning(DayIntention intention) => intention switch
+        {
+            DayIntention.Rest => "Woke, meaning to rest",
+            DayIntention.Training => "Woke, meaning to practise",
+            DayIntention.Want => "Woke, meaning to do as it wants",
+            _ => "Woke, meaning to work",
+        };
+
         /// <summary>The tick the calendar day of <paramref name="tick"/> began at (midnight; 0 on day 1, which starts at 06:00).</summary>
         public static long DayStart(long tick)
         {

@@ -118,6 +118,30 @@ namespace Simpiens.Client.Tests
             Assert.Equal(new[] { "10:00  Rescued by Bram", "09:00  TantrumStarted", "08:00  A good meal", "07:00  Slept in a bunk" }, Shown(today));
         }
 
+        /// <summary>
+        /// The day's intention in the dossier and the day log (Epic LIFE-1 plan 3, V.1, D38): on a day off, "Today: a day off."
+        /// beside the mood and the day opening with its waking, "Woke, meaning to rest"; nothing of the sort on a working day or
+        /// before one is drawn.
+        /// </summary>
+        [Fact]
+        public void TheDayOffIsToldInTheDossierAndTheDay()
+        {
+            Assert.Equal("Today: a day off.", LifeTexts.TodayLine(DayIntention.Rest));
+            Assert.Equal(string.Empty, LifeTexts.TodayLine(DayIntention.Work));
+            var state = Crawler(new AgentNeeds(30f, 80f, 60f));
+            long now = Midnight + 12 * DayClock.TicksPerHour; // 12:00 on day 2
+            var routine = state.RoutineAt((uint)now);
+            var today = new DayLogModel();
+            today.Refresh(state, now, null, null, Names);
+            Assert.Empty(today.Lines); // no intention drawn: no waking line
+            var life = state.Life;
+            life.SetIntention(DayIntention.Rest, routine.Day);
+            state.Life = life;
+            today.Refresh(state, now, null, null, Names);
+            Assert.Equal(new[] { LifeTexts.Clock(routine.WakesAt) + "  Woke, meaning to rest" }, Shown(today));
+            Assert.Equal(DayIntention.Rest, state.IntentionAt((uint)now));
+        }
+
         private static List<string> Shown(DayLogModel today)
         {
             var shown = new List<string>();
