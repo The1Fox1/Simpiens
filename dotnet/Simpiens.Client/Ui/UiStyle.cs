@@ -96,6 +96,7 @@ namespace Simpiens.Client.Ui
             AgentVisualState.Harvesting => Hex(0x4f3d1c),
             AgentVisualState.Resting => Hex(0x3a3350),
             AgentVisualState.Sleeping => Hex(0x3a3350),
+            AgentVisualState.Seated => Hex(0x3d3a26), // at its ease (Epic LIFE-1 plan 3, V.3)
             AgentVisualState.Gossiping => Hex(0x24414a),
             AgentVisualState.Sharing => Hex(0x2f4a2a),
             AgentVisualState.Panicking => Hex(0xb8432c),

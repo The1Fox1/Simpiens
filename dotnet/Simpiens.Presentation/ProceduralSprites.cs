@@ -13,8 +13,8 @@ namespace Simpiens.Presentation
     public static class ProceduralSprites
     {
         private static readonly List<PixelSprite> _all = new List<PixelSprite>(48);
-        private static readonly PixelSprite[,] _agentSprites = new PixelSprite[12, 2];
-        private static readonly IReadOnlyList<string>[,] _agentPatterns = new IReadOnlyList<string>[12, 2];
+        private static readonly PixelSprite[,] _agentSprites = new PixelSprite[13, 2];
+        private static readonly IReadOnlyList<string>[,] _agentPatterns = new IReadOnlyList<string>[13, 2];
         private static readonly Dictionary<char, Rgba32> _crawlerKeys, _sleepKeys; // a standing crawler's palette (its fixed letters are every state's), and the sleeper's
         private static readonly PixelSprite _resourceSprite;
         private static readonly PixelSprite _oreVeinSprite;
@@ -186,6 +186,10 @@ namespace Simpiens.Presentation
             _sleepKeys = sleepPalette;
             Agent(AgentVisualState.Sleeping, 0, PatternSleep0, sleepPalette, "Agent_Sleep_0");
             Agent(AgentVisualState.Sleeping, 1, PatternSleep1, sleepPalette, "Agent_Sleep_1");
+
+            // 13. Seated Sprites (Epic LIFE-1 plan 3, V.3): sitting at a seat, knees forward; the idle outfit's colours
+            Agent(AgentVisualState.Seated, 0, PatternSeat0, idlePalette, "Agent_Seat_0");
+            Agent(AgentVisualState.Seated, 1, PatternSeat1, idlePalette, "Agent_Seat_1");
 
             // 12. Resource (Berry Bush)
             var bushPalette = new Dictionary<char, Rgba32>
@@ -571,6 +575,48 @@ namespace Simpiens.Presentation
             ".##############################.",
             ".#ww#......................#ww#.",
             "................................",
+        };
+
+        // Seated (Epic LIFE-1 plan 3, V.3): the head two rows lower, hands on the knees, the thighs forward and the shins under
+        // them; frame 1 blinks
+        private static readonly string[] PatternSeat0 =
+        {
+            "................",
+            "................",
+            "................",
+            ".....######.....",
+            "....#HHHHHH#....",
+            "....#HKKKKH#....",
+            "....#KBKKBK#....",
+            "....#KKKKKK#....",
+            ".....######.....",
+            "....#CCCCCC#....",
+            "...#CCCCCCCC#...",
+            "...#KCCCCCCK#...",
+            "..#SSSSSSSSSS#..",
+            "..#SS######SS#..",
+            "...##......##...",
+            "................"
+        };
+
+        private static readonly string[] PatternSeat1 =
+        {
+            "................",
+            "................",
+            "................",
+            ".....######.....",
+            "....#HHHHHH#....",
+            "....#HKKKKH#....",
+            "....#KKKKKK#....",
+            "....#KKKKKK#....",
+            ".....######.....",
+            "....#CCCCCC#....",
+            "...#CCCCCCCC#...",
+            "...#KCCCCCCK#...",
+            "..#SSSSSSSSSS#..",
+            "..#SS######SS#..",
+            "...##......##...",
+            "................"
         };
 
         private static readonly string[] PatternIdle0 =

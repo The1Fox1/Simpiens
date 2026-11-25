@@ -7,7 +7,7 @@ using Simpiens.Simulation.People;
 namespace Simpiens.Presentation.Art.People
 {
     /// <summary>
-    /// A crawler's body on the map, baked from its look (Epic UI-Beta B2, design §3.2): today's 24 pose frames, read in
+    /// A crawler's body on the map, baked from its look (Epic UI-Beta B2, design §3.2): today's 26 pose frames, read in
     /// their key letters (<see cref="ProceduralSprites.CrawlerKeys"/>), then the look applied to the keys in a fixed
     /// order (the hair style and facial hair at the frame's head anchor, the helm, the build, the delvers' height, the
     /// guild's tabard), then the keys painted in the look's colours (<see cref="LookPalettes"/>). Pure, in integer
@@ -18,8 +18,8 @@ namespace Simpiens.Presentation.Art.People
     {
         public const int Size = 16;
 
-        /// <summary>Frames in a body: two per <see cref="AgentVisualState"/>.</summary>
-        public const int FrameCount = 24;
+        /// <summary>Frames in a body: two per <see cref="AgentVisualState"/> (24 until the seated pose, Epic LIFE-1 plan 3, V.3).</summary>
+        public const int FrameCount = 26;
 
         public const int PixelsPerFrame = Size * Size;
         public const int PixelsPerBody = FrameCount * PixelsPerFrame;
@@ -40,7 +40,7 @@ namespace Simpiens.Presentation.Art.People
         public static int FrameIndex(AgentVisualState state, int frame) => (int)state * 2 + (frame & 1);
 
         /// <summary>
-        /// Bakes all 24 frames of a body into <paramref name="into"/> (<see cref="PixelsPerBody"/> pixels), frame after
+        /// Bakes all 26 frames of a body into <paramref name="into"/> (<see cref="PixelsPerBody"/> pixels), frame after
         /// frame in <see cref="FrameIndex"/> order, each row by row from the top. <paramref name="worn"/> is what shows of
         /// the crawler's gear, slot by slot (Epic 10 Part 3, K1.5: a helm or a mask on the head, a coat over the shirt; where
         /// two show in one place, the higher draw layer's); <paramref name="tabard"/>, whether it wears the guild's tabard,

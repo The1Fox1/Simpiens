@@ -17,6 +17,7 @@ namespace Simpiens.Entities
         Sharing = 8,
         Rallying = 9,
         Defiant = 10,
-        Sleeping = 11 // lying in a bunk, under the blanket (Epic MAP Phase 3 rest anchor)
+        Sleeping = 11, // lying in a bunk, under the blanket (Epic MAP Phase 3 rest anchor)
+        Seated = 12 // at a seat for an activity: an ale, a supper, dice, the fireside (Epic LIFE-1 plan 3, V.3, D38)
     }
 }
