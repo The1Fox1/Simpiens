@@ -79,9 +79,9 @@ namespace Simpiens.Client.Tests
         [Fact]
         public void EveryCrawlerStateHasTwoFramesAndTheMapAndPropsHaveTheirSprites()
         {
-            // 12 crawler states x 2 frames, berry bush, ore vein, herb patch, wall, campfire x 2, bunk, floor, rock,
+            // 12 crawler states x 2 frames (the 13th's, seated, at the end), berry bush, ore vein, herb patch, wall, campfire x 2, bunk, floor, rock,
             // and the selection ring (M1.5)
-            Assert.Equal(42, ProceduralSprites.All.Count); // 34, plus Epic 10 G2's glowstone, graphics V5's stall, Part 2's forge, still and plot, Part 3's cairn (K5.8b), Epic 11's drill yard (S3.4) and Epic LIFE-1's tavern (plan 2, T.3)
+            Assert.Equal(44, ProceduralSprites.All.Count); // 34, plus Epic 10 G2's glowstone, graphics V5's stall, Part 2's forge, still and plot, Part 3's cairn (K5.8b), Epic 11's drill yard (S3.4), Epic LIFE-1's tavern (plan 2, T.3) and the seated frames (plan 3, V.3), last
             for (int i = 0; i < ProceduralSprites.All.Count; i++)
             {
                 var sprite = ProceduralSprites.All[i];

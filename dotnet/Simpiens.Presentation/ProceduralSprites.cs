@@ -187,10 +187,6 @@ namespace Simpiens.Presentation
             Agent(AgentVisualState.Sleeping, 0, PatternSleep0, sleepPalette, "Agent_Sleep_0");
             Agent(AgentVisualState.Sleeping, 1, PatternSleep1, sleepPalette, "Agent_Sleep_1");
 
-            // 13. Seated Sprites (Epic LIFE-1 plan 3, V.3): sitting at a seat, knees forward; the idle outfit's colours
-            Agent(AgentVisualState.Seated, 0, PatternSeat0, idlePalette, "Agent_Seat_0");
-            Agent(AgentVisualState.Seated, 1, PatternSeat1, idlePalette, "Agent_Seat_1");
-
             // 12. Resource (Berry Bush)
             var bushPalette = new Dictionary<char, Rgba32>
             {
@@ -340,6 +336,11 @@ namespace Simpiens.Presentation
                 { 's', new Rgba32(130, 124, 116, 255) }, // Stone, lit
             };
             _cairnSprite = CreateSprite(PatternCairn, cairnPalette, "Prop_Cairn");
+
+            // The seated frames (Epic LIFE-1 plan 3, V.3), last, so every earlier sprite keeps its place in the sheet: sitting at a
+            // seat, knees forward; the idle outfit's colours
+            Agent(AgentVisualState.Seated, 0, PatternSeat0, idlePalette, "Agent_Seat_0");
+            Agent(AgentVisualState.Seated, 1, PatternSeat1, idlePalette, "Agent_Seat_1");
         }
 
         private static PixelSprite CreateRing()
