@@ -183,6 +183,14 @@ namespace Simpiens.Cognition
                 State.ExpireWants((uint)currentTick);
                 if (_simulationManager != null) Wanting.OnWaking(State, _spatialPartition?.GetActiveSnapshot(), _simulationManager.Economy, _simulationManager.Seed, (uint)currentTick);
             }
+            // Its intention for the day (Epic LIFE-1 plan 3, R.7, D34): once a routine day, awake outside its night, after a new
+            // want may have arisen
+            if (_simulationManager != null && State.IntentionDue((uint)currentTick, out long routineDay))
+            {
+                var economy = _simulationManager.Economy ?? Simpiens.Simulation.Economy.EconomyTuning.Default;
+                int target = Simpiens.Cognition.Planning.Rhythm.PurseTarget(economy, State.Personality, State.Life, _spatialPartition?.GetActiveSnapshot());
+                State.DrawIntention(routineDay, (uint)currentTick, _simulationManager.Seed, economy.Life.Rhythm, target);
+            }
 
             // Sent for a fallen mate (Epic 10 Part 3, K7.2c, D42): once its last decision has landed, it drops what it does
             var carry = State.Expedition.Carry;

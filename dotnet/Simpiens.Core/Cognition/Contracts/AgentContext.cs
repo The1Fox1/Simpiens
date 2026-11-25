@@ -91,6 +91,12 @@ namespace Simpiens.Cognition.Contracts
         /// </summary>
         public readonly Simpiens.Simulation.Life.RoutineBlock Block;
 
+        /// <summary>
+        /// What it means to do with its routine day (Epic LIFE-1 plan 3, R.7, D34): the intention drawn for this routine day, or a
+        /// work day before one is drawn. The motive model weighs by it.
+        /// </summary>
+        public readonly Simpiens.Simulation.Life.DayIntention Intention;
+
         /// <summary>The player's guild it belongs to, its group id, or 0 (Epic 11, S3.4: a member may drill at the guildhall's yard).</summary>
         public readonly byte GuildGroupId;
         public bool IsGuildMember => GuildGroupId != 0;
@@ -149,7 +155,9 @@ namespace Simpiens.Cognition.Contracts
             Identity = identity;
             Inventory = inventory;
             Mood = Simpiens.Simulation.Life.MoodRules.BandOf(Simpiens.Simulation.Life.MoodRules.Of(Needs, Health, IsDowned, Life, CurrentTick)); // after every field it reads
-            Block = Simpiens.Simulation.Life.Routine.BlockAt(Life.Chronotype, Personality.Diligence, AgentId, CurrentTick, Station.Shifts); // likewise
+            var routine = Simpiens.Simulation.Life.Routine.Of(Life.Chronotype, Personality.Diligence, AgentId, CurrentTick); // likewise
+            Block = routine.BlockAt(CurrentTick, Station.Shifts);
+            Intention = Life.IntentionFor(routine.Day);
         }
 
         // Backward-compatible constructor

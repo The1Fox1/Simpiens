@@ -128,6 +128,45 @@ namespace Simpiens.Cognition
         public Simpiens.Simulation.Life.RoutineBlock RoutineBlockAt(uint tick) =>
             Simpiens.Simulation.Life.Routine.BlockAt(_life.Chronotype, Personality.Diligence, AgentId, tick, Station.Shifts);
 
+        /// <summary>Its routine day at <paramref name="tick"/> (Epic LIFE-1 plan 3, R.7), as its context computes it.</summary>
+        public Simpiens.Simulation.Life.Routine RoutineAt(uint tick) => Simpiens.Simulation.Life.Routine.Of(_life.Chronotype, Personality.Diligence, AgentId, tick);
+
+        /// <summary>The intention it holds for its routine day at <paramref name="tick"/>: a work day before one is drawn (D34).</summary>
+        public Simpiens.Simulation.Life.DayIntention IntentionAt(uint tick) => _life.IntentionFor(RoutineAt(tick).Day);
+
+        /// <summary>
+        /// Whether its intention for its routine day at <paramref name="tick"/> is due (Epic LIFE-1 plan 3, R.7, D34): once a routine
+        /// day, at its first tick awake outside its night (on waking from its night's sleep, most days). A drifter draws none.
+        /// </summary>
+        public bool IntentionDue(uint tick, out long day)
+        {
+            day = -1;
+            if (IsDrifter || IsExhaustionCollapsed || VisualState == AgentVisualState.Sleeping || VisualState == AgentVisualState.Resting) return false;
+            var routine = RoutineAt(tick);
+            day = routine.Day;
+            return routine.Day >= 0 && _life.IntentionDay != routine.Day + 1 && routine.BlockAt(tick) != Simpiens.Simulation.Life.RoutineBlock.Night;
+        }
+
+        /// <summary>
+        /// Draws and begins its intention for routine day <paramref name="day"/> (D34): its odds from its weariness, a windfall within
+        /// the last game day, its purse against <paramref name="purseTarget"/>, its passions and its wants.
+        /// </summary>
+        public Simpiens.Simulation.Life.DayIntention DrawIntention(long day, uint tick, ulong seed, in Simpiens.Simulation.Life.RhythmTuning rhythm, int purseTarget)
+        {
+            bool passion = false;
+            var traits = Traits;
+            for (int s = 0; s < Simpiens.Simulation.Skills.SkillTable.Capacity && !passion; s++)
+                passion = traits.PassionFor((Simpiens.Simulation.Skills.Skill)s) != Simpiens.Simulation.Skills.Passion.None;
+            bool want = false;
+            for (int w = 0; w < Simpiens.Simulation.Life.CrawlerLife.WantCapacity && !want; w++) want = _life.WantAt(w).Want != 0;
+            int gold = Inventory != null ? Inventory.Gold : 0;
+            var odds = Simpiens.Simulation.Life.IntentionRules.For(rhythm, _life.Weariness, Simpiens.Simulation.Life.IntentionRules.WindfallWithinADay(_life.LastWindfall, tick),
+                purseTarget > 0 && gold > purseTarget, passion, want);
+            var intention = Simpiens.Simulation.Life.IntentionRules.Draw(odds, seed, AgentId, day);
+            Simpiens.Simulation.Life.IntentionRules.Begin(ref _life, intention, day);
+            return intention;
+        }
+
         /// <summary>
         /// Whether a sleeper (in a bunk or rough) is up at <paramref name="tick"/>: rested or too hungry to sleep on, at the
         /// session's lines; in its routine's night it dozes on at full energy until its waking hour, and only hunger's line wakes

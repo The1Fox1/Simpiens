@@ -54,6 +54,8 @@ namespace Simpiens.Cognition.Planning
             float weight = life.MotiveWeight(motive) * life.MoodWeight(context.Mood, motive) * life.RoutineWeight(context.Block, (int)family);
             // Satiation and weariness on work (plan 3's R.6, D32, D33): exactly 1 under the purse target and unwearied
             if (family == ActivityFamily.Work) weight *= Rhythm.OnWork(context);
+            // The day's intention (R.7, D34): exactly 1 on a work day
+            if (context.Intention != Simpiens.Simulation.Life.DayIntention.Work) weight *= life.Rhythm.IntentionWeight(context.Intention, family, goal.Motive);
             return weight;
         }
     }

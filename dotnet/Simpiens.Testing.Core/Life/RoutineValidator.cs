@@ -47,7 +47,7 @@ namespace Simpiens.Testing.Life
             Assert(life.Chronotype == Chronotype.Average, "A record with none drawn reads as average.");
             life.SetChronotype(Chronotype.Owl);
             Assert(life.Chronotype == Chronotype.Owl && CrawlerLife.BytesOf(life)[279] == (byte)Chronotype.Owl, "The chronotype is the record's byte 279.");
-            Assert(CrawlerLife.SpareBytes == 224, $"Its spare bytes are untouched ({CrawlerLife.SpareBytes}).");
+            Assert(CrawlerLife.SpareBytes == 222, $"Its spare bytes are untouched ({CrawlerLife.SpareBytes}).");
         }
 
         private void ValidateTheBlocks()

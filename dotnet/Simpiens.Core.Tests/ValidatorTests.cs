@@ -84,6 +84,9 @@ namespace Simpiens.Core.Tests
         public void Weariness() => new Simpiens.Testing.Life.WearinessValidator().RunAllValidationTests(); // Epic LIFE-1 plan 3, R.5
 
         [Fact]
+        public void Intention() => new Simpiens.Testing.Life.IntentionValidator().RunAllValidationTests(); // Epic LIFE-1 plan 3, R.7
+
+        [Fact]
         public void Look() => new Simpiens.Testing.People.LookValidator().RunAllValidationTests();
 
         [Fact]

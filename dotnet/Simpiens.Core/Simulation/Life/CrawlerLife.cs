@@ -81,7 +81,9 @@ namespace Simpiens.Simulation.Life
     /// <item><b>Chronotype</b> (plan 3's R.1, D28): a lark, an average sleeper or an owl, at 279, drawn at spawn (0 reads as
     /// average, so a record written before it keeps today's hours).</item>
     /// <item><b>Variety</b> (L2.7, D15): eight bytes at 280, a variety group each.</item>
-    /// <item><b>Spare</b>, at 288: taste and keepsakes (LIFE-2) and an aspiration (LIFE-3), with about 100 bytes left. A field
+    /// <item><b>The intention's day</b> (plan 3's R.7, D34): a <c>ushort</c> at 288, the routine day the intention at 276 was drawn
+    /// for, plus one (0: never drawn, read as a work day).</item>
+    /// <item><b>Spare</b>, at 290: taste and keepsakes (LIFE-2) and an aspiration (LIFE-3), with about 100 bytes left. A field
     /// laid here later reads 0 as "none", so a save made before it loads unchanged.</item>
     /// </list>
     /// Its size is pinned (<c>EconomySerializationValidator</c>).
@@ -103,8 +105,8 @@ namespace Simpiens.Simulation.Life
         public const int VarietyGroups = 8;
 
         /// <summary>What's left of <see cref="Size"/> after the thoughts, their subjects, the wants, boredom, the rhythm's room,
-        /// the intention, curiosity, the tried venues, the chronotype and variety.</summary>
-        public const int SpareBytes = Size - ThoughtCapacity * 8 - SubjectCapacity * 16 - WantBytes - sizeof(float) - sizeof(float) - sizeof(uint) - 4 - VarietyGroups;
+        /// the intention, curiosity, the tried venues, the chronotype, variety and the intention's day.</summary>
+        public const int SpareBytes = Size - ThoughtCapacity * 8 - SubjectCapacity * 16 - WantBytes - sizeof(float) - sizeof(float) - sizeof(uint) - 4 - VarietyGroups - sizeof(ushort);
 
         /// <summary>The most weariness holds (D33).</summary>
         public const float MaxWeariness = 100f;
@@ -118,12 +120,13 @@ namespace Simpiens.Simulation.Life
         private float _boredom;            // 264: 4
         private float _weariness;          // 268: 4 (plan 3's R.5)
         private uint _lastWindfall;        // 272: 4 (plan 3's R.5)
-        private byte _intention;           // 276 (plan 3)
+        private byte _intention;           // 276 (plan 3's R.7)
         private byte _curiosity;           // 277
         private byte _venuesTried;         // 278
         private byte _chronotype;          // 279 (plan 3's R.1)
         private LifeVariety _variety;      // 280: 8
-        private LifeSpare _spare;          // 288: 224
+        private ushort _intentionDay;      // 288: 2 (plan 3's R.7)
+        private LifeSpare _spare;          // 290: 222
 
         // --- Thoughts (L1.2) ---
 
@@ -214,6 +217,22 @@ namespace Simpiens.Simulation.Life
         public readonly uint LastWindfall => _lastWindfall;
 
         public void RecordWindfall(uint tick) => _lastWindfall = tick == 0 ? 1u : tick;
+
+        /// <summary>The day's intention as drawn (plan 3's R.7, D34), whatever day it was drawn for; a work day in a record without one.</summary>
+        public readonly DayIntention Intention => (DayIntention)_intention;
+
+        /// <summary>The routine day the intention was drawn for, plus one; 0 for never.</summary>
+        public readonly ushort IntentionDay => _intentionDay;
+
+        /// <summary>The intention for routine day <paramref name="day"/> (0 for day 1): the one drawn for it, or a work day.</summary>
+        public readonly DayIntention IntentionFor(long day) => day >= 0 && _intentionDay == day + 1 ? (DayIntention)_intention : DayIntention.Work;
+
+        /// <summary>Draws <paramref name="intention"/> for routine day <paramref name="day"/> (0 for day 1).</summary>
+        public void SetIntention(DayIntention intention, long day)
+        {
+            _intention = (byte)intention;
+            _intentionDay = (ushort)Math.Clamp(day + 1, 0, ushort.MaxValue);
+        }
 
         // --- The record as bytes ---
 

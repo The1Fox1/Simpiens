@@ -62,6 +62,7 @@ namespace Simpiens.Core.Tests
             long horizon = days * (long)DayClock.TicksPerDay;
             var residents = new List<AgentState>(32);
             var sleeping = new Dictionary<EntityId, (bool Asleep, long Since, long LastSleepEnd)>();
+            var intentionDays = new Dictionary<EntityId, ushort>();
             while (sim.Clock.CurrentTick < horizon)
             {
                 watch.Run(1);
@@ -112,6 +113,21 @@ namespace Simpiens.Core.Tests
                     tally.ByPurse[band]++;
                     if (category == "Work") tally.WorkByPurse[band]++;
                     tally.WearinessSum += crawler.Life.Weariness;
+                    // The day's intention (plan 3's R.7): each drawn, and a rest day after a windfall
+                    if (crawler.Life.IntentionDay != 0 && (!intentionDays.TryGetValue(crawler.AgentId, out ushort seenDay) || seenDay != crawler.Life.IntentionDay))
+                    {
+                        intentionDays[crawler.AgentId] = crawler.Life.IntentionDay;
+                        tally.Intentions[(int)crawler.Life.Intention]++;
+                        bool windfall = Simpiens.Simulation.Life.IntentionRules.WindfallWithinADay(crawler.Life.LastWindfall, (uint)sim.Clock.CurrentTick);
+                        if (windfall) { tally.DrawnAfterWindfall++; if (crawler.Life.Intention == Simpiens.Simulation.Life.DayIntention.Rest) tally.RestAfterWindfall++; }
+                    }
+                    if (crawler.IntentionAt((uint)sim.Clock.CurrentTick) == Simpiens.Simulation.Life.DayIntention.Rest)
+                    {
+                        tally.RestDayTicks++;
+                        tally.Bump(tally.RestDayByCategory, category);
+                        if (category == "Work") tally.RestDayWorkTicks++;
+                        if (category == "Leisure") tally.RestDayLeisureTicks++;
+                    }
                     long now = (long)sim.Clock.CurrentTick;
                     if (!sleeping.TryGetValue(crawler.AgentId, out var spell)) sleeping[crawler.AgentId] = (asleep, now, -1);
                     else if (spell.Asleep != asleep)
@@ -200,6 +216,9 @@ namespace Simpiens.Core.Tests
             public long HandsOnTicks;
             public readonly long[] ByPurse = new long[3], WorkByPurse = new long[3];
             public double WearinessSum;
+            public readonly long[] Intentions = new long[4];
+            public long DrawnAfterWindfall, RestAfterWindfall, RestDayTicks, RestDayWorkTicks, RestDayLeisureTicks;
+            public readonly Dictionary<string, long> RestDayByCategory = new();
             public long ResidentTicks, Decisions, GoalsChosen, NearTies, Flips, PlansNotFound, PairTicks, ChronicleLines, ChronicleLinesAboutResidents;
             public readonly Dictionary<string, long> ByCategory = new(), ByGoal = new(), BySource = new(), NotFoundGoals = new(), AfterNotFound = new(), NearTiePairs = new(), FlipPairs = new(), ByEventType = new();
             public readonly HashSet<(int Day, EntityId A, EntityId B)> PairsMet = new();
@@ -223,12 +242,16 @@ namespace Simpiens.Core.Tests
                 HandsOnTicks += other.HandsOnTicks;
                 for (int b = 0; b < 3; b++) { ByPurse[b] += other.ByPurse[b]; WorkByPurse[b] += other.WorkByPurse[b]; }
                 WearinessSum += other.WearinessSum;
+                for (int k = 0; k < 4; k++) Intentions[k] += other.Intentions[k];
+                DrawnAfterWindfall += other.DrawnAfterWindfall; RestAfterWindfall += other.RestAfterWindfall;
+                RestDayTicks += other.RestDayTicks; RestDayWorkTicks += other.RestDayWorkTicks; RestDayLeisureTicks += other.RestDayLeisureTicks;
                 ResidentTicks += other.ResidentTicks; Decisions += other.Decisions; GoalsChosen += other.GoalsChosen; NearTies += other.NearTies;
                 Flips += other.Flips; PlansNotFound += other.PlansNotFound; PairTicks += other.PairTicks;
                 ChronicleLines += other.ChronicleLines; ChronicleLinesAboutResidents += other.ChronicleLinesAboutResidents;
                 _distinctPairDays += other.PairsMet.Count;
                 foreach (var map in new[] { (ByCategory, other.ByCategory), (ByGoal, other.ByGoal), (BySource, other.BySource), (NotFoundGoals, other.NotFoundGoals),
-                                            (AfterNotFound, other.AfterNotFound), (NearTiePairs, other.NearTiePairs), (FlipPairs, other.FlipPairs), (ByEventType, other.ByEventType) })
+                                            (AfterNotFound, other.AfterNotFound), (NearTiePairs, other.NearTiePairs), (FlipPairs, other.FlipPairs), (ByEventType, other.ByEventType),
+                                            (RestDayByCategory, other.RestDayByCategory) })
                     foreach (var pair in map.Item2) map.Item1[pair.Key] = (map.Item1.TryGetValue(pair.Key, out long n) ? n : 0) + pair.Value;
                 for (int d = 0; d < BoredomAtDayEnd.Length; d++) BoredomAtDayEnd[d] += other.BoredomAtDayEnd[d];
                 for (int h = 0; h < 24; h++)
@@ -281,6 +304,10 @@ namespace Simpiens.Core.Tests
                 text.AppendLine("Work by purse (plan 3's R.6): " + string.Join("; ", Enumerable.Range(0, 3).Select(b =>
                     $"{bands[b]} {(ResidentTicks > 0 ? 100.0 * ByPurse[b] / ResidentTicks : 0):F0}% of the time, at work {(ByPurse[b] > 0 ? 100.0 * WorkByPurse[b] / ByPurse[b] : 0):F0}% of it")));
                 text.AppendLine($"Weariness, the mean resident over the run: {(ResidentTicks > 0 ? WearinessSum / ResidentTicks : 0):F1}.");
+                long drawn = Intentions.Sum();
+                text.AppendLine($"Intentions drawn (plan 3's R.7): {drawn} ({drawn / ResidentDays:F2} a resident-day); work {Intentions[0]}, rest {Intentions[1]}, training {Intentions[2]}, a want's {Intentions[3]}; " +
+                    $"after a windfall {DrawnAfterWindfall}, of them rest days {RestAfterWindfall}; on a rest day, at work {(RestDayTicks > 0 ? 100.0 * RestDayWorkTicks / RestDayTicks : 0):F0}% and at leisure {(RestDayTicks > 0 ? 100.0 * RestDayLeisureTicks / RestDayTicks : 0):F0}% of the time.");
+                text.AppendLine("  A rest day's hours: " + string.Join(", ", RestDayByCategory.OrderByDescending(p => p.Value).Take(7).Select(p => $"{p.Key} {100.0 * p.Value / System.Math.Max(1, RestDayTicks):F0}%")));
                 text.AppendLine($"Sleeps (asleep {SleepAtLeast / DayClock.TicksPerHour} h or more): {SleepLengths.Count / ResidentDays:F2} a resident-day; length {Spread(SleepLengths)}.");
                 text.AppendLine($"Hours awake between sleeps: {Spread(AwakeSpans)} ({AwakeSpans.Count} waking days).");
                 text.AppendLine("Asleep by chronotype (plan 3's R.3), the share at each hour:");

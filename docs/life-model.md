@@ -333,3 +333,36 @@ In its routine's night a crawler's `RestGoal` is valid below the bedtime line (e
 - **F16 resolved:** the outpost sleeps at night, 82–99% asleep from midnight to 05:00 and nobody from noon to 19:00. Hours awake between sleeps: mean 16.1 (p10 15.0, p50 16.2, p90 17.0); a sleep 7.9 h (p10 7.0, p90 9.1).
 - **The rest of the day:** work 9.2 h (hands-on 3.3), the hearth 3.2 h, leisure 0.9 h, rest 7.8 h; flips 0.9 a resident-day; no plan unfound. With the guild player: work 8.2 h, leisure 1.2 h.
 - **Golden unchanged:** its 3,000 ticks end at 13:08 on day 1, before anyone's bedtime.
+
+### 6.4 Weights by family and hour (R.4, D30 amended, 2026-11-24)
+D30's table in `LifeTuning`: the working block weighs work 1.2 and leisure 0.8; the leisure block work 0.8 and leisure 1.2; the night work 0.6, leisure 0.7, company 0.8 and rest 1.5. An artisan's working block is its shifts.
+
+- **Company weighs 1 by day (D30 amended by measurement).** The first table weighed it 0.9 working and 1.15 at leisure: the hearth, already the strongest pull on free time, took 5.2 h a resident-day (from 3.2), and over `TheGuildBreaksTheGatekeeper`'s 16 days residents harvested and sold about half as much, trust toward the patron faded to 0, the guild lost its members and never reached the gate. With company at 1 by day, the gate breached at t76,230 (t98,528 at plan 2's end).
+- **The day** (three days, no player): work 9.2 → 8.5 h (hands-on 3.3 → 3.1, the baseline's), the hearth 3.2 → 4.1 h, leisure 0.9 → 1.0 h; awake 16.2 h.
+- **Chronotypes by the clock:** larks asleep 98% at 23:00 and 27% at 05:00; owls 12% at midnight and 56% at 09:00; the average 48% at 23:00 and 18% at 07:00.
+
+### 6.5 Weariness and the windfall (R.5, D33, 2026-11-24)
+Weariness (a float at 268) rises 1 a game hour at a harvest, a station's work or a fight; a windfall (a single payment of at least half the comfortable purse: a bounty, a hunt's share, an expedition's share) records its tick at 272 and thinks "Earned a rest" (+4 for 24 hours). Mean weariness over three days: 5.2; over six, 8.4–9.5.
+
+- **Windfalls are rare in today's economy:** the seeded bounties pay 25g and 15g, an expedition's share about 21g. None came in six days with no player or with the guild player; a hunt bounty paid to a lone hunter is where one comes from (D.1).
+
+### 6.6 Satiation on work (R.6, D32, 2026-11-24)
+`Rhythm` weighs the Work family's goals by satiation (1 up to the purse target, the comfortable purse times 1 + greed × 0.5 plus what held wants ask for, falling to 0.6 at twice it) and weariness (1 − 0.3 × weariness / 100). Golden unchanged.
+
+- **It barely bites:** over three days residents are at or under the comfortable purse 92% of the time and never at work above it, as before (`EarnIncome` stops at the comfortable purse). F11 stays open: earning outbids free time because the hearth and work are strong, not because crawlers are rich.
+- **F18 re-read:** the tavern serves 10–12 a seed in three days on the gate seeds (5.8 at plan 2's end): the evenings by the clock help, not satiation.
+
+### 6.7 The day's intention (R.7, D34 amended, 2026-11-24)
+Drawn once a routine day, at the first tick awake outside the night, on `SimRandomSalt.Intention` (23), saved at 276 with its day at 288. A rest day halves weariness and a second in a row clears it.
+
+**Six days, the 23 gate seeds** (before: R.6 measured over the same six days):
+
+| | Before, no player | After | Before, the guild player | After |
+| :--- | ---: | ---: | ---: | ---: |
+| Work (hands-on) | 7.9 h (2.9) | 7.4 h (2.8) | 6.1 h (2.5) | 5.7 h (2.4) |
+| The hearth | 4.9 h | 5.6 h | 6.1 h | 6.7 h |
+| Leisure | 1.2 h | 1.1 h | 1.5 h | 1.4 h |
+| Intentions a resident-day: work, rest, training, a want's | | 79%, 8%, 12%, 1% | | 77%, 11%, 12%, 1% |
+
+- **A rest day by the fire:** a rest day's hours are 57% at the hearth, 29% asleep, 3–6% at venues and 3–4% at work. D34's company weight on a rest day (1.2) is amended to 1, as D30's was, though with it at 1 the hearth still takes the freed hours: its base is high whenever company runs low, and leisure's is small while the hearth keeps boredom near 15 (F11).
+- **Training days** come with a passion (most residents have one), 12% of days.

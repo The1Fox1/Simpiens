@@ -63,6 +63,9 @@ namespace Simpiens.Simulation.Life
         public const float LarkOdds = 0.2f;
         public const float OwlOdds = 0.2f;
 
+        /// <summary>The routine day: the clock day of its waking, 0 for day 1 (-1 for the night before the first waking).</summary>
+        public readonly long Day;
+
         /// <summary>This routine day's waking tick (it may be before tick 0 on the first morning).</summary>
         public readonly long WakesAt;
 
@@ -75,8 +78,9 @@ namespace Simpiens.Simulation.Life
         /// <summary>The next day's waking tick: the routine day ends here.</summary>
         public readonly long NextWake;
 
-        private Routine(long wakesAt, long workFrom, long workUntil, long nightFrom, long nextWake)
+        private Routine(long day, long wakesAt, long workFrom, long workUntil, long nightFrom, long nextWake)
         {
+            Day = day;
             WakesAt = wakesAt;
             WorkFrom = workFrom;
             WorkUntil = workUntil;
@@ -103,7 +107,7 @@ namespace Simpiens.Simulation.Life
             long workFrom = wakes + (long)WorkStartsAfterMinutes * DayClock.TicksPerMinute;
             long workUntil = workFrom + (long)workMinutes * DayClock.TicksPerMinute;
             long night = wakes + (long)WakingHours * DayClock.TicksPerHour;
-            return new Routine(wakes, workFrom, workUntil, night, next);
+            return new Routine(day, wakes, workFrom, workUntil, night, next);
         }
 
         /// <summary>The block <paramref name="tick"/> falls in, within this routine day.</summary>
@@ -120,9 +124,13 @@ namespace Simpiens.Simulation.Life
         /// tick in one is working and a tick of its routine's working block outside them is leisure; the night stays the
         /// night outside its shifts.
         /// </summary>
-        public static RoutineBlock BlockAt(Chronotype chronotype, float diligence, EntityId crawler, long tick, byte shifts)
+        public static RoutineBlock BlockAt(Chronotype chronotype, float diligence, EntityId crawler, long tick, byte shifts) =>
+            Of(chronotype, diligence, crawler, tick).BlockAt(tick, shifts);
+
+        /// <summary>The block <paramref name="tick"/> falls in within this routine day, for a crawler with <paramref name="shifts"/> (see the static overload).</summary>
+        public RoutineBlock BlockAt(long tick, byte shifts)
         {
-            var block = Of(chronotype, diligence, crawler, tick).BlockAt(tick);
+            var block = BlockAt(tick);
             if (shifts == 0) return block;
             if (Workshops.ShiftBlocks.Covers(shifts, tick)) return RoutineBlock.Working;
             return block == RoutineBlock.Working ? RoutineBlock.Leisure : block;
