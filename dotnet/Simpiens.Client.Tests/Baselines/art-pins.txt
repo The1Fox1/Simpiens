@@ -1,4 +1,11 @@
 # name width height fnv64-of-rgba (graphics V0; re-record with SIMPIENS_RECORD_ART=1 after a look at art-sheet.png)
+Activity_Ale 7 7 12935213661751189506
+Activity_Browse 7 7 18156097866869661258
+Activity_Dice 7 7 6869676487070973462
+Activity_Fireside 7 7 7044467750985648410
+Activity_Spar 7 7 16451418083451917824
+Activity_Supper 7 7 1174389940214477503
+Activity_Walk 7 7 9920658908005740926
 Agent_Defiant_0 16 16 7502138011796658237
 Agent_Defiant_0_chitin-plate 16 16 7502138011796658237
 Agent_Defiant_0_crossbow 16 16 9852107731557704145
