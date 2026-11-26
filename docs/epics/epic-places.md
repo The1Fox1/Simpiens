@@ -1,6 +1,6 @@
 # Epic PLACES: Buildings, Furnishings and the Outpost's Look
 
-- **Status**: QUEUED (2026-11-25), drafted at the producer's request: "Please write up an Epic to introduce venues / buildings, furniture / decor / environmental ascetics, and clarify what a 'station' really is and is not." Not yet scheduled; it waits for the producer's answers to §0's questions and their go.
+- **Status**: QUEUED (2026-11-25), drafted at the producer's request: "Please write up an Epic to introduce venues / buildings, furniture / decor / environmental ascetics, and clarify what a 'station' really is and is not." Not yet scheduled; it waits for the producer's answers to §0's questions and their go. **Plan 1**, Groundwork, buildings and furniture (PL0–PL2), drafted 2026-11-25 at the producer's "Write the first implementation plan for PLACES": [`.agents/places_buildings_plan.md`](../../.agents/places_buildings_plan.md).
 - **Why now:** Epic LIFE-1's close-out found that the tavern doesn't read as a tavern (its F23). The sim has no buildings: a sector is the only walled enclosure, so the tavern took a whole sector, and inside it only the counter is drawn. Its eight seats are invisible points, and crawlers drinking together look like a crowd on bare floor beside the hub.
 - **Track**: Track A (Core Simulation & Cognition Engine), with its client work done here, as in Epic 11 and Epic LIFE-1.
 - **Milestone**: Production Milestone 6, A Living Outpost (proposed: between Epic LIFE-1 and Epic LIFE-2; the producer's call, §0 Q8).
@@ -98,6 +98,10 @@ A player can tell where a crawler is and what it's doing by looking. A tavern is
 **The producer's looks:** PL1 (a building and a lot), PL3 and PL4 (the tavern hall), PL5 (a decorated room at night); then the play session at PLG.
 
 **Plans (proposed, one PR each):** 1. Groundwork, buildings and furniture (PL0–PL2); 2. Stations and the tavern (PL3–PL4); 3. The look and the gate (PL5, PL6, PLG). About 18–28 agent days in all.
+
+**Plan 1's changes to this section** (its decisions, defaults by exception; they move to §0 as their steps land):
+- **The save's raise moves to plan 2** (its D1): plan 1's buildings and lots are map data only, and the first saved building state is plan 2's build command for a lot. A7 and PL1's row read "plan 2" for the raise.
+- **The barracks moves to plan 2's map pass** (its D6): the guildhall is six units deep, too shallow for a building in its half. Plan 1 makes the bunkhouse a building on its room's walls, so no wall moves, and sketches an outpost square for plan 2 (its D7, S.1): the hub, the tavern's room and the bunkhouse's one zone, with the tavern hall and the bunkhouse standing in it.
 
 ---
 
