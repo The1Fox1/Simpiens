@@ -135,8 +135,9 @@ This is a working document (AGENTS.md, Documentation Protocol 6), the first of E
 
 ### D. The Definition of Done (1 day)
 **Complexity:** Possibly Complex: a live scenario with nothing injected.
-- [ ] **D.1 `AnEveningAtTheTavern`, seated at its tables** [Possibly Complex: a live scenario]
+- [x] **D.1 `AnEveningAtTheTavern`, seated at its tables** [Possibly Complex: a live scenario]
   - On its seed with the tavern player, nothing injected: every crawler drawn `Seated` stands on one of the tavern's bench seats, the tables are walked round and never through, and the tavern serves on two days as before.
+  - **Done:** on seed 5, 7,018 crawler-ticks seated at the tables over three days, none off its stool (within 0.06), none sharing one, no crawler ever in a table; it serves on days 2 and 3 as before. Without F.6's claim every seated tick is off its stool and the test fails.
 - [ ] **D.2 The gate seeds' day with buildings and furniture** [Basic: an existing scenario re-read]
   - `TheOutpostsDayHoldsOnEverySeed` with the bunkhouse a building and the tavern's tables blocking; a sleeper's bunk read through its furniture.
 
