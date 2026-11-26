@@ -188,12 +188,14 @@ namespace Simpiens.Client.Tests
         // Epic PLACES plan 1 B.5 (2026-11-25): the bunkhouse is Floor 1's first building, its walls timber, its floor planked and
         // its sign by the hub door, so every view showing it moved its items, with the render references after a look; labels
         // unchanged everywhere (the zone's name already reads "Bunkhouse", so the building isn't named twice).
-        private static readonly (ulong, ulong) PinnedTick0 = (1456834630122365757UL, 26935273446057295UL);
-        private static readonly (ulong, ulong) PinnedTick300 = (6866278921844461212UL, 26935273446057295UL);
+        // Epic PLACES plan 1 F.5 (2026-11-26): the tavern's two tables and eight stools are drawn, so every view showing them moved
+        // its items, with the render references after a look; labels unchanged.
+        private static readonly (ulong, ulong) PinnedTick0 = (6299842098349117911UL, 26935273446057295UL);
+        private static readonly (ulong, ulong) PinnedTick300 = (8822001192766914090UL, 26935273446057295UL);
         // Epic UI-Beta B1: the selected crawler's label shows its given name; labels re-pinned, items unchanged.
-        private static readonly (ulong, ulong) PinnedSelectedZoomed = (18023526420625080639UL, 12464834543357701047UL);
+        private static readonly (ulong, ulong) PinnedSelectedZoomed = (3053929934408661765UL, 12464834543357701047UL);
         // Isometric's (M3 step 2.3), pinned with its render references after a look at them.
-        private static readonly (ulong, ulong) PinnedIsometricTick300 = (1802990823744076050UL, 6934753541016256865UL);
-        private static readonly (ulong, ulong) PinnedIsometricSelectedZoomed = (14748733234241302205UL, 17703223923498051003UL);
+        private static readonly (ulong, ulong) PinnedIsometricTick300 = (12791425635283458034UL, 6934753541016256865UL);
+        private static readonly (ulong, ulong) PinnedIsometricSelectedZoomed = (15844467530152629305UL, 17703223923498051003UL);
     }
 }
