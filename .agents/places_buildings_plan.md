@@ -85,9 +85,10 @@ This is a working document (AGENTS.md, Documentation Protocol 6), the first of E
 
 ### B. Buildings: PL1 (3–4 days)
 **Complexity:** Possibly Complex: a new map element, art in two view modes; each step below is at most Possibly Complex.
-- [ ] **B.1 Buildings as map data** (D2, D3, D4, D8) [Possibly Complex: a new map element and its validators; golden unchanged, no building on Floor 1 yet]
+- [x] **B.1 Buildings as map data** (D2, D3, D4, D8) [Possibly Complex: a new map element and its validators; golden unchanged, no building on Floor 1 yet]
   - `BuildingDefinition`, `BuildingKind` and `BuildingTable` (the bunkhouse and the barracks); `MapDefinitionBuilder.Building(...)` writing the walls from the footprint less its doors, not twice over a zone's wall; `MapDefinition.Buildings` and `BuildingAt`.
   - **The checks:** `BuildingValidator` (the table; a building in one zone, never two, never overlapping; doors on its edges and six units wide; walls written once; `BuildingAt` inside, on a wall and outside); the builder's refusals; `BuildingNamesTests` (code names a building kind only in the table).
+  - **Done:** as planned, the tables in a new `Simulation/Places/` namespace; the furniture a kind comes with waits for plan 2's build command (no reader in plan 1). `docs/places-model.md` §4.
 - [ ] **B.2 Lots, on the Dev Map** (D5) [Possibly Complex: the test map; golden unchanged]
   - A building of kind None is a lot. The Dev Map gains an empty lot and a small standing building, each with a door into a pen, so a validator walks a crawler in through the door to a point inside, and finds no way in through a wall.
   - **The checks:** `BuildingValidator` gains the walk; `MapDefinitionValidator`'s Dev Map checks; the Dev Map's renders.

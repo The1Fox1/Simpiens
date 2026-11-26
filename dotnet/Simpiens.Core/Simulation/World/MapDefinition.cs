@@ -261,6 +261,63 @@ namespace Simpiens.Simulation.World
         public Simpiens.Simulation.Creatures.CreatureKind KindIn(int slot) => slot == 0 && HasBoss ? Boss : Kind;
     }
 
+    /// <summary>
+    /// A building (Epic PLACES, A1, plan 1's D2): a walled structure inside one zone, standing from the start or, of kind None, an
+    /// empty lot. Its footprint is its walls' centre lines, on whole units; its doors are gaps in its edges, each
+    /// <see cref="DoorSpan"/> between the wall cells either side, as the map's doors are. Its walls are written with the zone's
+    /// (<see cref="MapDefinitionBuilder.Building"/>), once: a wall the map already has isn't added again.
+    /// </summary>
+    public readonly struct BuildingDefinition
+    {
+        /// <summary>A door's span: from the wall cell on one side to the one on the other, centre to centre. The cells between are open.</summary>
+        public const float DoorSpan = 6f;
+
+        public readonly string Key;
+        public readonly Simpiens.Simulation.Places.BuildingKind Kind;
+
+        /// <summary>The zone it stands in, wholly.</summary>
+        public readonly byte SectorId;
+
+        /// <summary>Its walls' centre lines.</summary>
+        public readonly RectF Footprint;
+
+        /// <summary>Its doors' centres, each on an edge of its footprint; the first is its main door, its sign beside it.</summary>
+        public readonly IReadOnlyList<Vec2> Doors;
+
+        /// <summary>Where its sign hangs: on the wall line beside its main door.</summary>
+        public readonly Vec2 Sign;
+
+        /// <summary>The wall cells it added to the map's: none for a building standing on a zone's walls (the bunkhouse).</summary>
+        public readonly int WallCellsAdded;
+
+        public BuildingDefinition(string key, Simpiens.Simulation.Places.BuildingKind kind, byte sectorId, RectF footprint, IReadOnlyList<Vec2> doors, Vec2 sign, int wallCellsAdded)
+        {
+            Key = key;
+            Kind = kind;
+            SectorId = sectorId;
+            Footprint = footprint;
+            Doors = doors ?? System.Array.Empty<Vec2>();
+            Sign = sign;
+            WallCellsAdded = wallCellsAdded;
+        }
+
+        /// <summary>An empty lot: foundations, no building yet (D5).</summary>
+        public bool IsLot => Kind == Simpiens.Simulation.Places.BuildingKind.None;
+
+        /// <summary>Its row in the building table.</summary>
+        public Simpiens.Simulation.Places.BuildingKindDefinition Row => Simpiens.Simulation.Places.BuildingTable.Get(Kind);
+
+        /// <summary>The lot its footprint makes.</summary>
+        public Simpiens.Simulation.Places.LotSize Size => Simpiens.Simulation.Places.BuildingTable.SizeOf(Footprint);
+
+        /// <summary>Whether <paramref name="point"/> is inside it: within its walls, not on them nor in a doorway.</summary>
+        public bool Contains(Vec2 point)
+        {
+            const float wall = MapDefinitionBuilder.WallHalfExtent;
+            return point.X > Footprint.XMin + wall && point.X < Footprint.XMax - wall && point.Y > Footprint.YMin + wall && point.Y < Footprint.YMax - wall;
+        }
+    }
+
     /// <summary>Presentation hint: a text label drawn on the map.</summary>
     public readonly struct MapLabel
     {
@@ -311,6 +368,12 @@ namespace Simpiens.Simulation.World
         /// <summary>The most venues a map holds: the snapshot's open mask is 32 bits.</summary>
         public const int MaxVenues = 32;
 
+        /// <summary>The buildings and lots, in definition order (Epic PLACES plan 1, B.1); at most <see cref="MaxBuildings"/>. Empty on a map with none.</summary>
+        public readonly IReadOnlyList<BuildingDefinition> Buildings;
+
+        /// <summary>The most buildings a map holds, as venues: a mask of them fits 32 bits.</summary>
+        public const int MaxBuildings = 32;
+
         /// <summary>
         /// The trade caravan's way in (Epic 10 Part 2, the stretch, D70): from where the road meets the map to the stall, in
         /// order; it walks back out the same way. Empty on a map the caravan doesn't walk.
@@ -330,8 +393,10 @@ namespace Simpiens.Simulation.World
             MapLabel[] labels,
             Vec2[] caravanRoute = null,
             LairDefinition[] lairs = null,
-            VenueDefinition[] venues = null)
+            VenueDefinition[] venues = null,
+            BuildingDefinition[] buildings = null)
         {
+            Buildings = buildings ?? System.Array.Empty<BuildingDefinition>();
             Venues = venues ?? System.Array.Empty<VenueDefinition>();
             CaravanRoute = caravanRoute ?? System.Array.Empty<Vec2>();
             Lairs = lairs ?? System.Array.Empty<LairDefinition>();
@@ -386,6 +451,30 @@ namespace Simpiens.Simulation.World
                 }
             }
             sector = default;
+            return false;
+        }
+
+        /// <summary>The index of the building <paramref name="position"/> is inside (within its walls, not on them), or -1 (Epic PLACES, A2, plan 1's D8).</summary>
+        public int BuildingAt(Vec2 position)
+        {
+            for (int i = 0; i < Buildings.Count; i++)
+            {
+                if (Buildings[i].Contains(position)) return i;
+            }
+            return -1;
+        }
+
+        public bool TryGetBuilding(string key, out BuildingDefinition building)
+        {
+            for (int i = 0; i < Buildings.Count; i++)
+            {
+                if (Buildings[i].Key == key)
+                {
+                    building = Buildings[i];
+                    return true;
+                }
+            }
+            building = default;
             return false;
         }
 

@@ -228,6 +228,9 @@ namespace Simpiens.Core.Tests
         public void MapDefinition() => new Simpiens.Testing.World.MapDefinitionValidator().RunAllValidationTests();
 
         [Fact]
+        public void Buildings() => new Simpiens.Testing.World.BuildingValidator().RunAllValidationTests(); // Epic PLACES plan 1, B.1
+
+        [Fact]
         public void SectorCharting() => new Simpiens.Testing.World.SectorChartingValidator().RunAllValidationTests();
 
         [Fact]
