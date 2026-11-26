@@ -270,6 +270,13 @@ namespace Simpiens.Core.Session
                 if (poi.Kind != PoiKind.Hearth) continue;
                 _world.RegisterEntity(poi.Key, SpawnHearth(poi.Position, poi.Radius));
             }
+            // 3. The furniture's beds (Epic PLACES plan 1, F.2, D13): after the POIs, so a map whose bunks moved from POIs to furniture
+            // spawns them in the same order and its entities keep their ids
+            for (int b = map.FirstFurnitureBed; b < map.Beds.Count; b++)
+            {
+                var bed = map.Beds[b];
+                _world.RegisterEntity(bed.Key, SpawnBunk(bed.Position, bed.Guild));
+            }
             return map;
         }
 

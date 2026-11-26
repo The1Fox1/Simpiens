@@ -112,9 +112,10 @@ This is a working document (AGENTS.md, Documentation Protocol 6), the first of E
   - `FurnitureKind`, `FurnitureTable` (table, bench, chair, stool, bunk, guild bunk; beauty and comfort as columns), `MapDefinitionBuilder.Furniture(...)`, `MapDefinition.Furniture`.
   - **The checks:** `FurnitureValidator` (the table; no piece in a wall; no blocking piece across a door's way in; seats and beds on open cells); `FurnitureNamesTests`.
   - **Done:** footprints in world units, not cells (a stool is 0.6 across); a piece may be turned a quarter; seats and beds as offsets; `BedFor` says whose beds. The door's way in and open cells are checked against the built grid once a piece blocks (F.4), where they can be.
-- [ ] **F.2 Bunks as furniture** (D13) [Possibly Complex: entity spawn order; golden unchanged]
+- [x] **F.2 Bunks as furniture** (D13) [Possibly Complex: entity spawn order; golden unchanged]
   - Floor 1's 12 bunks and 8 guild bunks become furniture at the same places; the session host spawns their entities from the furniture in the same order.
   - **The checks:** golden unchanged (ids and claims as before); `RestAnchorValidator`; `TiredCrawlersSleepInTheBunkhouse`; the barracks' guild tests.
+  - **Done:** `MapDefinition.Beds` (POI bunks in POI order, then the furniture's beds) is the one list of beds: the session host spawns furniture beds after its POI loop (Floor 1's hearth came before its bunks, so every id holds), and cognition's refuge (`Vitality.TryGetRefugeFrom`) reads it. Golden unchanged; the full core suite 422/422 and the client's 579/579 locally.
 - [ ] **F.3 Seats from furniture: the tavern's tables and stools** (D14) [Possibly Complex: cognition reads seats; golden unchanged]
   - Venues may list the furniture they seat; the tavern's venue lists its eight stools, whose seat points are the eight it had. The tables are placed but don't block yet.
   - **The checks:** `VenueValidator` (a venue's seats on its furniture, in its sector, clear of walls); `LeisureTests` (the score as before); `AnEveningAtTheTavern` on its seed.

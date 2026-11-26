@@ -152,11 +152,8 @@ namespace Simpiens.Testing.World
             // Floor 1's bunkhouse (B.5, D6): it fills its room on its walls and doors, so it adds no wall and moves nothing
             Assert(Floor1Layout.Definition.TryGetBuilding(Floor1Layout.BunkhouseBuilding, out var bunkhouse) && bunkhouse.WallCellsAdded == 0
                 && bunkhouse.SectorId == Floor1Layout.BunkhouseSectorId && bunkhouse.Row.Title == "Bunkhouse", "Floor 1's bunkhouse fills its room and adds no wall.");
-            for (int i = 0; i < Floor1Layout.Definition.Pois.Count; i++)
-            {
-                var poi = Floor1Layout.Definition.Pois[i];
-                if (poi.Kind == PoiKind.Bunk) Assert(bunkhouse.Contains(poi.Position), $"Bunk '{poi.Key}' is inside the bunkhouse.");
-            }
+            foreach (var bed in Floor1Layout.Definition.Beds)
+                if (!bed.Guild) Assert(bunkhouse.Contains(bed.Position), $"Bunk '{bed.Key}' is inside the bunkhouse.");
             TestLog.Log($"[PASS] Test 5: On the shipped maps, every building is walked into from its zone through its doors, and has no other way in ({buildings} buildings, {doors} doors).");
         }
 

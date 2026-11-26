@@ -255,9 +255,10 @@ namespace Simpiens.Core.Session.Layouts
             // --- Bunkhouse: two rows of six in the west half, 1.5 apart, clear of the gate-to-hub lane (x 2..6), with the
             // walkable strip along the north wall (y -7.5) kept free: it is the way from the bunks to the hub door, and a
             // sleeper lies in its bunk for hours (Epic 10 Part 2, T4.2: a top row there walled a crawler in until it starved) ---
+            // Bunks are furniture (Epic PLACES plan 1, F.2, D13), at the places and with the keys they had as POIs
             for (int i = 0; i < BunkCount; i++)
             {
-                b.Poi($"bunk.{i + 1}", PoiKind.Bunk, new Vec2(-6.5f + (i % 6) * 1.5f, i < 6 ? -8.5f : -10.5f), 1.0f);
+                b.Furniture($"bunk.{i + 1}", Simpiens.Simulation.Places.FurnitureKind.Bunk, new Vec2(-6.5f + (i % 6) * 1.5f, i < 6 ? -8.5f : -10.5f));
             }
 
             // --- Guildhall: the barracks, two rows of four in its east half, laid out as the bunkhouse is (1.5 apart, the
@@ -265,7 +266,7 @@ namespace Simpiens.Core.Session.Layouts
             // west half, inside the door, is the yard (D64: the muster stays at the stall) ---
             for (int i = 0; i < GuildBunkCount; i++)
             {
-                b.Poi($"barracks.{i + 1}", PoiKind.GuildBunk, new Vec2(16.5f + (i % 4) * 1.5f, i < 4 ? -20.5f : -22.5f), 1.0f);
+                b.Furniture($"barracks.{i + 1}", Simpiens.Simulation.Places.FurnitureKind.GuildBunk, new Vec2(16.5f + (i % 4) * 1.5f, i < 4 ? -20.5f : -22.5f));
             }
 
             // --- The trade caravan's way in (Epic 10 Part 2, the stretch, D70): up the gate-to-hub lane from the Road Gate's

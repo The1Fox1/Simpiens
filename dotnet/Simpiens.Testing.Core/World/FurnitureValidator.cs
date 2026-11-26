@@ -100,7 +100,16 @@ namespace Simpiens.Testing.World
                     pieces++;
                 }
             }
-            TestLog.Log($"[PASS] Test 4: On the shipped maps, every piece's seats and beds are clear of walls and in its zone ({pieces} pieces).");
+            // Floor 1's bunks are furniture (F.2, D13): its twelve and the barracks' eight, in the beds' list by their old keys, none left a POI
+            var floor = Floor1Layout.Definition;
+            Assert(floor.FirstFurnitureBed == 0 && floor.Beds.Count == Floor1Layout.BunkCount + Floor1Layout.GuildBunkCount, $"Floor 1's beds are all furniture ({floor.Beds.Count}, from {floor.FirstFurnitureBed}).");
+            for (int i = 0; i < floor.Beds.Count; i++)
+            {
+                bool guild = i >= Floor1Layout.BunkCount;
+                string key = guild ? $"barracks.{i - Floor1Layout.BunkCount + 1}" : $"bunk.{i + 1}";
+                Assert(floor.Beds[i].Key == key && floor.Beds[i].Guild == guild, $"Floor 1's bed {i} is '{key}' ({floor.Beds[i].Key}).");
+            }
+            TestLog.Log($"[PASS] Test 4: On the shipped maps, every piece's seats and beds are clear of walls and in its zone ({pieces} pieces); Floor 1's bunks are furniture, in order.");
         }
 
         // --- Helpers ---

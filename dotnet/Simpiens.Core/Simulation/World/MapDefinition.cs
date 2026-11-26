@@ -368,6 +368,24 @@ namespace Simpiens.Simulation.World
         private Vec2 Place(Vec2 offset) => Position + (Turned ? new Vec2(offset.Y, offset.X) : offset);
     }
 
+    /// <summary>
+    /// A bed on the map (Epic PLACES plan 1, F.2, D13): where a crawler sleeps, from a bunk POI (a map not moved over to furniture)
+    /// or a piece of furniture's beds; whether it is kept for the guild; and the key its bunk entity is registered under.
+    /// </summary>
+    public readonly struct BedDefinition
+    {
+        public readonly string Key;
+        public readonly Vec2 Position;
+        public readonly bool Guild;
+
+        public BedDefinition(string key, Vec2 position, bool guild)
+        {
+            Key = key;
+            Position = position;
+            Guild = guild;
+        }
+    }
+
     /// <summary>Presentation hint: a text label drawn on the map.</summary>
     public readonly struct MapLabel
     {
@@ -428,6 +446,15 @@ namespace Simpiens.Simulation.World
         public readonly IReadOnlyList<FurnitureDefinition> Furniture;
 
         /// <summary>
+        /// Every bed (Epic PLACES plan 1, F.2, D13), in the order their bunks are spawned: the bunk POIs in POI order, then the
+        /// furniture's beds in furniture order. A piece with one bed gives it the piece's key; with more, the key and its number.
+        /// </summary>
+        public readonly IReadOnlyList<BedDefinition> Beds;
+
+        /// <summary>The beds from furniture: <see cref="Beds"/> after its POI bunks (the session host spawns these after the POIs).</summary>
+        public int FirstFurnitureBed { get; }
+
+        /// <summary>
         /// The trade caravan's way in (Epic 10 Part 2, the stretch, D70): from where the road meets the map to the stall, in
         /// order; it walks back out the same way. Empty on a map the caravan doesn't walk.
         /// </summary>
@@ -451,6 +478,19 @@ namespace Simpiens.Simulation.World
             FurnitureDefinition[] furniture = null)
         {
             Furniture = furniture ?? System.Array.Empty<FurnitureDefinition>();
+            var beds = new List<BedDefinition>();
+            for (int i = 0; i < pois.Length; i++)
+            {
+                if (pois[i].Kind == PoiKind.Bunk || pois[i].Kind == PoiKind.GuildBunk) beds.Add(new BedDefinition(pois[i].Key, pois[i].Position, pois[i].Kind == PoiKind.GuildBunk));
+            }
+            FirstFurnitureBed = beds.Count;
+            for (int i = 0; i < Furniture.Count; i++)
+            {
+                var piece = Furniture[i];
+                for (int b = 0; b < piece.BedCount; b++)
+                    beds.Add(new BedDefinition(piece.BedCount == 1 ? piece.Key : piece.Key + "#" + (b + 1), piece.BedAt(b), piece.Row.BedFor == Simpiens.Simulation.Places.BedFor.Guild));
+            }
+            Beds = beds;
             Buildings = buildings ?? System.Array.Empty<BuildingDefinition>();
             Venues = venues ?? System.Array.Empty<VenueDefinition>();
             CaravanRoute = caravanRoute ?? System.Array.Empty<Vec2>();
