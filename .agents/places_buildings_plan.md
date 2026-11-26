@@ -69,8 +69,9 @@ This is a working document (AGENTS.md, Documentation Protocol 6), the first of E
   - `docs/places-model.md` opens with the epic's vocabulary table and grows with each table's numbers.
   - F1's list: every place that reads a `StationKind` or a station's key (`Drill`, `TavernPlayer`, `GuildPlayer`, `EconomySoak`, the venue's needed station, `WorkshopRules`, the station window, the art keys), each with what plan 2's revision does to it.
   - **Done:** `docs/places-model.md` §1 (the vocabulary) and §2 (the station table today and 16 readers, each with plan 2's change).
-- [ ] **G.2 The map card says a day off** (Epic LIFE-1's F23) [Basic: a model line and the inspector card; presentation tests]
+- [x] **G.2 The map card says a day off** (Epic LIFE-1's F23) [Basic: a model line and the inspector card; presentation tests]
   - `InspectorModel` gains the intention's line ("Today: a day off."), the card shows it after the mood as the dossier does.
+  - **Done:** `InspectorModel.IntentionLine`, the card's mood line joined with it as the dossier's is; `InspectorTests.TheCardSaysADayOff`.
 - [ ] **G.3 The day log's waking time** (Epic LIFE-1's F23) [Possibly Complex: a field in the life record's spare bytes; golden re-recorded for its coverage]
   - The tick an intention is drawn (when the crawler is first awake outside its night: when it got up) is kept with it, a `uint` at 292 (290–291 padding), so the day log's first line says when the crawler woke, not its waking hour. A record before it reads 0, and the day log falls back to the waking hour.
   - **The checks:** `IntentionValidator` (the tick kept, a record before it), `LifeModelsTests` (the line's time), the round trip.

@@ -129,7 +129,7 @@ namespace Simpiens.Client.Ui
             UiParts.SetText(_name, inspector.Name);
             UiParts.SetText(_badge, inspector.Badge);
             _badgeFill.FillColor = UiStyle.StateColor(inspector.State);
-            UiParts.SetText(_mood, inspector.MoodLine);
+            UiParts.SetText(_mood, inspector.IntentionLine.Length > 0 ? inspector.MoodLine + " " + inspector.IntentionLine : inspector.MoodLine); // the day's intention beside the mood, as the dossier has it
             _health.Set(inspector.Health);
             _hunger.Set(inspector.Hunger);
             _energy.Set(inspector.Energy);
