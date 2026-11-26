@@ -231,6 +231,9 @@ namespace Simpiens.Core.Tests
         public void Buildings() => new Simpiens.Testing.World.BuildingValidator().RunAllValidationTests(); // Epic PLACES plan 1, B.1
 
         [Fact]
+        public void Furniture() => new Simpiens.Testing.World.FurnitureValidator().RunAllValidationTests(); // Epic PLACES plan 1, F.1
+
+        [Fact]
         public void SectorCharting() => new Simpiens.Testing.World.SectorChartingValidator().RunAllValidationTests();
 
         [Fact]

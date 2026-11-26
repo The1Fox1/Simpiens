@@ -31,6 +31,8 @@ namespace Simpiens.Simulation.World
         private readonly List<MapLabel> _labels = new List<MapLabel>();
         private readonly List<(string Key, Simpiens.Simulation.Places.BuildingKind Kind, RectF Footprint, Vec2[] Doors)> _buildings
             = new List<(string, Simpiens.Simulation.Places.BuildingKind, RectF, Vec2[])>();
+        private readonly List<(string Key, Simpiens.Simulation.Places.FurnitureKind Kind, Vec2 Position, bool Turned)> _furniture
+            = new List<(string, Simpiens.Simulation.Places.FurnitureKind, Vec2, bool)>();
         private Vec2[] _caravanRoute;
 
         public MapDefinitionBuilder(string name, RectF playableBounds)
@@ -151,6 +153,16 @@ namespace Simpiens.Simulation.World
             return this;
         }
 
+        /// <summary>
+        /// A piece of furniture (Epic PLACES plan 1, F.1, D12): its kind, its centre, and whether it is turned a quarter. It stands in
+        /// a zone (and the building it is inside, if any), clear of every wall and of every other piece.
+        /// </summary>
+        public MapDefinitionBuilder Furniture(string key, Simpiens.Simulation.Places.FurnitureKind kind, Vec2 position, bool turned = false)
+        {
+            _furniture.Add((key, kind, position, turned));
+            return this;
+        }
+
         /// <summary>An empty lot (D5): a building of kind None, its walls drawn as foundations.</summary>
         public MapDefinitionBuilder Lot(string key, RectF footprint, params Vec2[] doors) => Building(key, Simpiens.Simulation.Places.BuildingKind.None, footprint, doors);
 
@@ -213,6 +225,7 @@ namespace Simpiens.Simulation.World
 
             var walls = new List<WallRect>(_walls);
             var buildings = BuildBuildings(keys, walls);
+            var furniture = BuildFurniture(keys, walls, buildings);
 
             return new MapDefinition(
                 _name,
@@ -228,7 +241,39 @@ namespace Simpiens.Simulation.World
                 _caravanRoute,
                 _lairs.ToArray(),
                 venues,
-                buildings);
+                buildings,
+                furniture);
+        }
+
+        // --- Furniture (Epic PLACES plan 1, F.1) ---
+
+        private FurnitureDefinition[] BuildFurniture(HashSet<string> keys, List<WallRect> walls, BuildingDefinition[] buildings)
+        {
+            var pieces = new FurnitureDefinition[_furniture.Count];
+            for (int i = 0; i < _furniture.Count; i++)
+            {
+                var (key, kind, position, turned) = _furniture[i];
+                RequireKey(keys, key);
+                RequireInside(position, key);
+                if (Simpiens.Simulation.Places.FurnitureTable.Get(kind) == null) throw new InvalidOperationException($"Map '{_name}': furniture '{key}' is of kind {kind}, which has no row.");
+                byte sector = 0;
+                foreach (var s in _sectors) if (s.Bounds.Contains(position)) { sector = s.Id; break; }
+                if (sector == 0) throw new InvalidOperationException($"Map '{_name}': furniture '{key}' lies in no zone.");
+                int building = -1;
+                for (int b = 0; b < buildings.Length; b++) if (buildings[b].Contains(position)) { building = b; break; }
+                var piece = new FurnitureDefinition(key, kind, position, turned, sector, building);
+                var footprint = piece.Footprint;
+                for (int w = 0; w < walls.Count; w++)
+                {
+                    if (walls[w].Solid.Overlaps(footprint)) throw new InvalidOperationException($"Map '{_name}': furniture '{key}' at {position} stands in a wall.");
+                }
+                for (int j = 0; j < i; j++)
+                {
+                    if (pieces[j].Footprint.Overlaps(footprint)) throw new InvalidOperationException($"Map '{_name}': furniture '{key}' overlaps '{pieces[j].Key}'.");
+                }
+                pieces[i] = piece;
+            }
+            return pieces;
         }
 
         // --- Buildings (Epic PLACES plan 1, B.1) ---

@@ -318,6 +318,56 @@ namespace Simpiens.Simulation.World
         }
     }
 
+    /// <summary>
+    /// A piece of furniture placed on the map (Epic PLACES plan 1, F.1, D12): its key, its kind, its centre, whether it is turned a
+    /// quarter (its footprint's sides and its seats' and beds' offsets swapped), the zone it stands in and the building it stands
+    /// in (-1 for none).
+    /// </summary>
+    public readonly struct FurnitureDefinition
+    {
+        public readonly string Key;
+        public readonly Simpiens.Simulation.Places.FurnitureKind Kind;
+        public readonly Vec2 Position;
+        public readonly bool Turned;
+        public readonly byte SectorId;
+        public readonly int Building;
+
+        public FurnitureDefinition(string key, Simpiens.Simulation.Places.FurnitureKind kind, Vec2 position, bool turned, byte sectorId, int building)
+        {
+            Key = key;
+            Kind = kind;
+            Position = position;
+            Turned = turned;
+            SectorId = sectorId;
+            Building = building;
+        }
+
+        public Simpiens.Simulation.Places.FurnitureKindDefinition Row => Simpiens.Simulation.Places.FurnitureTable.Get(Kind);
+
+        /// <summary>Its footprint in the world.</summary>
+        public RectF Footprint
+        {
+            get
+            {
+                var row = Row;
+                float w = Turned ? row.Depth : row.Width, d = Turned ? row.Width : row.Depth;
+                return new RectF(Position.X - w * 0.5f, Position.Y - d * 0.5f, w, d);
+            }
+        }
+
+        public int SeatCount => Row.Seats.Count;
+
+        /// <summary>Seat <paramref name="i"/> in the world.</summary>
+        public Vec2 SeatAt(int i) => Place(Row.Seats[i]);
+
+        public int BedCount => Row.Beds.Count;
+
+        /// <summary>Bed <paramref name="i"/> in the world.</summary>
+        public Vec2 BedAt(int i) => Place(Row.Beds[i]);
+
+        private Vec2 Place(Vec2 offset) => Position + (Turned ? new Vec2(offset.Y, offset.X) : offset);
+    }
+
     /// <summary>Presentation hint: a text label drawn on the map.</summary>
     public readonly struct MapLabel
     {
@@ -374,6 +424,9 @@ namespace Simpiens.Simulation.World
         /// <summary>The most buildings a map holds, as venues: a mask of them fits 32 bits.</summary>
         public const int MaxBuildings = 32;
 
+        /// <summary>The furniture placed on the map, in definition order (Epic PLACES plan 1, F.1). Empty on a map with none.</summary>
+        public readonly IReadOnlyList<FurnitureDefinition> Furniture;
+
         /// <summary>
         /// The trade caravan's way in (Epic 10 Part 2, the stretch, D70): from where the road meets the map to the stall, in
         /// order; it walks back out the same way. Empty on a map the caravan doesn't walk.
@@ -394,8 +447,10 @@ namespace Simpiens.Simulation.World
             Vec2[] caravanRoute = null,
             LairDefinition[] lairs = null,
             VenueDefinition[] venues = null,
-            BuildingDefinition[] buildings = null)
+            BuildingDefinition[] buildings = null,
+            FurnitureDefinition[] furniture = null)
         {
+            Furniture = furniture ?? System.Array.Empty<FurnitureDefinition>();
             Buildings = buildings ?? System.Array.Empty<BuildingDefinition>();
             Venues = venues ?? System.Array.Empty<VenueDefinition>();
             CaravanRoute = caravanRoute ?? System.Array.Empty<Vec2>();
@@ -498,6 +553,20 @@ namespace Simpiens.Simulation.World
                 }
             }
             building = default;
+            return false;
+        }
+
+        public bool TryGetFurniture(string key, out FurnitureDefinition piece)
+        {
+            for (int i = 0; i < Furniture.Count; i++)
+            {
+                if (Furniture[i].Key == key)
+                {
+                    piece = Furniture[i];
+                    return true;
+                }
+            }
+            piece = default;
             return false;
         }
 

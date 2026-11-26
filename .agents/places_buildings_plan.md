@@ -108,9 +108,10 @@ This is a working document (AGENTS.md, Documentation Protocol 6), the first of E
 
 ### F. Furniture: PL2 (3–4 days)
 **Complexity:** Possibly Complex: a new table, seats cognition reads, walkable ground that changes, and art; each step below is at most Possibly Complex.
-- [ ] **F.1 The furniture table and placements** (D11, D12) [Possibly Complex: a new table and its validators; golden unchanged]
+- [x] **F.1 The furniture table and placements** (D11, D12) [Possibly Complex: a new table and its validators; golden unchanged]
   - `FurnitureKind`, `FurnitureTable` (table, bench, chair, stool, bunk, guild bunk; beauty and comfort as columns), `MapDefinitionBuilder.Furniture(...)`, `MapDefinition.Furniture`.
   - **The checks:** `FurnitureValidator` (the table; no piece in a wall; no blocking piece across a door's way in; seats and beds on open cells); `FurnitureNamesTests`.
+  - **Done:** footprints in world units, not cells (a stool is 0.6 across); a piece may be turned a quarter; seats and beds as offsets; `BedFor` says whose beds. The door's way in and open cells are checked against the built grid once a piece blocks (F.4), where they can be.
 - [ ] **F.2 Bunks as furniture** (D13) [Possibly Complex: entity spawn order; golden unchanged]
   - Floor 1's 12 bunks and 8 guild bunks become furniture at the same places; the session host spawns their entities from the furniture in the same order.
   - **The checks:** golden unchanged (ids and claims as before); `RestAnchorValidator`; `TiredCrawlersSleepInTheBunkhouse`; the barracks' guild tests.
