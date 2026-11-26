@@ -112,6 +112,9 @@ namespace Simpiens.Core.Session.Layouts
         /// <summary>The guild's barracks (Epic 10 Part 2, W5.2, D62): a bunk kept for each of its eight members, by D21's reckoning.</summary>
         public const int GuildBunkCount = 8;
 
+        /// <summary>The bunkhouse, Floor 1's first building (Epic PLACES plan 1, B.5, D6): it fills the Bunkhouse's room, on its walls and doors.</summary>
+        public const string BunkhouseBuilding = "bunkhouse.building";
+
         /// <summary>Doorway centres (on wall centre lines). Validators and scenarios read doors from here.</summary>
         public static readonly IReadOnlyList<Vec2> Doors = new[]
         {
@@ -244,6 +247,10 @@ namespace Simpiens.Core.Session.Layouts
             // --- Hub ---
             b.Poi(Stall, PoiKind.Stall, new Vec2(0f, 2.5f), 3.0f);
             b.Poi(Hearth, PoiKind.Hearth, new Vec2(-4.5f, -3.5f), 3.0f);
+
+            // --- The bunkhouse building (Epic PLACES plan 1, B.5, D6): it fills its room, standing on the room's walls and doors, so no
+            // wall moves; its main door is the hub's, its sign beside it in the hub. Plan 2's map pass gives it a zone to stand in ---
+            b.Building(BunkhouseBuilding, Simpiens.Simulation.Places.BuildingKind.Bunkhouse, new RectF(-8f, -12f, 16f, 6f), HubBunkhouseDoor, new Vec2(4f, -12f));
 
             // --- Bunkhouse: two rows of six in the west half, 1.5 apart, clear of the gate-to-hub lane (x 2..6), with the
             // walkable strip along the north wall (y -7.5) kept free: it is the way from the bunks to the hub door, and a

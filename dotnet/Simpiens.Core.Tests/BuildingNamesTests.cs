@@ -17,6 +17,7 @@ namespace Simpiens.Core.Tests
         private static readonly Dictionary<string, string> Allowed = new Dictionary<string, string>
         {
             ["Simpiens.Core/Simulation/Places/BuildingTable.cs"] = "the table: the kinds' rows",
+            ["Simpiens.Core/Session/Layouts/Floor1Layout.cs"] = "a layout: the bunkhouse stands on Floor 1 (B.5)",
         };
 
         private static readonly string[] Projects = { "Simpiens.Core", "Simpiens.Presentation", "Simpiens.Client", "Simpiens.Hosting" };

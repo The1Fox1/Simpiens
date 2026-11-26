@@ -124,8 +124,8 @@ namespace Simpiens.Testing.World
                 {
                     var b = map.Buildings[i];
                     Assert(map.TryGetSector(b.SectorId, out var zone), $"{map.Name}'s '{b.Key}' is in a zone.");
-                    Assert(map.BuildingAt(b.Sign) < 0 && zone.Bounds.Contains(b.Sign) && !WallRasterizer.CircleOverlapsWall(map, b.Sign, 0.05f),
-                        $"{map.Name}'s '{b.Key}' sign stands outside it, in its zone, clear of every wall ({b.Sign}).");
+                    Assert(map.BuildingAt(b.Sign) < 0 && map.FindSector(b.Sign).Id != 0 && !WallRasterizer.CircleOverlapsWall(map, b.Sign, 0.05f),
+                        $"{map.Name}'s '{b.Key}' sign stands outside it, in a zone (its own, or the next for a building filling its own), clear of every wall ({b.Sign}).");
                     var walks = MapMeasure.Walks(grid, zone.TargetPoint);
                     var firstInside = b.Doors[0] + Inward(b.Footprint, b.Doors[0]);
                     Assert(MapMeasure.WalkTo(grid, walks, firstInside) >= 0f, $"{map.Name}'s '{b.Key}' is walked into from its zone.");
@@ -148,7 +148,15 @@ namespace Simpiens.Testing.World
                     Assert(!shut.AreConnected(firstInside, b.Doors[0] - Inward(b.Footprint, b.Doors[0])), $"{map.Name}'s '{b.Key}' has no way in but its doors.");
                 }
             }
-            Assert(buildings >= 2, $"The shipped maps hold buildings to check ({buildings}).");
+            Assert(buildings >= 3, $"The shipped maps hold buildings to check ({buildings}).");
+            // Floor 1's bunkhouse (B.5, D6): it fills its room on its walls and doors, so it adds no wall and moves nothing
+            Assert(Floor1Layout.Definition.TryGetBuilding(Floor1Layout.BunkhouseBuilding, out var bunkhouse) && bunkhouse.WallCellsAdded == 0
+                && bunkhouse.SectorId == Floor1Layout.BunkhouseSectorId && bunkhouse.Row.Title == "Bunkhouse", "Floor 1's bunkhouse fills its room and adds no wall.");
+            for (int i = 0; i < Floor1Layout.Definition.Pois.Count; i++)
+            {
+                var poi = Floor1Layout.Definition.Pois[i];
+                if (poi.Kind == PoiKind.Bunk) Assert(bunkhouse.Contains(poi.Position), $"Bunk '{poi.Key}' is inside the bunkhouse.");
+            }
             TestLog.Log($"[PASS] Test 5: On the shipped maps, every building is walked into from its zone through its doors, and has no other way in ({buildings} buildings, {doors} doors).");
         }
 

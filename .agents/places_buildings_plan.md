@@ -101,9 +101,10 @@ This is a working document (AGENTS.md, Documentation Protocol 6), the first of E
   - A sign plaque by the main door (a decor sprite, its art row); the building's name in the map's label layout at the sign, smaller than a zone's, kept clear of it.
   - **The checks:** `MapLabelLayout`'s tests (no two labels overlap at any offered zoom); art pins; renders.
   - **Done:** the sign is a post standing outside the main door's wall, a cell out (a plaque on the wall would float over a cut-away wall); `LabelKind.Building` a size under its zone's name, hidden with it and where it would overlap; a building whose zone already bears its name isn't named twice.
-- [ ] **B.5 The bunkhouse, Floor 1's first building** (D6) [Possibly Complex: map data; renders]
+- [x] **B.5 The bunkhouse, Floor 1's first building** (D6) [Possibly Complex: map data; renders]
   - The bunkhouse building on the Bunkhouse zone's walls and doors, with its look and its sign by the hub door. No wall moves.
   - **The checks:** golden (the map's hash may move for the building's record; the crawlers' parts must not: the step's commit says which); the gate seeds' day; the renders that show the bunkhouse, re-recorded in the pinned image.
+  - **Done:** `Floor1Layout.BunkhouseBuilding` on the room's walls and doors (main door the hub's, its sign in the hub at (0, -5)); no wall added, so the nav grid, the save's map fingerprint and golden are unchanged; the zone's label already reads "Bunkhouse", so the building isn't named twice.
 
 ### F. Furniture: PL2 (3–4 days)
 **Complexity:** Possibly Complex: a new table, seats cognition reads, walkable ground that changes, and art; each step below is at most Possibly Complex.
