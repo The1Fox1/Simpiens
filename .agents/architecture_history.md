@@ -1965,3 +1965,9 @@ As development expanded across multiple concurrent sessions (UI redesign, test h
 - **Re-picks:** fourteen scenarios' seeds re-picked once, after R.10 (each summary names its seed and the reason).
 - **The gate:** core 378/378, client 566/566 and the same in the pinned image, golden 3/3, soak 21/21 and 4×20/20; the day, days off, moods and F17 re-run (`docs/life-model.md` §6.13); cost 12–15% fewer ticks a second at 16–48 crawlers, from residents awake and deciding longer (F22).
 - **Open:** the producer's look at L3 and play session (G.3), then G.4's close-out (the plan deleted, the epic COMPLETED); F11 (the hearth is the leisure, LIFE-2's), F17 (the producer's), F20–F22.
+
+## 2026-11-25: Epic LIFE-1 closed out; plans 2 and 3 merged as one PR
+- **The word:** the producer, after plan 3's captures of the running client: "Start by opening a PR and closing out what we have by merging to main". L3's look was taken from the captures; no separate play session (plan 3's G.3).
+- **The merge:** `feat/life1-rhythm` carries plan 2's commits (it was cut from `feat/life1-tavern` before plan 2 merged), so one PR closes out both plans.
+- **The plan** (`.agents/life1_rhythm_plan.md`) is deleted: its decisions are in the epic's §0 (D27–D38, as amended), its numbers in `docs/life-model.md` §6, its findings in the epic's §7 (F20–F23).
+- **What the look found (F23):** the tavern doesn't read as a tavern. The sim has no buildings: a sector is the only walled enclosure, the tavern is a whole sector, its seats are invisible and only its counter is drawn. The producer: stations shouldn't be conflated with buildings; "A building/venue should be able to host different stations such as a tavern hosting a central bar, cooking station, brew barrel, etc." An epic on buildings and venues, furniture, decor and environmental aesthetics, and what a station is and isn't, is drafted next.
