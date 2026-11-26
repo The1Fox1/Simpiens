@@ -128,6 +128,11 @@ This is a working document (AGENTS.md, Documentation Protocol 6), the first of E
   - Generators for a table, a bench, a chair and a stool (bunks keep their sprites, read through their furniture rows); rows in both art tables; the scene draws furniture under the crawlers at it (a seated crawler over its bench).
   - **The checks:** `ArtCompletenessTests` (every furniture kind has its art), art pins, renders; the producer's look at the bunkhouse building and the tavern's tables.
 
+- [x] **F.6 A seat is one crawler's** (the epic's F4, found at F.5's look) [Possibly Complex: main-thread claims, a behaviour change at venues; golden unchanged]
+  - A sitting spell at a venue seated on furniture claims its seat as it arrives (`Seating`, beside `Lodging`; `IIntentExecutionContext.TryClaimSeat`); a seat held by another fails the intent, and the crawler chooses again; its own, it takes the last steps onto the seat's point (`RecreateIntentHandler.SettleDistance`), so others see it taken. A claim lasts only while its holder is at a spell on that seat, goes with a crawler leaving the outpost, and isn't saved (work in progress, as bunk claims). A venue's standing spots (the stall's browsing, the yard's sparring) stay as they were.
+  - **The checks:** `SeatingValidator`; `AnEveningAtTheTavern` (D.1) fails without the claim (every seated tick off its stool) and passes with it.
+  - **Done:** first written for every sitting pose, it took in the stall's browsing (an idle pose) and moved golden and 14 seeded scenarios; narrowed to seats on furniture, golden is unchanged and the full core suite 423/423.
+
 ### D. The Definition of Done (1 day)
 **Complexity:** Possibly Complex: a live scenario with nothing injected.
 - [ ] **D.1 `AnEveningAtTheTavern`, seated at its tables** [Possibly Complex: a live scenario]

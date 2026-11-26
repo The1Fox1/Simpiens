@@ -36,6 +36,12 @@ namespace Simpiens.Simulation
 
         public IntentResult StepOntoBunk(WorldEntity node, EntityId bunkId) => _lodging.StepOntoBunk(node, bunkId);
 
+        /// <summary>Claims a venue's seat for a crawler arriving at it: one crawler a seat (Epic PLACES plan 1, F.6). Main thread.</summary>
+        public bool TryClaimSeat(int venueIndex, int seat, EntityId agentId) => _seating.TryClaim(venueIndex, seat, agentId);
+
+        /// <summary>Who holds a venue's seat, if anyone (F.6).</summary>
+        public bool TryGetSeatHolder(int venueIndex, int seat, out EntityId holder) => _seating.TryGetHolder(venueIndex, seat, out holder);
+
         public void DepartOutpost(WorldEntity node)
         {
             var agent = node?.Agent;
@@ -155,6 +161,7 @@ namespace Simpiens.Simulation
             var agent = node.Agent;
             int releasedClaims = _market.ReleaseClaimsForAgent(node.Id);
             _lodging.ReleaseAllForAgent(node.Id);
+            _seating.ReleaseAllForAgent(node.Id);
             if (_groupRegistry != null)
             {
                 _groupRegistry.LeaveAllGroups(node.Id);

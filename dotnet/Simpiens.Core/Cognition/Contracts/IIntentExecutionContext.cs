@@ -87,6 +87,12 @@ namespace Simpiens.Cognition.Contracts
         bool TryClaimBunk(EntityId bunkId, EntityId agentId, Vec2 agentPosition);
 
         /// <summary>
+        /// Claims seat <paramref name="seat"/> of venue <paramref name="venueIndex"/> for a crawler arriving at it: false when another
+        /// sits there (Epic PLACES plan 1, F.6: one crawler a seat). Main thread. A context with no seating lets everyone sit.
+        /// </summary>
+        bool TryClaimSeat(int venueIndex, int seat, EntityId agentId) => true;
+
+        /// <summary>
         /// Moves the agent one tick toward the bunk's exact position, ignoring pawn clearance (the bunk is free; stepping
         /// onto it is the point). Success once on the bunk's exact position, so the sleeper lies in it; PathBlocked when a
         /// wall is in the way; TargetMissing when unknown or taken by someone else.

@@ -71,6 +71,7 @@ namespace Simpiens.Simulation
         private readonly Locomotion _locomotion;
         private readonly Market _market;
         private readonly Lodging _lodging;
+        private readonly Seating _seating = new Seating(); // who sits where (Epic PLACES plan 1, F.6)
         private readonly SocialDynamics _social;
         private EconomyTuning _economy = EconomyTuning.Default;
 
@@ -1067,6 +1068,8 @@ namespace Simpiens.Simulation
                 EvaluateHearthProximity(currentTick);
                 EvaluateLeadershipSuccession(currentTick);
             }
+
+            _seating.Validate(_activeIntents); // a seat stays taken only while its holder sits there (Epic PLACES plan 1, F.6)
 
             // Generate the thread-safe global snapshot for any cognitive agents that poll this frame
             if (_spatialPartition != null && _worldRegistry != null)

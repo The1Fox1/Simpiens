@@ -158,6 +158,7 @@ namespace Simpiens.Simulation
             _economyLedger?.Reset();
             _social.Reset();
             _lodging.Reset();
+            _seating.Reset();
             _harvested.Clear();
             _market.Reset();
             _keysToRemove.Clear();
