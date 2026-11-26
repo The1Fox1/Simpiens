@@ -43,6 +43,17 @@ namespace Simpiens.Client.Tests
     }
 
     /// <summary>The map's stations in a scene (Epic 10 Part 2, W1.6a): each drawn once, a plot or the station, unless the fog hides it.</summary>
+    /// <summary>The standing buildings' signs a scene shows (Epic PLACES plan 1, B.4): a lot has none; the fog hides one in an uncharted zone.</summary>
+    internal static class SceneSigns
+    {
+        public static int Shown(Simpiens.Simulation.World.MapDefinition map, Simpiens.Presentation.WorldScene scene)
+        {
+            int shown = 0;
+            for (int i = 0; i < map.Buildings.Count; i++) if (!map.Buildings[i].IsLot && scene.Fog.Visibility(map.Buildings[i].Sign, 0f) > 0f) shown++;
+            return shown;
+        }
+    }
+
     internal static class SceneStations
     {
         public static int Shown(LocalSimulation sim, Simpiens.Presentation.WorldScene scene)

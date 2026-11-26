@@ -172,9 +172,13 @@ namespace Simpiens.Client.Tests
                 var centre = layer.CellCentre(tile.X, tile.Y);
                 Assert.True(centre.X >= Floor1.PlayableBounds.XMin && centre.X <= Floor1.PlayableBounds.XMax
                     && centre.Y >= Floor1.PlayableBounds.YMin && centre.Y <= Floor1.PlayableBounds.YMax, $"floor at {centre}");
-                var expected = MapTileLayer.TryGetSectorIndex(Floor1, centre, out int sector) ? MapTileLayer.FloorTint(Floor1, Floor1.Sectors[sector]) : MapTileLayer.NeutralFloor;
+                // A building's floor keeps its own colours (Epic PLACES plan 1, B.3): Floor 1's bunkhouse is planked
+                var expected = tile.Material != 0 ? Rgba.White
+                    : MapTileLayer.TryGetSectorIndex(Floor1, centre, out int sector) ? MapTileLayer.FloorTint(Floor1, Floor1.Sectors[sector]) : MapTileLayer.NeutralFloor;
                 Assert.Equal(expected, tile.Tint);
+                Assert.Equal(MapTileLayer.FloorMaterialAt(Floor1, centre), (Simpiens.Simulation.Places.FloorMaterial)tile.Material);
             }
+            Assert.Contains(layer.Tiles, t => t.Kind == TileKind.Floor && t.Material == (byte)Simpiens.Simulation.Places.FloorMaterial.Planks);
             // Floor 1's walls are centred on whole numbers
             Assert.Equal(Vec2.Zero, layer.Origin);
         }
@@ -247,7 +251,8 @@ namespace Simpiens.Client.Tests
             Assert.True(props > 0);
             int textAndFog = Enumerable.Range(0, scene.Items.Count).Count(i => DrawSortKey.Layer(scene.Items[i].SortKey) is RenderLayer.Labels or RenderLayer.Fog);
             int hazards = scene.Hazards.Spots.Count(s => s.Kind != Simpiens.Simulation.World.HazardKind.FallingRock || HazardEffects.LocalSeconds(s, 0f) >= 0f); // the hazards' animations at 0 s (Epic 10 Part 2, D69): every hazard sector is charted
-            Assert.Equal(scene.Tiles.Tiles.Count + props + crawlers + SceneStalls.ShownPieces(sim) + SceneStations.Shown(sim, scene) + hazards, scene.Items.Count - textAndFog); // and the stall with its goods (graphics V5), the stations (Epic 10 Part 2)
+            Assert.Equal(scene.Tiles.Tiles.Count + props + crawlers + SceneStalls.ShownPieces(sim) + SceneStations.Shown(sim, scene) + hazards + SceneSigns.Shown(sim.Host.Current.Map, scene),
+                scene.Items.Count - textAndFog); // and the stall with its goods (graphics V5), the stations (Epic 10 Part 2), the buildings' signs (Epic PLACES plan 1, B.4)
 
             int previousLayer = int.MinValue;
             for (int i = 0; i < scene.Items.Count; i++)
