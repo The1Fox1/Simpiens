@@ -38,7 +38,7 @@ namespace Simpiens.Testing.Life
             Assert(life.Weariness == 0f, "And at 0.");
             life.RecordWindfall(0u);
             Assert(life.LastWindfall != 0u, "A windfall at tick 0 still reads as one.");
-            Assert(CrawlerLife.SpareBytes == 222, $"The spare bytes are untouched ({CrawlerLife.SpareBytes}).");
+            Assert(CrawlerLife.SpareBytes == 216, $"The spare bytes are untouched ({CrawlerLife.SpareBytes}).");
         }
 
         private void ValidateWorkWearies()

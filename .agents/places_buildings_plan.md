@@ -72,9 +72,10 @@ This is a working document (AGENTS.md, Documentation Protocol 6), the first of E
 - [x] **G.2 The map card says a day off** (Epic LIFE-1's F23) [Basic: a model line and the inspector card; presentation tests]
   - `InspectorModel` gains the intention's line ("Today: a day off."), the card shows it after the mood as the dossier does.
   - **Done:** `InspectorModel.IntentionLine`, the card's mood line joined with it as the dossier's is; `InspectorTests.TheCardSaysADayOff`.
-- [ ] **G.3 The day log's waking time** (Epic LIFE-1's F23) [Possibly Complex: a field in the life record's spare bytes; golden re-recorded for its coverage]
+- [x] **G.3 The day log's waking time** (Epic LIFE-1's F23) [Possibly Complex: a field in the life record's spare bytes; golden re-recorded for its coverage]
   - The tick an intention is drawn (when the crawler is first awake outside its night: when it got up) is kept with it, a `uint` at 292 (290–291 padding), so the day log's first line says when the crawler woke, not its waking hour. A record before it reads 0, and the day log falls back to the waking hour.
   - **The checks:** `IntentionValidator` (the tick kept, a record before it), `LifeModelsTests` (the line's time), the round trip.
+  - **Done:** `CrawlerLife.WokeAt` / `WokeOn(day)` at 292 (spare 216 from 296), kept by `IntentionRules.Begin` from the draw's tick, left by a call-in; the day log reads it, the waking hour for a record without it. Golden unchanged: its 3,000 ticks end before any intention is drawn (the first routine day draws none).
 
 ### S. The outpost square, a sketch for plan 2 (half a day)
 **Complexity:** Possibly Complex: a map design for the producer.

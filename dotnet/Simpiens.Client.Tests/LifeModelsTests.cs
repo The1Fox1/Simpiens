@@ -138,8 +138,12 @@ namespace Simpiens.Client.Tests
             life.SetIntention(DayIntention.Rest, routine.Day);
             state.Life = life;
             today.Refresh(state, now, null, null, Names);
-            Assert.Equal(new[] { LifeTexts.Clock(routine.WakesAt) + "  Woke, meaning to rest" }, Shown(today));
+            Assert.Equal(new[] { LifeTexts.Clock(routine.WakesAt) + "  Woke, meaning to rest" }, Shown(today)); // a record that doesn't know when it woke
             Assert.Equal(DayIntention.Rest, state.IntentionAt((uint)now));
+            life.Woke((uint)(routine.WakesAt + 30 * DayClock.TicksPerMinute)); // up half an hour after its waking hour (Epic PLACES plan 1, G.3)
+            state.Life = life;
+            today.Refresh(state, now, null, null, Names);
+            Assert.Equal(new[] { LifeTexts.Clock(routine.WakesAt + 30 * DayClock.TicksPerMinute) + "  Woke, meaning to rest" }, Shown(today));
         }
 
         /// <summary>

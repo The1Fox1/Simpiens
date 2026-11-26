@@ -70,19 +70,8 @@ namespace Simpiens.Simulation.Life
         /// Records <paramref name="intention"/> for <paramref name="day"/> in <paramref name="life"/>, and a day off's effect on
         /// weariness (D33): a rest day halves it, and a rest day after a rest day clears it.
         /// </summary>
-        public static void Begin(ref CrawlerLife life, DayIntention intention, long day)
-            => Begin(ref life, intention, day, calledIn: false);
-
-        /// <summary>
-        /// A member called in from its day off (D36): it kept to its orders, so its day is a work day; weariness stays as the day off
-        /// left it.
-        /// </summary>
-        public static void CallIn(ref CrawlerLife life, long day)
-        {
-            if (life.IntentionFor(day) == DayIntention.Rest) life.SetIntention(DayIntention.Work, day);
-        }
-
-        private static void Begin(ref CrawlerLife life, DayIntention intention, long day, bool calledIn)
+        /// <param name="wokeAt">The tick it was drawn, when the crawler got up (Epic PLACES plan 1, G.3); 0 when unknown.</param>
+        public static void Begin(ref CrawlerLife life, DayIntention intention, long day, uint wokeAt = 0u)
         {
             if (intention == DayIntention.Rest)
             {
@@ -90,6 +79,16 @@ namespace Simpiens.Simulation.Life
                 life.Weary(secondInARow ? -CrawlerLife.MaxWeariness : -life.Weariness / 2f);
             }
             life.SetIntention(intention, day);
+            life.Woke(wokeAt);
+        }
+
+        /// <summary>
+        /// A member called in from its day off (D36): it kept to its orders, so its day is a work day; weariness stays as the day off
+        /// left it.
+        /// </summary>
+        public static void CallIn(ref CrawlerLife life, long day)
+        {
+            if (life.IntentionFor(day) == DayIntention.Rest) life.SetIntention(DayIntention.Work, day); // when it woke stays
         }
     }
 }

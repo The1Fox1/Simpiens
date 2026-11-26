@@ -181,7 +181,7 @@ namespace Simpiens.Cognition
                 purseTarget > 0 && gold > purseTarget, passion, want);
             var intention = Simpiens.Simulation.Life.IntentionRules.IsOutpostRestDay(rhythm, day) ? Simpiens.Simulation.Life.DayIntention.Rest // Q11's switch (D37)
                 : Simpiens.Simulation.Life.IntentionRules.Draw(odds, seed, AgentId, day);
-            Simpiens.Simulation.Life.IntentionRules.Begin(ref _life, intention, day);
+            Simpiens.Simulation.Life.IntentionRules.Begin(ref _life, intention, day, tick); // drawn as it got up: when it woke (Epic PLACES plan 1, G.3)
             return intention;
         }
 
