@@ -6,7 +6,8 @@ namespace Simpiens.Testing.Sessions
     /// <summary>
     /// The Dev Map: the 10 demonstration play pens (Epics 7, Beta, 8), test-only since Epic MAP Phase 2. Walls,
     /// sectors and props are transcribed cell for cell from the former live pen arena (parity proven in Phase 1);
-    /// the Outpost Commons yard became the open-yard test fixture CommonsYardFixture.
+    /// the Outpost Commons yard became the open-yard test fixture CommonsYardFixture. Below the pens, the building yard (Epic
+    /// PLACES plan 1, B.2): a closed zone holding a small standing building and an empty lot, for the validators and the renders.
     /// </summary>
     public static class DevMapLayout
     {
@@ -24,6 +25,18 @@ namespace Simpiens.Testing.Sessions
         public const string Pen9Bush = "pen9.bush";
         public const string Pen10Bush = "pen10.bush";
 
+        /// <summary>The building yard's zone (Epic PLACES plan 1, B.2): below the pens.</summary>
+        public const byte BuildingYardSectorId = 11;
+
+        /// <summary>The yard's small standing building, a barracks, its door on its north edge.</summary>
+        public const string YardBarracks = "yard.barracks";
+
+        /// <summary>The yard's empty lot, its door on its north edge.</summary>
+        public const string YardLot = "yard.lot";
+
+        /// <summary>Where the camera frames the pens: the arena before the building yard was added below them.</summary>
+        public static readonly RectF PenFrame = new RectF(-12f, -14.5f, 24f, 20f);
+
         // Pen grid: dividers between and around the 5 pens of each row
         private static readonly float[] DividerX = { -10f, -6f, -2f, 2f, 6f, 10f };
 
@@ -34,10 +47,10 @@ namespace Simpiens.Testing.Sessions
 
         private static MapDefinition Build()
         {
-            // The two pen rows (walls span x -10.55..10.55, y -13.05..4.05) plus a margin. The pens are closed, so the
-            // bounds only frame the camera and size the partition.
-            var arena = new RectF(-12f, -14.5f, 24f, 20f);
-            var b = new MapDefinitionBuilder("DevMap", arena).CameraFrame(arena);
+            // The two pen rows (walls span x -10.55..10.55, y -13.05..4.05) and the building yard below them (y -26..-14), plus a
+            // margin. The pens and the yard are closed, so the bounds only size the partition; the camera frames the pens.
+            var arena = new RectF(-12f, -28f, 24f, 33.5f);
+            var b = new MapDefinitionBuilder("DevMap", arena).CameraFrame(PenFrame);
 
             // --- Row 1 (Pens 1-5: Epics 7 & Beta), walls on y = ±3.5 ---
             b.WallRun(new Vec2(-10f, 3.5f), new Vec2(10f, 3.5f));
@@ -78,6 +91,16 @@ namespace Simpiens.Testing.Sessions
                 new RectF(2f, -12.5f, 4f, 7f), new Vec2(4f, -9f), 2.0f);
             b.Sector(10, "Schism Ward", "Crisis of legitimacy, factional fracture, and splinter bands.",
                 new RectF(6f, -12.5f, 4f, 7f), new Vec2(8f, -9f), 2.0f);
+
+            // --- The building yard (Epic PLACES plan 1, B.2): a closed zone, a barracks and an empty lot side by side ---
+            b.WallRun(new Vec2(-10f, -14f), new Vec2(10f, -14f));
+            b.WallRun(new Vec2(-10f, -26f), new Vec2(10f, -26f));
+            b.WallRun(new Vec2(-10f, -26f), new Vec2(-10f, -14f));
+            b.WallRun(new Vec2(10f, -26f), new Vec2(10f, -14f));
+            b.Sector(BuildingYardSectorId, "Building Yard", "A barracks and an empty lot, for buildings' checks and looks.",
+                new RectF(-10f, -26f, 20f, 12f), new Vec2(0f, -16f), 1.5f);
+            b.Building(YardBarracks, Simpiens.Simulation.Places.BuildingKind.Barracks, new RectF(-9f, -24f, 8f, 6f), new Vec2(-5f, -18f));
+            b.Lot(YardLot, new RectF(1f, -24f, 8f, 6f), new Vec2(5f, -18f));
 
             // --- Pen demonstration props ---
             b.Node(Pen1ContestedBush, new Vec2(-8f, 0f), ItemType.Ration, 1, FoodRegrowTicks);

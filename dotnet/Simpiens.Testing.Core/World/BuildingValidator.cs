@@ -12,7 +12,8 @@ namespace Simpiens.Testing.World
     /// zone or two, an overlap, a door off its edges or crowding a corner or another door, no door, a kind too big for its lot,
     /// off whole units, a kind with no row); its walls written once, less its doors, never over a wall the map has (a building on
     /// a zone's walls adds none and leaves the grid as it was); <see cref="MapDefinition.BuildingAt"/>; and on every shipped map,
-    /// each building's doors open onto its interior. Runs as a test (ValidatorTests).
+    /// each building's doors open onto its interior, its inside is walked to from its zone through them, and with its doorways
+    /// walled up there is no way in (B.2: the Dev Map's barracks and empty lot). Runs as a test (ValidatorTests).
     /// </summary>
     public class BuildingValidator
     {
@@ -115,14 +116,18 @@ namespace Simpiens.Testing.World
 
         private void ValidateShippedMaps()
         {
-            int doors = 0;
+            int doors = 0, buildings = 0;
             foreach (var map in new[] { Floor1Layout.Definition, DevMapLayout.Definition })
             {
                 var grid = MapMeasure.Rasterized(map);
                 for (int i = 0; i < map.Buildings.Count; i++)
                 {
                     var b = map.Buildings[i];
-                    Assert(map.TryGetSector(b.SectorId, out _), $"{map.Name}'s '{b.Key}' is in a zone.");
+                    Assert(map.TryGetSector(b.SectorId, out var zone), $"{map.Name}'s '{b.Key}' is in a zone.");
+                    var walks = MapMeasure.Walks(grid, zone.TargetPoint);
+                    var firstInside = b.Doors[0] + Inward(b.Footprint, b.Doors[0]);
+                    Assert(MapMeasure.WalkTo(grid, walks, firstInside) >= 0f, $"{map.Name}'s '{b.Key}' is walked into from its zone.");
+                    buildings++;
                     for (int d = 0; d < b.Doors.Count; d++)
                     {
                         var inward = Inward(b.Footprint, b.Doors[d]);
@@ -133,9 +138,31 @@ namespace Simpiens.Testing.World
                         Assert(map.BuildingAt(inside) == i, $"{map.Name}'s '{b.Key}': a step in through its door is inside it.");
                         doors++;
                     }
+
+                    // No way in but its doors: with every doorway walled up, its inside is cut off from its zone
+                    var shut = MapMeasure.Rasterized(map);
+                    for (int d = 0; d < b.Doors.Count; d++) WallUp(shut, b.Footprint, b.Doors[d]);
+                    shut.EnsureRegions();
+                    Assert(!shut.AreConnected(firstInside, b.Doors[0] - Inward(b.Footprint, b.Doors[0])), $"{map.Name}'s '{b.Key}' has no way in but its doors.");
                 }
             }
-            TestLog.Log($"[PASS] Test 5: On the shipped maps, every building's doors open onto its inside ({doors} doors).");
+            Assert(buildings >= 2, $"The shipped maps hold buildings to check ({buildings}).");
+            TestLog.Log($"[PASS] Test 5: On the shipped maps, every building is walked into from its zone through its doors, and has no other way in ({buildings} buildings, {doors} doors).");
+        }
+
+        /// <summary>Blocks the cells of a doorway: its gap, post to post, on both sides of its wall line.</summary>
+        private static void WallUp(StaticNavGrid grid, RectF footprint, Vec2 door)
+        {
+            bool horizontal = SimMath.Approximately(door.Y, footprint.YMin) || SimMath.Approximately(door.Y, footprint.YMax);
+            float half = BuildingDefinition.DoorSpan * 0.5f;
+            for (float t = -half + 0.5f; t < half; t += 1f)
+            {
+                for (float across = -0.5f; across <= 0.5f; across += 1f)
+                {
+                    var point = horizontal ? new Vec2(door.X + t, door.Y + across) : new Vec2(door.X + across, door.Y + t);
+                    if (grid.WorldToCell(point, out int x, out int y)) grid.SetWall(x, y);
+                }
+            }
         }
 
         // --- Helpers ---
