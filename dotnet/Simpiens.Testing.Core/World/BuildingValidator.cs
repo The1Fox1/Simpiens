@@ -78,7 +78,7 @@ namespace Simpiens.Testing.World
             var map = Yard().Building("hall", BuildingKind.Bunkhouse, new RectF(-6f, -4f, 12f, 8f), new Vec2(0f, -4f)).Build();
             var hall = map.Buildings[0];
             Assert(hall.WallCellsAdded == 35, $"In the open, its walls are its perimeter less its door ({hall.WallCellsAdded} cells, not 35).");
-            Assert(hall.Sign == new Vec2(4f, -4f), $"Its sign hangs on its door's edge past the post ({hall.Sign}).");
+            Assert(hall.Sign == new Vec2(4f, -5f), $"Its sign stands outside its door's wall, past the post ({hall.Sign}).");
             var grid = MapMeasure.Rasterized(map);
             Assert(Walkable(grid, new Vec2(0f, -4f)) && !Walkable(grid, new Vec2(3f, -4f)) && !Walkable(grid, new Vec2(-6f, 0f)) && !Walkable(grid, new Vec2(0f, 4f)),
                 "Its doorway is open; its posts and walls aren't.");
@@ -124,6 +124,8 @@ namespace Simpiens.Testing.World
                 {
                     var b = map.Buildings[i];
                     Assert(map.TryGetSector(b.SectorId, out var zone), $"{map.Name}'s '{b.Key}' is in a zone.");
+                    Assert(map.BuildingAt(b.Sign) < 0 && zone.Bounds.Contains(b.Sign) && !WallRasterizer.CircleOverlapsWall(map, b.Sign, 0.05f),
+                        $"{map.Name}'s '{b.Key}' sign stands outside it, in its zone, clear of every wall ({b.Sign}).");
                     var walks = MapMeasure.Walks(grid, zone.TargetPoint);
                     var firstInside = b.Doors[0] + Inward(b.Footprint, b.Doors[0]);
                     Assert(MapMeasure.WalkTo(grid, walks, firstInside) >= 0f, $"{map.Name}'s '{b.Key}' is walked into from its zone.");

@@ -50,6 +50,7 @@ namespace Simpiens.Presentation.Art
                .Add(ArtKeys.TileWallFoundations, Sheet, new[] { BuildingSprites.Foundations }, 1f, 1f, Art)
                .Add(ArtKeys.TileFloorPlanks, Sheet, new[] { BuildingSprites.PlankFloor }, 1f, 1f, Art)
                .Add(ArtKeys.TileFloorBare, Sheet, new[] { BuildingSprites.BareFloor }, 1f, 1f, Art)
+               .Add(ArtKeys.DecorSign, Sheet, new[] { BuildingSprites.Sign }, 1f, 1f, Art) // B.4
                .Add(ArtKeys.PropHearth, Sheet, new[] { "Anchor_Campfire_0", "Anchor_Campfire_1" }, HearthSize, HearthSize, Art,
                    framesPerSecond: HearthFramesPerSecond, pulseRate: HearthPulseRate, pulseAmplitude: HearthPulseAmplitude)
                .Add(ArtKeys.PropBunk, Sheet, new[] { "Anchor_Bunk" }, BunkSize, BunkSize, Art)

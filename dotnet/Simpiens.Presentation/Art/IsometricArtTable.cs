@@ -43,6 +43,7 @@ namespace Simpiens.Presentation.Art
                .Add(ArtKeys.TileWallFoundations, Sheet, new[] { BuildingSprites.IsoFoundations }, tileW, tileH + BuildingSprites.FoundationsRise, pivotY: IsometricSprites.BlockPivotY(tileH, BuildingSprites.FoundationsRise))
                .Add(ArtKeys.TileFloorPlanks, Sheet, new[] { BuildingSprites.IsoPlankFloor }, tileW, tileH)
                .Add(ArtKeys.TileFloorBare, Sheet, new[] { BuildingSprites.IsoBareFloor }, tileW, tileH)
+               .Add(ArtKeys.DecorSign, Sheet, new[] { BuildingSprites.Sign }, Standing, Standing, pivotY: FeetPivot) // B.4: standing as the hearth does
                .Add(ArtKeys.PropHearth, Sheet, new[] { "Anchor_Campfire_0", "Anchor_Campfire_1" }, Standing, Standing, pivotY: FeetPivot,
                    framesPerSecond: TopDownArtTable.HearthFramesPerSecond, pulseRate: TopDownArtTable.HearthPulseRate, pulseAmplitude: TopDownArtTable.HearthPulseAmplitude)
                .Add(ArtKeys.PropBunk, Sheet, new[] { "Iso_Bunk" }, IsometricSprites.BunkWidth, IsometricSprites.BunkHeight + IsometricSprites.BunkRise,

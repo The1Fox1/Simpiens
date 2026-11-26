@@ -120,6 +120,7 @@ namespace Simpiens.Client.Tests
                 used.Add(catalog.Id(ArtKeys.TileWallLowOf(m)));
             }
             foreach (Simpiens.Simulation.Places.FloorMaterial m in System.Enum.GetValues(typeof(Simpiens.Simulation.Places.FloorMaterial))) used.Add(catalog.Id(ArtKeys.TileFloorOf(m)));
+            used.Add(catalog.Id(ArtKeys.DecorSign)); // a building's sign (B.4)
             used.Add(catalog.Id(ArtKeys.PropStall));
             used.Add(catalog.Id(ArtKeys.PropCaravan)); // the caravan walking the map (Epic 10 Part 2, D70)
             used.Add(new EntityVisuals(catalog).Cairn); // a body (Epic 10 Part 3, K5.8b)

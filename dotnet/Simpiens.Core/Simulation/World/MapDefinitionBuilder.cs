@@ -374,17 +374,21 @@ namespace Simpiens.Simulation.World
         /// <summary>A point's place along its edge: x on a horizontal edge, y on a vertical one.</summary>
         private static float Along(RectF footprint, Vec2 point) => EdgeOf(footprint, point) <= 1 ? point.X : point.Y;
 
-        /// <summary>Where a building's sign hangs (D10): on its main door's edge, a cell past the door's post, toward the edge's middle.</summary>
+        /// <summary>
+        /// Where a building's sign stands (D10): outside its main door's wall, a cell out, a cell past the door's post toward the
+        /// edge's middle. A post outside, not a plaque on the wall: the isometric cutaway lowers front walls.
+        /// </summary>
         private static Vec2 SignBeside(RectF footprint, Vec2 door)
         {
             float offset = BuildingDefinition.DoorSpan * 0.5f + 1f;
-            if (EdgeOf(footprint, door) <= 1)
+            int edge = EdgeOf(footprint, door);
+            if (edge <= 1)
             {
                 float x = door.X <= footprint.Center.X ? door.X + offset : door.X - offset;
-                return new Vec2(SimMath.Clamp(x, footprint.XMin + 1f, footprint.XMax - 1f), door.Y);
+                return new Vec2(SimMath.Clamp(x, footprint.XMin + 1f, footprint.XMax - 1f), door.Y + (edge == 0 ? -1f : 1f));
             }
             float y = door.Y <= footprint.Center.Y ? door.Y + offset : door.Y - offset;
-            return new Vec2(door.X, SimMath.Clamp(y, footprint.YMin + 1f, footprint.YMax - 1f));
+            return new Vec2(door.X + (edge == 2 ? -1f : 1f), SimMath.Clamp(y, footprint.YMin + 1f, footprint.YMax - 1f));
         }
 
         private static bool IsWhole(float value) => SimMath.Approximately(value, SimMath.Round(value));

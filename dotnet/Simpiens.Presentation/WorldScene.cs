@@ -50,6 +50,7 @@ namespace Simpiens.Presentation
             {
                 _catalog = value ?? throw new ArgumentNullException(nameof(value));
                 _rock = value.Id(ArtKeys.TileRock);
+                _sign = value.Id(ArtKeys.DecorSign);
                 for (int m = 0; m < _wallBy.Length; m++) // buildings' walls and floors by material (Epic PLACES plan 1, B.3)
                 {
                     _wallBy[m] = value.Id(ArtKeys.TileWallOf((Simpiens.Simulation.Places.WallMaterial)m));
@@ -94,6 +95,7 @@ namespace Simpiens.Presentation
         public CrawlerBodies Bodies { get; set; }
 
         private ArtCatalog _catalog;
+        private ArtId _sign;
         private ArtId _rock, _ring, _shadow, _caravan, _bar, _gate, _gateOpen;
         private readonly ArtId[] _wallBy = new ArtId[3], _lowBy = new ArtId[3], _floorBy = new ArtId[3]; // by WallMaterial, FloorMaterial
         private readonly ArtId[] _badges = new ArtId[5]; // by PartyRole (Epic 11, S5.8)
@@ -190,6 +192,7 @@ namespace Simpiens.Presentation
                 Fog.AddLabels(Labels, viewSeconds);
                 AddHazardNotes(map);
                 AddHazardEffects(map, viewSeconds);
+                AddBuildings(map, viewSeconds);
             }
 
             if (frame != null)
@@ -367,6 +370,41 @@ namespace Simpiens.Presentation
                 if (shown <= 0f) continue;
                 Add(DrawRole.Prop, Projection.Depth(pois[i].Position), _catalog.Piece(art, viewSeconds), pois[i].Position, Shown(White, shown));
             }
+        }
+
+        /// <summary>A building's name over its sign: parchment, warmer than a room's name.</summary>
+        public static readonly Rgba BuildingNameColor = new Rgba(0.95f, 0.86f, 0.66f, 1f);
+
+        /// <summary>
+        /// Each standing building's sign beside its main door, and its name over the sign (Epic PLACES plan 1, B.4, D10): a lot has
+        /// neither, and a building whose zone already bears its name (the bunkhouse filling its room) isn't named twice. Faded
+        /// with the fog, as any prop is; its name hidden while its zone is uncharted.
+        /// </summary>
+        private void AddBuildings(MapDefinition map, float viewSeconds)
+        {
+            var buildings = map.Buildings;
+            for (int i = 0; i < buildings.Count; i++)
+            {
+                var building = buildings[i];
+                if (building.IsLot) continue;
+                float shown = Fog.Visibility(building.Sign, viewSeconds);
+                if (shown <= 0f) continue;
+                Add(DrawRole.Prop, Projection.Depth(building.Sign), _catalog.Piece(_sign, viewSeconds), building.Sign, Shown(White, shown));
+                string title = building.Row.Title;
+                if (Fog.Covers(building.SectorId) || ZoneBears(map, building.SectorId, title)) continue;
+                Labels.Add(new WorldLabel(title, building.Sign + _catalog.NameOffset, LabelKind.Building, Shown(Rgba32.From(BuildingNameColor), shown), _catalog.NameHeight, building.SectorId));
+            }
+        }
+
+        /// <summary>Whether a label of the map in zone <paramref name="sectorId"/> already reads <paramref name="title"/>.</summary>
+        private static bool ZoneBears(MapDefinition map, int sectorId, string title)
+        {
+            if (!map.TryGetSector((byte)sectorId, out var sector)) return false;
+            for (int i = 0; i < map.Labels.Count; i++)
+            {
+                if (map.Labels[i].Text == title && sector.Contains(map.Labels[i].Position)) return true;
+            }
+            return false;
         }
 
         private static readonly Rgba32 BarBack = new Rgba32(20, 18, 24, 220), BarFill = new Rgba32(220, 64, 52, 255), BarFury = new Rgba32(255, 150, 60, 255);

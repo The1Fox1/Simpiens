@@ -284,7 +284,7 @@ namespace Simpiens.Simulation.World
         /// <summary>Its doors' centres, each on an edge of its footprint; the first is its main door, its sign beside it.</summary>
         public readonly IReadOnlyList<Vec2> Doors;
 
-        /// <summary>Where its sign hangs: on the wall line beside its main door.</summary>
+        /// <summary>Where its sign stands: outside its main door's wall, a cell out, beside the door.</summary>
         public readonly Vec2 Sign;
 
         /// <summary>The wall cells it added to the map's: none for a building standing on a zone's walls (the bunkhouse).</summary>

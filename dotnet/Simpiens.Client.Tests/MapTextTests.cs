@@ -144,6 +144,55 @@ namespace Simpiens.Client.Tests
             Assert.All(glyphs, g => Assert.True(g.Width > 0 && g.Height > 0));
         }
 
+        /// <summary>
+        /// A building's name over its sign (Epic PLACES plan 1, B.4, D10): one size under its zone's name, above its point; at the
+        /// least size in a zone with no name; hidden while its zone's name is, and where it would overlap a label placed before it.
+        /// </summary>
+        [Fact]
+        public void ABuildingsNameSitsOverItsSignASizeUnderItsZonesAndNeverOverlaps()
+        {
+            var white = Rgba32.From(new Rgba(1f, 1f, 1f, 1f));
+            var map = Simpiens.Core.Session.Layouts.Floor1Layout.Definition;
+            var camera = CameraOn(map, 32f);
+            var labels = new List<WorldLabel>
+            {
+                new WorldLabel("Outpost Square", new Vec2(0f, 0f), LabelKind.Room, white, sectorId: 1),
+                new WorldLabel("Bunkhouse", new Vec2(-5f, -4f), LabelKind.Building, white, sectorId: 1),
+                new WorldLabel("Barracks", new Vec2(12f, -4f), LabelKind.Building, white, sectorId: 9), // a zone with no name
+                new WorldLabel("Tavern", new Vec2(0.5f, 0.2f), LabelKind.Building, white, sectorId: 1), // over the zone's name
+            };
+            var layout = new MapLabelLayout();
+            layout.Layout(labels, camera, Fonts.Value, new List<ScreenGlyph>());
+            var room = layout.Placed.Single(p => p.Index == 0);
+            var bunkhouse = layout.Placed.Single(p => p.Index == 1);
+            var barracks = layout.Placed.Single(p => p.Index == 2);
+            Assert.True(room.Shown && bunkhouse.Shown && barracks.Shown);
+            Assert.True(bunkhouse.Face.Size < room.Face.Size, $"A size under its zone's ({bunkhouse.Face.Size} under {room.Face.Size}).");
+            Assert.Equal(MapLabelLayout.MinSize, barracks.Face.Size);
+            var at = camera.WorldToScreen(new Vec2(-5f, -4f), 0f);
+            Assert.True(bunkhouse.Y + bunkhouse.Height <= (int)MathF.Floor(at.Y + 0.5f) && MathF.Abs(bunkhouse.X + bunkhouse.Width * 0.5f - at.X) <= 1f, "Over its point, centred.");
+            Assert.False(layout.Placed.Single(p => p.Index == 3).Shown, "Hidden where it would overlap its zone's name.");
+
+            // Its zone's name hidden (too small a zoom), so is it
+            layout.Layout(labels, CameraOn(map, 4f), Fonts.Value, new List<ScreenGlyph>());
+            Assert.False(layout.Placed.Single(p => p.Index == 0).Shown);
+            Assert.False(layout.Placed.Single(p => p.Index == 1).Shown);
+        }
+
+        /// <summary>On the Dev Map, the yard's barracks is named over its sign; its empty lot is not; on Floor 1 nothing is named twice.</summary>
+        [Fact]
+        public void TheSceneNamesStandingBuildingsOnce()
+        {
+            var scene = new WorldScene();
+            scene.Build(DevMapLayout.Definition, null, 0f);
+            var named = scene.Labels.Where(l => l.Kind == LabelKind.Building).ToList();
+            Assert.True(DevMapLayout.Definition.TryGetBuilding(DevMapLayout.YardBarracks, out var barracks));
+            Assert.Equal("Barracks", Assert.Single(named).Text);
+            scene.Build(Simpiens.Core.Session.Layouts.Floor1Layout.Definition, null, 0f);
+            foreach (var label in scene.Labels.Where(l => l.Kind == LabelKind.Building))
+                Assert.DoesNotContain(scene.Labels, l => l.Kind == LabelKind.Room && l.Text == label.Text);
+        }
+
         [Fact]
         public void UnchartedFindsItsRoomBySectorNotByAnExactlyEqualPoint()
         {

@@ -35,6 +35,12 @@ namespace Simpiens.Client.Tests
             Row(ArtKeys.TileRock, 101);
             Row(ArtKeys.TileWall, 102);
             Row(ArtKeys.TileWallLow, 102); // top-down's: the wall
+            Row(ArtKeys.TileWallTimber, 102); // a building's walls and floors, marked as the zone's (Epic PLACES plan 1, B.3)
+            Row(ArtKeys.TileWallLowTimber, 102);
+            Row(ArtKeys.TileWallFoundations, 102);
+            Row(ArtKeys.TileFloorPlanks, 100);
+            Row(ArtKeys.TileFloorBare, 100);
+            Row(ArtKeys.DecorSign, 111); // a building's sign (B.4), marked as a prop
             Row(ArtKeys.Missing, 109); // never drawn on a shipped map
             Row(ArtKeys.Node("ration"), 110);
             Row(ArtKeys.Node("iron-ore"), 110);

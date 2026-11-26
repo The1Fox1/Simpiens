@@ -31,6 +31,9 @@ namespace Simpiens.Presentation.Art
         public const string TileWallFoundations = "tile/wall/foundations";
         public const string TileFloorPlanks = "tile/floor/planks";
         public const string TileFloorBare = "tile/floor/bare";
+
+        /// <summary>A standing building's sign, beside its main door (Epic PLACES plan 1, B.4, D10).</summary>
+        public const string DecorSign = "decor/sign";
         public const string PropHearth = "prop/hearth";
         public const string PropBunk = "prop/bunk";
         /// <summary>The trade stall, with its goods on display (graphics V5).</summary>

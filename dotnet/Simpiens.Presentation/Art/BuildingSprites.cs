@@ -6,7 +6,7 @@ namespace Simpiens.Presentation.Art
     /// <summary>
     /// Buildings' walls and floors (Epic PLACES plan 1, B.3, D9): timber walls, standing and cut away, a lot's foundations (a low
     /// course of pale stone), plank floors and bare ground, each from above (a 16-pixel cell) and in isometric (a 32 by 16 tile,
-    /// walls risen as the stone wall is). Colours are warm against the stone and flagstone of the zones, so a building reads as
+    /// walls risen as the stone wall is); and a building's sign (B.4, D10), a lettered board on a post, standing as the hearth does. Colours are warm against the stone and flagstone of the zones, so a building reads as
     /// its own place. A generator: it reads no table and no sheet.
     /// </summary>
     public static class BuildingSprites
@@ -17,6 +17,7 @@ namespace Simpiens.Presentation.Art
         public const int FoundationsRise = 4;
 
         public const string TimberWall = "Map_Wall_Timber", Foundations = "Map_Wall_Foundations", PlankFloor = "Map_Floor_Planks", BareFloor = "Map_Floor_Bare";
+        public const string Sign = "Prop_Sign";
         public const string IsoTimberWall = "Iso_Wall_Timber", IsoTimberWallLow = "Iso_Wall_Timber_Low", IsoFoundations = "Iso_Wall_Foundations",
             IsoPlankFloor = "Iso_Floor_Planks", IsoBareFloor = "Iso_Floor_Bare";
 
@@ -46,6 +47,48 @@ namespace Simpiens.Presentation.Art
             Add(IsoFoundations, StoneBlock(FoundationsRise), w, h + FoundationsRise);
             Add(IsoPlankFloor, PlanksDiamond(), w, h);
             Add(IsoBareFloor, EarthDiamond(), w, h);
+            Add(Sign, FromPattern(SignPattern), Cell, Cell); // B.4
+        }
+
+        /// <summary>The sign: a lettered board on a post, its foot on row 14 as a standing 16-pixel sprite's.</summary>
+        private static readonly string[] SignPattern =
+        {
+            "................",
+            "................",
+            "..OOOOOOOOOOOO..",
+            "..OBBBBBBBBBBO..",
+            "..OBddBdBddBBO..",
+            "..OBBBBBBBBBBO..",
+            "..OBdBddBdddBO..",
+            "..OBBBBBBBBBBO..",
+            "..OOOOOOOOOOOO..",
+            ".......OPO......",
+            ".......OPO......",
+            ".......OPO......",
+            ".......OPO......",
+            ".......OPO......",
+            "......OOPOO.....",
+            "................",
+        };
+
+        private static Rgba32[] FromPattern(string[] rows)
+        {
+            var pixels = new Rgba32[Cell * Cell];
+            for (int y = 0; y < Cell; y++)
+            {
+                for (int x = 0; x < Cell; x++)
+                {
+                    pixels[y * Cell + x] = rows[y][x] switch
+                    {
+                        'O' => WoodOutline,
+                        'B' => Board,
+                        'd' => Seam,
+                        'P' => WoodBeam,
+                        _ => Rgba32.Clear,
+                    };
+                }
+            }
+            return pixels;
         }
 
         private static void Add(string name, Rgba32[] pixels, int width, int height) => _all.Add(new PixelSprite(name, width, height, pixels));
