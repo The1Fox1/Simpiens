@@ -200,8 +200,16 @@ namespace Simpiens.Simulation.World
         /// <summary>The key of the station it needs built (the drill yard for the guildhall's yard; the tavern's counter); null for none.</summary>
         public readonly string Station;
 
-        public VenueDefinition(string key, byte sectorId, Vec2 position, float radius, IReadOnlyList<Vec2> seats, byte hours, uint activities, VenueAccess access, string station)
+        /// <summary>
+        /// The furniture it seats crawlers on, by key (Epic PLACES plan 1, F.3, D14), whose seats are its <see cref="Seats"/> in this
+        /// order; empty for a venue of standing spots (the Garden's walk, the stall's browsing, the yard).
+        /// </summary>
+        public readonly IReadOnlyList<string> SeatedOn;
+
+        public VenueDefinition(string key, byte sectorId, Vec2 position, float radius, IReadOnlyList<Vec2> seats, byte hours, uint activities, VenueAccess access, string station,
+            IReadOnlyList<string> seatedOn = null)
         {
+            SeatedOn = seatedOn ?? System.Array.Empty<string>();
             Key = key;
             SectorId = sectorId;
             Position = position;
@@ -593,6 +601,20 @@ namespace Simpiens.Simulation.World
                 }
             }
             building = default;
+            return false;
+        }
+
+        public bool TryGetVenue(string key, out VenueDefinition venue)
+        {
+            for (int i = 0; i < Venues.Count; i++)
+            {
+                if (Venues[i].Key == key)
+                {
+                    venue = Venues[i];
+                    return true;
+                }
+            }
+            venue = default;
             return false;
         }
 

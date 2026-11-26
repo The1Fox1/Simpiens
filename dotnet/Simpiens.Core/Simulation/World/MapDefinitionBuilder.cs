@@ -26,8 +26,8 @@ namespace Simpiens.Simulation.World
         private readonly List<PoiDefinition> _pois = new List<PoiDefinition>();
         private readonly List<StationDefinition> _stations = new List<StationDefinition>();
         private readonly List<LairDefinition> _lairs = new List<LairDefinition>();
-        private readonly List<(string Key, Vec2 Position, float Radius, Vec2[] Seats, byte Hours, uint Activities, VenueAccess Access, string Station)> _venues
-            = new List<(string, Vec2, float, Vec2[], byte, uint, VenueAccess, string)>();
+        private readonly List<(string Key, Vec2 Position, float Radius, Vec2[] Seats, byte Hours, uint Activities, VenueAccess Access, string Station, string[] SeatedOn)> _venues
+            = new List<(string, Vec2, float, Vec2[], byte, uint, VenueAccess, string, string[])>();
         private readonly List<MapLabel> _labels = new List<MapLabel>();
         private readonly List<(string Key, Simpiens.Simulation.Places.BuildingKind Kind, RectF Footprint, Vec2[] Doors)> _buildings
             = new List<(string, Simpiens.Simulation.Places.BuildingKind, RectF, Vec2[])>();
@@ -134,11 +134,11 @@ namespace Simpiens.Simulation.World
         /// the one its centre lies in.
         /// </summary>
         public MapDefinitionBuilder Venue(string key, Vec2 position, float radius, Vec2[] seats, Simpiens.Simulation.Life.Activity[] offers,
-            byte hours = 0b111111, VenueAccess access = VenueAccess.Anyone, string station = null)
+            byte hours = 0b111111, VenueAccess access = VenueAccess.Anyone, string station = null, string[] seatedOn = null)
         {
             uint activities = 0;
             if (offers != null) foreach (var activity in offers) activities |= 1u << (byte)activity;
-            _venues.Add((key, position, radius, seats ?? System.Array.Empty<Vec2>(), hours, activities, access, station));
+            _venues.Add((key, position, radius, seats ?? System.Array.Empty<Vec2>(), hours, activities, access, station, seatedOn));
             return this;
         }
 
@@ -211,6 +211,22 @@ namespace Simpiens.Simulation.World
             for (int i = 0; i < _venues.Count; i++)
             {
                 var v = _venues[i];
+                if (v.SeatedOn != null && v.SeatedOn.Length > 0)
+                {
+                    // Seats from furniture (Epic PLACES plan 1, F.3, D14): each piece's seats, in the venue's order of pieces
+                    if (v.Seats.Length > 0) throw new InvalidOperationException($"Map '{_name}': venue '{v.Key}' has seats of its own and seats on furniture.");
+                    var seated = new List<Vec2>();
+                    foreach (var pieceKey in v.SeatedOn)
+                    {
+                        int at = _furniture.FindIndex(f => f.Key == pieceKey);
+                        if (at < 0) throw new InvalidOperationException($"Map '{_name}': venue '{v.Key}' seats crawlers on '{pieceKey}', which the map hasn't.");
+                        var (_, kind, position, turned) = _furniture[at];
+                        var piece = new FurnitureDefinition(pieceKey, kind, position, turned, 0, -1);
+                        if (piece.Row == null || piece.SeatCount == 0) throw new InvalidOperationException($"Map '{_name}': venue '{v.Key}' seats crawlers on '{pieceKey}', which has no seat.");
+                        for (int s = 0; s < piece.SeatCount; s++) seated.Add(piece.SeatAt(s));
+                    }
+                    v.Seats = seated.ToArray();
+                }
                 RequireKey(keys, v.Key);
                 RequireInside(v.Position, v.Key);
                 foreach (var seat in v.Seats) RequireInside(seat, v.Key + " seat");
@@ -220,7 +236,7 @@ namespace Simpiens.Simulation.World
                 byte sector = 0;
                 foreach (var s in _sectors) if (s.Bounds.Contains(v.Position)) { sector = s.Id; break; }
                 if (sector == 0) throw new InvalidOperationException($"Map '{_name}': venue '{v.Key}' lies in no sector.");
-                venues[i] = new VenueDefinition(v.Key, sector, v.Position, v.Radius, v.Seats, v.Hours, v.Activities, v.Access, v.Station);
+                venues[i] = new VenueDefinition(v.Key, sector, v.Position, v.Radius, v.Seats, v.Hours, v.Activities, v.Access, v.Station, v.SeatedOn);
             }
 
             var walls = new List<WallRect>(_walls);

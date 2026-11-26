@@ -102,6 +102,22 @@ namespace Simpiens.Core.Session.Layouts
 
         /// <summary>The venues' keys (Epic LIFE-1 plan 2, L2.3, D13): where free time goes.</summary>
         public const string HearthVenue = "venue.hearth", StallVenue = "venue.stall", GardenVenue = "venue.garden", YardVenue = "venue.yard", TavernVenue = "venue.tavern";
+
+        /// <summary>
+        /// The tavern's furniture (Epic PLACES plan 1, F.3, D14): two tables in the room's west half, each with four stools round it
+        /// (west, east, south, north), its seats the venue's in that order. The stools are written out, not added to their tables'
+        /// centres, so their seats are exactly the points the venue's seats were (a float sum can round the other way).
+        /// </summary>
+        public static readonly IReadOnlyList<Vec2> TavernTables = new[] { new Vec2(-4.5f, 9.5f), new Vec2(-4.5f, 14.5f) };
+
+        public static readonly IReadOnlyList<Vec2> TavernStools = new[]
+        {
+            new Vec2(-5.7f, 9.5f), new Vec2(-3.3f, 9.5f), new Vec2(-4.5f, 8.3f), new Vec2(-4.5f, 10.7f),
+            new Vec2(-5.7f, 14.5f), new Vec2(-3.3f, 14.5f), new Vec2(-4.5f, 13.3f), new Vec2(-4.5f, 15.7f),
+        };
+
+        /// <summary>The tavern's stools' keys, its seats' order.</summary>
+        public static string TavernStool(int stool) => $"tavern.stool.{stool + 1}";
         public const float StationRadius = 1.5f;
 
         public const int SpawnPointCount = 12;
@@ -292,15 +308,18 @@ namespace Simpiens.Core.Session.Layouts
                 new[] { Simpiens.Simulation.Life.Activity.Walk });
             b.Venue(YardVenue, new Vec2(12f, -21.5f), 2f, new[] { new Vec2(10.8f, -21.5f), new Vec2(13.2f, -21.5f) },
                 new[] { Simpiens.Simulation.Life.Activity.Spar }, access: VenueAccess.GuildMembers, station: DrillYard);
-            // The tavern (T.4): two tables of four in the room's west half; open while it stands and its keeper is at the counter on shift
-            b.Venue(TavernVenue, new Vec2(-4.5f, 12f), 4f,
-                new[]
-                {
-                    new Vec2(-5.7f, 9.5f), new Vec2(-3.3f, 9.5f), new Vec2(-4.5f, 8.3f), new Vec2(-4.5f, 10.7f),
-                    new Vec2(-5.7f, 14.5f), new Vec2(-3.3f, 14.5f), new Vec2(-4.5f, 13.3f), new Vec2(-4.5f, 15.7f),
-                },
+            // The tavern (T.4): two tables of four in the room's west half; open while it stands and its keeper is at the counter on
+            // shift. Its seats are its stools (Epic PLACES plan 1, F.3, D14), at the places its seats had
+            for (int t = 0; t < TavernTables.Count; t++) b.Furniture($"tavern.table.{t + 1}", Simpiens.Simulation.Places.FurnitureKind.Table, TavernTables[t]);
+            var stools = new string[TavernStools.Count];
+            for (int s = 0; s < TavernStools.Count; s++)
+            {
+                stools[s] = TavernStool(s);
+                b.Furniture(stools[s], Simpiens.Simulation.Places.FurnitureKind.Stool, TavernStools[s]);
+            }
+            b.Venue(TavernVenue, new Vec2(-4.5f, 12f), 4f, null,
                 new[] { Simpiens.Simulation.Life.Activity.Ale, Simpiens.Simulation.Life.Activity.Supper, Simpiens.Simulation.Life.Activity.Dice },
-                station: Tavern);
+                station: Tavern, seatedOn: stools);
 
             // --- Road Gate spawn points: two rows of six ---
             for (int i = 0; i < SpawnPointCount; i++)
