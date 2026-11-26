@@ -105,15 +105,16 @@ namespace Simpiens.Core.Session.Layouts
 
         /// <summary>
         /// The tavern's furniture (Epic PLACES plan 1, F.3, D14): two tables in the room's west half, each with four stools round it
-        /// (west, east, south, north), its seats the venue's in that order. The stools are written out, not added to their tables'
-        /// centres, so their seats are exactly the points the venue's seats were (a float sum can round the other way).
+        /// (west, east, south, north), its seats the venue's in that order. A table blocks (F.4, D15), written into the nav grid as a
+        /// wall is, so it takes the 3 x 3 cells round it: its stools stand 1.8 out, on the first open cells. Written out, not added
+        /// to their tables' centres (a float sum can round an ulp the other way).
         /// </summary>
         public static readonly IReadOnlyList<Vec2> TavernTables = new[] { new Vec2(-4.5f, 9.5f), new Vec2(-4.5f, 14.5f) };
 
         public static readonly IReadOnlyList<Vec2> TavernStools = new[]
         {
-            new Vec2(-5.7f, 9.5f), new Vec2(-3.3f, 9.5f), new Vec2(-4.5f, 8.3f), new Vec2(-4.5f, 10.7f),
-            new Vec2(-5.7f, 14.5f), new Vec2(-3.3f, 14.5f), new Vec2(-4.5f, 13.3f), new Vec2(-4.5f, 15.7f),
+            new Vec2(-6.3f, 9.5f), new Vec2(-2.7f, 9.5f), new Vec2(-4.5f, 7.7f), new Vec2(-4.5f, 11.3f),
+            new Vec2(-6.3f, 14.5f), new Vec2(-2.7f, 14.5f), new Vec2(-4.5f, 12.7f), new Vec2(-4.5f, 16.3f),
         };
 
         /// <summary>The tavern's stools' keys, its seats' order.</summary>
@@ -317,7 +318,7 @@ namespace Simpiens.Core.Session.Layouts
                 stools[s] = TavernStool(s);
                 b.Furniture(stools[s], Simpiens.Simulation.Places.FurnitureKind.Stool, TavernStools[s]);
             }
-            b.Venue(TavernVenue, new Vec2(-4.5f, 12f), 4f, null,
+            b.Venue(TavernVenue, new Vec2(-4.5f, 12f), 4.75f, null, // round its stools (F.4): company counts within it
                 new[] { Simpiens.Simulation.Life.Activity.Ale, Simpiens.Simulation.Life.Activity.Supper, Simpiens.Simulation.Life.Activity.Dice },
                 station: Tavern, seatedOn: stools);
 

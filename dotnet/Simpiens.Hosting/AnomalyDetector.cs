@@ -351,7 +351,9 @@ namespace Simpiens.Hosting
 
                 float probe = node.Radius * BodyProbe;
                 string obstacle = null;
+                int piece;
                 if (map != null && WallRasterizer.CircleOverlapsWall(map, position, probe)) obstacle = "a map wall";
+                else if (map != null && (piece = WallRasterizer.CircleOverlapsFurniture(map, position, probe)) >= 0) obstacle = "a " + map.Furniture[piece].Row.Word; // a table (Epic PLACES plan 1, F.4)
                 else
                 {
                     for (int w = 0; w < entities.Count; w++)

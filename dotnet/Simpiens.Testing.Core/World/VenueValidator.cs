@@ -86,8 +86,13 @@ namespace Simpiens.Testing.World
                 seated++;
             }
             Assert(map.TryGetVenue(Floor1Layout.TavernVenue, out var tavern) && tavern.SeatedOn.Count == 8 && tavern.Seats.Count == 8, "The tavern seats its crawlers on its eight stools.");
-            var was = new[] { new Vec2(-5.7f, 9.5f), new Vec2(-3.3f, 9.5f), new Vec2(-4.5f, 8.3f), new Vec2(-4.5f, 10.7f), new Vec2(-5.7f, 14.5f), new Vec2(-3.3f, 14.5f), new Vec2(-4.5f, 13.3f), new Vec2(-4.5f, 15.7f) };
-            for (int i = 0; i < was.Length; i++) Assert(tavern.Seats[i].X == was[i].X && tavern.Seats[i].Y == was[i].Y, $"The tavern's seat {i} is exactly where it was ({tavern.Seats[i]}).");
+            // Its stools stand 1.8 from their tables' centres since the tables block (F.4, D15), each within the venue's reach
+            for (int i = 0; i < tavern.Seats.Count; i++)
+            {
+                var table = Floor1Layout.TavernTables[i / 4];
+                Assert(Math.Abs(Vec2.Distance(tavern.Seats[i], table) - 1.8f) < 0.001f && Vec2.Distance(tavern.Seats[i], tavern.Position) + VenueDefinition.SeatRadius <= tavern.Radius,
+                    $"The tavern's seat {i} stands 1.8 from its table, within the venue ({tavern.Seats[i]}).");
+            }
 
             // The builder refuses seats of its own beside seats on furniture, a piece the map hasn't, and a piece with no seat
             Refused(b => b.Furniture("stool", Simpiens.Simulation.Places.FurnitureKind.Stool, new Vec2(0f, 0f))
@@ -95,7 +100,7 @@ namespace Simpiens.Testing.World
             Refused(b => b.Venue("v", new Vec2(0f, 0f), 2f, null, new[] { Activity.Ale }, seatedOn: new[] { "stool" }), "a piece the map hasn't");
             Refused(b => b.Furniture("table", Simpiens.Simulation.Places.FurnitureKind.Table, new Vec2(0f, 0f))
                 .Venue("v", new Vec2(0f, 0f), 2f, null, new[] { Activity.Ale }, seatedOn: new[] { "table" }), "a piece with no seat");
-            TestLog.Log($"[PASS] Test 4: Seats on furniture: {seated} venue(s) seat crawlers on their pieces, in order; the tavern's stools where its seats were; the builder's refusals.");
+            TestLog.Log($"[PASS] Test 4: Seats on furniture: {seated} venue(s) seat crawlers on their pieces, in order; the tavern's stools round its tables; the builder's refusals.");
         }
 
         private static void Refused(Action<MapDefinitionBuilder> add, string what)

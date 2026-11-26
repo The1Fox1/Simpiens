@@ -90,9 +90,17 @@ namespace Simpiens.Testing.World
             int pieces = 0;
             foreach (var map in new[] { Floor1Layout.Definition, DevMapLayout.Definition })
             {
+                var grid = MapMeasure.Rasterized(map);
                 for (int i = 0; i < map.Furniture.Count; i++)
                 {
                     var piece = map.Furniture[i];
+                    // In the built grid (F.4, D15): a blocking piece's cells are shut; every seat and bed lies on an open cell, reached from its zone
+                    if (piece.Row.Blocks) Assert(!Walkable(grid, piece.Position), $"{map.Name}'s '{piece.Key}' stands in the way.");
+                    map.TryGetSector(piece.SectorId, out var zone);
+                    for (int s = 0; s < piece.SeatCount; s++)
+                        Assert(Walkable(grid, piece.SeatAt(s)) && grid.AreConnected(piece.SeatAt(s), zone.TargetPoint), $"{map.Name}'s '{piece.Key}' seat {s} is on an open cell, reached from its zone.");
+                    for (int b = 0; b < piece.BedCount; b++)
+                        Assert(Walkable(grid, piece.BedAt(b)) && grid.AreConnected(piece.BedAt(b), zone.TargetPoint), $"{map.Name}'s '{piece.Key}' bed {b} is on an open cell, reached from its zone.");
                     for (int s = 0; s < piece.SeatCount; s++)
                         Assert(!WallRasterizer.CircleOverlapsWall(map, piece.SeatAt(s), 0.25f) && map.FindSector(piece.SeatAt(s)).Id == piece.SectorId, $"{map.Name}'s '{piece.Key}' seat {s} is clear of walls, in its zone.");
                     for (int b = 0; b < piece.BedCount; b++)
@@ -137,6 +145,8 @@ namespace Simpiens.Testing.World
             }
             throw new InvalidOperationException("[FurnitureValidator] FAILED: The builder refuses a piece " + what + ".");
         }
+
+        private static bool Walkable(Simpiens.Simulation.Spatial.StaticNavGrid grid, Vec2 point) => grid.WorldToCell(point, out int x, out int y) && grid.IsCellWalkable(x, y);
 
         private static bool Latin1(string text)
         {

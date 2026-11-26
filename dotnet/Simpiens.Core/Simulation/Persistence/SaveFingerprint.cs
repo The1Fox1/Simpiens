@@ -6,7 +6,8 @@ namespace Simpiens.Simulation.Persistence
     /// <summary>
     /// Identifies the map a save was made on, so a load can refuse a save made on another map (Milestone 1, D4).
     /// FNV-1a over what the save's entity ids and positions rest on: the map's name and bounds, its walls, sectors,
-    /// resource nodes, points of interest and stations, in definition order. Labels and the camera frame are presentation
+    /// resource nodes, points of interest and stations, its beds and the furniture that stands in the way (Epic PLACES plan 1,
+    /// F.4), in definition order. Labels, the camera frame, buildings' looks and furniture that doesn't block are presentation
     /// and are left out.
     /// </summary>
     public static class SaveFingerprint
@@ -57,6 +58,17 @@ namespace Simpiens.Simulation.Persistence
                 Mix(ref h, (int)station.Kind);
                 Mix(ref h, station.Position);
                 Mix(ref h, station.Radius);
+            }
+            Mix(ref h, map.Beds.Count); // the bunks' entities are spawned from them (F.2)
+            for (int i = 0; i < map.Beds.Count; i++)
+            {
+                Mix(ref h, map.Beds[i].Key);
+                Mix(ref h, map.Beds[i].Position);
+                Mix(ref h, map.Beds[i].Guild ? 1 : 0);
+            }
+            for (int i = 0; i < map.Furniture.Count; i++) // what blocks shapes the walkable ground (F.4)
+            {
+                if (map.Furniture[i].Row.Blocks) Mix(ref h, map.Furniture[i].Footprint);
             }
             return h;
         }
