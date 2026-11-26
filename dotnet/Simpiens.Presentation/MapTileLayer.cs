@@ -117,19 +117,7 @@ namespace Simpiens.Presentation
         /// World position of tile (0, 0)'s centre: the fractional part of the first wall cell's centre on each axis, so
         /// tiles line up with the map's wall cells. A map's walls share one alignment.
         /// </summary>
-        public static Vec2 CellOrigin(MapDefinition map)
-        {
-            if (map.Walls.Count == 0) return Vec2.Zero;
-            var solid = map.Walls[0].Solid;
-            float inset = IsRock(solid) ? 0.5f : MapDefinitionBuilder.WallHalfExtent;
-            return new Vec2(Fraction(solid.XMin + inset), Fraction(solid.YMin + inset));
-        }
-
-        private static float Fraction(float v)
-        {
-            float f = v - SimMath.Floor(v);
-            return SimMath.Abs(f - 0.5f) < 0.01f ? 0.5f : 0f;
-        }
+        public static Vec2 CellOrigin(MapDefinition map) => map.WallAlignment;
 
         /// <summary>The cells whose centres lie inside <paramref name="rect"/>.</summary>
         public static void CellRange(RectF rect, Vec2 origin, out int minX, out int maxX, out int minY, out int maxY)

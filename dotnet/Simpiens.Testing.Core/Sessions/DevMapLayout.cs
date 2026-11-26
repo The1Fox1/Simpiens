@@ -47,7 +47,7 @@ namespace Simpiens.Testing.Sessions
 
         private static MapDefinition Build()
         {
-            // The two pen rows (walls span x -10.55..10.55, y -13.05..4.05) and the building yard below them (y -26..-14), plus a
+            // The two pen rows (walls span x -10.55..10.55, y -13.05..4.05) and the building yard below them (y -26.5..-14.5), plus a
             // margin. The pens and the yard are closed, so the bounds only size the partition; the camera frames the pens.
             var arena = new RectF(-12f, -28f, 24f, 33.5f);
             var b = new MapDefinitionBuilder("DevMap", arena).CameraFrame(PenFrame);
@@ -92,15 +92,16 @@ namespace Simpiens.Testing.Sessions
             b.Sector(10, "Schism Ward", "Crisis of legitimacy, factional fracture, and splinter bands.",
                 new RectF(6f, -12.5f, 4f, 7f), new Vec2(8f, -9f), 2.0f);
 
-            // --- The building yard (Epic PLACES plan 1, B.2): a closed zone, a barracks and an empty lot side by side ---
-            b.WallRun(new Vec2(-10f, -14f), new Vec2(10f, -14f));
-            b.WallRun(new Vec2(-10f, -26f), new Vec2(10f, -26f));
-            b.WallRun(new Vec2(-10f, -26f), new Vec2(-10f, -14f));
-            b.WallRun(new Vec2(10f, -26f), new Vec2(10f, -14f));
+            // --- The building yard (Epic PLACES plan 1, B.2): a closed zone, a barracks and an empty lot side by side, on the pens'
+            // wall grid (half units in y) ---
+            b.WallRun(new Vec2(-10f, -14.5f), new Vec2(10f, -14.5f));
+            b.WallRun(new Vec2(-10f, -26.5f), new Vec2(10f, -26.5f));
+            b.WallRun(new Vec2(-10f, -26.5f), new Vec2(-10f, -14.5f));
+            b.WallRun(new Vec2(10f, -26.5f), new Vec2(10f, -14.5f));
             b.Sector(BuildingYardSectorId, "Building Yard", "A barracks and an empty lot, for buildings' checks and looks.",
-                new RectF(-10f, -26f, 20f, 12f), new Vec2(0f, -16f), 1.5f);
-            b.Building(YardBarracks, Simpiens.Simulation.Places.BuildingKind.Barracks, new RectF(-9f, -24f, 8f, 6f), new Vec2(-5f, -18f));
-            b.Lot(YardLot, new RectF(1f, -24f, 8f, 6f), new Vec2(5f, -18f));
+                new RectF(-10f, -26.5f, 20f, 12f), new Vec2(0f, -16.5f), 1.5f);
+            b.Building(YardBarracks, Simpiens.Simulation.Places.BuildingKind.Barracks, new RectF(-9f, -24.5f, 8f, 6f), new Vec2(-5f, -18.5f));
+            b.Lot(YardLot, new RectF(1f, -24.5f, 8f, 6f), new Vec2(5f, -18.5f));
 
             // --- Pen demonstration props ---
             b.Node(Pen1ContestedBush, new Vec2(-8f, 0f), ItemType.Ration, 1, FoodRegrowTicks);

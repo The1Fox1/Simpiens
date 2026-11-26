@@ -150,14 +150,14 @@ namespace Simpiens.Testing.World
             TestLog.Log($"[PASS] Test 5: On the shipped maps, every building is walked into from its zone through its doors, and has no other way in ({buildings} buildings, {doors} doors).");
         }
 
-        /// <summary>Blocks the cells of a doorway: its gap, post to post, on both sides of its wall line.</summary>
+        /// <summary>Blocks the cells of a doorway: its gap, post to post, across its wall line (three rows, as a wall on a half unit blocks).</summary>
         private static void WallUp(StaticNavGrid grid, RectF footprint, Vec2 door)
         {
             bool horizontal = SimMath.Approximately(door.Y, footprint.YMin) || SimMath.Approximately(door.Y, footprint.YMax);
             float half = BuildingDefinition.DoorSpan * 0.5f;
             for (float t = -half + 0.5f; t < half; t += 1f)
             {
-                for (float across = -0.5f; across <= 0.5f; across += 1f)
+                for (float across = -1f; across <= 1f; across += 1f)
                 {
                     var point = horizontal ? new Vec2(door.X + t, door.Y + across) : new Vec2(door.X + across, door.Y + t);
                     if (grid.WorldToCell(point, out int x, out int y)) grid.SetWall(x, y);

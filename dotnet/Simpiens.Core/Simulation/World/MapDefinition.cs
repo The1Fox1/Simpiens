@@ -263,7 +263,7 @@ namespace Simpiens.Simulation.World
 
     /// <summary>
     /// A building (Epic PLACES, A1, plan 1's D2): a walled structure inside one zone, standing from the start or, of kind None, an
-    /// empty lot. Its footprint is its walls' centre lines, on whole units; its doors are gaps in its edges, each
+    /// empty lot. Its footprint is its walls' centre lines, on the map's wall grid; its doors are gaps in its edges, each
     /// <see cref="DoorSpan"/> between the wall cells either side, as the map's doors are. Its walls are written with the zone's
     /// (<see cref="MapDefinitionBuilder.Building"/>), once: a wall the map already has isn't added again.
     /// </summary>
@@ -410,6 +410,29 @@ namespace Simpiens.Simulation.World
             Pois = pois;
             Stations = stations;
             Labels = labels;
+        }
+
+        /// <summary>
+        /// The map's wall grid (Epic PLACES plan 1, B.2): the fractional part, 0 or 0.5 on each axis, of its first wall cell's
+        /// centre. A map's walls share one alignment (Floor 1's on whole units; the Dev Map's on half units in y); its tiles line
+        /// up with it, and its buildings' footprints and doors lie on it.
+        /// </summary>
+        public Vec2 WallAlignment => AlignmentOf(Walls);
+
+        /// <summary>The wall grid of <paramref name="walls"/>: (0, 0) with none.</summary>
+        public static Vec2 AlignmentOf(IReadOnlyList<WallRect> walls)
+        {
+            if (walls == null || walls.Count == 0) return Vec2.Zero;
+            var solid = walls[0].Solid;
+            float unit = 2f * MapDefinitionBuilder.WallHalfExtent + 0.01f;
+            float inset = solid.Width > unit && solid.Height > unit ? 0.5f : MapDefinitionBuilder.WallHalfExtent; // rock, or a wall run
+            return new Vec2(Fraction(solid.XMin + inset), Fraction(solid.YMin + inset));
+        }
+
+        private static float Fraction(float v)
+        {
+            float f = v - SimMath.Floor(v);
+            return SimMath.Abs(f - 0.5f) < 0.01f ? 0.5f : 0f;
         }
 
         /// <summary>

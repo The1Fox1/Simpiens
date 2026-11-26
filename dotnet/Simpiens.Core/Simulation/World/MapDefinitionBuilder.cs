@@ -142,7 +142,7 @@ namespace Simpiens.Simulation.World
 
         /// <summary>
         /// A building standing from the start (Epic PLACES plan 1, B.1, D2–D3): its kind, its footprint (its walls' centre lines, on
-        /// whole units, wholly inside one zone) and its doors (centres on its edges; the first is its main door). Its walls are
+        /// the map's wall grid (<see cref="MapDefinition.WallAlignment"/>), wholly inside one zone) and its doors (centres on its edges; the first is its main door). Its walls are
         /// written in <see cref="Build"/> after every other wall, unit cell by cell, less its doors and any cell a wall already covers.
         /// </summary>
         public MapDefinitionBuilder Building(string key, Simpiens.Simulation.Places.BuildingKind kind, RectF footprint, params Vec2[] doors)
@@ -237,13 +237,14 @@ namespace Simpiens.Simulation.World
         {
             if (_buildings.Count > MapDefinition.MaxBuildings) throw new InvalidOperationException($"Map '{_name}': {_buildings.Count} buildings; a map holds at most {MapDefinition.MaxBuildings}.");
             var buildings = new BuildingDefinition[_buildings.Count];
+            var grid = _walls.Count > 0 ? MapDefinition.AlignmentOf(_walls) : _buildings.Count > 0 ? new Vec2(Fraction(_buildings[0].Footprint.XMin), Fraction(_buildings[0].Footprint.YMin)) : Vec2.Zero;
             for (int i = 0; i < _buildings.Count; i++)
             {
                 var (key, kind, footprint, doors) = _buildings[i];
                 RequireKey(keys, key);
                 RequireInside(footprint.Center, key);
-                if (!IsWhole(footprint.XMin) || !IsWhole(footprint.YMin) || !IsWhole(footprint.Width) || !IsWhole(footprint.Height))
-                    throw new InvalidOperationException($"Map '{_name}': building '{key}' has a footprint {footprint} off whole units.");
+                if (!IsWhole(footprint.XMin - grid.X) || !IsWhole(footprint.YMin - grid.Y) || !IsWhole(footprint.Width) || !IsWhole(footprint.Height))
+                    throw new InvalidOperationException($"Map '{_name}': building '{key}' has a footprint {footprint} off the map's wall grid.");
                 if (footprint.Width < 4f || footprint.Height < 4f) throw new InvalidOperationException($"Map '{_name}': building '{key}' is too small ({footprint}).");
                 var row = Simpiens.Simulation.Places.BuildingTable.Get(kind);
                 if (row.Kind != kind) throw new InvalidOperationException($"Map '{_name}': building '{key}' is of kind {kind}, which has no row.");
@@ -271,7 +272,7 @@ namespace Simpiens.Simulation.World
                 if (doors.Length == 0) throw new InvalidOperationException($"Map '{_name}': building '{key}' has no door.");
                 for (int d = 0; d < doors.Length; d++)
                 {
-                    if (!OnEdge(footprint, doors[d])) throw new InvalidOperationException($"Map '{_name}': building '{key}'s door at {doors[d]} isn't on its edges with room for its posts.");
+                    if (!OnEdge(footprint, doors[d], grid)) throw new InvalidOperationException($"Map '{_name}': building '{key}'s door at {doors[d]} isn't on its edges with room for its posts.");
                     for (int e = 0; e < d; e++)
                     {
                         if (SameEdge(footprint, doors[d], doors[e]) && SimMath.Abs(Along(footprint, doors[d]) - Along(footprint, doors[e])) < BuildingDefinition.DoorSpan)
@@ -341,11 +342,11 @@ namespace Simpiens.Simulation.World
             return false;
         }
 
-        /// <summary>Whether a door centred at <paramref name="door"/> lies on an edge of the footprint, on a whole unit, with its posts within the edge.</summary>
-        private static bool OnEdge(RectF footprint, Vec2 door)
+        /// <summary>Whether a door centred at <paramref name="door"/> lies on an edge of the footprint, on the map's wall grid, with its posts within the edge.</summary>
+        private static bool OnEdge(RectF footprint, Vec2 door, Vec2 grid)
         {
             float half = BuildingDefinition.DoorSpan * 0.5f;
-            if (!IsWhole(door.X) || !IsWhole(door.Y)) return false;
+            if (!IsWhole(door.X - grid.X) || !IsWhole(door.Y - grid.Y)) return false;
             bool horizontal = SimMath.Approximately(door.Y, footprint.YMin) || SimMath.Approximately(door.Y, footprint.YMax);
             bool vertical = SimMath.Approximately(door.X, footprint.XMin) || SimMath.Approximately(door.X, footprint.XMax);
             if (horizontal == vertical) return false; // on no edge, or a corner
@@ -387,6 +388,12 @@ namespace Simpiens.Simulation.World
         }
 
         private static bool IsWhole(float value) => SimMath.Approximately(value, SimMath.Round(value));
+
+        private static float Fraction(float v)
+        {
+            float f = v - SimMath.Floor(v);
+            return SimMath.Abs(f - 0.5f) < 0.01f ? 0.5f : 0f;
+        }
 
         private void RequireKey(HashSet<string> keys, string key)
         {
