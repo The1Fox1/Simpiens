@@ -79,9 +79,10 @@ This is a working document (AGENTS.md, Documentation Protocol 6), the first of E
 
 ### S. The outpost square, a sketch for plan 2 (half a day)
 **Complexity:** Possibly Complex: a map design for the producer.
-- [ ] **S.1 The outpost square, sketched** (D7) [Possibly Complex: a design; the producer's stop]
+- [x] **S.1 The outpost square, sketched** (D7) [Possibly Complex: a design; the producer's stop]
   - A drawing of Floor 1 with the hub, the tavern's room and the bunkhouse's as one zone: an open square with the hearth and the stall, the tavern hall (a large lot), the bunkhouse and a lot for later on its sides, the Garden beside it, the barracks in a deepened guildhall. Each building's footprint, doors and sign; the walks from the Road Gate and the work rooms, against P.1's baseline.
   - It goes to the producer as a page to look at; their answer sets plan 2's map pass. Nothing in plan 1 waits for it.
+  - **Done:** with the look at the bunkhouse and the tavern's tables, one page: https://claude.ai/artifact/3KCKNGXkco7DoL2ZCAkw9M. Proposed: A, the square at today's width (the hub, the tavern's room and the bunkhouse's one zone, 16 × 30; the tavern hall across its north end, 16 × 10; the bunkhouse across its south end; the hearth and stall between), over B, a column 24 wide (every side room moving out four units). Questions S1 (A or B) and S2 (the guildhall's row deepened to 12 for the barracks), by exception.
 
 ### B. Buildings: PL1 (3–4 days)
 **Complexity:** Possibly Complex: a new map element, art in two view modes; each step below is at most Possibly Complex.
@@ -138,8 +139,9 @@ This is a working document (AGENTS.md, Documentation Protocol 6), the first of E
 - [x] **D.1 `AnEveningAtTheTavern`, seated at its tables** [Possibly Complex: a live scenario]
   - On its seed with the tavern player, nothing injected: every crawler drawn `Seated` stands on one of the tavern's bench seats, the tables are walked round and never through, and the tavern serves on two days as before.
   - **Done:** on seed 5, 7,018 crawler-ticks seated at the tables over three days, none off its stool (within 0.06), none sharing one, no crawler ever in a table; it serves on days 2 and 3 as before. Without F.6's claim every seated tick is off its stool and the test fails.
-- [ ] **D.2 The gate seeds' day with buildings and furniture** [Basic: an existing scenario re-read]
+- [x] **D.2 The gate seeds' day with buildings and furniture** [Basic: an existing scenario re-read]
   - `TheOutpostsDayHoldsOnEverySeed` with the bunkhouse a building and the tavern's tables blocking; a sleeper's bunk read through its furniture.
+  - **Done:** it held on all 23 gate seeds in every full core run from B.5 on (the bunkhouse a building, its bunks furniture since F.2, the tables blocking since F.4, seats claimed since F.6), with nobody starving and the sleep check passing on beds spawned from furniture.
 
 ### C. The gate and close-out (1–2 days)
 **Complexity:** Possibly Complex: measuring.
