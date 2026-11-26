@@ -44,6 +44,11 @@ namespace Simpiens.Presentation.Art
                .Add(ArtKeys.TileFloorPlanks, Sheet, new[] { BuildingSprites.IsoPlankFloor }, tileW, tileH)
                .Add(ArtKeys.TileFloorBare, Sheet, new[] { BuildingSprites.IsoBareFloor }, tileW, tileH)
                .Add(ArtKeys.DecorSign, Sheet, new[] { BuildingSprites.Sign }, Standing, Standing, pivotY: FeetPivot) // B.4: standing as the hearth does
+               // Furniture (Epic PLACES plan 1, F.5): standing as the hearth does, the bench two cells wide
+               .Add(ArtKeys.Furniture("table"), Sheet, new[] { FurnitureSprites.Table }, Standing, Standing, pivotY: FeetPivot)
+               .Add(ArtKeys.Furniture("stool"), Sheet, new[] { FurnitureSprites.Stool }, Standing, Standing, pivotY: FeetPivot)
+               .Add(ArtKeys.Furniture("chair"), Sheet, new[] { FurnitureSprites.Chair }, Standing, Standing, pivotY: FeetPivot)
+               .Add(ArtKeys.Furniture("bench"), Sheet, new[] { FurnitureSprites.Bench }, 2f * Standing, Standing, pivotY: FeetPivot)
                .Add(ArtKeys.PropHearth, Sheet, new[] { "Anchor_Campfire_0", "Anchor_Campfire_1" }, Standing, Standing, pivotY: FeetPivot,
                    framesPerSecond: TopDownArtTable.HearthFramesPerSecond, pulseRate: TopDownArtTable.HearthPulseRate, pulseAmplitude: TopDownArtTable.HearthPulseAmplitude)
                .Add(ArtKeys.PropBunk, Sheet, new[] { "Iso_Bunk" }, IsometricSprites.BunkWidth, IsometricSprites.BunkHeight + IsometricSprites.BunkRise,

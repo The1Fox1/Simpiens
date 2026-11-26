@@ -41,6 +41,7 @@ namespace Simpiens.Client.Tests
             Row(ArtKeys.TileFloorPlanks, 100);
             Row(ArtKeys.TileFloorBare, 100);
             Row(ArtKeys.DecorSign, 111); // a building's sign (B.4), marked as a prop
+            foreach (var row in Simpiens.Simulation.Places.FurnitureTable.All) if (row.Beds.Count == 0) Row(ArtKeys.Furniture(row.ArtKey), 111); // furniture (F.5), marked as a prop
             Row(ArtKeys.Missing, 109); // never drawn on a shipped map
             Row(ArtKeys.Node("ration"), 110);
             Row(ArtKeys.Node("iron-ore"), 110);

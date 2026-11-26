@@ -51,6 +51,8 @@ namespace Simpiens.Presentation
                 _catalog = value ?? throw new ArgumentNullException(nameof(value));
                 _rock = value.Id(ArtKeys.TileRock);
                 _sign = value.Id(ArtKeys.DecorSign);
+                foreach (var row in Simpiens.Simulation.Places.FurnitureTable.All) // furniture by kind (Epic PLACES plan 1, F.5); a bunk is drawn by its bed's entity
+                    _furniture[(int)row.Kind] = row.Beds.Count > 0 ? ArtId.None : value.Id(ArtKeys.Furniture(row.ArtKey));
                 for (int m = 0; m < _wallBy.Length; m++) // buildings' walls and floors by material (Epic PLACES plan 1, B.3)
                 {
                     _wallBy[m] = value.Id(ArtKeys.TileWallOf((Simpiens.Simulation.Places.WallMaterial)m));
@@ -96,6 +98,7 @@ namespace Simpiens.Presentation
 
         private ArtCatalog _catalog;
         private ArtId _sign;
+        private readonly ArtId[] _furniture = new ArtId[16]; // by FurnitureKind
         private ArtId _rock, _ring, _shadow, _caravan, _bar, _gate, _gateOpen;
         private readonly ArtId[] _wallBy = new ArtId[3], _lowBy = new ArtId[3], _floorBy = new ArtId[3]; // by WallMaterial, FloorMaterial
         private readonly ArtId[] _badges = new ArtId[5]; // by PartyRole (Epic 11, S5.8)
@@ -193,6 +196,7 @@ namespace Simpiens.Presentation
                 AddHazardNotes(map);
                 AddHazardEffects(map, viewSeconds);
                 AddBuildings(map, viewSeconds);
+                AddFurniture(map, viewSeconds);
             }
 
             if (frame != null)
@@ -393,6 +397,25 @@ namespace Simpiens.Presentation
                 string title = building.Row.Title;
                 if (Fog.Covers(building.SectorId) || ZoneBears(map, building.SectorId, title)) continue;
                 Labels.Add(new WorldLabel(title, building.Sign + _catalog.NameOffset, LabelKind.Building, Shown(Rgba32.From(BuildingNameColor), shown), _catalog.NameHeight, building.SectorId));
+            }
+        }
+
+        /// <summary>
+        /// The map's furniture (Epic PLACES plan 1, F.5): a piece that stands in the way (a table) stands as a prop, sorted by depth;
+        /// a seat lies with the floor marks, under whoever sits on it. A piece with beds is drawn by its bed's bunk. Faded with the fog.
+        /// </summary>
+        private void AddFurniture(MapDefinition map, float viewSeconds)
+        {
+            var furniture = map.Furniture;
+            for (int i = 0; i < furniture.Count; i++)
+            {
+                var piece = furniture[i];
+                var art = (int)piece.Kind < _furniture.Length ? _furniture[(int)piece.Kind] : ArtId.None;
+                if (art.IsNone) continue;
+                float shown = Fog.Visibility(piece.Position, viewSeconds);
+                if (shown <= 0f) continue;
+                bool stands = piece.Row.Blocks;
+                Add(stands ? DrawRole.Prop : DrawRole.FloorMark, stands ? Projection.Depth(piece.Position) : 0f, _catalog.Piece(art, viewSeconds), piece.Position, Shown(White, shown));
             }
         }
 

@@ -130,8 +130,8 @@ namespace Simpiens.Client.Tests
             Assert.True(bunks > 0 && hearths > 0 && resources > 0);
             // The hazards' animations on this layer (Epic 10 Part 2, D69): pebbles are props; puffs and ripples floor marks, which top-down draws here too
             int hazards = scene.Hazards.Spots.Count(s => HazardEffects.LocalSeconds(s, 0f) >= 0f && scene.Projection.LayerOf(HazardEffects.RoleOf(s.Kind)) == RenderLayer.Props);
-            Assert.Equal(bunks + hearths + resources + SceneStalls.ShownPieces(sim) + SceneStations.Shown(sim, scene) + hazards + SceneSigns.Shown(sim.Host.Current.Map, scene),
-                props.Count); // and the stall with its goods (graphics V5), the stations' plots (Epic 10 Part 2), the buildings' signs (Epic PLACES plan 1, B.4)
+            Assert.Equal(bunks + hearths + resources + SceneStalls.ShownPieces(sim) + SceneStations.Shown(sim, scene) + hazards + SceneSigns.Shown(sim.Host.Current.Map, scene)
+                + SceneFurniture.Shown(sim.Host.Current.Map, scene), props.Count); // and the furniture, a table a prop and a seat a floor mark, both on top-down's props layer (F.5) // and the stall with its goods (graphics V5), the stations' plots (Epic 10 Part 2), the buildings' signs (Epic PLACES plan 1, B.4)
             Assert.Equal(bunks, props.Count(p => p.SpriteIndex == SpriteSheets.World.IndexOf(ProceduralSprites.BunkSprite) && p.Width == TopDownArtTable.BunkSize * TopDownProjection.BasePixelsPerUnit));
             Assert.Equal(hearths, props.Count(p => p.SpriteIndex == SpriteSheets.World.IndexOf(ProceduralSprites.GetCampfireSprite(0)))); // frame 0 at 0 s
         }

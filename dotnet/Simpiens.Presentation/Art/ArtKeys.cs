@@ -34,6 +34,11 @@ namespace Simpiens.Presentation.Art
 
         /// <summary>A standing building's sign, beside its main door (Epic PLACES plan 1, B.4, D10).</summary>
         public const string DecorSign = "decor/sign";
+
+        public const string FurniturePrefix = "furniture/";
+
+        /// <summary>A piece of furniture by its kind's art key (Epic PLACES plan 1, F.5): <c>furniture/table</c> (setup only: builds a string).</summary>
+        public static string Furniture(string artKey) => FurniturePrefix + artKey;
         public const string PropHearth = "prop/hearth";
         public const string PropBunk = "prop/bunk";
         /// <summary>The trade stall, with its goods on display (graphics V5).</summary>

@@ -96,7 +96,7 @@ namespace Simpiens.Client.Tests
         }
 
         [Fact]
-        public void TheWorldSheetHoldsThe16x16ArtThenThePlaceholdersThenTheMissingArtThenTheItemsThenTheWornThenTheHazardsThenTheCaravanThenTheCreaturesThenTheShotsThenTheBadgesThenTheActivitiesThenTheBuildingsThenTheBodies()
+        public void TheWorldSheetHoldsThe16x16ArtThenThePlaceholdersThenTheMissingArtThenTheItemsThenTheWornThenTheHazardsThenTheCaravanThenTheCreaturesThenTheShotsThenTheBadgesThenTheActivitiesThenTheBuildingsThenTheFurnitureThenTheBodies()
         {
             var world = SpriteSheets.World;
             int missing = ProceduralSprites.All.Count + IsometricSprites.All.Count;
@@ -109,8 +109,10 @@ namespace Simpiens.Client.Tests
             int badges = gates + GateSprites.All.Count; // the descent gate (K10.5c)
             int activities = badges + BadgeSprites.All.Count; // a guild member's role badge (Epic 11, S5.8)
             int buildings = activities + ActivitySprites.All.Count; // what a crawler is doing (Epic LIFE-1 plan 3, V.4)
-            int bodies = buildings + BuildingSprites.All.Count; // buildings' walls, floors and signs (Epic PLACES plan 1, B.3–B.4)
+            int furniture = buildings + BuildingSprites.All.Count; // buildings' walls, floors and signs (Epic PLACES plan 1, B.3–B.4)
+            int bodies = furniture + FurnitureSprites.All.Count; // furniture (F.5)
             for (int i = 0; i < BuildingSprites.All.Count; i++) Assert.Same(BuildingSprites.All[i], world[buildings + i]);
+            for (int i = 0; i < FurnitureSprites.All.Count; i++) Assert.Same(FurnitureSprites.All[i], world[furniture + i]);
             for (int i = 0; i < BadgeSprites.All.Count; i++) Assert.Same(BadgeSprites.All[i], world[badges + i]);
             for (int i = 0; i < ActivitySprites.All.Count; i++) Assert.Same(ActivitySprites.All[i], world[activities + i]);
             for (int i = 0; i < BarSprites.All.Count; i++) Assert.Same(BarSprites.All[i], world[bars + i]);

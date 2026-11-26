@@ -22,7 +22,7 @@ namespace Simpiens.Presentation.Art
         /// </summary>
         public static SpriteSheet World { get; } = new SpriteSheet(DrawSheet.World, ProceduralSprites.All.Concat(IsometricSprites.All).Append(MissingArt.Sprite)
             .Concat(ItemSprites.World).Concat(WornSprites.All).Concat(HazardSprites.All).Concat(CaravanSprites.All).Concat(CreatureSprites.All).Concat(ShotSprites.All)
-            .Concat(BarSprites.All).Concat(GateSprites.All).Concat(BadgeSprites.All).Concat(ActivitySprites.All).Concat(BuildingSprites.All).Concat(People.BodySlots.All));
+            .Concat(BarSprites.All).Concat(GateSprites.All).Concat(BadgeSprites.All).Concat(ActivitySprites.All).Concat(BuildingSprites.All).Concat(FurnitureSprites.All).Concat(People.BodySlots.All));
 
         /// <summary>The fog's cloud, sampled smoothly.</summary>
         public static SpriteSheet Fog { get; } = new SpriteSheet(DrawSheet.Fog, new[] { FogCloud.Sprite });

@@ -51,6 +51,11 @@ namespace Simpiens.Presentation.Art
                .Add(ArtKeys.TileFloorPlanks, Sheet, new[] { BuildingSprites.PlankFloor }, 1f, 1f, Art)
                .Add(ArtKeys.TileFloorBare, Sheet, new[] { BuildingSprites.BareFloor }, 1f, 1f, Art)
                .Add(ArtKeys.DecorSign, Sheet, new[] { BuildingSprites.Sign }, 1f, 1f, Art) // B.4
+               // Furniture (Epic PLACES plan 1, F.5): a cell each, the bench two
+               .Add(ArtKeys.Furniture("table"), Sheet, new[] { FurnitureSprites.Table }, 1f, 1f, Art)
+               .Add(ArtKeys.Furniture("stool"), Sheet, new[] { FurnitureSprites.Stool }, 1f, 1f, Art)
+               .Add(ArtKeys.Furniture("chair"), Sheet, new[] { FurnitureSprites.Chair }, 1f, 1f, Art)
+               .Add(ArtKeys.Furniture("bench"), Sheet, new[] { FurnitureSprites.Bench }, 2f, 1f, Art)
                .Add(ArtKeys.PropHearth, Sheet, new[] { "Anchor_Campfire_0", "Anchor_Campfire_1" }, HearthSize, HearthSize, Art,
                    framesPerSecond: HearthFramesPerSecond, pulseRate: HearthPulseRate, pulseAmplitude: HearthPulseAmplitude)
                .Add(ArtKeys.PropBunk, Sheet, new[] { "Anchor_Bunk" }, BunkSize, BunkSize, Art)
