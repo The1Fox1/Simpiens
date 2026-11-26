@@ -23,8 +23,8 @@ This is a working document (AGENTS.md, Documentation Protocol 6), the first of E
 
 ## 0. What `main` hands over (checked at P.1)
 - **The map** (`MapDefinition`, built by `MapDefinitionBuilder`):
-  - **Sectors** (zones): Floor 1 has 16 and the fallback, each a 16 × 12 room (the bottom row 16 × 6), with a name, a label, fog, maybe a hazard, and a facility flag (the tavern, the workshop row, the guildhall).
-  - **Walls** are `WallRect`s (`Wall`, `WallRun` of unit cells on whole-unit centre lines), rasterized into the static nav grid (`WallRasterizer`). Doors are gaps of six units ("every doorway leaves 4 walkable cells after body inflation").
+  - **Sectors** (zones): Floor 1 has 15 and the fallback, each a 16 × 12 room (the bottom row 16 × 6), with a name, a label, fog, maybe a hazard, and a facility flag (the tavern, the workshop row, the guildhall).
+  - **Walls** are `WallRect`s (`Wall`, `WallRun` of unit cells on whole-unit centre lines), rasterized into the static nav grid (`WallRasterizer`). Doors are gaps of six units ("every doorway leaves 4 walkable cells after body inflation"); the guildhall's one door leaves 3, its room six units deep.
   - **POIs:** the stall, the hearth, 12 bunks, 8 guild bunks, spawn points, the descent gate. The session host spawns bunk entities from the bunk POIs (`SessionHost`, in POI order, so entity ids follow it).
   - **Stations:** four sites (forge, still, drill yard, tavern counter), each a point and a reach; `StationTable` rows.
   - **Venues:** five (the hearth, the stall, the Garden, the guild's yard, the tavern), their seats bare points. The tavern's eight are two tables of four in the room's west half, centred at (-4.5, 9.5) and (-4.5, 14.5), a seat 1.2 units out on each side; nothing is drawn there.
@@ -58,9 +58,10 @@ This is a working document (AGENTS.md, Documentation Protocol 6), the first of E
 
 ### P. The hand-over (half a day)
 **Complexity:** Basic.
-- [ ] **P.1 The hand-over checked, and the map measured** [Basic: docs and a measurement]
+- [x] **P.1 The hand-over checked, and the map measured** [Basic: docs and a measurement]
   - Check §0 against `main` at `4134c53`; record any difference as a finding (the epic's §7, F4 onward).
   - A baseline for the map's changes: the walkable cells, the rooms each door joins, and the paths between the hub and every room (lengths), so a step that changes walls shows what moved.
+  - **Done:** §0 held but for two slips of this plan's (15 zones, not 16; the guildhall's door leaves 3 cells, not 4), corrected above; no finding. The baseline (`MapMeasure`, `MapMeasureTests.MeasureTheMap`) is in `docs/places-model.md` §1: 1,790 walkable cells, the walks from the hub 11.2 (the Bunkhouse) to 34.9 (the Drowned Gallery); a regular test checks every zone is walked to from the hub.
 
 ### G. Groundwork: PL0 (1 day)
 **Complexity:** Possibly Complex at most (a field in the life record).
