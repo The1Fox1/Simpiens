@@ -44,6 +44,12 @@ namespace Simpiens.Presentation.Art
                .Add(ArtKeys.TileRock, Sheet, new[] { "Map_Rock" }, 1f, 1f, Art)
                .Add(ArtKeys.TileWall, Sheet, new[] { "Obstacle_StoneWall" }, 1f, 1f, Art)
                .Add(ArtKeys.TileWallLow, Sheet, new[] { "Obstacle_StoneWall" }, 1f, 1f, Art) // top-down's walls are flat
+               // Buildings' walls and floors (Epic PLACES plan 1, B.3)
+               .Add(ArtKeys.TileWallTimber, Sheet, new[] { BuildingSprites.TimberWall }, 1f, 1f, Art)
+               .Add(ArtKeys.TileWallLowTimber, Sheet, new[] { BuildingSprites.TimberWall }, 1f, 1f, Art)
+               .Add(ArtKeys.TileWallFoundations, Sheet, new[] { BuildingSprites.Foundations }, 1f, 1f, Art)
+               .Add(ArtKeys.TileFloorPlanks, Sheet, new[] { BuildingSprites.PlankFloor }, 1f, 1f, Art)
+               .Add(ArtKeys.TileFloorBare, Sheet, new[] { BuildingSprites.BareFloor }, 1f, 1f, Art)
                .Add(ArtKeys.PropHearth, Sheet, new[] { "Anchor_Campfire_0", "Anchor_Campfire_1" }, HearthSize, HearthSize, Art,
                    framesPerSecond: HearthFramesPerSecond, pulseRate: HearthPulseRate, pulseAmplitude: HearthPulseAmplitude)
                .Add(ArtKeys.PropBunk, Sheet, new[] { "Anchor_Bunk" }, BunkSize, BunkSize, Art)

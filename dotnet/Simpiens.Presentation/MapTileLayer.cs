@@ -10,21 +10,28 @@ namespace Simpiens.Presentation
         Wall = 2,
     }
 
-    /// <summary>One cell of the map's static picture: what it is and how its floor is tinted.</summary>
+    /// <summary>One cell of the map's static picture: what it is, what it is made of, and how its floor is tinted.</summary>
     public readonly struct MapTile
     {
         public readonly int X;
         public readonly int Y;
         public readonly TileKind Kind;
-        /// <summary>The floor's sector tint; white for rock and walls.</summary>
+        /// <summary>The floor's sector tint; white for rock, walls and a building's floor (its own colours).</summary>
         public readonly Rgba Tint;
 
-        public MapTile(int x, int y, TileKind kind, Rgba tint)
+        /// <summary>
+        /// What it is made of (Epic PLACES plan 1, B.3, D9): a wall's <c>WallMaterial</c> or a floor's <c>FloorMaterial</c>, as
+        /// a byte; 0 (a zone's stone and flagstone) unless a building's walls or floor are here.
+        /// </summary>
+        public readonly byte Material;
+
+        public MapTile(int x, int y, TileKind kind, Rgba tint, byte material = 0)
         {
             X = x;
             Y = y;
             Kind = kind;
             Tint = tint;
+            Material = material;
         }
     }
 
@@ -83,7 +90,8 @@ namespace Simpiens.Presentation
                         // As Unity's tilemaps: one rock and one wall tile at most per cell (a cell can hold both)
                         if (isRock ? rock.Add(Key(x, y)) : walls.Add(Key(x, y)))
                         {
-                            tiles.Add(new MapTile(x, y, isRock ? TileKind.Rock : TileKind.Wall, Rgba.White));
+                            byte material = isRock ? (byte)0 : (byte)WallMaterialAt(map, origin + new Vec2(x, y));
+                            tiles.Add(new MapTile(x, y, isRock ? TileKind.Rock : TileKind.Wall, Rgba.White, material));
                         }
                     }
                 }
@@ -97,13 +105,54 @@ namespace Simpiens.Presentation
                 {
                     long key = Key(x, y);
                     if (walls.Contains(key) || rock.Contains(key)) continue;
-                    var tint = TryGetSectorIndex(map, origin + new Vec2(x, y), out int sectorIndex) ? FloorTint(map, map.Sectors[sectorIndex]) : NeutralFloor;
-                    tiles.Add(new MapTile(x, y, TileKind.Floor, tint));
+                    var centre = origin + new Vec2(x, y);
+                    var material = FloorMaterialAt(map, centre);
+                    var tint = material != Simpiens.Simulation.Places.FloorMaterial.Flagstone ? Rgba.White
+                        : TryGetSectorIndex(map, centre, out int sectorIndex) ? FloorTint(map, map.Sectors[sectorIndex]) : NeutralFloor;
+                    tiles.Add(new MapTile(x, y, TileKind.Floor, tint, (byte)material));
                     floor.Add(key);
                 }
             }
 
             return new MapTileLayer(map, origin, tiles, floor);
+        }
+
+        /// <summary>
+        /// The material of a wall cell centred at <paramref name="centre"/> (Epic PLACES plan 1, B.3): the first building whose
+        /// footprint's edge it lies on gives its walls' (a wall shared with a zone takes the building's); otherwise stone.
+        /// </summary>
+        public static Simpiens.Simulation.Places.WallMaterial WallMaterialAt(MapDefinition map, Vec2 centre)
+        {
+            for (int i = 0; i < map.Buildings.Count; i++)
+            {
+                if (OnEdge(map.Buildings[i].Footprint, centre)) return map.Buildings[i].Row.Walls;
+            }
+            return Simpiens.Simulation.Places.WallMaterial.Stone;
+        }
+
+        /// <summary>
+        /// The material of a floor cell centred at <paramref name="centre"/>: a building's floor inside its walls and across its
+        /// doorways (a threshold, so a door reads as the building's); otherwise flagstone.
+        /// </summary>
+        public static Simpiens.Simulation.Places.FloorMaterial FloorMaterialAt(MapDefinition map, Vec2 centre)
+        {
+            for (int i = 0; i < map.Buildings.Count; i++)
+            {
+                var footprint = map.Buildings[i].Footprint;
+                bool inside = centre.X > footprint.XMin && centre.X < footprint.XMax && centre.Y > footprint.YMin && centre.Y < footprint.YMax;
+                if (inside || OnEdge(footprint, centre)) return map.Buildings[i].Row.Floor;
+            }
+            return Simpiens.Simulation.Places.FloorMaterial.Flagstone;
+        }
+
+        /// <summary>Whether <paramref name="point"/> lies on one of the footprint's four edges.</summary>
+        private static bool OnEdge(RectF footprint, Vec2 point)
+        {
+            const float e = 0.01f;
+            bool inX = point.X >= footprint.XMin - e && point.X <= footprint.XMax + e;
+            bool inY = point.Y >= footprint.YMin - e && point.Y <= footprint.YMax + e;
+            return (inY && (SimMath.Abs(point.X - footprint.XMin) < e || SimMath.Abs(point.X - footprint.XMax) < e))
+                || (inX && (SimMath.Abs(point.Y - footprint.YMin) < e || SimMath.Abs(point.Y - footprint.YMax) < e));
         }
 
         /// <summary>A wall rect wider than one cell both ways is solid rock outside the floor, not a wall run.</summary>

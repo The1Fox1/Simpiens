@@ -37,6 +37,12 @@ namespace Simpiens.Presentation.Art
                .Add(ArtKeys.TileRock, Sheet, new[] { "Iso_Rock" }, tileW, tileH)
                .Add(ArtKeys.TileWall, Sheet, new[] { "Iso_Wall" }, tileW, tileH + IsometricSprites.WallRise, pivotY: IsometricSprites.BlockPivotY(tileH, IsometricSprites.WallRise))
                .Add(ArtKeys.TileWallLow, Sheet, new[] { "Iso_Wall_Low" }, tileW, tileH + IsometricSprites.LowWallRise, pivotY: IsometricSprites.BlockPivotY(tileH, IsometricSprites.LowWallRise))
+               // Buildings' walls and floors (Epic PLACES plan 1, B.3): risen as the stone's, a lot's foundations low
+               .Add(ArtKeys.TileWallTimber, Sheet, new[] { BuildingSprites.IsoTimberWall }, tileW, tileH + IsometricSprites.WallRise, pivotY: IsometricSprites.BlockPivotY(tileH, IsometricSprites.WallRise))
+               .Add(ArtKeys.TileWallLowTimber, Sheet, new[] { BuildingSprites.IsoTimberWallLow }, tileW, tileH + IsometricSprites.LowWallRise, pivotY: IsometricSprites.BlockPivotY(tileH, IsometricSprites.LowWallRise))
+               .Add(ArtKeys.TileWallFoundations, Sheet, new[] { BuildingSprites.IsoFoundations }, tileW, tileH + BuildingSprites.FoundationsRise, pivotY: IsometricSprites.BlockPivotY(tileH, BuildingSprites.FoundationsRise))
+               .Add(ArtKeys.TileFloorPlanks, Sheet, new[] { BuildingSprites.IsoPlankFloor }, tileW, tileH)
+               .Add(ArtKeys.TileFloorBare, Sheet, new[] { BuildingSprites.IsoBareFloor }, tileW, tileH)
                .Add(ArtKeys.PropHearth, Sheet, new[] { "Anchor_Campfire_0", "Anchor_Campfire_1" }, Standing, Standing, pivotY: FeetPivot,
                    framesPerSecond: TopDownArtTable.HearthFramesPerSecond, pulseRate: TopDownArtTable.HearthPulseRate, pulseAmplitude: TopDownArtTable.HearthPulseAmplitude)
                .Add(ArtKeys.PropBunk, Sheet, new[] { "Iso_Bunk" }, IsometricSprites.BunkWidth, IsometricSprites.BunkHeight + IsometricSprites.BunkRise,

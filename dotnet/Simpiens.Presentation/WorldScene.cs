@@ -49,10 +49,13 @@ namespace Simpiens.Presentation
             set
             {
                 _catalog = value ?? throw new ArgumentNullException(nameof(value));
-                _floor = value.Id(ArtKeys.TileFloor);
                 _rock = value.Id(ArtKeys.TileRock);
-                _wall = value.Id(ArtKeys.TileWall);
-                _lowWall = value.Id(ArtKeys.TileWallLow);
+                for (int m = 0; m < _wallBy.Length; m++) // buildings' walls and floors by material (Epic PLACES plan 1, B.3)
+                {
+                    _wallBy[m] = value.Id(ArtKeys.TileWallOf((Simpiens.Simulation.Places.WallMaterial)m));
+                    _lowBy[m] = value.Id(ArtKeys.TileWallLowOf((Simpiens.Simulation.Places.WallMaterial)m));
+                }
+                for (int m = 0; m < _floorBy.Length; m++) _floorBy[m] = value.Id(ArtKeys.TileFloorOf((Simpiens.Simulation.Places.FloorMaterial)m));
                 _ring = value.Id(ArtKeys.SelectionRing);
                 _shadow = value.TryId(ArtKeys.CrawlerShadow, out var shadow) ? shadow : ArtId.None;
                 _bar = value.TryId(ArtKeys.FxBar, out var bar) ? bar : ArtId.None;
@@ -91,7 +94,8 @@ namespace Simpiens.Presentation
         public CrawlerBodies Bodies { get; set; }
 
         private ArtCatalog _catalog;
-        private ArtId _floor, _rock, _wall, _lowWall, _ring, _shadow, _caravan, _bar, _gate, _gateOpen;
+        private ArtId _rock, _ring, _shadow, _caravan, _bar, _gate, _gateOpen;
+        private readonly ArtId[] _wallBy = new ArtId[3], _lowBy = new ArtId[3], _floorBy = new ArtId[3]; // by WallMaterial, FloorMaterial
         private readonly ArtId[] _badges = new ArtId[5]; // by PartyRole (Epic 11, S5.8)
         private ArtId _namedBadge; // a named creature's mark (Epic 11, S7.7)
         private readonly ArtId[] _activities = new ArtId[Simpiens.Simulation.Life.ActivityTable.Capacity]; // what a crawler is doing with its free time, by Activity (Epic LIFE-1 plan 3, V.4)
@@ -514,22 +518,20 @@ namespace Simpiens.Presentation
 
         private void AddTiles(MapTileLayer tiles)
         {
-            var floor = _catalog.Piece(_floor, 0f);
             var rock = _catalog.Piece(_rock, 0f);
-            var wall = _catalog.Piece(_wall, 0f);
-            var low = _catalog.Piece(_lowWall, 0f);
             var stands = WallsStanding(tiles);
             var list = tiles.Tiles;
             for (int i = 0; i < list.Count; i++)
             {
                 var tile = list[i];
                 var centre = tiles.CellCentre(tile.X, tile.Y);
+                int material = tile.Material < _wallBy.Length ? tile.Material : 0; // a building's walls and floor by their material (Epic PLACES plan 1, B.3)
                 switch (tile.Kind)
                 {
-                    case TileKind.Floor: Add(DrawRole.Floor, 0f, floor, centre, Rgba32.From(tile.Tint)); break;
+                    case TileKind.Floor: Add(DrawRole.Floor, 0f, _catalog.Piece(_floorBy[material], 0f), centre, Rgba32.From(tile.Tint)); break;
                     case TileKind.Rock: Add(DrawRole.Rock, 0f, rock, centre, White); break;
                     // Walls stand: in isometric they interleave with crawlers by depth (in top-down they never overlap)
-                    default: Add(DrawRole.Wall, Projection.Depth(centre), Stands(stands, i) ? wall : low, centre, White); break;
+                    default: Add(DrawRole.Wall, Projection.Depth(centre), _catalog.Piece(Stands(stands, i) ? _wallBy[material] : _lowBy[material], 0f), centre, White); break;
                 }
             }
         }

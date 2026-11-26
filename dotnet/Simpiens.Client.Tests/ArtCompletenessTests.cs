@@ -114,6 +114,12 @@ namespace Simpiens.Client.Tests
                 catalog.Id(ArtKeys.PropHearth), catalog.Id(ArtKeys.PropBunk), catalog.Id(ArtKeys.SelectionRing), catalog.Missing,
             };
             if (catalog.TryId(ArtKeys.CrawlerShadow, out var shadow)) used.Add(shadow);
+            foreach (Simpiens.Simulation.Places.WallMaterial m in System.Enum.GetValues(typeof(Simpiens.Simulation.Places.WallMaterial)))
+            {
+                used.Add(catalog.Id(ArtKeys.TileWallOf(m))); // buildings' walls and floors (Epic PLACES plan 1, B.3)
+                used.Add(catalog.Id(ArtKeys.TileWallLowOf(m)));
+            }
+            foreach (Simpiens.Simulation.Places.FloorMaterial m in System.Enum.GetValues(typeof(Simpiens.Simulation.Places.FloorMaterial))) used.Add(catalog.Id(ArtKeys.TileFloorOf(m)));
             used.Add(catalog.Id(ArtKeys.PropStall));
             used.Add(catalog.Id(ArtKeys.PropCaravan)); // the caravan walking the map (Epic 10 Part 2, D70)
             used.Add(new EntityVisuals(catalog).Cairn); // a body (Epic 10 Part 3, K5.8b)
