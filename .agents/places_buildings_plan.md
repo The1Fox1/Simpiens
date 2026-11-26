@@ -65,9 +65,10 @@ This is a working document (AGENTS.md, Documentation Protocol 6), the first of E
 
 ### G. Groundwork: PL0 (1 day)
 **Complexity:** Possibly Complex at most (a field in the life record).
-- [ ] **G.1 The vocabulary, and every reader of a station kind** [Basic: docs]
+- [x] **G.1 The vocabulary, and every reader of a station kind** [Basic: docs]
   - `docs/places-model.md` opens with the epic's vocabulary table and grows with each table's numbers.
   - F1's list: every place that reads a `StationKind` or a station's key (`Drill`, `TavernPlayer`, `GuildPlayer`, `EconomySoak`, the venue's needed station, `WorkshopRules`, the station window, the art keys), each with what plan 2's revision does to it.
+  - **Done:** `docs/places-model.md` §1 (the vocabulary) and §2 (the station table today and 16 readers, each with plan 2's change).
 - [ ] **G.2 The map card says a day off** (Epic LIFE-1's F23) [Basic: a model line and the inspector card; presentation tests]
   - `InspectorModel` gains the intention's line ("Today: a day off."), the card shows it after the mood as the dossier does.
 - [ ] **G.3 The day log's waking time** (Epic LIFE-1's F23) [Possibly Complex: a field in the life record's spare bytes; golden re-recorded for its coverage]
