@@ -145,11 +145,12 @@ This is a working document (AGENTS.md, Documentation Protocol 6), the first of E
 
 ### C. The gate and close-out (1–2 days)
 **Complexity:** Possibly Complex: measuring.
-- [ ] **C.1 The gate** [Possibly Complex: measuring]
+- [x] **C.1 The gate** [Possibly Complex: measuring]
   - **The tests:** every test, the golden check, the gate seeds' day, the client's tests in the pinned image.
   - **The soak:** every profile's band on the final build.
   - **Measurements:** P.1's map baseline re-run (the walks that changed and why); the day (`MeasureACrawlersDay`), against Epic LIFE-1's gate.
   - **Cost:** `PopulationScalingProbe` at 16, 24 and 48 crawlers beside `main` at the branch's start, in a quiet sitting.
+  - **Done:** core 423/423 with golden; client 569/569 in the pinned image; the soak 21/21; the map and the day as recorded in `docs/places-model.md` §6 (the day equal to LIFE-1's gate); cost no measurable difference at 16, 24 and 48 crawlers. Golden held throughout (the core suite's `GoldenWorldHashTests`; the step commits' own golden checks after G.3 ran a Host binary left unbuilt, so the full runs after B.5, F.2, F.4 and F.6 are the evidence).
 - [ ] **C.2 Close-out** [Basic: written from lists this plan holds]
   - **The docs, in order:** the roadmap first (Epic PLACES ACTIVE, plan 1 done); the epic's status, §0 (D1–D15), §4 and §7; `docs/places-model.md`; `AGENTS.md` (buildings and furniture in the map's notes; recipes: a building kind, a furniture kind); the focus file and `.agents/architecture_history.md`.
   - **Delete this plan.**
