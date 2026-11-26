@@ -59,6 +59,7 @@ namespace Simpiens.Presentation.Art.People
             new HeadAnchor(6, 8, 9), new HeadAnchor(6, 8, 9), // Rallying: the banner's pole beside the hair
             new HeadAnchor(2, 4, 5), new HeadAnchor(2, 4, 5), // Defiant: brows down
             new HeadAnchor(2, 3, 4, lying: true), new HeadAnchor(2, 3, 4, lying: true), // Sleeping
+            new HeadAnchor(4, 6, 7), new HeadAnchor(4, 6, 7), // Seated: two rows lower, frame 1 blinking (Epic LIFE-1 plan 3, V.3)
         };
 
         /// <summary>The head in <paramref name="state"/>'s <paramref name="frame"/> (0 or 1).</summary>

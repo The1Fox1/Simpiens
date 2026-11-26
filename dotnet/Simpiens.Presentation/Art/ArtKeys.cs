@@ -40,14 +40,23 @@ namespace Simpiens.Presentation.Art
         /// <summary>The guildhall's drill yard (Epic 11, S3.4): a straw post on its stone, a weapon stand beside it.</summary>
         public const string PropDrillYard = "prop/drill-yard";
 
+        /// <summary>The tavern (Epic LIFE-1 plan 2, T.3): its counter, tankards and a barrel.</summary>
+        public const string PropTavern = "prop/tavern";
+
         /// <summary>A station's art: its own once built, the plot before.</summary>
-        public static string Station(StationKind kind, bool built) => !built ? PropStationPlot : kind switch
+        public static string Station(StationKind kind, bool built) => !built ? PropStationPlot : (int)kind < StationKeys.Length && StationKeys[(int)kind] != null ? StationKeys[(int)kind] : PropStationPlot;
+
+        // Each kind's key, built once from its row (Epic LIFE-1 plan 2, T.1): drawing a station allocates nothing
+        private static readonly string[] StationKeys = BuildStationKeys();
+
+        private static string[] BuildStationKeys()
         {
-            StationKind.Forge => PropForge,
-            StationKind.Still => PropStill,
-            StationKind.DrillYard => PropDrillYard,
-            _ => PropStationPlot
-        };
+            int capacity = 0;
+            foreach (var row in StationTable.All) if ((int)row.Kind + 1 > capacity) capacity = (int)row.Kind + 1;
+            var keys = new string[capacity];
+            foreach (var row in StationTable.All) keys[(int)row.Kind] = "prop/" + row.ArtKey;
+            return keys;
+        }
 
         public const string SelectionRing = "fx/selection-ring";
 
@@ -74,6 +83,10 @@ namespace Simpiens.Presentation.Art
 
         /// <summary>A named creature's mark over it (Epic 11, S7.7, D37).</summary>
         public const string BadgeNamed = "badge/named";
+
+        /// <summary>What a crawler is doing with its free time, over its head (Epic LIFE-1 plan 3, V.4): "activity/ale"; null for none.</summary>
+        public static string Activity(Simpiens.Simulation.Life.Activity activity) =>
+            activity == Simpiens.Simulation.Life.Activity.None ? null : "activity/" + activity.ToString().ToLowerInvariant();
 
         /// <summary>The badge's key for <paramref name="role"/>; null for none.</summary>
         public static string Badge(Simpiens.Simulation.Skills.PartyRole role) => role switch

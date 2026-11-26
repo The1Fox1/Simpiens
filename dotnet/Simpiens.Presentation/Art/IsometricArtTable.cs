@@ -27,6 +27,7 @@ namespace Simpiens.Presentation.Art
                 NameOffset = Vec2.Zero, NameHeight = 1.125f, // over the head: a 16-pixel sprite is one unit tall
                 CarryOffset = Vec2.Zero, CarryHeight = 1.25f, // centred over the head
                 BadgeOffset = new Vec2(-0.3f, 0.3f), BadgeHeight = 1f, // a role badge beside the head, to its left on screen (Epic 11, S5.8)
+                ThoughtOffset = new Vec2(0.3f, -0.3f), ThoughtHeight = 1f, // what it is doing, beside the head to its right on screen (Epic LIFE-1 plan 3, V.4)
                 RideOffset = Vec2.Zero, RideHeight = 0.55f, // a carried crawler across the shoulders (Epic 10 Part 3, K5.8a)
                 // Along the counter's front edge, 12 px apart on screen ((s, -s) on the floor is horizontal), on its top (8 px up)
                 DisplaySlots = new[] { (new Vec2(-0.5625f, 0.5625f), 0.5f), (new Vec2(-0.1875f, 0.1875f), 0.5f), (new Vec2(0.1875f, -0.1875f), 0.5f), (new Vec2(0.5625f, -0.5625f), 0.5f) },
@@ -49,6 +50,8 @@ namespace Simpiens.Presentation.Art
                .Add(ArtKeys.PropStationPlot, Sheet, new[] { "Iso_StationPlot" }, IsometricSprites.PlotWidth, IsometricSprites.PlotHeight)
                .Add(ArtKeys.PropDrillYard, Sheet, new[] { "Iso_DrillYard" }, IsometricSprites.DrillYardWidth, IsometricSprites.DrillYardHeight + IsometricSprites.DrillYardRise,
                    pivotY: IsometricSprites.BlockPivotY(IsometricSprites.DrillYardHeight, IsometricSprites.DrillYardRise)) // Epic 11, S3.4
+               .Add(ArtKeys.PropTavern, Sheet, new[] { "Iso_Tavern" }, IsometricSprites.TavernWidth, IsometricSprites.TavernHeight + IsometricSprites.TavernRise,
+                   pivotY: IsometricSprites.BlockPivotY(IsometricSprites.TavernHeight, IsometricSprites.TavernRise)) // Epic LIFE-1 plan 2, T.3
                .Add(ArtKeys.PropCairn, Sheet, new[] { "Prop_Cairn" }, Standing, Standing, pivotY: FeetPivot) // a body (Epic 10 Part 3, K5.8b), standing as the hearth does
                .Add(ArtKeys.CrawlerShadow, Sheet, new[] { "Iso_Shadow" }, IsometricSprites.Shadow.Width, IsometricSprites.Shadow.Height)
                .Add(ArtKeys.SelectionRing, Sheet, new[] { "Iso_Selection_Ring" }, IsometricSprites.SelectionRing.Width, IsometricSprites.SelectionRing.Height)
@@ -71,6 +74,10 @@ namespace Simpiens.Presentation.Art
                .Add(ArtKeys.Missing, Sheet, new[] { MissingArt.Name }, Standing, Standing, pivotY: FeetPivot);
             foreach (var (key, sprite) in TopDownArtTable.Nodes) art.Add(key, Sheet, new[] { sprite }, Standing, Standing, pivotY: FeetPivot);
             foreach (var (state, sprites) in TopDownArtTable.Crawlers) art.Add(ArtKeys.Crawler(state), Sheet, sprites, Standing, Standing, pivotY: FeetPivot);
+            // What a crawler is doing with its free time (Epic LIFE-1 plan 3, V.4), as top-down's
+            foreach (Simpiens.Simulation.Life.Activity activity in System.Enum.GetValues(typeof(Simpiens.Simulation.Life.Activity)))
+                if (activity != Simpiens.Simulation.Life.Activity.None)
+                    art.Add(ArtKeys.Activity(activity), Sheet, new[] { ActivitySprites.Name(activity) }, ActivitySprites.Size, ActivitySprites.Size);
             foreach (var (key, framesPerSecond) in TopDownArtTable.Creatures)
             {
                 float size = Standing * CreatureSprites.SizeOf(key) / CreatureSprites.Size; // a boss on its bigger canvas (K10.5a)

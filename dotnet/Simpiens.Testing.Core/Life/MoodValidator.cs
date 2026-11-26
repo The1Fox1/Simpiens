@@ -28,7 +28,7 @@ namespace Simpiens.Testing.Life
 
         private void ValidateTheTerms()
         {
-            Assert(MoodRules.AllTerms.Length == 8, $"Eight need terms ({MoodRules.AllTerms.Length}).");
+            Assert(MoodRules.AllTerms.Length == 9, $"Nine need terms, boredom's the ninth ({MoodRules.AllTerms.Length}).");
             foreach (var term in MoodRules.AllTerms)
             {
                 Assert(MoodRules.Term(term.Id) == term && !string.IsNullOrEmpty(term.Words), $"{term.Id}: found by its id, with words.");
@@ -52,6 +52,15 @@ namespace Simpiens.Testing.Life
             Assert(MoodRules.TermsOf(new AgentNeeds(30f, 80f, 60f), 0f, true, terms) == 1 && terms[0] == MoodTerm.Downed, "Downed, not hurt too.");
             Assert(MoodRules.NeedsOf(new AgentNeeds(30f, 80f, 60f), 100f, false) == 4 && MoodRules.NeedsOf(new AgentNeeds(90f, 10f, 20f), 100f, false) == -33,
                 "The terms' sums: comfortable 4; starving, exhausted and lonely -33.");
+            // Boredom (Epic LIFE-1 plan 2, L2.6): fun at 25 or less, last in order, and no comfort beside it
+            Span<MoodTerm> five = stackalloc MoodTerm[MoodRules.TermCapacity];
+            Assert(MoodRules.TermsOf(new AgentNeeds(30f, 80f, 60f), 100f, false, 25f, five) == 1 && five[0] == MoodTerm.Bored, "Fun 25: bored, and no comfort.");
+            Assert(MoodRules.TermsOf(new AgentNeeds(30f, 80f, 60f), 100f, false, 26f, five) == 1 && five[0] == MoodTerm.Comfortable, "Fun 26: comfortable.");
+            Assert(MoodRules.TermsOf(new AgentNeeds(65f, 10f, 20f), 30f, false, 0f, five) == 5 && five[4] == MoodTerm.Bored, "Five at once, boredom last.");
+            Assert(MoodRules.NeedsOf(new AgentNeeds(30f, 80f, 60f), 100f, false, 10f) == -5, "Bored alone: -5.");
+            var bored = default(CrawlerLife);
+            bored.Bore(80f);
+            Assert(MoodRules.Of(new AgentNeeds(30f, 80f, 60f), 100f, false, bored, 1) == -5, "The mood reads its record's fun.");
         }
 
         private void ValidateTheBands()

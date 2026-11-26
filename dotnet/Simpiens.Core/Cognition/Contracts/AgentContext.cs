@@ -84,6 +84,19 @@ namespace Simpiens.Cognition.Contracts
         /// <summary>Its mood's band now (Epic LIFE-1, L1.4, D9), read once from its needs, health and thoughts as the main thread reads it (<see cref="Simpiens.Simulation.Life.MoodRules"/>).</summary>
         public readonly Simpiens.Simulation.Life.MoodBand Mood;
 
+        /// <summary>
+        /// The part of its day its routine is in now (Epic LIFE-1 plan 3, R.1, D29): computed once here from its chronotype, its
+        /// diligence, the tick and an artisan's shifts (<see cref="Simpiens.Simulation.Life.Routine"/>), as mood's band is. The
+        /// weights by family read it (D30).
+        /// </summary>
+        public readonly Simpiens.Simulation.Life.RoutineBlock Block;
+
+        /// <summary>
+        /// What it means to do with its routine day (Epic LIFE-1 plan 3, R.7, D34): the intention drawn for this routine day, or a
+        /// work day before one is drawn. The motive model weighs by it.
+        /// </summary>
+        public readonly Simpiens.Simulation.Life.DayIntention Intention;
+
         /// <summary>The player's guild it belongs to, its group id, or 0 (Epic 11, S3.4: a member may drill at the guildhall's yard).</summary>
         public readonly byte GuildGroupId;
         public bool IsGuildMember => GuildGroupId != 0;
@@ -142,6 +155,9 @@ namespace Simpiens.Cognition.Contracts
             Identity = identity;
             Inventory = inventory;
             Mood = Simpiens.Simulation.Life.MoodRules.BandOf(Simpiens.Simulation.Life.MoodRules.Of(Needs, Health, IsDowned, Life, CurrentTick)); // after every field it reads
+            var routine = Simpiens.Simulation.Life.Routine.Of(Life.Chronotype, Personality.Diligence, AgentId, CurrentTick); // likewise
+            Block = routine.BlockAt(CurrentTick, Station.Shifts);
+            Intention = Life.IntentionFor(routine.Day);
         }
 
         // Backward-compatible constructor

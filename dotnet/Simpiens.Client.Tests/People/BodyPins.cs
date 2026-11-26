@@ -9,7 +9,7 @@ using Simpiens.Simulation.People;
 namespace Simpiens.Client.Tests.People
 {
     /// <summary>
-    /// The bodies the art pins hold (Epic UI-Beta B2, D10), each as one sprite of its 24 frames stacked, by name:
+    /// The bodies the art pins hold (Epic UI-Beta B2, D10), each as one sprite of its 26 frames stacked (24 until the seated pose), by name:
     /// every option the map shows on a base look, the helm over each hair style, the tabard on each build, and the people
     /// sheet's crowd of 64. A changed body fails by name (<see cref="ArtPinTests"/>).
     /// </summary>

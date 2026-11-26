@@ -52,6 +52,8 @@ namespace Simpiens.Cognition.Planning.Domain
             graph.RegisterAction(new BuyManualAction()); // Epic 11, S3.3
             graph.RegisterAction(new ReadManualAction());
             graph.RegisterAction(new DrillAction(pathfinder)); // Epic 11, S3.4
+            graph.RegisterAction(new RecreateAction(pathfinder)); // Epic LIFE-1 plan 2, L2.6
+            graph.RegisterAction(new FulfilWantAction(pathfinder)); // W.3
             return graph;
         }
 
@@ -76,6 +78,8 @@ namespace Simpiens.Cognition.Planning.Domain
                 new StudyGoal(), // Epic 11, S3.3
                 new ReadManualGoal(),
                 new DrillGoal(), // Epic 11, S3.4
+                new FulfilWantGoal(), // Epic LIFE-1 plan 2, W.3: a want before a plain spell, on a tie
+                new RecreateGoal(), // Epic LIFE-1 plan 2, L2.6: after the training goals, before earning
                 new LiquidateSalvageGoal(),
                 new FulfillBountyGoal(),
                 new EarnIncomeGoal(),

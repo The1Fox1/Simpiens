@@ -46,6 +46,9 @@ namespace Simpiens.Cognition
         /// <summary>The fallen mate the guild last sent it for that it answered (Epic 10 Part 3, K7.2c): it drops what it does once per order.</summary>
         private EntityId _answeredCarry;
 
+        /// <summary>The tick before which its intention needn't be looked at again (Epic LIFE-1 plan 3, G.2): the next waking once drawn.</summary>
+        private long _intentionCheckAt;
+
         /// <summary>True once it answered its clear's fight (Epic 10 Part 3, K8.2b): it drops its march once, to fight as its weapon fights.</summary>
         private bool _answeredFight;
 
@@ -176,6 +179,41 @@ namespace Simpiens.Cognition
             }
             if (!wasCollapsed && State.IsExhaustionCollapsed) State.Think(Simpiens.Simulation.Life.Thought.SleptOnTheFloor, (uint)currentTick); // collapsed where it stood (Epic LIFE-1, L1.2)
             FeelMood(currentTick);
+            if (State.JustWoke)
+            {
+                // Woken: old wants run out, and a new one may arise (Epic LIFE-1 plan 2, W.2, D20)
+                State.JustWoke = false;
+                State.ExpireWants((uint)currentTick);
+                if (_simulationManager != null) Wanting.OnWaking(State, _spatialPartition?.GetActiveSnapshot(), _simulationManager.Economy, _simulationManager.Seed, (uint)currentTick);
+            }
+            // Its intention for the day (Epic LIFE-1 plan 3, R.7, D34): once a routine day, awake outside its night, after a new
+            // want may have arisen
+            if (_simulationManager != null && currentTick >= _intentionCheckAt && State.IntentionDue((uint)currentTick, out long routineDay))
+            {
+                var economy = _simulationManager.Economy ?? Simpiens.Simulation.Economy.EconomyTuning.Default;
+                int target = Simpiens.Cognition.Planning.Rhythm.PurseTarget(economy, State.Personality, State.Life, _spatialPartition?.GetActiveSnapshot());
+                var intention = State.DrawIntention(routineDay, (uint)currentTick, _simulationManager.Seed, economy.Life.Rhythm, target);
+                // A day off begun with a work plan in hand (awake at its waking hour, as on the first morning) drops it, so it chooses
+                // afresh under the day off and walks into no danger on a working day's plan (plan 3's R.8, D35); orders are kept
+                if (intention == Simpiens.Simulation.Life.DayIntention.Rest && State.HasActivePlan && State.ActiveGoal != null
+                    && State.ActiveGoal.Family == Simpiens.Cognition.Planning.ActivityFamily.Work && !State.IsEvaluating)
+                {
+                    _simulationManager.AbortIntent(State.AgentId);
+                    State.AbortActivePlan();
+                    State.CurrentIntent = null;
+                    State.HasActiveIntent = false;
+                }
+            }
+            // Drawn for this routine day (or none due): not looked at again until the next waking, a cache of what the routine says (unsaved,
+            // so a load looks again and finds the same)
+            if (_simulationManager != null && currentTick >= _intentionCheckAt && State.Life.IntentionDay != 0)
+            {
+                var routine = State.RoutineAt((uint)currentTick);
+                if (State.Life.IntentionDay == routine.Day + 1) _intentionCheckAt = routine.NextWake;
+            }
+            // A member keeping to its orders on its day off is called in (plan 3's R.9, D36)
+            if (State.CallInIfKeepingOrders((uint)currentTick))
+                SimLog.Cognition.ZLogDebug($"{SimLog.Agent(State.AgentId)} was called in from its day off to keep its orders");
 
             // Sent for a fallen mate (Epic 10 Part 3, K7.2c, D42): once its last decision has landed, it drops what it does
             var carry = State.Expedition.Carry;

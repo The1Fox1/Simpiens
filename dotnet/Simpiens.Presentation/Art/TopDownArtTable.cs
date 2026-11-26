@@ -34,6 +34,7 @@ namespace Simpiens.Presentation.Art
                 NameOffset = new Vec2(0f, 0.65f), NameHeight = 0f, // above the crawler (Unity's CameraController)
                 CarryOffset = new Vec2(0.25f, 0.3f), CarryHeight = 0f, // over its pack, at its upper right
                 BadgeOffset = new Vec2(-0.25f, 0.3f), BadgeHeight = 0f, // a role badge at its upper left (Epic 11, S5.8)
+                ThoughtOffset = new Vec2(0f, 0.5f), ThoughtHeight = 0f, // what it is doing, over its head (Epic LIFE-1 plan 3, V.4)
                 RideOffset = new Vec2(0f, 0.3f), RideHeight = 0f, // a carried crawler across its back, up the screen (Epic 10 Part 3, K5.8a)
                 // On the stall's counter, its lower half: four goods as their 8x8 markers (a 12-px map sprite would cover it)
                 DisplaySlots = new[] { (new Vec2(-0.69f, -0.22f), 0f), (new Vec2(-0.23f, -0.22f), 0f), (new Vec2(0.23f, -0.22f), 0f), (new Vec2(0.69f, -0.22f), 0f) },
@@ -53,6 +54,7 @@ namespace Simpiens.Presentation.Art
                .Add(ArtKeys.PropStill, Sheet, new[] { "Prop_Still" }, 1f, 1f, Art)
                .Add(ArtKeys.PropStationPlot, Sheet, new[] { "Prop_StationPlot" }, 1f, 1f, Art)
                .Add(ArtKeys.PropDrillYard, Sheet, new[] { "Prop_DrillYard" }, 1f, 1f, Art) // Epic 11, S3.4
+               .Add(ArtKeys.PropTavern, Sheet, new[] { "Prop_Tavern" }, 1f, 1f, Art) // Epic LIFE-1 plan 2, T.3
                .Add(ArtKeys.SelectionRing, Sheet, new[] { "Selection_Ring" }, SelectionRingSize, SelectionRingSize, Art)
                // The trade caravan (Epic 10 Part 2, the stretch, D70): a porter and its cart, walking
                .Add(ArtKeys.PropCaravan, Sheet, HazardSprites.Names(CaravanSprites.Name, CaravanSprites.Frames), 1f, 1f, Art, framesPerSecond: CaravanFramesPerSecond)
@@ -77,6 +79,10 @@ namespace Simpiens.Presentation.Art
                .Add(ArtKeys.Missing, Sheet, new[] { MissingArt.Name }, 1f, 1f, Art);
             foreach (var (key, sprite) in Nodes) art.Add(key, Sheet, new[] { sprite }, ResourceSize, ResourceSize, Art);
             foreach (var (state, sprites) in Crawlers) art.Add(ArtKeys.Crawler(state), Sheet, sprites, CrawlerSize, CrawlerSize, Art);
+            // What a crawler is doing with its free time, over its head (Epic LIFE-1 plan 3, V.4): one icon an activity
+            foreach (Simpiens.Simulation.Life.Activity activity in System.Enum.GetValues(typeof(Simpiens.Simulation.Life.Activity)))
+                if (activity != Simpiens.Simulation.Life.Activity.None)
+                    art.Add(ArtKeys.Activity(activity), Sheet, new[] { ActivitySprites.Name(activity) }, ActivitySprites.Size / 16f, ActivitySprites.Size / 16f, Art);
             // The creatures (Epic 10 Part 3, K2.5): a crawler's canvas at a crawler's size, so their pixels match
             // A boss on its bigger canvas at the same scale (K10.5a)
             foreach (var (key, framesPerSecond) in Creatures)

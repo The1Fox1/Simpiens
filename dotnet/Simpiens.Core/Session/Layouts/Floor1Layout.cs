@@ -11,8 +11,10 @@ namespace Simpiens.Core.Session.Layouts
     /// sectors, and hold richer nodes. Validated headlessly in Phase 1; spawned as the live map in Phase 3.
     ///
     ///  x: -40      -24        -8         8         24
-    ///   y 18   +----------+----------+----------+----------+
-    ///          |Old Stair D Deep Seam|  Garden  |Overgrowth|   frontier sectors start shrouded; the Old Stair (Epic 10
+    ///   y 30                         +----------+
+    ///                                |  Garden  |              the Garden, moved north for the tavern (Epic LIFE-1 plan 2,
+    ///   y 18   +----------+----------+------D---+----------+   T.2): reached only through the tavern, by its east door
+    ///          |Old Stair D Deep Seam|  Tavern  |Overgrowth|   frontier sectors start shrouded; the Old Stair (Epic 10
     ///   y  6   +-gate-----+---D------+----D-----+------D---+   Part 3, K10): the sealed gate at the floor's west edge
     ///          |  Ore     D  stall   D   Herb   |   quarry and grove doors sit beside the stall
     ///          |  Quarry  |fire      |   Grove  |   the hearth has the hub's quiet south-west corner
@@ -45,6 +47,9 @@ namespace Simpiens.Core.Session.Layouts
         public const byte WorkshopRowSectorId = 12;
         public const byte GuildhallSectorId = 13;
         public const byte OldStairSectorId = 14;
+
+        /// <summary>The tavern's room (Epic LIFE-1 plan 2, T.2, D16): the Garden's old room, off the hub; a facility.</summary>
+        public const byte TavernSectorId = 15;
 
         /// <summary>
         /// The hazard sectors' danger (Epic 10 G2): health lost per second by a crawler standing in them. On the 24-hour day
@@ -91,6 +96,12 @@ namespace Simpiens.Core.Session.Layouts
         public const string Still = "workshop.still";
         /// <summary>The guildhall's drill yard (Epic 11, S3.4, D10): in the hall's west half, inside the door.</summary>
         public const string DrillYard = "guildhall.yard";
+
+        /// <summary>The tavern's counter (Epic LIFE-1 plan 2, T.4, D16): its station site, at the room's east wall, clear of the way to the Garden.</summary>
+        public const string Tavern = "tavern.counter";
+
+        /// <summary>The venues' keys (Epic LIFE-1 plan 2, L2.3, D13): where free time goes.</summary>
+        public const string HearthVenue = "venue.hearth", StallVenue = "venue.stall", GardenVenue = "venue.garden", YardVenue = "venue.yard", TavernVenue = "venue.tavern";
         public const float StationRadius = 1.5f;
 
         public const int SpawnPointCount = 12;
@@ -105,7 +116,7 @@ namespace Simpiens.Core.Session.Layouts
         public static readonly IReadOnlyList<Vec2> Doors = new[]
         {
             new Vec2(-16f, 6f),  // Deep Seam - Ore Quarry
-            new Vec2(0f, 6f),    // Garden - Hub
+            new Vec2(0f, 6f),    // Tavern - Hub (the Garden's door until Epic LIFE-1 plan 2, T.2)
             new Vec2(16f, 6f),   // Overgrowth - Herb Grove
             new Vec2(-8f, 3f),   // Ore Quarry - Hub
             new Vec2(8f, 3f),    // Hub - Herb Grove
@@ -117,6 +128,7 @@ namespace Simpiens.Core.Session.Layouts
             new Vec2(4f, -18f),   // Road Gate - Workshop Row (Epic 10 Part 2): the lane runs on from the gate
             new Vec2(8f, -20.5f), // Workshop Row - Guildhall: the guildhall's only door
             new Vec2(-24f, 9f),   // Deep Seam - Old Stair (Epic 10 Part 3, K10.1): low in the Deep Seam's west wall, clear of the hollow's reach
+            new Vec2(4f, 18f),    // Tavern - Garden (Epic LIFE-1 plan 2, T.2): at the tavern's east end, so the way to the Garden skirts its tables
         };
 
         public static Vec2 HubBunkhouseDoor => Doors[5];
@@ -131,12 +143,21 @@ namespace Simpiens.Core.Session.Layouts
 
         private static MapDefinition Build(System.Action<MapDefinitionBuilder> more = null)
         {
-            // The floor grows west for the Old Stair (Epic 10 Part 3, K10.1), never north: 42 units tall still fits a 720-row window
-            // at one screen pixel per art pixel, top-down; 64 wide is 1,024 pixels
-            var b = new MapDefinitionBuilder("Floor1", new RectF(-40f, -24f, 64f, 42f));
+            // The floor grew west for the Old Stair (Epic 10 Part 3, K10.1) and north for the Garden (Epic LIFE-1 plan 2, T.2): it may
+            // grow past what a window shows whole (the producer, 2026-11-24: "It is not only okay but encouraged to expand the map
+            // beyond the viewport size"); the camera frames it at 1:1 and pans
+            var b = new MapDefinitionBuilder("Floor1", new RectF(-40f, -24f, 64f, 54f));
 
             // --- Outer walls of the 3x2 upper block, and the Old Stair's ---
-            b.WallRun(new Vec2(-40f, 18f), new Vec2(24f, 18f));
+            b.WallRun(new Vec2(-40f, 18f), new Vec2(1f, 18f)); // the tavern's door to the Garden at x 1..7 (T.2)
+            b.WallRun(new Vec2(7f, 18f), new Vec2(24f, 18f));
+            // The Garden's room, north of the tavern (Epic LIFE-1 plan 2, T.2): it opens onto nothing else
+            b.WallRun(new Vec2(-8f, 18f), new Vec2(-8f, 30f));
+            b.WallRun(new Vec2(8f, 18f), new Vec2(8f, 30f));
+            b.WallRun(new Vec2(-8f, 30f), new Vec2(8f, 30f));
+            // Beside it the floor's new north strip is solid rock, as the strip under the Old Stair is
+            b.Wall(new RectF(-40f, 18f, 32f, 12f));
+            b.Wall(new RectF(8f, 18f, 16f, 12f));
             b.WallRun(new Vec2(-24f, -24f), new Vec2(-24f, 6f));
             b.WallRun(new Vec2(24f, -24f), new Vec2(24f, 17f));
             // The Old Stair (K10.1): west of the Deep Seam, its one door low in their shared wall (y 6..12), out of the beetle
@@ -192,7 +213,9 @@ namespace Simpiens.Core.Session.Layouts
             b.Sector(BunkhouseSectorId, "Bunkhouse", "Quiet bunks where tired crawlers sleep off a long run.",
                 new RectF(-8f, -12f, 16f, 6f));
             b.Sector(GardenSectorId, "Garden", "Ration plots that regrow between harvests: the outpost's baseline food.",
-                new RectF(-8f, 6f, 16f, 12f));
+                new RectF(-8f, 18f, 16f, 12f)); // north of the tavern since Epic LIFE-1 plan 2's T.2
+            b.Sector(TavernSectorId, "The Tavern", "A room off the hub with a cold hearthstone, where a tavern may be built and kept.",
+                new RectF(-8f, 6f, 16f, 12f), facility: true);
             b.Sector(OreQuarrySectorId, "Ore Quarry", "Worked iron veins a short walk west of the hub.",
                 new RectF(-24f, -6f, 16f, 12f));
             b.Sector(HerbGroveSectorId, "Herb Grove", "Medicinal herb patches a short walk east of the hub.",
@@ -247,6 +270,29 @@ namespace Simpiens.Core.Session.Layouts
             b.Station(Still, StationKind.Still, new Vec2(-1f, -21f), StationRadius);
             // --- The guildhall's yard (Epic 11, S3.4, D10): a drill yard may be built there, west of the barracks ---
             b.Station(DrillYard, StationKind.DrillYard, new Vec2(12f, -21.5f), StationRadius);
+            // The tavern's counter (Epic LIFE-1 plan 2, T.4), against the room's east wall; its tables stand in the west half
+            b.Station(Tavern, StationKind.Tavern, new Vec2(6f, 12f), StationRadius);
+
+            // --- Venues (Epic LIFE-1 plan 2, L2.3, D13): where free time goes, what each offers, its seats. The hearth's
+            // fireside is GatherAtAnchor's; Recreate takes the rest. Open at all hours (D26), the yard while the drill yard
+            // stands, for the guild's members. The tavern's comes with its room (T.2) ---
+            b.Venue(HearthVenue, new Vec2(-4.5f, -3.5f), 3f, null, new[] { Simpiens.Simulation.Life.Activity.Fireside });
+            b.Venue(StallVenue, new Vec2(0f, 2.5f), 3f, new[] { new Vec2(-2f, 1.2f), new Vec2(-0.7f, 0.8f), new Vec2(0.7f, 0.8f), new Vec2(2f, 1.2f) },
+                new[] { Simpiens.Simulation.Life.Activity.Browse });
+            b.Venue(GardenVenue, new Vec2(0f, 24f), 6f,
+                new[] { new Vec2(-6.5f, 20f), new Vec2(-6.5f, 28f), new Vec2(0f, 28.5f), new Vec2(6.5f, 28f), new Vec2(6.5f, 20f), new Vec2(0f, 19.5f) },
+                new[] { Simpiens.Simulation.Life.Activity.Walk });
+            b.Venue(YardVenue, new Vec2(12f, -21.5f), 2f, new[] { new Vec2(10.8f, -21.5f), new Vec2(13.2f, -21.5f) },
+                new[] { Simpiens.Simulation.Life.Activity.Spar }, access: VenueAccess.GuildMembers, station: DrillYard);
+            // The tavern (T.4): two tables of four in the room's west half; open while it stands and its keeper is at the counter on shift
+            b.Venue(TavernVenue, new Vec2(-4.5f, 12f), 4f,
+                new[]
+                {
+                    new Vec2(-5.7f, 9.5f), new Vec2(-3.3f, 9.5f), new Vec2(-4.5f, 8.3f), new Vec2(-4.5f, 10.7f),
+                    new Vec2(-5.7f, 14.5f), new Vec2(-3.3f, 14.5f), new Vec2(-4.5f, 13.3f), new Vec2(-4.5f, 15.7f),
+                },
+                new[] { Simpiens.Simulation.Life.Activity.Ale, Simpiens.Simulation.Life.Activity.Supper, Simpiens.Simulation.Life.Activity.Dice },
+                station: Tavern);
 
             // --- Road Gate spawn points: two rows of six ---
             for (int i = 0; i < SpawnPointCount; i++)
@@ -255,10 +301,10 @@ namespace Simpiens.Core.Session.Layouts
             }
 
             // --- Resources: near sectors (explored) ---
-            b.Node("garden.1", new Vec2(-5f, 12f), ItemType.Ration, FoodPlotYield, FoodRegrowTicks);
-            b.Node("garden.2", new Vec2(-2f, 10f), ItemType.Ration, FoodPlotYield, FoodRegrowTicks);
-            b.Node("garden.3", new Vec2(2f, 10f), ItemType.Ration, FoodPlotYield, FoodRegrowTicks);
-            b.Node("garden.4", new Vec2(5f, 12f), ItemType.Ration, FoodPlotYield, FoodRegrowTicks);
+            b.Node("garden.1", new Vec2(-5f, 24f), ItemType.Ration, FoodPlotYield, FoodRegrowTicks);
+            b.Node("garden.2", new Vec2(-2f, 22f), ItemType.Ration, FoodPlotYield, FoodRegrowTicks);
+            b.Node("garden.3", new Vec2(2f, 22f), ItemType.Ration, FoodPlotYield, FoodRegrowTicks);
+            b.Node("garden.4", new Vec2(5f, 24f), ItemType.Ration, FoodPlotYield, FoodRegrowTicks);
             b.Node("quarry.1", new Vec2(-20f, 2f), ItemType.IronOre, 3, OreRegrowTicks);
             b.Node("quarry.2", new Vec2(-16f, -2f), ItemType.IronOre, 3, OreRegrowTicks);
             b.Node("quarry.3", new Vec2(-12f, 2f), ItemType.IronOre, 3, OreRegrowTicks);
@@ -298,7 +344,8 @@ namespace Simpiens.Core.Session.Layouts
             // --- Labels (sector names near each sector's top edge) ---
             b.Label("Outpost Hub", new Vec2(0f, 4.6f), new Rgba(0.95f, 0.85f, 0.4f));
             b.Label("Bunkhouse", new Vec2(0f, -7.4f), new Rgba(0.7f, 0.75f, 0.95f));
-            b.Label("Garden", new Vec2(0f, 16.6f), new Rgba(0.45f, 0.9f, 0.45f));
+            b.Label("Garden", new Vec2(0f, 28.6f), new Rgba(0.45f, 0.9f, 0.45f));
+            b.Label("The Tavern", new Vec2(0f, 16.6f), new Rgba(0.95f, 0.75f, 0.45f));
             b.Label("Ore Quarry", new Vec2(-16f, 4.6f), new Rgba(0.95f, 0.55f, 0.2f));
             b.Label("Herb Grove", new Vec2(16f, 4.6f), new Rgba(0.45f, 0.9f, 0.8f));
             b.Label("Deep Seam", new Vec2(-16f, 16.6f), new Rgba(0.8f, 0.5f, 0.3f));

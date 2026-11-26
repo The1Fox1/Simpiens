@@ -134,7 +134,7 @@ namespace Simpiens.Simulation
             Creatures.Tick(this, tick);
             Piles.Tick(this, tick);
             TickTheFallen(tick);
-            _market.SettleHunts(Creatures, _agentRegistry, tick); // a hunted lair emptied, or a hunt's quarry slain, pays its hunters (K6.1; Epic 11, S7.4)
+            _market.SettleHunts(Creatures, _agentRegistry, tick, (_economy ?? EconomyTuning.Default).ComfortablePurse); // a hunted lair emptied, or a hunt's quarry slain, pays its hunters (K6.1; Epic 11, S7.4)
         }
 
         /// <summary>
@@ -204,6 +204,11 @@ namespace Simpiens.Simulation
         /// </summary>
         /// <inheritdoc/>
         public event Action<AgentState, Simpiens.Simulation.Skills.Skill, int, Simpiens.Simulation.Skills.PracticeSource> Practised;
+
+        /// <summary>An item served at a venue, with its price (Epic LIFE-1 plan 2, T.5): the tavern's takings, observed. Nothing in the rules reads it.</summary>
+        public event Action<EntityId, ItemType, uint> Served;
+
+        void IIntentExecutionContext.RecordServed(EntityId crawler, ItemType item, uint price) => Served?.Invoke(crawler, item, price);
 
         public void Practise(AgentState agent, in Simpiens.Simulation.Skills.SkillWork work, int experience, in Simpiens.Simulation.Skills.PracticeSource source)
         {
@@ -612,6 +617,13 @@ namespace Simpiens.Simulation
         }
 
         TradeStallData ISupplyHost.PayWages(TradeStallData stall, uint currentTick) => Workshops.PayWages(this, Guild.PayWages(this, stall, currentTick), currentTick);
+
+        bool ISupplyHost.StationStands(Simpiens.Simulation.Items.StationKind kind)
+        {
+            var workshops = Workshops;
+            for (int i = 0; i < workshops.Count; i++) if (workshops[i].Kind == kind && workshops[i].Built) return true;
+            return false;
+        }
         /// <summary>The outpost's masterpieces (Epic 11, S8.3), the workshops': the door the sale, the guild's gift and the piles share.</summary>
         public Simpiens.Simulation.Workshops.MasterpieceService Masterpieces => Workshops.Masterpieces;
 
@@ -1064,7 +1076,9 @@ namespace Simpiens.Simulation
                 _spatialPartition.SetBossLairs(Creatures.BossMask); // the lairs whose boss lives (K10.2a)
                 Creatures.NamedLairs(out ulong namedLow, out ulong namedHigh);
                 _spatialPartition.SetNamedLairs(namedLow, namedHigh); // the lairs a named creature leads, by its rank (Epic 11, S7.2)
-                _spatialPartition.SetBuiltStations(Workshops.BuiltMask); // the stations standing: a drill yard (Epic 11, S3.4)
+                ulong built = Workshops.BuiltMask;
+                _spatialPartition.SetBuiltStations(built); // the stations standing: a drill yard (Epic 11, S3.4)
+                _spatialPartition.SetOpenVenues(Simpiens.Simulation.World.VenueRules.OpenMask(Map, currentTick, built, Workshops.KeptMask(this, (uint)currentTick))); // the venues open (Epic LIFE-1 plan 2, L2.3, T.4)
                 _spatialPartition.SetPiles(Piles.Piles); // the items on the ground (K4.3b)
                 _spatialPartition.SetHunts(_market.Hunts); // the hunts' parties (K6.2)
                 ValidateBunkOccupancy();

@@ -164,6 +164,13 @@ namespace Simpiens.Simulation.Spatial
         /// <summary>Whether the map's station <paramref name="stationIndex"/> stands built.</summary>
         public bool IsStationBuilt(int stationIndex) => stationIndex >= 0 && stationIndex < 64 && (BuiltStationMask & (1UL << stationIndex)) != 0;
 
+        /// <summary>Which of the map's venues are open (bit i = venue i, Epic LIFE-1 plan 2, L2.3, D13): in their hours, their station standing.</summary>
+        public uint OpenVenueMask { get; private set; }
+        public void SetOpenVenues(uint mask) => OpenVenueMask = mask;
+
+        /// <summary>Whether the map's venue <paramref name="venueIndex"/> is open.</summary>
+        public bool IsVenueOpen(int venueIndex) => venueIndex >= 0 && venueIndex < 32 && (OpenVenueMask & (1u << venueIndex)) != 0;
+
         public bool IsSectorCharted(int sectorId)
         {
             if (sectorId < 0 || sectorId >= 64) return true;

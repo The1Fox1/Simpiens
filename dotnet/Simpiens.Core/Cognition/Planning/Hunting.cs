@@ -49,9 +49,9 @@ namespace Simpiens.Cognition.Planning
             return found;
         }
 
-        /// <summary>A resident fit to hunt: on its feet over the recovery line, not hungry or worn out, bold and armed.</summary>
+        /// <summary>A resident fit to hunt: on its feet over the recovery line, not hungry or worn out, bold and armed, and not on its day off (Epic LIFE-1 plan 3, R.8, D35).</summary>
         public static bool IsHunter(in AgentContext context) =>
-            !context.IsDrifter && !context.IsDowned && context.Health >= Vitality.RecoveredAt && context.Hunger < 75f && context.Energy > 25f
+            !context.IsDrifter && !context.IsDowned && !Vitality.Resting(context) && context.Health >= Vitality.RecoveredAt && context.Hunger < 75f && context.Energy > 25f
             && context.Personality.RiskTolerancePercent >= Vitality.VentureRiskTolerancePercent && Vitality.IsArmed(context.Inventory);
 
         /// <summary>It braves lair <paramref name="lairIndex"/> (D21).</summary>

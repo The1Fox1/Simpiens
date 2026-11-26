@@ -26,8 +26,13 @@ namespace Simpiens.Simulation.Economy
         /// <summary>Exports: units the caravan leaves the stall (a reserve for the forge, Epic 10 Part 3, K4.4, D25); it takes only what is past them.</summary>
         public readonly ushort Keep;
 
-        public CaravanTerms(ItemType item, CaravanRole role, ushort limit, ushort price, string flowName = null, ushort keep = 0)
+        /// <summary>Supplies: the station that must stand for the caravan to bring it (the tavern's menu, Epic LIFE-1 plan 2, T.3); none for always.</summary>
+        public readonly Simpiens.Simulation.Items.StationKind ForStation;
+
+        public CaravanTerms(ItemType item, CaravanRole role, ushort limit, ushort price, string flowName = null, ushort keep = 0,
+            Simpiens.Simulation.Items.StationKind forStation = Simpiens.Simulation.Items.StationKind.None)
         {
+            ForStation = forStation;
             Item = item;
             Role = role;
             Limit = limit;
@@ -37,7 +42,9 @@ namespace Simpiens.Simulation.Economy
         }
 
         public static CaravanTerms Exports(ItemType item, ushort quota, ushort marketPrice, ushort keep = 0) => new CaravanTerms(item, CaravanRole.Exports, quota, marketPrice, keep: keep);
-        public static CaravanTerms Supplies(ItemType item, ushort stockCap, ushort wholesaleCost, string flowName) => new CaravanTerms(item, CaravanRole.Supplies, stockCap, wholesaleCost, flowName);
+        public static CaravanTerms Supplies(ItemType item, ushort stockCap, ushort wholesaleCost, string flowName,
+            Simpiens.Simulation.Items.StationKind forStation = Simpiens.Simulation.Items.StationKind.None)
+            => new CaravanTerms(item, CaravanRole.Supplies, stockCap, wholesaleCost, flowName, forStation: forStation);
     }
 
     /// <summary>
@@ -110,7 +117,10 @@ namespace Simpiens.Simulation.Economy
             CaravanTerms.Supplies(ItemType.ForagingPrimer, stockCap: 1, wholesaleCost: 2, SupplyService.ManualSinkName),
             CaravanTerms.Supplies(ItemType.SmithingPrimer, stockCap: 1, wholesaleCost: 2, SupplyService.ManualSinkName),
             CaravanTerms.Supplies(ItemType.AlchemyPrimer, stockCap: 1, wholesaleCost: 2, SupplyService.ManualSinkName),
-            CaravanTerms.Supplies(ItemType.MedicinePrimer, stockCap: 1, wholesaleCost: 2, SupplyService.ManualSinkName));
+            CaravanTerms.Supplies(ItemType.MedicinePrimer, stockCap: 1, wholesaleCost: 2, SupplyService.ManualSinkName),
+            // The tavern's menu (Epic LIFE-1 plan 2, T.3, D19): a visit's ale and stew, only while a tavern stands
+            CaravanTerms.Supplies(ItemType.Ale, stockCap: 12, wholesaleCost: 2, SupplyService.TavernSinkName, Simpiens.Simulation.Items.StationKind.Tavern),
+            CaravanTerms.Supplies(ItemType.Stew, stockCap: 8, wholesaleCost: 4, SupplyService.TavernSinkName, Simpiens.Simulation.Items.StationKind.Tavern));
 
         /// <summary>The most gold the caravan can pay a stall for its exports in one visit.</summary>
         public uint MaxSalvagePaymentPerVisit

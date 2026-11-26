@@ -118,9 +118,15 @@ namespace Simpiens.Core.Tests
         /// Gate seed 3 (S5.9, <see cref="MeasureACallingEmergesOnTheGateSeeds"/> on S5's build): over ten days a member became a
         /// Warden on its own on 2 of the 23 gate seeds (3 and 11), and on both it held the front at a clear that emptied its lair
         /// (finding F12: melee seldom becomes a member's best skill in ten days). On this one Lane becomes a Warden at t60619, and
-        /// at the clear that ends at t81285 takes 26 of the creatures' blows, a mate 4 at the most.
+        /// at the clear that ends at t81285 takes 26 of the creatures' blows, a mate 4 at the most. Gate seed 11 since Epic LIFE-1's Recreate (plan 2, L2.6, `docs/life-model.md` §5.8): free time moved the outpost's history, and
+        /// seed 3 earned no Warden in ten days: still on 1 of 23, this one, where Eamon becomes a Warden at t52910 and at the clear
+        /// that ends at t63461 takes 23 of the blows, a mate 2 at the most.
+        /// Seed 83 since the tavern's room (Epic LIFE-1 plan 2, T.2): the taller floor and the Garden's move moved the outpost's
+        /// history, and seed 11 earned no Warden; none of the gate seeds or 21–82 does within the ten days (83 and 85 of 31–100).
+        /// Seed 46 since variety, curiosity, wants and mood's pull on leisure (Epic LIFE-1 plan 2, L2.7, W.1-W.4, L2.8) moved the outpost's history, and seed 83's moment no longer came.
+        /// Seed 7 since Epic LIFE-1 plan 3's rhythm (nights, routines, weights by the hour and days off, R.2-R.9) moved the outpost's history, and seed 46's moment no longer came.
         /// </summary>
-        private const ulong Seed = 3;
+        private static readonly ulong Seed = ScenarioSeed.Or(7);
 
         [Fact]
         public void ACallingEmerges()

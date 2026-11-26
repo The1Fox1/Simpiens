@@ -108,6 +108,16 @@ namespace Simpiens.Cognition.Planning
         /// <summary>Below this energy a crawler is tired and wants rest (RestGoal).</summary>
         public const float TiredEnergy = 40f;
 
+        /// <summary>
+        /// The bedtime line (Epic LIFE-1 plan 3, R.3, D31): in its routine's night a crawler below this energy goes to bed, rather
+        /// than waiting until it is tired; a waking day of about 16 hours ends near 46.
+        /// </summary>
+        public const float BedtimeEnergy = 70f;
+
+        /// <summary>In its routine's night and below the bedtime line: it goes to bed (D31).</summary>
+        public static bool IsBedtime(in AgentContext context) =>
+            context.Block == Simpiens.Simulation.Life.RoutineBlock.Night && context.Energy < BedtimeEnergy;
+
         public static float FieldRestCost(in AgentContext context, float baseCost)
         {
             if (context.Energy <= TooTiredToWalkEnergy) return baseCost;
@@ -117,7 +127,8 @@ namespace Simpiens.Cognition.Planning
         /// <summary>Relaxing at the hearth: priced like resting in place while tired, at base cost otherwise.</summary>
         public static float HearthRestCost(in AgentContext context, float baseCost)
         {
-            return context.Energy < TiredEnergy ? FieldRestCost(context, baseCost) : baseCost;
+            // At bedtime too (Epic LIFE-1 plan 3, R.3): a crawler going to bed sleeps in a bunk rather than dozing by the fire
+            return context.Energy < TiredEnergy || IsBedtime(context) ? FieldRestCost(context, baseCost) : baseCost;
         }
 
         public static ushort MinimumSalePrice(in AgentContext context, ItemType item)

@@ -24,6 +24,7 @@ namespace Simpiens.Presentation.Art
             (AgentVisualState.Rallying, Frames("Rally")),
             (AgentVisualState.Defiant, Frames("Defiant")),
             (AgentVisualState.Sleeping, Frames("Sleep")),
+            (AgentVisualState.Seated, Frames("Seat")), // Epic LIFE-1 plan 3, V.3
         };
 
         private static string[] Frames(string stem) => new[] { "Agent_" + stem + "_0", "Agent_" + stem + "_1" };

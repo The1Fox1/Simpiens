@@ -123,6 +123,9 @@ namespace Simpiens.Presentation.Dashboard
         /// <summary>The station takes an artisan and orders (the forge, the still); the drill yard takes neither (Epic 11, S3.4, D10).</summary>
         public bool TakesWork { get; private set; } = true;
 
+        /// <summary>Whether it makes to order (its row's recipes): the tavern takes a keeper but no orders (Epic LIFE-1 plan 2, T.7).</summary>
+        public bool TakesOrders { get; private set; } = true;
+
         /// <summary>The drill yard's members who drilled today (Epic 11, S3.5): "Drilled today: Bram, Ione", or that nobody has.</summary>
         public string DrilledToday { get; private set; } = string.Empty;
 
@@ -173,14 +176,16 @@ namespace Simpiens.Presentation.Dashboard
             var tuning = Tuning;
             var state = workshops[Index];
             string station = WorkshopRules.StationName(state.Kind);
-            Title = "The " + LongName(state.Kind);
-            Description = DescriptionOf(state.Kind);
+            var row = StationTable.Get(state.Kind);
+            Title = "The " + row.Title;
+            Description = row.Description;
             Built = state.Built;
-            TakesWork = state.Kind != StationKind.DrillYard;
+            TakesWork = row.TakesArtisan;
+            TakesOrders = row.HasRecipes;
             ushort cost = tuning.CostOf(state.Kind);
             DrilledToday = TakesWork ? string.Empty : DrilledTodayText();
             Status = !Built ? Invariant($"An empty plot · {cost}g to build")
-                : TakesWork ? Invariant($"Standing · {state.Made} made") : "Standing · " + DrilledToday;
+                : TakesOrders ? Invariant($"Standing · {state.Made} made") : TakesWork ? "Standing · open while its keeper keeps it" : "Standing · " + DrilledToday;
 
             var host = _context.Simulation as IWorkshopHost;
             var build = host != null ? workshops.CanBuild(host, Index) : WorkshopRules.Check.NoStall;
@@ -493,22 +498,6 @@ namespace Simpiens.Presentation.Dashboard
             }
             return names.Count == 0 ? "nobody has drilled today" : "drilled today: " + string.Join(", ", names);
         }
-
-        private static string LongName(StationKind kind) => kind switch
-        {
-            StationKind.Forge => "Forge",
-            StationKind.Still => "Alchemy Still",
-            StationKind.DrillYard => "Drill Yard",
-            _ => "Station"
-        };
-
-        private static string DescriptionOf(StationKind kind) => kind switch
-        {
-            StationKind.Forge => "Iron ore into tools and gear, worked by an artisan you hire.",
-            StationKind.Still => "Herbs into draughts, worked by an artisan you hire.",
-            StationKind.DrillYard => "Where guild members drill in their free hours: no artisan, no orders.",
-            _ => "A station worked by an artisan you hire."
-        };
 
         private static string Capitalised(string text) => string.IsNullOrEmpty(text) ? text : char.ToUpperInvariant(text[0]) + text.Substring(1);
     }

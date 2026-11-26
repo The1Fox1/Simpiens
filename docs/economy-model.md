@@ -162,3 +162,22 @@ The default prices (15 / 5 / 6) are fair to a neutral crawler. A remembered affi
 - ~~**Lodging fees:**~~ delivered by Epic 10 Part 2, W5 (2026-11-06, D63): a guild member with a bunk in the barracks is paid its wage less 1g each caravan visit (`GuildTuning.LodgingFee`), never below nothing. It is a deduction, not a transfer: the fee stays in the treasury and the ledger records the wage paid.
 - **Other crawler sinks:** not needed while crawler wallets stay flat.
 - **Rival shops and guilds** (the producer's long-term direction, 2026-11-04): other shops and guilds competing for the crawlers' trade, trust and service, as a sink and a pressure on prices and wages. Unscheduled; the vision is in the [Game Design Proposal §5](Game%20Design%20Proposal.md).
+
+## The tavern (Epic LIFE-1 plan 2, T.3–T.6, 2026-11-24)
+- **Its flows:** building it, 200g into `Construction`; its keeper's wage, as an artisan's; the caravan's ale (12 at 2g) and stew (8 at 4g) into `TavernWholesale`, only while it stands; its takings, an ale at 4g and a stew supper at 10g, from the crawler's purse to the treasury through the ledger's stall purchase, as any sale. Dice are free.
+- **The `tavern` soak profile** (the fair player's prices and `TavernPlayer`, keeping a 150g reserve): on seeds 1–20 the tavern stands by day 1, is first kept around t12,000 (when a resident trusts the patron enough to keep it), opens 2–15 hours over the three days on the day shift, and serves 0–10 a seed (about 2 a seed, 13g). Treasuries end at 440–1,311g, every stall solvent, nobody starving. Its band asks for the tavern built and kept, the stall solvent, trust risen for 8 and no starving; its takings are read, not banded (finding F18: work outbids free time, and dice are what free time picks most).
+- **At plan 2's gate** (C.1, with wants and mood's pull on leisure in): on seeds 1–20 the tavern opens 1.3–15.7 hours over the three days and serves 0–9 a seed, 106 in all (5.3 a seed, 610g of takings); treasuries end at 445–1,240g, every stall solvent, nobody starving; 20 of 20 within the band. The crafting profile's share of seeds that make goods is 0.75 since plan 2 (31 of seeds 1–40; the epic's F19).
+
+## Rhythm (Epic LIFE-1 plan 3, R.10, 2026-11-24)
+Nights, routines, satiation, weariness and days off move how long residents work: over six days on the gate seeds the Work family's plans take 7.4 hours a resident-day with no player (8.3 at plan 2's gate over three days; 7.9 over six before the day's intention) and 5.7 with the guild player, of them 2.8 and 2.4 hands-on. D25's 6–8 hours of work hold with no player and fall under them with the guild's expeditions. The soak, all bands as before:
+
+| Profile | Seeds | Within band | Treasury at day 3 | Trust mean |
+| :--- | :--- | ---: | :--- | ---: |
+| fair, greedy, generous, guild, crafting, hunting, tavern | the defaults | 21 of 21 | fair 802–1,029g; greedy 375–643g; generous 0g; guild 683–959g; crafting 109–188g; hunting 128–354g; tavern 571–734g | 75.5; −41.6; 89.7; 77.4; 74.2; 78.4; 77.6 |
+| guild | 1–40 | 40 of 40 | 520–1,178g (mean 864) | 72.2 |
+| crafting | 1–40 | 40 of 40 | 0–439g (mean 80) | 60.1 |
+| hunting | 1–40 | 40 of 40 | 4–613g (mean 209) | 73.2 |
+| tavern | 1–40 | 40 of 40 | 320–1,104g (mean 741) | 70.5 |
+
+- **The tavern** serves about 12 a seed in three days on seeds 1–40 (78g), from 5.3 at plan 2's gate: its evenings now come while residents are awake (F18).
+- **The crafting loop, by exception:** the stations make goods on 37 of seeds 1–40 (31 at plan 2's gate), so `CraftingMadeShare` is back at 0.8 (F19 resolved); a quit for want of pay comes on 13 of 40 (10 allowed before), the generous players' treasury running dry at a visit more often while residents sell less, so `CraftingUnpaidQuitShare` is 0.35 (the epic's F20).

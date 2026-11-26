@@ -19,11 +19,15 @@ namespace Simpiens.Core.Tests
     /// meets the creatures there, fights back and slays one, within four game days. The days hold, the ledger balances, no
     /// intent handler throws. Gate seed 18: K3.3 measured kills on 7 of the 23 gate seeds in four days, this one's first at
     /// t14382; with skills on 5, and with a lair judged by the crawler's skill (Epic 10 Part 3, K9.8b) on 6, with no death and
-    /// the days held on all 23 (<see cref="MeasureFightsBackOnTheGateSeeds"/>), this one's first at t19597.
-    /// </summary>
+    /// the days held on all 23 (<see cref="MeasureFightsBackOnTheGateSeeds"/>), this one's first at t19597. Gate seed 424242
+    /// since Epic LIFE-1's Recreate (plan 2, L2.6, `docs/life-model.md` §5.8): free time moved the outpost's history, and seed 18 brought no kill in four days; a kill within four days on 5 of the 23 (20 of seeds 1–60), this one's
+    /// first at t13492.
+    /// Gate seed 20261009 since the tavern's room (Epic LIFE-1 plan 2, T.2): the taller floor and the Garden's move moved the
+        /// outpost's history, and seed 424242's moment no longer came.
+        /// </summary>
     public class ArmedCrawlerScenarioTests
     {
-        private const ulong Seed = 18;
+        private static readonly ulong Seed = ScenarioSeed.Or(20261009);
         private const long Horizon = 4 * DayClock.TicksPerDay;
 
         [Fact]

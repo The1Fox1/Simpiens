@@ -70,6 +70,9 @@ namespace Simpiens.Presentation
         public Simpiens.Presentation.Art.People.ScarMarks Scars;
         /// <summary>Who a crawler is to the outpost (Epic UI-Beta B2); Resident for props.</summary>
         public CrawlerStanding Standing;
+
+        /// <summary>What it is doing with its free time (Epic LIFE-1 plan 3, V.4): a begun spell's activity, the fireside at the hearth; none otherwise.</summary>
+        public Simpiens.Simulation.Life.Activity Activity;
         /// <summary>One of the patron's people (Epic 11, S4.8): a guild member or a station's artisan; false for the rest and props.</summary>
         public bool Ours;
         /// <summary>A guild member's calling's part in a party (Epic 11, S5.8): its badge over its body; none for the rest and props.</summary>
@@ -241,6 +244,7 @@ namespace Simpiens.Presentation
                     Look = agent != null ? agent.Look : default,
                     Scars = agent != null ? Simpiens.Presentation.Art.People.ScarMarks.Of(agent.Traits) : default,
                     Standing = agent != null ? StandingOf(agent) : CrawlerStanding.Resident,
+                    Activity = agent != null ? ActivityOf(agent) : Simpiens.Simulation.Life.Activity.None,
                     Ours = agent != null && (agent.Memberships.Has(GroupType.FactionGuild) || agent.Memberships.Has(GroupType.Workshop)),
                     Role = agent != null && agent.Memberships.Has(GroupType.FactionGuild) ? Simpiens.Simulation.Skills.CallingTable.RoleOf(agent.Traits.Calling) : Simpiens.Simulation.Skills.PartyRole.None,
                     Creature = creature != null ? creature.Kind : Simpiens.Simulation.Creatures.CreatureKind.None,
@@ -255,6 +259,15 @@ namespace Simpiens.Presentation
                 _index[entity.Id] = Count;
                 Count++;
             }
+        }
+
+        /// <summary>What <paramref name="agent"/> is doing with its free time (Epic LIFE-1 plan 3, V.4): a begun spell's activity, or the fireside while it relaxes at the hearth.</summary>
+        public static Simpiens.Simulation.Life.Activity ActivityOf(Simpiens.Cognition.AgentState agent)
+        {
+            if (agent.CurrentIntent is Simpiens.Cognition.Contracts.RecreateIntent spell && spell.Begun) return spell.Activity;
+            if (agent.HasActivePlan && agent.ActivePlan?.CurrentAction is Simpiens.Cognition.Planning.Actions.RelaxAtAnchorAction
+                && agent.VisualState != Simpiens.Entities.AgentVisualState.Walking) return Simpiens.Simulation.Life.Activity.Fireside;
+            return Simpiens.Simulation.Life.Activity.None;
         }
 
         // A pile's rarest stack, the first on a tie (K4.5a)

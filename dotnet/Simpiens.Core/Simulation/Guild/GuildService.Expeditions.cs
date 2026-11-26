@@ -470,7 +470,11 @@ namespace Simpiens.Simulation.Guild
                             ? host.EconomyLedger.TryPayFromStall(stall.StallEntityId, ref stall, crawler.Inventory, share, StallPayment.GuildShare)
                             : PayDirect(ref stall, crawler, share);
                         if (!paid) SimLog.Economy.ZLogWarning($"{SimLog.Agent(member.CrawlerId)}'s {share}g share went unpaid (the treasury holds {stall.TreasuryGold}g)");
-                        else if (share > 0) crawler.Think(Simpiens.Simulation.Life.Thought.AGoodPayday, tick); // an expedition's share (Epic LIFE-1, L1.2)
+                        else if (share > 0)
+                        {
+                            crawler.Think(Simpiens.Simulation.Life.Thought.AGoodPayday, tick); // an expedition's share (Epic LIFE-1, L1.2)
+                            crawler.NoteWindfall(share, tick, (host.Economy ?? EconomyTuning.Default).ComfortablePurse); // a windfall (plan 3's R.5, D33)
+                        }
                     }
                 }
                 host.UpdateStall(stall);
@@ -627,7 +631,12 @@ namespace Simpiens.Simulation.Guild
             Direct(host, party);
         }
 
-        /// <summary>The party's directive, issued at dispatch (so members judge it once) and aimed at the stage's place: the stall, or the sector.</summary>
+        /// <summary>
+        /// The party's directive, aimed at the stage's place (the stall, the sector, or a clear's lair) and issued afresh at each
+        /// stage, so every member judges it again by compliance, as an artisan judges each block of its shift: a member who
+        /// no longer complies stays behind or deserts, by the path dispatch uses (the producer, 2026-11-24: "Crawlers can
+        /// absolutely disobey orders"; Epic LIFE-1 plan 2's O.2, D25, amending Epic 10's D8, which judged it once at dispatch).
+        /// </summary>
         private static void Direct(IGuildHost host, GuildParty party)
         {
             var groups = host.Groups;
@@ -643,7 +652,7 @@ namespace Simpiens.Simulation.Guild
                 target = sector.TargetPoint;
             }
             groups.SetDirective(party.GroupId, new GroupDirective(DirectiveType.Expedition, party.GroupId, WorldRegistry.PlayerEntityId,
-                target, default, party.Record.DispatchTick, uint.MaxValue, Tuning(host).Expedition.MusterRadius));
+                target, default, party.Record.StageTick, uint.MaxValue, Tuning(host).Expedition.MusterRadius));
         }
 
         /// <summary>Each member with the party takes a ready node of the haul's item, in member id order, sharing when there are fewer nodes than members.</summary>

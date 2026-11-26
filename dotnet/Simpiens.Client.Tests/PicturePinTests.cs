@@ -185,12 +185,12 @@ namespace Simpiens.Client.Tests
         // pin moved with the render references, labels with them, after a look.
         // Epic 11 S3.4 (2026-11-17): the guildhall's drill yard lies as a plot in the hall's west half, so both whole-floor
         // top-down views gain its item; labels unchanged, isometric's and the zoomed views unchanged (the plot falls outside them).
-        private static readonly (ulong, ulong) PinnedTick0 = (12229471680476396116UL, 10638611690560153633UL);
-        private static readonly (ulong, ulong) PinnedTick300 = (11587337056755854097UL, 10638611690560153633UL);
+        private static readonly (ulong, ulong) PinnedTick0 = (7925710846751072319UL, 26935273446057295UL); // since Epic LIFE-1 plan 2's T.2-T.4: the taller floor, the tavern's room and counter
+        private static readonly (ulong, ulong) PinnedTick300 = (16249221129329632034UL, 26935273446057295UL);
         // Epic UI-Beta B1: the selected crawler's label shows its given name; labels re-pinned, items unchanged.
-        private static readonly (ulong, ulong) PinnedSelectedZoomed = (8154952986832287063UL, 4173834597935897353UL);
+        private static readonly (ulong, ulong) PinnedSelectedZoomed = (12051221185872801022UL, 12464834543357701047UL);
         // Isometric's (M3 step 2.3), pinned with its render references after a look at them.
-        private static readonly (ulong, ulong) PinnedIsometricTick300 = (5272746028741346296UL, 18192351689350694692UL);
-        private static readonly (ulong, ulong) PinnedIsometricSelectedZoomed = (13761009627820041930UL, 2675439562305966924UL);
+        private static readonly (ulong, ulong) PinnedIsometricTick300 = (14908396125817986634UL, 6934753541016256865UL);
+        private static readonly (ulong, ulong) PinnedIsometricSelectedZoomed = (14238228492994128266UL, 17703223923498051003UL);
     }
 }

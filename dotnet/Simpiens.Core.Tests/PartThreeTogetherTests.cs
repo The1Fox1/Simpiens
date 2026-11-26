@@ -46,11 +46,20 @@ namespace Simpiens.Core.Tests
             return guild;
         }
 
+        /// <summary>
+        /// Every scenario's seed (the default, measured with K11.1a: see the epic's K11 entry), and the bleeding saves'. Every
+        /// scenario's is gate seed 424242 since Epic LIFE-1's Recreate (plan 2, L2.6, `docs/life-model.md` §5.8): free time moved the outpost's history, and on the default not every scenario came about within its days.
+        /// Together, seed 8 since Epic LIFE-1 plan 3's rhythm (nights, routines, weights by the hour and days off, R.2-R.9) moved the outpost's history, and seed 424242's moment no longer came.
+        /// Bleeding, seed 1 since Epic LIFE-1 plan 3's rhythm (nights, routines, weights by the hour and days off, R.2-R.9) moved the outpost's history, and seed 3's moment no longer came.
+        /// Mid-fight, seed 424242 since Epic LIFE-1 plan 3's rhythm (nights, routines, weights by the hour and days off, R.2-R.9) moved the outpost's history, and the default seed (20261009)'s moment no longer came.
+        /// </summary>
+        private static readonly ulong TogetherSeed = ScenarioSeed.Or(8), BleedingSeed = ScenarioSeed.Or(1), MidFightSeed = ScenarioSeed.Or(424242);
+
         /// <summary>The default seed (measured with K11.1a: see the epic's K11 entry).</summary>
         [Fact]
         public void EveryScenarioPlaysTogether()
         {
-            using var sim = LocalSimulation.Create(SimulationSettings.DefaultSeed);
+            using var sim = LocalSimulation.Create(TogetherSeed);
             sim.Respawn(OutpostSession.SessionId);
             Players(sim, hunts: true);
             var watch = new OutpostWatch(sim);
@@ -87,7 +96,7 @@ namespace Simpiens.Core.Tests
         [Fact]
         public void ASaveMidFightLoadsByteForByteAndPlaysOn()
         {
-            using var played = LocalSimulation.Create(SimulationSettings.DefaultSeed);
+            using var played = LocalSimulation.Create(MidFightSeed);
             played.Respawn(OutpostSession.SessionId);
             Players(played, hunts: false);
             var party = played.Simulation.Guild.Parties[0];
@@ -97,7 +106,7 @@ namespace Simpiens.Core.Tests
                 && creatures.TryGet(creatures.Lairs[gate].MemberIn(0), out var k) && k.Mode == CreatureMode.Chase && k.Health < k.Definition.MaxHealth;
             while (played.Clock.CurrentTick < 16 * DayClock.TicksPerDay && !MidFight()) played.Step(1);
             Assert.True(MidFight(), "The guild came to blows at the gate.");
-            var loaded = SaveAndLoad(played, SimulationSettings.DefaultSeed, out long tick);
+            var loaded = SaveAndLoad(played, MidFightSeed, out long tick);
             using (loaded)
             {
                 var lp = loaded.Simulation.Guild.Parties[0];
@@ -115,12 +124,13 @@ namespace Simpiens.Core.Tests
 
         /// <summary>
         /// K11.1b: saved with a crawler bleeding out in danger, and later with one being carried out (K7's carry, gate seed 6),
-        /// each loaded and played on: the fallen is carried out, or its clock runs out, as it would have.
+        /// each loaded and played on: the fallen is carried out, or its clock runs out, as it would have. Gate seed 3 since Epic LIFE-1's Recreate (plan 2, L2.6, `docs/life-model.md` §5.8): free time moved the outpost's history,
+        /// and on seed 6 nobody fell (the carry's seed moved with it); the load now follows the scenario's seed.
         /// </summary>
         [Fact]
         public void SavesWithACrawlerBleedingAndOneCarriedLoadByteForByte()
         {
-            using var played = LocalSimulation.Create(6);
+            using var played = LocalSimulation.Create(BleedingSeed);
             played.Respawn(OutpostSession.SessionId);
             new WorkshopPlayer(played, StationKind.Forge, ItemType.IronBlade, batch: 4);
             new GuildPlayer(played, targetSize: 4).SendClear(CreatureKind.None, RetreatRule.Steady, arm: true);
@@ -131,7 +141,7 @@ namespace Simpiens.Core.Tests
             var fallen = states.FirstOrDefault(c => c.IsCollapsed);
             Assert.True(fallen != null, "A crawler fell in danger.");
             uint bleeds = fallen.BleedsOutAt;
-            var loaded = SaveAndLoad(played, 6, out long tick);
+            var loaded = SaveAndLoad(played, BleedingSeed, out long tick);
             using (loaded)
             {
                 var again = loaded.Host.CrawlerStates.First(c => c.AgentId == fallen.AgentId);
@@ -147,7 +157,7 @@ namespace Simpiens.Core.Tests
             while (played.Clock.CurrentTick < 8 * DayClock.TicksPerDay && !states.Any(c => c.CarriedBy != default)) played.Step(1);
             var carried = states.FirstOrDefault(c => c.CarriedBy != default);
             Assert.True(carried != null, "A crawler was carried.");
-            loaded = SaveAndLoad(played, 6, out tick);
+            loaded = SaveAndLoad(played, BleedingSeed, out tick);
             using (loaded)
             {
                 var again = loaded.Host.CrawlerStates.First(c => c.AgentId == carried.AgentId);

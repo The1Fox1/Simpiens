@@ -537,7 +537,7 @@ namespace Simpiens.Simulation.Economy
         /// the escrow by damage dealt, the bounty completed, the chronicle told. A done hunt with nobody in it waits for a
         /// claimant, or its expiry. In id order.
         /// </summary>
-        public void SettleHunts(Simpiens.Simulation.Creatures.CreatureService creatures, IAgentRegistry agents, uint currentTick)
+        public void SettleHunts(Simpiens.Simulation.Creatures.CreatureService creatures, IAgentRegistry agents, uint currentTick, int comfortablePurse = 0)
         {
             bool settled = false;
             for (int i = _hunts.Count - 1; i >= 0; i--)
@@ -563,6 +563,7 @@ namespace Simpiens.Simulation.Economy
                     {
                         hunter.AddDeed(Simpiens.Simulation.Skills.Deed.HuntPaid); // a deed (Epic 11, S0.5)
                         if (shares[c] > 0) hunter.Think(Simpiens.Simulation.Life.Thought.AGoodPayday, currentTick); // and a payday (Epic LIFE-1, L1.2)
+                        if (shares[c] > 0) hunter.NoteWindfall(shares[c], currentTick, comfortablePurse); // a windfall (plan 3's R.5, D33)
                     }
                     _chronicleService?.RecordEvent(new ChronicleEvent(ChronicleEventType.BountyFulfilled, hunt.ClaimantAt(c), SimulationManager.PlayerEntityId,
                         bounty.TargetSectorId, currentTick, ChronicleIntensity.Notable, shares[c]));

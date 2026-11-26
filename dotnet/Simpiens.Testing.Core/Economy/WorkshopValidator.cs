@@ -55,8 +55,9 @@ namespace Simpiens.Testing.Economy
             ValidateOverworkBreaksAnArtisan();
             ValidatePracticeRaisesTheGrade();
             ValidateRepair();
+            ValidateTheTavernsKeeper();
 
-            TestLog.Log("<color=green>[WorkshopValidator] ALL 12 TESTS PASSED SUCCESSFULLY!</color>");
+            TestLog.Log("<color=green>[WorkshopValidator] ALL 13 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private static void ValidateBuilding()
@@ -445,6 +446,39 @@ namespace Simpiens.Testing.Economy
             Assert(check == expected, $"Refused ({what}): expected {expected}, got {check}.");
             Assert(o.Sim.Workshops.Artisans.Count == artisans, $"A refusal ({what}) hires nobody.");
         }
+
+        /// <summary>
+        /// The tavern (Epic LIFE-1 plan 2, T.4, D18): built for its 200g, a keeper hired as an artisan is, on the shifts it is given;
+        /// on shift with no order (it has no recipes) it is sent to the counter, and the tavern's venue is open while it stands
+        /// there on shift, and shut off shift or away from the counter.
+        /// </summary>
+        private static void ValidateTheTavernsKeeper()
+        {
+            var o = NewOutpost(treasury: 1000);
+            int tavern = o.Sim.Workshops.IndexOf(StationKind.Tavern);
+            Assert(tavern >= 0, "Floor 1 has a tavern's site.");
+            uint before = o.Treasury;
+            Assert(o.Sim.Workshops.Build(o.Sim, tavern, 0) == WorkshopRules.Check.Ok && o.Treasury == before - 200, "The tavern is built for 200g.");
+            var keeper = Crawler(o, trust: 60, warmth: 40);
+            Assert(o.Sim.Workshops.Hire(o.Sim, keeper.AgentId, tavern, 6, 1) == WorkshopRules.Check.Ok, "A keeper is hired.");
+            Assert(o.Sim.Workshops.SetShifts(o.Sim, keeper.AgentId, 0b000011) == WorkshopRules.Check.Ok, "It keeps 06:00 to 14:00.");
+            var map = Floor1Layout.Definition;
+            int venue = -1;
+            for (int v = 0; v < map.Venues.Count; v++) if (map.Venues[v].Key == Floor1Layout.TavernVenue) venue = v;
+            var counter = o.Sim.Workshops.DefinitionAt(tavern).Position;
+            uint onShift = 10, offShift = (uint)(9 * DayClock.TicksPerHour); // 06:00 and 15:00
+            Assert(o.Sim.Workshops.OrderFor(keeper.AgentId, onShift).IsActive, "On shift, with no order, it is sent to the counter.");
+            Assert(!o.Sim.Workshops.OrderFor(keeper.AgentId, offShift).IsActive, "Off shift it is not.");
+            keeper.Position = Vec2.Zero;
+            Assert(!Open(o, map, venue, onShift), "On shift but away from the counter, the tavern is shut.");
+            keeper.Position = counter;
+            Assert(Open(o, map, venue, onShift), "On shift at the counter, the tavern is open.");
+            Assert(!Open(o, map, venue, offShift), "Off shift, shut.");
+            TestLog.Log("[PASS] Test 13: the tavern is built, its keeper hired and sent to the counter on shift, and its venue open only while it keeps it.");
+        }
+
+        private static bool Open(Outpost o, MapDefinition map, int venue, uint tick) =>
+            (VenueRules.OpenMask(map, tick, o.Sim.Workshops.BuiltMask, o.Sim.Workshops.KeptMask(o.Sim, tick)) & (1u << venue)) != 0;
 
         private static Outpost NewOutpost(uint treasury)
         {

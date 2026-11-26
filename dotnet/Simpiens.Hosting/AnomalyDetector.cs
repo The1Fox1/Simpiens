@@ -99,6 +99,7 @@ namespace Simpiens.Hosting
             public bool HasPosition;
             public Vec2 LastHeading;
             public bool HasHeading;
+            public long LastMoveTick;
             public readonly long[] Reversals = new long[4];
             public int ReversalIndex, ReversalCount;
             public long LastJitterAlert = long.MinValue / 2;
@@ -243,6 +244,11 @@ namespace Simpiens.Hosting
             if (delta.SqrMagnitude <= 0.0001f) return; // headings only from real movement
             Vec2 heading = delta.Normalized;
             pawn.LastPosition = position;
+            // A move after standing still longer than the jitter window starts afresh (Epic LIFE-1 plan 3, R.10): a pawn jammed in a
+            // door, nudged aside by the watchdog after a second's stall, counted the nudge as a reversal of its heading from before
+            // the stall, which is a pause, not an oscillation
+            if (pawn.HasHeading && tick - pawn.LastMoveTick > JitterWindowTicks) pawn.HasHeading = false;
+            pawn.LastMoveTick = tick;
 
             if (pawn.HasHeading && Vec2.Dot(heading, pawn.LastHeading) < -0.5f)
             {

@@ -52,6 +52,32 @@ namespace Simpiens.Simulation.Life
         EarnedAName = 20,
         /// <summary>It made a masterpiece.</summary>
         MadeAMasterpiece = 21,
+        /// <summary>A walk in the Garden ended (plan 2's activities, L2.2: thought at an activity's end).</summary>
+        AWalkInTheGarden = 22,
+        /// <summary>A browse of the stall's goods ended.</summary>
+        BrowsedTheMarket = 23,
+        /// <summary>A bout in the yard ended.</summary>
+        AGoodBout = 24,
+        /// <summary>An ale at the tavern ended.</summary>
+        AnAleAtTheTavern = 25,
+        /// <summary>A supper at the tavern ended.</summary>
+        ASupperAtTheTavern = 26,
+        /// <summary>A game of dice ended.</summary>
+        AGameOfDice = 27,
+        // A want come true, or run out (plan 2's W.1, D20)
+        HadMyTavernSupper = 28,
+        MissedMySupper = 29,
+        ANightOfDice = 30,
+        NoDiceTonight = 31,
+        AQuietWalk = 32,
+        NoTimeToMyself = 33,
+        /// <summary>It saw the friend it wanted to (names the friend).</summary>
+        SawAFriend = 34,
+        /// <summary>It never saw the friend it wanted to (names the friend).</summary>
+        MissedAFriend = 35,
+        TriedSomewhereNew = 36,
+        /// <summary>A windfall paid: a single payment of half the comfortable purse or more (plan 3's R.5, D33).</summary>
+        EarnedARest = 37,
     }
 
     /// <summary>What a thought is about: a need met or missed, an event in its life, or another crawler.</summary>
@@ -159,6 +185,24 @@ namespace Simpiens.Simulation.Life
                 new ThoughtDefinition(Thought.GrewInMyCraft, "GrewInMyCraft", "Grew in my craft", 8, 48, 1, 1f, ThoughtKind.Event),
                 new ThoughtDefinition(Thought.EarnedAName, "EarnedAName", "Earned a name", 12, 72, 1, 1f, ThoughtKind.Event),
                 new ThoughtDefinition(Thought.MadeAMasterpiece, "MadeAMasterpiece", "Made a masterpiece", 15, 120, 1, 1f, ThoughtKind.Event),
+                // An activity's end (plan 2, L2.2, D12): a little lift, gone by the next day
+                new ThoughtDefinition(Thought.AWalkInTheGarden, "AWalkInTheGarden", "A walk in the Garden", 2, 6, 2, 0.5f, ThoughtKind.Event),
+                new ThoughtDefinition(Thought.BrowsedTheMarket, "BrowsedTheMarket", "Browsed the market", 1, 6, 2, 0.5f, ThoughtKind.Event),
+                new ThoughtDefinition(Thought.AGoodBout, "AGoodBout", "A good bout", 3, 8, 2, 0.5f, ThoughtKind.Event),
+                new ThoughtDefinition(Thought.AnAleAtTheTavern, "AnAleAtTheTavern", "An ale at the tavern", 3, 8, 2, 0.5f, ThoughtKind.Event),
+                new ThoughtDefinition(Thought.ASupperAtTheTavern, "ASupperAtTheTavern", "A supper at the tavern", 4, 10, 1, 1f, ThoughtKind.Need),
+                new ThoughtDefinition(Thought.AGameOfDice, "AGameOfDice", "A game of dice", 4, 8, 2, 0.5f, ThoughtKind.Event),
+                // A want come true, or run out (plan 2's W.1, D20): a little more than the activity's own, a little less when missed
+                new ThoughtDefinition(Thought.HadMyTavernSupper, "HadMyTavernSupper", "Had my tavern supper", 5, 24, 1, 1f, ThoughtKind.Event),
+                new ThoughtDefinition(Thought.MissedMySupper, "MissedMySupper", "Missed my supper", -2, 12, 1, 1f, ThoughtKind.Event),
+                new ThoughtDefinition(Thought.ANightOfDice, "ANightOfDice", "A night of dice", 5, 24, 1, 1f, ThoughtKind.Event),
+                new ThoughtDefinition(Thought.NoDiceTonight, "NoDiceTonight", "No dice tonight", -2, 12, 1, 1f, ThoughtKind.Event),
+                new ThoughtDefinition(Thought.AQuietWalk, "AQuietWalk", "A quiet walk", 3, 24, 1, 1f, ThoughtKind.Event),
+                new ThoughtDefinition(Thought.NoTimeToMyself, "NoTimeToMyself", "No time to myself", -1, 12, 1, 1f, ThoughtKind.Event),
+                new ThoughtDefinition(Thought.SawAFriend, "SawAFriend", "Saw {0}", 4, 24, 1, 1f, ThoughtKind.Social),
+                new ThoughtDefinition(Thought.MissedAFriend, "MissedAFriend", "Missed {0}", -3, 24, 1, 1f, ThoughtKind.Social),
+                new ThoughtDefinition(Thought.TriedSomewhereNew, "TriedSomewhereNew", "Somewhere new", 4, 24, 1, 1f, ThoughtKind.Event),
+                new ThoughtDefinition(Thought.EarnedARest, "EarnedARest", "Earned a rest", 4, 24, 1, 1f, ThoughtKind.Event), // plan 3's R.5, D33
             };
             var byId = new ThoughtDefinition[Capacity];
             foreach (var row in rows)

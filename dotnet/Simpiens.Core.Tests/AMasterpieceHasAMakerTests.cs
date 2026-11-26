@@ -96,9 +96,14 @@ namespace Simpiens.Core.Tests
 
         /// <summary>
         /// Gate seed 424242, the default (S8.4, `docs/skills-model.md` §5.14): the forge's smith makes a masterpiece on day 5 and a
-        /// resident wears it within the two weeks; <see cref="MeasureAMasterpieceHasAMakerOnTheGateSeeds"/> gives the rest.
+        /// resident wears it within the two weeks; <see cref="MeasureAMasterpieceHasAMakerOnTheGateSeeds"/> gives the rest. Gate
+        /// seed 12 since Epic LIFE-1's Recreate (plan 2, L2.6, `docs/life-model.md` §5.8): free time moved the outpost's history, and 424242's smith made none in the two weeks: made on 8 of 23, worn on 5; on this one Cormac makes the
+        /// Lantern Shell on day 4 and it is worn at once.
+        /// Gate seed 424242 since the tavern's room (Epic LIFE-1 plan 2, T.2): the taller floor and the Garden's move moved the
+        /// outpost's history, and seed 12's moment no longer came.
+        /// Seed 5 since Epic LIFE-1 plan 3's rhythm (nights, routines, weights by the hour and days off, R.2-R.9) moved the outpost's history, and seed 424242's moment no longer came.
         /// </summary>
-        private const ulong Seed = 424242;
+        private static readonly ulong Seed = ScenarioSeed.Or(5);
 
         [Fact]
         public void AMasterpieceHasAMaker()

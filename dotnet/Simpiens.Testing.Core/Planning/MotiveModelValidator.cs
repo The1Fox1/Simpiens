@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Simpiens.Cognition.Contracts;
 using Simpiens.Cognition.Planning;
 using Simpiens.Cognition.Planning.Domain;
+using Simpiens.Simulation;
 using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.Life;
 using Simpiens.Simulation.Spatial;
@@ -25,24 +26,28 @@ namespace Simpiens.Testing.Planning
             ValidateTheTuning();
             ValidateUrgency();
             ValidateMoodWeighs();
-            TestLog.Log("<color=green>[MotiveModelValidator] ALL 5 TESTS PASSED SUCCESSFULLY!</color>");
+            ValidateTheRoutineWeighs();
+            ValidateTheRhythmWeighsWork();
+            TestLog.Log("<color=green>[MotiveModelValidator] ALL 7 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
-        private static AgentContext Context(in AgentNeeds needs, EconomyTuning economy = null)
+        /// <summary>
+        /// A context at tick 0 under <paramref name="economy"/> (the default's), with the routine's weights set aside: the tests
+        /// of the base, the session's weights and mood read their own factors alone (the routine's are
+        /// <see cref="ValidateTheRoutineWeighs"/>'s).
+        /// </summary>
+        private static AgentContext Context(in AgentNeeds needs, EconomyTuning economy = null, in StationOrder station = default)
         {
-            SharedWorldSnapshot snapshot = null;
-            if (economy != null)
-            {
-                snapshot = new SharedWorldSnapshot(10, 10, 1f, 4, _ => { });
-                snapshot.SetEconomy(economy);
-            }
-            return new AgentContext(default, default, needs, 0f, snapshot, null, 0);
+            economy ??= EconomyTuning.Default;
+            var snapshot = new SharedWorldSnapshot(10, 10, 1f, 4, _ => { });
+            snapshot.SetEconomy(economy.WithLife(economy.Life.WithoutRoutine()));
+            return new AgentContext(default, default, needs, 0f, snapshot, null, 0, station: station);
         }
 
         private void ValidateNeutralIsExact()
         {
             var needs = new AgentNeeds(63.7f, 31.3f, 22.9f); // hungry and lonely: a low mood, so mood's weights are set aside here
-            var context = Context(needs, EconomyTuning.Default.WithLife(LifeTuning.Default.WithoutMood()));
+            var context = Context(needs, EconomyTuning.Default.WithLife(LifeTuning.Default.WithoutMood().WithoutRoutine()));
             foreach (var goal in OutpostGoapDomain.BuildGoals())
             {
                 float basePriority = goal.BasePriority(context);
@@ -110,15 +115,106 @@ namespace Simpiens.Testing.Planning
                 $"Low: income pulls 0.9; company (until plan 2's fun, F12) and hunger as ever ({MotiveModel.Weight(earn, low)}, {MotiveModel.Weight(socialize, low)}).");
             var life = LifeTuning.Default;
             Assert(life.MoodWeight(Simpiens.Simulation.Life.MoodBand.Breaking, (int)Motive.Income) == 0.75f && life.MoodWeight(Simpiens.Simulation.Life.MoodBand.Breaking, (int)Motive.Company) == 1f, "Breaking: income 0.75, company 1.");
-            var shift = new AgentContext(default, default, new AgentNeeds(65f, 25f, 20f), 0f, null, null, 0, station: new StationOrder(0, default, 1f));
-            Assert(shift.Mood == Simpiens.Simulation.Life.MoodBand.Low && MotiveModel.UnderOrders(shift) && MotiveModel.Weight(earn, shift) == 1f,
-                "Under orders (on shift), mood weighs nothing: the orders decide (the epic's A8).");
+            Assert(life.MoodWeight(Simpiens.Simulation.Life.MoodBand.Low, (int)Motive.Duty) == 0.85f && life.MoodWeight(Simpiens.Simulation.Life.MoodBand.Breaking, (int)Motive.Duty) == 0.6f
+                && life.MoodWeight(Simpiens.Simulation.Life.MoodBand.Steady, (int)Motive.Duty) == 1f, "Duty: low 0.85, breaking 0.6, steady 1 (plan 2's D25).");
+            // Under orders, mood weighs as anywhere (the producer, 2026-11-24: orders don't override a crawler's autonomy; D25)
+            var shift = Context(new AgentNeeds(65f, 25f, 20f), station: new StationOrder(0, default, 1f));
+            var comply = new Simpiens.Cognition.Planning.Goals.ComplyDirectiveGoal();
+            Assert(shift.Mood == Simpiens.Simulation.Life.MoodBand.Low && shift.Station.IsActive && MotiveModel.Weight(earn, shift) == 0.9f && MotiveModel.Weight(comply, shift) == 0.85f,
+                $"Under orders (on shift), a low mood weighs earning 0.9 and duty 0.85 ({MotiveModel.Weight(earn, shift)}, {MotiveModel.Weight(comply, shift)}).");
             Assert(life.MoodFrustrationPerHour(Simpiens.Simulation.Life.MoodBand.Breaking) == 15f && life.MoodFrustrationPerHour(Simpiens.Simulation.Life.MoodBand.Low) == 5f
                 && life.MoodFrustrationPerHour(Simpiens.Simulation.Life.MoodBand.Steady) == 0f && life.MoodFrustrationPerHour(Simpiens.Simulation.Life.MoodBand.Happy) == -5f, "Mood's frustration: +15, +5, 0, -5.");
             var quiet = life.WithoutMood();
             Assert(quiet.MoodWeight(Simpiens.Simulation.Life.MoodBand.Breaking, (int)Motive.Income) == 1f && quiet.MoodFrustrationPerHour(Simpiens.Simulation.Life.MoodBand.Breaking) == 0f && quiet.FallbackDepth == 2,
                 "Without mood: no weights, no frustration, the rest kept.");
             Assert(default(LifeTuning).MoodWeight(Simpiens.Simulation.Life.MoodBand.Low, (int)Motive.Income) == 1f, "A zeroed tuning: mood weighs nothing.");
+        }
+
+        /// <summary>
+        /// The routine's weights (Epic LIFE-1 plan 3, R.3, R.4, D30, D31): in its night rest weighs 1.5 (the bedtime pull) and is
+        /// valid from the bedtime line; outside the night rest weighs 1 and waits for the tired line; work, leisure and company by
+        /// block as D30's table has them; an artisan's shifts are its working block; the unweighted family (and a clear's loot)
+        /// is never scaled; and a tuning without the routine weighs nothing by the hour.
+        /// </summary>
+        private void ValidateTheRoutineWeighs()
+        {
+            var routine = Routine.Of(Chronotype.Average, 0f, default, DayClock.TicksPerDay + DayClock.Hours(4));
+            uint working = (uint)(routine.WorkFrom + 7), leisure = (uint)(routine.WorkUntil + 7), night = (uint)(routine.NightFrom + 7);
+            AgentContext At(uint tick, float energy) => new AgentContext(default, default, new AgentNeeds(20f, energy, 80f), 0f, null, null, tick);
+            Assert(At(working, 60f).Block == RoutineBlock.Working && At(leisure, 60f).Block == RoutineBlock.Leisure && At(night, 60f).Block == RoutineBlock.Night,
+                "The contexts are in the blocks the routine says.");
+            var rest = new Simpiens.Cognition.Planning.Goals.RestGoal();
+            var eat = new Simpiens.Cognition.Planning.Goals.SatiateHungerGoal();
+            var comply = new Simpiens.Cognition.Planning.Goals.ComplyDirectiveGoal();
+            Assert(MotiveModel.Weight(rest, At(night, 60f)) == 1.5f && MotiveModel.Weight(rest, At(working, 60f)) == 1f && MotiveModel.Weight(rest, At(leisure, 60f)) == 1f,
+                "Rest weighs 1.5 in the night, 1 by day.");
+            // D30's table (R.4): work, leisure and company by block
+            var earn = new Simpiens.Cognition.Planning.Goals.EarnIncomeGoal();
+            var recreate = new Simpiens.Cognition.Planning.Goals.RecreateGoal();
+            var socialize = new Simpiens.Cognition.Planning.Goals.SocializeGoal();
+            var gather = new Simpiens.Cognition.Planning.Goals.GatherAtAnchorGoal();
+            (uint Tick, float Work, float Leisure, float Social)[] table = { (working, 1.2f, 0.8f, 1f), (leisure, 0.8f, 1.2f, 1f), (night, 0.6f, 0.7f, 0.8f) }; // company 1 by day (D30 amended)
+            foreach (var row in table)
+            {
+                var context = At(row.Tick, 80f);
+                Assert(MotiveModel.Weight(earn, context) == row.Work && MotiveModel.Weight(recreate, context) == row.Leisure
+                    && MotiveModel.Weight(socialize, context) == row.Social && MotiveModel.Weight(gather, context) == row.Social,
+                    $"{context.Block}: work {row.Work}, leisure {row.Leisure}, company {row.Social} ({MotiveModel.Weight(earn, context)}, {MotiveModel.Weight(recreate, context)}, {MotiveModel.Weight(socialize, context)}).");
+                Assert(MotiveModel.Weight(eat, context) == 1f && MotiveModel.Weight(comply, context) == 1f, $"{context.Block}: hunger and orders unweighted.");
+            }
+            // An artisan works its shifts: in them its work weighs as the working block's, whatever its routine says
+            var offShift = new AgentContext(default, default, new AgentNeeds(20f, 80f, 80f), 0f, null, null, night, station: StationOrder.OffShift(Simpiens.Simulation.Workshops.ShiftBlocks.All));
+            Assert(offShift.Block == RoutineBlock.Working && MotiveModel.Weight(earn, offShift) == 1.2f, "An artisan with every block on shift is working at night.");
+            // A clear's loot is unweighted, as orders are, at any hour
+            var loot = new Simpiens.Cognition.Planning.Goals.CollectLootGoal();
+            var clear = new AgentContext(default, default, new AgentNeeds(20f, 80f, 80f), 0f, null, null, night,
+                expedition: new Simpiens.Cognition.Contracts.ExpeditionOrder(Simpiens.Simulation.Guild.ExpeditionStage.Fight, 1, default, default, Simpiens.Simulation.Guild.ExpeditionKind.Clear));
+            Assert(MotiveModel.Weight(loot, clear) == 1f && MotiveModel.Weight(loot, At(night, 80f)) == 0.6f, "Loot under a clear's orders is unweighted; on its own it is night work.");
+            Assert(MotiveModel.Weight(eat, At(night, 60f)) == 1f && MotiveModel.Weight(comply, At(night, 60f)) == 1f, "Hunger and orders are unweighted at any hour.");
+            Assert(rest.IsValid(At(night, 60f)) && !rest.IsValid(At(night, 75f)) && !rest.IsValid(At(leisure, 60f)) && rest.IsValid(At(leisure, 35f)),
+                "In the night rest is valid below the bedtime line (70); by day only below the tired line (40).");
+            Assert(Considerations.IsBedtime(At(night, 69f)) && !Considerations.IsBedtime(At(night, 70f)) && !Considerations.IsBedtime(At(leisure, 30f)), "Bedtime is the night below 70.");
+            var life = LifeTuning.Default;
+            Assert(life.RoutineWeight(RoutineBlock.Night, (int)ActivityFamily.Unweighted) == 1f && life.RoutineWeight(RoutineBlock.None, (int)ActivityFamily.Rest) == 1f,
+                "The unweighted family and no block weigh 1.");
+            Assert(life.WithoutRoutine().RoutineWeight(RoutineBlock.Night, (int)ActivityFamily.Rest) == 1f && life.WithoutRoutine().MoodWeight(MoodBand.Low, (int)Motive.Income) == 0.9f,
+                "Without the routine: no weight by the hour, mood's kept.");
+            Assert(life.WithRoutineWeight(RoutineBlock.Night, (int)ActivityFamily.Unweighted, 2f).RoutineWeight(RoutineBlock.Night, (int)ActivityFamily.Unweighted) == 1f,
+                "The unweighted family can't be given a routine weight.");
+        }
+
+        /// <summary>
+        /// Satiation and weariness on work (Epic LIFE-1 plan 3, R.6, D32, D33): work weighs 1 up to the purse target (the
+        /// comfortable purse by greed), falling to 0.6 at twice it; weariness takes up to 0.3 off; neither touches another family;
+        /// and a zeroed rhythm weighs nothing.
+        /// </summary>
+        private void ValidateTheRhythmWeighsWork()
+        {
+            int purse = EconomyTuning.Default.ComfortablePurse;
+            var earn = new Simpiens.Cognition.Planning.Goals.FulfillBountyGoal();
+            var socialize = new Simpiens.Cognition.Planning.Goals.SocializeGoal();
+            var quiet = EconomyTuning.Default.WithLife(LifeTuning.Default.WithoutRoutine().WithoutMood());
+            AgentContext Rich(int gold, float greed = 0f, float weariness = 0f, EconomyTuning economy = null)
+            {
+                var snapshot = new SharedWorldSnapshot(10, 10, 1f, 4, _ => { });
+                snapshot.SetEconomy(economy ?? quiet);
+                var life = default(CrawlerLife);
+                life.Weary(weariness);
+                return new AgentContext(default, default, new AgentNeeds(20f, 80f, 80f), 0f, snapshot, null, 0,
+                    inventory: new Simpiens.Cognition.Inventory.AgentInventory(4, startingGold: gold), personality: new AgentPersonality(greed, 0f, 0f, 0f, 0f), life: life);
+            }
+            Assert(Rhythm.PurseTarget(Rich(0)) == purse && Rhythm.PurseTarget(Rich(0, greed: 1f)) == (int)(purse * 1.5f) && Rhythm.PurseTarget(Rich(0, greed: -1f)) == purse / 2,
+                $"The purse target: the comfortable purse ({purse}g), by greed half to one and a half times it.");
+            Assert(MotiveModel.Weight(earn, Rich(purse)) == 1f && MotiveModel.Weight(earn, Rich(purse / 2)) == 1f, "Up to the target, work weighs 1.");
+            Assert(Math.Abs(MotiveModel.Weight(earn, Rich(purse + purse / 2)) - 0.8f) < 1e-5f, $"Half again over it, 0.8 ({MotiveModel.Weight(earn, Rich(purse + purse / 2))}).");
+            Assert(Math.Abs(MotiveModel.Weight(earn, Rich(2 * purse)) - 0.6f) < 1e-5f && Math.Abs(MotiveModel.Weight(earn, Rich(5 * purse)) - 0.6f) < 1e-5f, "At twice it and beyond, 0.6.");
+            Assert(MotiveModel.Weight(earn, Rich(purse + purse / 2, greed: 1f)) == 1f, "The greedy work on: their target is higher.");
+            Assert(Math.Abs(MotiveModel.Weight(earn, Rich(10, weariness: 100f)) - 0.7f) < 1e-5f && Math.Abs(MotiveModel.Weight(earn, Rich(10, weariness: 50f)) - 0.85f) < 1e-5f,
+                "Weariness at its height takes 0.3 off work, half of it 0.15.");
+            Assert(Math.Abs(MotiveModel.Weight(earn, Rich(2 * purse, weariness: 100f)) - 0.42f) < 1e-5f, "Rich and weary: the two multiply (0.6 x 0.7).");
+            Assert(MotiveModel.Weight(socialize, Rich(5 * purse, weariness: 100f)) == 1f, "Company is untouched by the purse and weariness.");
+            var none = EconomyTuning.Default.WithLife(LifeTuning.Default.WithoutRoutine().WithoutMood().WithRhythm(default));
+            Assert(MotiveModel.Weight(earn, Rich(5 * purse, weariness: 100f, economy: none)) == 1f, "A zeroed rhythm weighs nothing.");
         }
 
         private static void Assert(bool condition, string message)

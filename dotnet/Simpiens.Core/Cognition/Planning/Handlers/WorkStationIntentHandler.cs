@@ -34,7 +34,10 @@ namespace Simpiens.Cognition.Planning.Handlers
 
             if (agent != null)
             {
-                agent.VisualState = AgentVisualState.Harvesting; // the harvest's swing reads as the hammer's
+                // The harvest's swing reads as the hammer's; a keeper at a station with no recipes (the tavern's counter) stands
+                var stations = context.Map?.Stations;
+                bool makes = stations == null || (uint)work.StationIndex >= (uint)stations.Count || Simpiens.Simulation.Items.StationTable.Get(stations[work.StationIndex].Kind).HasRecipes;
+                agent.VisualState = makes ? AgentVisualState.Harvesting : AgentVisualState.Idle;
                 agent.WorkedStation = true;
             }
             context.WorkStation(work.StationIndex);

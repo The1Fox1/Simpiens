@@ -11,7 +11,9 @@ namespace Simpiens.Simulation.Items
         /// <summary>The Alchemy Still: herbs into draughts.</summary>
         Still = 2,
         /// <summary>The guildhall's drill yard (Epic 11, S3.4, Q10, D10): no recipes and no artisan; guild members drill there.</summary>
-        DrillYard = 3
+        DrillYard = 3,
+        /// <summary>The tavern (Epic LIFE-1 plan 2, T.3, D18): kept by a keeper on its shifts; no recipes; a venue for the evening.</summary>
+        Tavern = 4
     }
 
     /// <summary>One of a recipe's inputs: an item and how many of it one make takes.</summary>

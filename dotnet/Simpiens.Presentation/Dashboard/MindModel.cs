@@ -16,13 +16,17 @@ namespace Simpiens.Presentation.Dashboard
         /// <summary>One line of the mind: its words, its value to mood, and for a thought the time it has left.</summary>
         public readonly struct Line
         {
-            public Line(string words, float value, string left, bool startsWithName = false)
+            public Line(string words, float value, string left, bool startsWithName = false, bool isWant = false)
             {
                 Words = words;
                 Value = value;
                 Left = left;
                 StartsWithName = startsWithName;
+                IsWant = isWant;
             }
+
+            /// <summary>Whether it is a want the crawler holds (Epic LIFE-1 plan 2, W.4), not a term or a thought: it has no value.</summary>
+            public bool IsWant { get; }
 
             /// <summary>Whether its words open with a crawler's name ("Ama died"), which keeps its capital inside a line.</summary>
             public bool StartsWithName { get; }
@@ -34,7 +38,8 @@ namespace Simpiens.Presentation.Dashboard
             public string Left { get; }
 
             /// <summary>"Rescued by Bram +10 · 2 days left".</summary>
-            public string Text => Left.Length > 0 ? Words + " " + LifeTexts.Value(Value) + " · " + Left : Words + " " + LifeTexts.Value(Value);
+            public string Text => IsWant ? "Wants: " + Words + " · " + Left
+                : Left.Length > 0 ? Words + " " + LifeTexts.Value(Value) + " · " + Left : Words + " " + LifeTexts.Value(Value);
         }
 
         private readonly List<Line> _lines = new List<Line>(24);
@@ -76,8 +81,8 @@ namespace Simpiens.Presentation.Dashboard
             Band = MoodRules.BandOf(Mood);
             MoodText = LifeTexts.BandWord(Band) + " (" + LifeTexts.Value(Mood) + ")";
 
-            Span<MoodTerm> terms = stackalloc MoodTerm[4];
-            int n = MoodRules.TermsOf(agent.Needs, agent.Health, agent.IsDowned, terms);
+            Span<MoodTerm> terms = stackalloc MoodTerm[MoodRules.TermCapacity];
+            int n = MoodRules.TermsOf(agent.Needs, agent.Health, agent.IsDowned, life.Fun, terms);
             int needLines = 0;
             for (int i = 0; i < n; i++)
             {
@@ -96,6 +101,21 @@ namespace Simpiens.Presentation.Dashboard
             }
             _lines.Sort(0, needLines, BySize.Instance);
             _lines.Sort(firstThought, _lines.Count - firstThought, BySize.Instance);
+            // Its wants, after its thoughts (Epic LIFE-1 plan 2, W.4): "Wants: a tavern supper · 9 h left"
+            for (int i = 0; i < CrawlerLife.WantCapacity; i++)
+            {
+                var want = life.WantAt(i);
+                var row = WantTable.Get((Want)want.Want);
+                if (row == null || tick >= want.ExpiresAt) continue;
+                string words = row.Words;
+                if (words.Contains("{0}"))
+                {
+                    string name = want.Friend != default ? nameOf?.Invoke(want.Friend) : null;
+                    words = words.Replace("{0}", string.IsNullOrEmpty(name) ? "someone" : name);
+                }
+                words = char.ToLowerInvariant(words[0]) + words.Substring(1);
+                _lines.Add(new Line(words, 0f, LifeTexts.Left(want.ExpiresAt - tick), isWant: true));
+            }
             int reason = ReasonIndex(_lines, Band);
             Reason = reason < 0 ? string.Empty : WithoutStacks(_lines[reason].Words);
             ReasonInLine = Reason.Length == 0 ? string.Empty

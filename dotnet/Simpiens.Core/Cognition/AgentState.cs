@@ -108,6 +108,91 @@ namespace Simpiens.Cognition
         /// mustering. On the 24-hour day a party sent at night or at dawn found its members asleep; as RimWorld's drafted
         /// colonists wake, a member who is rested enough answers. One below the tired line sleeps on, needs first (Part 1's Q6).
         /// </summary>
+        /// <summary>
+        /// A payment of <paramref name="amount"/> at <paramref name="tick"/> (a bounty, a hunt's share, an expedition's share): at
+        /// half <paramref name="comfortablePurse"/> or more it is a windfall (Epic LIFE-1 plan 3, R.5, D33), recorded in its life
+        /// record with the thought that it earned a rest. True for a windfall.
+        /// </summary>
+        public bool NoteWindfall(uint amount, uint tick, int comfortablePurse)
+        {
+            if (comfortablePurse <= 0 || amount < (uint)(comfortablePurse / 2)) return false;
+            _life.RecordWindfall(tick);
+            Think(Simpiens.Simulation.Life.Thought.EarnedARest, tick);
+            return true;
+        }
+
+        /// <summary>
+        /// The part of its day its routine is in at <paramref name="tick"/> (Epic LIFE-1 plan 3, R.1, D29), as its context computes
+        /// it: from its chronotype, its diligence and an artisan's shifts.
+        /// </summary>
+        public Simpiens.Simulation.Life.RoutineBlock RoutineBlockAt(uint tick) =>
+            Simpiens.Simulation.Life.Routine.BlockAt(_life.Chronotype, Personality.Diligence, AgentId, tick, Station.Shifts);
+
+        /// <summary>Its routine day at <paramref name="tick"/> (Epic LIFE-1 plan 3, R.7), as its context computes it.</summary>
+        public Simpiens.Simulation.Life.Routine RoutineAt(uint tick) => Simpiens.Simulation.Life.Routine.Of(_life.Chronotype, Personality.Diligence, AgentId, tick);
+
+        /// <summary>
+        /// Called in from its day off (Epic LIFE-1 plan 3, R.9, D36): a member keeping to its orders on a rest day (its plan its
+        /// orders', under an expedition's stage or on shift) has a work day instead, so the day off's safe zones never fight its
+        /// orders. True when it was called in.
+        /// </summary>
+        public bool CallInIfKeepingOrders(uint tick)
+        {
+            if (!(Expedition.IsActive || Station.IsActive) || !HasActivePlan || ActiveGoal == null || ActiveGoal.Motive != Simpiens.Cognition.Planning.Motive.Duty) return false;
+            var routine = RoutineAt(tick);
+            if (_life.IntentionFor(routine.Day) != Simpiens.Simulation.Life.DayIntention.Rest) return false;
+            Simpiens.Simulation.Life.IntentionRules.CallIn(ref _life, routine.Day);
+            return true;
+        }
+
+        /// <summary>The intention it holds for its routine day at <paramref name="tick"/>: a work day before one is drawn (D34).</summary>
+        public Simpiens.Simulation.Life.DayIntention IntentionAt(uint tick) => _life.IntentionFor(RoutineAt(tick).Day);
+
+        /// <summary>
+        /// Whether its intention for its routine day at <paramref name="tick"/> is due (Epic LIFE-1 plan 3, R.7, D34): once a routine
+        /// day, at its first tick awake outside its night (on waking from its night's sleep, most days). The outpost's first
+        /// routine day (0) has no night's sleep before it, everyone waking at 06:00 at the session's start, so it is a work day
+        /// (R.8: a resident who took up a bounty that morning and drew a day off at its waking hour left it unfinished). A drifter
+        /// draws none.
+        /// </summary>
+        public bool IntentionDue(uint tick, out long day)
+        {
+            day = -1;
+            if (IsDrifter || IsExhaustionCollapsed || VisualState == AgentVisualState.Sleeping || VisualState == AgentVisualState.Resting) return false;
+            var routine = RoutineAt(tick);
+            day = routine.Day;
+            return routine.Day >= 1 && _life.IntentionDay != routine.Day + 1 && routine.BlockAt(tick) != Simpiens.Simulation.Life.RoutineBlock.Night;
+        }
+
+        /// <summary>
+        /// Draws and begins its intention for routine day <paramref name="day"/> (D34): its odds from its weariness, a windfall within
+        /// the last game day, its purse against <paramref name="purseTarget"/>, its passions and its wants.
+        /// </summary>
+        public Simpiens.Simulation.Life.DayIntention DrawIntention(long day, uint tick, ulong seed, in Simpiens.Simulation.Life.RhythmTuning rhythm, int purseTarget)
+        {
+            bool passion = false;
+            var traits = Traits;
+            for (int s = 0; s < Simpiens.Simulation.Skills.SkillTable.Capacity && !passion; s++)
+                passion = traits.PassionFor((Simpiens.Simulation.Skills.Skill)s) != Simpiens.Simulation.Skills.Passion.None;
+            bool want = false;
+            for (int w = 0; w < Simpiens.Simulation.Life.CrawlerLife.WantCapacity && !want; w++) want = _life.WantAt(w).Want != 0;
+            int gold = Inventory != null ? Inventory.Gold : 0;
+            var odds = Simpiens.Simulation.Life.IntentionRules.For(rhythm, _life.Weariness, Simpiens.Simulation.Life.IntentionRules.WindfallWithinADay(_life.LastWindfall, tick),
+                purseTarget > 0 && gold > purseTarget, passion, want);
+            var intention = Simpiens.Simulation.Life.IntentionRules.IsOutpostRestDay(rhythm, day) ? Simpiens.Simulation.Life.DayIntention.Rest // Q11's switch (D37)
+                : Simpiens.Simulation.Life.IntentionRules.Draw(odds, seed, AgentId, day);
+            Simpiens.Simulation.Life.IntentionRules.Begin(ref _life, intention, day);
+            return intention;
+        }
+
+        /// <summary>
+        /// Whether a sleeper (in a bunk or rough) is up at <paramref name="tick"/>: rested or too hungry to sleep on, at the
+        /// session's lines; in its routine's night it dozes on at full energy until its waking hour, and only hunger's line wakes
+        /// it (Epic LIFE-1 plan 3, R.3, D31). The longest sleep is the intent's.
+        /// </summary>
+        public bool WakesAt(in Simpiens.Simulation.Economy.DayTuning day, uint tick) =>
+            RoutineBlockAt(tick) == Simpiens.Simulation.Life.RoutineBlock.Night ? Hunger >= day.WakeHunger : day.Wakes(Energy, Hunger);
+
         public bool IsCalledFromSleep => Expedition.Stage == Simpiens.Simulation.Guild.ExpeditionStage.Muster && Energy >= Considerations.TiredEnergy;
         public IdentityTag Identity { get; set; } = IdentityTag.Default;
 
@@ -159,7 +244,74 @@ namespace Simpiens.Cognition
         /// Who it is living as (Epic LIFE-1, L0.8, D6): its thoughts and the crawlers they name, and room for wants, fun and the
         /// day's rhythm. Written on the main thread only, saved whole in its record, copied for cognition.
         /// </summary>
-        public Simpiens.Simulation.Life.CrawlerLife Life { get; set; }
+        public Simpiens.Simulation.Life.CrawlerLife Life { get => _life; set => _life = value; }
+
+        private Simpiens.Simulation.Life.CrawlerLife _life;
+
+        /// <summary>Eases its boredom by <paramref name="amount"/> (Epic LIFE-1 plan 2, L2.5): an activity's fill. Main thread.</summary>
+        internal void Entertain(float amount) => _life.Bore(-amount);
+
+        /// <summary>A spell of free time ended (Epic LIFE-1 plan 2, L2.7, D15): its group tired, its venue tried. Main thread.</summary>
+        internal void Spent(int varietyGroup, int venue, int tire)
+        {
+            _life.Tire(varietyGroup, tire);
+            _life.MarkTried(venue);
+        }
+
+        /// <summary>It woke from a night's sleep (L2.7): every variety group eased. Main thread.</summary>
+        internal void EaseVariety(int amount) => _life.EaseVariety(amount);
+
+        /// <summary>Set when it wakes from a bunk's sleep, taken by the runtime that tick: a want may arise then (plan 2, W.2). Unsaved.</summary>
+        public bool JustWoke { get; set; }
+
+        /// <summary>
+        /// Wants <paramref name="want"/> from <paramref name="tick"/> (Epic LIFE-1 plan 2, W.2, D20): the one entry, on the main
+        /// thread, naming the activity, the venue (its index, or -1) and the friend it is for. Returns whether it was held.
+        /// </summary>
+        internal bool Want(Simpiens.Simulation.Life.Want want, uint tick, Simpiens.Simulation.Life.Activity activity = Simpiens.Simulation.Life.Activity.None, int venue = -1, EntityId friend = default)
+        {
+            var row = Simpiens.Simulation.Life.WantTable.Get(want);
+            if (row == null) return false;
+            var slot = new Simpiens.Simulation.Life.WantSlot
+            {
+                Want = (ushort)want,
+                Activity = (byte)activity,
+                Venue = (byte)(venue >= 0 ? venue + 1 : 0),
+                ExpiresAt = tick + (uint)(row.Hours * Simpiens.Simulation.DayClock.TicksPerHour),
+                Friend = friend,
+            };
+            return Simpiens.Simulation.Life.WantRules.Add(ref _life, slot);
+        }
+
+        /// <summary>Clears the wants run out at <paramref name="tick"/>, thinking each one's thought (W.2). Main thread.</summary>
+        internal void ExpireWants(uint tick)
+        {
+            System.Span<Simpiens.Simulation.Life.WantSlot> expired = stackalloc Simpiens.Simulation.Life.WantSlot[Simpiens.Simulation.Life.CrawlerLife.WantCapacity];
+            int n = Simpiens.Simulation.Life.WantRules.Expire(ref _life, tick, expired);
+            for (int i = 0; i < n; i++)
+            {
+                var row = Simpiens.Simulation.Life.WantTable.Get((Simpiens.Simulation.Life.Want)expired[i].Want);
+                if (row != null && row.Expired != Simpiens.Simulation.Life.Thought.None) Think(row.Expired, tick, expired[i].Friend);
+            }
+        }
+
+        /// <summary>A spell of <paramref name="activity"/> at venue <paramref name="venue"/> ended: the wants it answers come true, each thinking its thought (W.3). Main thread.</summary>
+        internal void FulfilWants(Simpiens.Simulation.Life.Activity activity, int venue, uint tick)
+        {
+            System.Span<Simpiens.Simulation.Life.WantSlot> fulfilled = stackalloc Simpiens.Simulation.Life.WantSlot[Simpiens.Simulation.Life.CrawlerLife.WantCapacity];
+            int n = Simpiens.Simulation.Life.WantRules.Fulfil(ref _life, activity, venue, tick, fulfilled);
+            for (int i = 0; i < n; i++)
+            {
+                var row = Simpiens.Simulation.Life.WantTable.Get((Simpiens.Simulation.Life.Want)fulfilled[i].Want);
+                if (row != null && row.Fulfilled != Simpiens.Simulation.Life.Thought.None) Think(row.Fulfilled, tick);
+            }
+        }
+
+        /// <summary>It talked with <paramref name="friend"/>: a want to see it comes true (W.3). Main thread.</summary>
+        internal void Saw(EntityId friend, uint tick)
+        {
+            if (Simpiens.Simulation.Life.WantRules.Saw(ref _life, friend, tick)) Think(Simpiens.Simulation.Life.Thought.SawAFriend, tick, friend);
+        }
 
         /// <summary>
         /// Thinks <paramref name="thought"/> at <paramref name="tick"/>, naming <paramref name="subject"/> where its row names a
@@ -423,6 +575,21 @@ namespace Simpiens.Cognition
             float social = SimMath.Max(0f, (float)(Needs.Social - (float)(dt * day.SocialPerSecond)));
             Needs = new AgentNeeds(hunger, energy, social);
             Frustration = SimMath.Max(0f, (float)(Frustration - (float)(dt * day.FrustrationEasePerSecond))); // on the day's pace (Epic LIFE-1, L1.4, F6)
+
+            // Boredom (Epic LIFE-1 plan 2, L2.1, D11): held asleep, eased at the hearth while relaxing there (the fireside's row,
+            // L2.2), rising otherwise
+            bool asleep = IsExhaustionCollapsed || inBunk || (HasActivePlan && ActivePlan.CurrentAction is Simpiens.Cognition.Planning.Actions.RestAction);
+            if (!asleep)
+            {
+                bool fireside = HasActivePlan && ActivePlan.CurrentAction is Simpiens.Cognition.Planning.Actions.RelaxAtAnchorAction;
+                _life.Bore(fireside ? -(float)(dt * Simpiens.Simulation.DayClock.PerSecond(Simpiens.Simulation.Life.ActivityTable.Get(Simpiens.Simulation.Life.Activity.Fireside).FunPerHour))
+                    : (float)(dt * day.BoredomPerSecond));
+            }
+
+            // Weariness (Epic LIFE-1 plan 3, R.5, D33): rises at work (a harvest, a station's work, a fight or a hunt, an
+            // expedition's work among them) on the day's pace; only a day off clears it (R.7)
+            if (!asleep && (VisualState == AgentVisualState.Harvesting || CurrentIntent is FightIntent || CurrentIntent is HuntIntent))
+                _life.Weary((float)(dt * day.WearinessPerSecond));
 
             // Emergency preemption check
             bool emergencyExhaustion = energy <= MentalBreakEvaluator.ExhaustionThreshold;

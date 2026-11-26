@@ -37,6 +37,9 @@ namespace Simpiens.Simulation.Economy
         ForagingPrimer = 28,
         SmithingPrimer = 29,
         AlchemyPrimer = 30,
-        MedicinePrimer = 31
+        MedicinePrimer = 31,
+        // The tavern's menu (Epic LIFE-1 plan 2, T.3, D19): served at the tavern, never carried; the caravan brings them while a tavern stands
+        Ale           = 32,
+        Stew          = 33
     }
 }

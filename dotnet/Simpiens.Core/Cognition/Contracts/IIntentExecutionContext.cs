@@ -113,6 +113,9 @@ namespace Simpiens.Cognition.Contracts
         void UpdateStall(TradeStallData stall);
         IReadOnlyList<TradeStallData> ActiveStalls { get; }
 
+        /// <summary>Tells the simulation an item was served at a venue, at its price (Epic LIFE-1 plan 2, T.5: the tavern's takings, observed).</summary>
+        void RecordServed(EntityId crawler, Simpiens.Simulation.Economy.ItemType item, uint price) { }
+
         bool TryGetBounty(ushort bountyId, out BountyContract bounty);
         void UpdateBounty(BountyContract bounty);
 

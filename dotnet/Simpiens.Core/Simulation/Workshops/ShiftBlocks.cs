@@ -16,6 +16,9 @@ namespace Simpiens.Simulation.Workshops
         /// <summary>The day shift the station window offers: 10:00 to 18:00, two blocks.</summary>
         public const byte DayShift = 0b000110;
 
+        /// <summary>The evening shift, 18:00 to 02:00, two blocks: the tavern's hours by the clock (Epic LIFE-1 plan 3, D.2).</summary>
+        public const byte EveningShift = 0b011000;
+
         /// <summary>The block <paramref name="tick"/> falls in, 0 to 5: tick 0 is 06:00, the start of block 0.</summary>
         public static int At(long tick) => (int)((tick < 0 ? 0 : tick) % DayClock.TicksPerDay / TicksEach);
 

@@ -65,6 +65,16 @@ namespace Simpiens.Client.Tests
             Assert.Equal("Starving", hungry.Reason);
             Assert.Equal(MoodBand.Low, hungry.Band);
 
+            // A want (Epic LIFE-1 plan 2, W.4): listed after the thoughts, with its time left, never the reason
+            var wanting = Crawler(new AgentNeeds(30f, 80f, 60f));
+            var life = wanting.Life;
+            WantRules.Add(ref life, new WantSlot { Want = (ushort)Want.SeeAFriend, ExpiresAt = (uint)(now + 9 * DayClock.TicksPerHour), Friend = Bram });
+            wanting.Life = life;
+            var wants = new MindModel();
+            wants.Refresh(wanting, now, Names);
+            Assert.Equal("Wants: to see Bram · 9 h left", wants.Lines[wants.Lines.Count - 1].Text);
+            Assert.NotEqual("to see Bram", wants.Reason);
+
             var none = new MindModel();
             none.Refresh(null, now, Names);
             Assert.False(none.HasCrawler);
@@ -106,6 +116,65 @@ namespace Simpiens.Client.Tests
             today.Refresh(state, now, chronicle, new Words(), Names);
             Assert.True(today.HasCrawler);
             Assert.Equal(new[] { "10:00  Rescued by Bram", "09:00  TantrumStarted", "08:00  A good meal", "07:00  Slept in a bunk" }, Shown(today));
+        }
+
+        /// <summary>
+        /// The day's intention in the dossier and the day log (Epic LIFE-1 plan 3, V.1, D38): on a day off, "Today: a day off."
+        /// beside the mood and the day opening with its waking, "Woke, meaning to rest"; nothing of the sort on a working day or
+        /// before one is drawn.
+        /// </summary>
+        [Fact]
+        public void TheDayOffIsToldInTheDossierAndTheDay()
+        {
+            Assert.Equal("Today: a day off.", LifeTexts.TodayLine(DayIntention.Rest));
+            Assert.Equal(string.Empty, LifeTexts.TodayLine(DayIntention.Work));
+            var state = Crawler(new AgentNeeds(30f, 80f, 60f));
+            long now = Midnight + 12 * DayClock.TicksPerHour; // 12:00 on day 2
+            var routine = state.RoutineAt((uint)now);
+            var today = new DayLogModel();
+            today.Refresh(state, now, null, null, Names);
+            Assert.Empty(today.Lines); // no intention drawn: no waking line
+            var life = state.Life;
+            life.SetIntention(DayIntention.Rest, routine.Day);
+            state.Life = life;
+            today.Refresh(state, now, null, null, Names);
+            Assert.Equal(new[] { LifeTexts.Clock(routine.WakesAt) + "  Woke, meaning to rest" }, Shown(today));
+            Assert.Equal(DayIntention.Rest, state.IntentionAt((uint)now));
+        }
+
+        /// <summary>
+        /// The outpost's pulse (Epic LIFE-1 plan 3, V.2, D38), on the real outpost: at 09:00 most residents are at work and none
+        /// asleep; at 03:00 most are asleep; its words count them.
+        /// </summary>
+        [Fact]
+        public void TheOutpostsPulseTurnsWithTheDay()
+        {
+            using var sim = Simpiens.Hosting.LocalSimulation.Create(Simpiens.Simulation.SimulationSettings.DefaultSeed);
+            sim.Respawn(Simpiens.Core.Session.OutpostSession.SessionId);
+            for (int t = 0; t < 3 * DayClock.TicksPerHour; t++) sim.Step(1); // 09:00 on day 1, a tick at a time as cognition lands
+            var morning = OutpostPulse.Of(sim.Registry.ActiveEntities);
+            Assert.True(morning.Residents >= 10 && morning.Asleep == 0 && morning.Working * 2 > morning.Residents, $"09:00: {morning.Words} of {morning.Residents}");
+            for (int t = 0; t < 18 * DayClock.TicksPerHour; t++) sim.Step(1); // 03:00 on day 2
+            var night = OutpostPulse.Of(sim.Registry.ActiveEntities);
+            Assert.True(night.Asleep * 2 > night.Residents, $"03:00: {night.Words}");
+            Assert.Equal($"{night.Asleep} asleep · {night.Working} at work · {night.Leisure} at leisure", night.Words);
+        }
+
+        /// <summary>
+        /// What the frames say a crawler is doing (Epic LIFE-1 plan 3, V.4, D38): a begun spell's activity, nothing on its way there,
+        /// so the scene hangs the spell's icon over it once it sits down to it.
+        /// </summary>
+        [Fact]
+        public void TheFramesCarryWhatACrawlerIsDoing()
+        {
+            var state = new AgentState(Ama);
+            Assert.Equal(Activity.None, Simpiens.Presentation.WorldViewFrame.ActivityOf(state));
+            var spell = new Simpiens.Cognition.Contracts.RecreateIntent(Ama, 0, Activity.Ale, 0, null);
+            state.CurrentIntent = spell;
+            Assert.Equal(Activity.None, Simpiens.Presentation.WorldViewFrame.ActivityOf(state)); // still walking there
+            spell.Begun = true;
+            Assert.Equal(Activity.Ale, Simpiens.Presentation.WorldViewFrame.ActivityOf(state));
+            Assert.Equal("activity/ale", Simpiens.Presentation.Art.ArtKeys.Activity(Activity.Ale));
         }
 
         private static List<string> Shown(DayLogModel today)

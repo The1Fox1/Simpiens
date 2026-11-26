@@ -166,7 +166,9 @@ namespace Simpiens.Testing.Persistence
                         Kind = Simpiens.Simulation.Items.StationKind.Still, Built = true, Order = (ItemType)9, HeldOutput = 1, HeldGrade = 1, Made = 2
                     },
                     // The guildhall's drill yard, built (Epic 11, S3.4): no order, no artisan
-                    new Simpiens.Simulation.Workshops.StationState { Kind = Simpiens.Simulation.Items.StationKind.DrillYard, Built = true }
+                    new Simpiens.Simulation.Workshops.StationState { Kind = Simpiens.Simulation.Items.StationKind.DrillYard, Built = true },
+                    // The tavern, built (Epic LIFE-1 plan 2, T.4): no recipes, kept by a keeper on its shifts
+                    new Simpiens.Simulation.Workshops.StationState { Kind = Simpiens.Simulation.Items.StationKind.Tavern, Built = true }
                 },
                 // The forge's artisan, unpaid once, on the day shift and off on a break (W1.2, W1.3), and a crawler who can't
                 // be hired again yet
@@ -485,6 +487,9 @@ namespace Simpiens.Testing.Persistence
             life.SetThought(0, new Simpiens.Simulation.Life.ThoughtSlot { Thought = 5, Stacks = 1, Subject = 2, BegunAt = 90u });
             life.SetThought(15, new Simpiens.Simulation.Life.ThoughtSlot { Thought = 9, Stacks = 3, BegunAt = 410u });
             life.SetSubject(2, B);
+            life.SetChronotype(Simpiens.Simulation.Life.Chronotype.Lark); // plan 3's R.1, D28
+            life.Weary(12.25f); // plan 3's R.5, D33
+            life.RecordWindfall(77u);
             state.Life = life;
             state.Activity.RecordSalvageHarvest(80u);
             state.Activity.RecordSalvageSale(95u);

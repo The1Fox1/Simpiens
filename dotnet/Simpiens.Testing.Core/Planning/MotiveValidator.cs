@@ -35,6 +35,8 @@ namespace Simpiens.Testing.Planning
             ("Study", Motive.Growth, ActivityFamily.Leisure),
             ("ReadManual", Motive.Growth, ActivityFamily.Leisure),
             ("Drill", Motive.Growth, ActivityFamily.Leisure),
+            ("FulfilWant", Motive.Want, ActivityFamily.Leisure), // Epic LIFE-1 plan 2, W.3
+            ("Recreate", Motive.Fun, ActivityFamily.Leisure), // Epic LIFE-1 plan 2, L2.6
             ("LiquidateSalvage", Motive.Income, ActivityFamily.Work),
             ("FulfillBounty", Motive.Income, ActivityFamily.Work),
             ("EarnIncome", Motive.Income, ActivityFamily.Work),

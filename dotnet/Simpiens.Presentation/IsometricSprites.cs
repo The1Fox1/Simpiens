@@ -28,6 +28,8 @@ namespace Simpiens.Presentation
         public const int PlotWidth = 32, PlotHeight = 16;
         /// <summary>The drill yard (Epic 11, S3.4): a post standing on a sanded footprint.</summary>
         public const int DrillYardWidth = 24, DrillYardHeight = 12, DrillYardRise = 18;
+        /// <summary>The tavern (Epic LIFE-1 plan 2, T.3): its counter standing on a planked footprint.</summary>
+        public const int TavernWidth = 32, TavernHeight = 16, TavernRise = 10;
 
         private static readonly List<PixelSprite> _all = new List<PixelSprite>(8);
 
@@ -47,6 +49,7 @@ namespace Simpiens.Presentation
         public static PixelSprite Still { get; }
         public static PixelSprite StationPlot { get; }
         public static PixelSprite DrillYard { get; }
+        public static PixelSprite Tavern { get; }
 
         // Top-down's palette (ProceduralSprites): flagstone, rock, slate walls, the bunk's wood, pillow and blanket
         private static readonly Rgba32 Flagstone = new Rgba32(232, 232, 232), Speckle = new Rgba32(212, 212, 212), Joint = new Rgba32(190, 190, 190);
@@ -69,6 +72,7 @@ namespace Simpiens.Presentation
             Still = Add("Iso_Still", StillPixels(), StillWidth, StillHeight + StillRise);
             StationPlot = Add("Iso_StationPlot", PlotPixels(), PlotWidth, PlotHeight);
             DrillYard = Add("Iso_DrillYard", DrillYardPixels(), DrillYardWidth, DrillYardHeight + DrillYardRise); // Epic 11, S3.4
+            Tavern = Add("Iso_Tavern", TavernPixels(), TavernWidth, TavernHeight + TavernRise); // Epic LIFE-1 plan 2, T.3
         }
 
         /// <summary>The pivot of a block <paramref name="rise"/> pixels tall on a <paramref name="height"/>-pixel footprint: its footprint's centre.</summary>
@@ -308,6 +312,52 @@ namespace Simpiens.Presentation
                     if (nx * nx + ny * ny > 1f) continue;
                     pixels[y * width + x] = y == 6 || y == 13 ? rope : nx + ny * 0.5f > 0.2f ? strawDark : straw;
                 }
+            }
+            return pixels;
+        }
+
+        /// <summary>
+        /// The tavern (Epic LIFE-1 plan 2, T.3): a planked footprint, a counter raised on it (its top in light wood, its faces in
+        /// shade), and two tankards on the counter, foam on top.
+        /// </summary>
+        private static Rgba32[] TavernPixels()
+        {
+            int width = TavernWidth, height = TavernHeight + TavernRise;
+            var plank = new Rgba32(120, 84, 48);
+            var plankDark = new Rgba32(96, 64, 34);
+            var top = new Rgba32(168, 116, 64);
+            var face = new Rgba32(120, 72, 32);
+            var faceDark = new Rgba32(78, 45, 18);
+            var pewter = new Rgba32(150, 152, 160);
+            var foam = new Rgba32(244, 232, 196);
+            var pixels = new Rgba32[width * height];
+            // The planked footprint, on the floor
+            for (int y = 0; y < TavernHeight; y++)
+                for (int x = 0; x < width; x++)
+                    if (InDiamond(x, y, width * 0.5f, TavernHeight * 0.5f, width, TavernHeight))
+                        pixels[(y + TavernRise) * width + x] = (x + y) % 4 == 0 ? plankDark : plank;
+            // The counter: a smaller diamond lifted by the rise, its faces dropped to the floor
+            int counterWidth = 22, counterHeight = 10;
+            float cx = width * 0.5f, cy = TavernRise + TavernHeight * 0.5f - 2f;
+            for (int x = 0; x < width; x++)
+            {
+                int lowest = -1;
+                for (int y = 0; y < height; y++)
+                {
+                    if (!InDiamond(x, y, cx, cy - TavernRise + 2f, counterWidth, counterHeight)) continue;
+                    pixels[y * width + x] = top;
+                    lowest = y;
+                }
+                if (lowest < 0) continue;
+                for (int y = lowest + 1; y <= lowest + TavernRise - 2 && y < height; y++) pixels[y * width + x] = x < cx ? face : faceDark;
+            }
+            // Two tankards on the counter
+            foreach (int mx in new[] { (int)cx - 6, (int)cx + 3 })
+            {
+                int my = (int)(cy - TavernRise + 1f);
+                for (int y = my - 3; y <= my; y++) { pixels[y * width + mx] = pewter; pixels[y * width + mx + 1] = pewter; }
+                pixels[(my - 4) * width + mx] = foam;
+                pixels[(my - 4) * width + mx + 1] = foam;
             }
             return pixels;
         }

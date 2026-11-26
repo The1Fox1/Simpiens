@@ -9,8 +9,8 @@ namespace Simpiens.Presentation.Dashboard
 {
     /// <summary>
     /// A crawler's day, as the dossier's Today tab tells it (Epic LIFE-1, L1.5, D10; the epic's A10, F5): since midnight, the
-    /// thoughts it began (its life as it felt it) and the chronicle's dramatic lines about it (a rescue, a tantrum, a
-    /// technique), newest first. A thought begun on a line's tick stands for that line, so nothing is told twice. It stores
+    /// thoughts it began (its life as it felt it), the chronicle's dramatic lines about it (a rescue, a tantrum, a technique)
+    /// and, first, its waking with what it meant to do with the day (plan 3's V.1), newest first. A thought begun on a line's tick stands for that line, so nothing is told twice. It stores
     /// nothing: the life record and the chronicle hold the day.
     /// </summary>
     public sealed class DayLogModel
@@ -60,6 +60,11 @@ namespace Simpiens.Presentation.Dashboard
                 if (slot.Thought == 0 || slot.BegunAt < since || slot.BegunAt > tick) continue;
                 _lines.Add(new Line(slot.BegunAt, LifeTexts.Thought(slot, life, nameOf)));
             }
+
+            // The day's first line (Epic LIFE-1 plan 3, V.1, D38): its waking hour and what it meant to do with the day, once drawn
+            var routine = agent.RoutineAt((uint)tick);
+            if (life.IntentionDay == routine.Day + 1 && routine.WakesAt >= since && routine.WakesAt <= tick)
+                _lines.Add(new Line(routine.WakesAt, LifeTexts.WokeMeaning(life.IntentionFor(routine.Day))));
 
             if (chronicle != null && formatter != null)
             {

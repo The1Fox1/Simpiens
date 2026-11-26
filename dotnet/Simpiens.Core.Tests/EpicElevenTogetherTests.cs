@@ -93,8 +93,11 @@ namespace Simpiens.Core.Tests
         /// technique, an epithet, a scar and a named creature on day 3; a calling and a masterpiece on day 7), the days holding.
         /// The only gate seed with all seven in two weeks: a scar and a name need a downing on a clear (9 and 8 seeds), a
         /// masterpiece a Journeyman at the forge (4 seeds with these players); see F19 for the trust check most fail.
+        /// Seed 35 since the tavern's room (Epic LIFE-1 plan 2, T.2): the taller floor and the Garden's move moved the outpost's
+        /// history, and on seed 5 not every layer came about; none of the gate seeds or 21–34 shows them all within the days.
+        /// Seed 59 since Epic LIFE-1 plan 3's rhythm (nights, routines, weights by the hour and days off, R.2-R.9) moved the outpost's history, and seed 35's moment no longer came.
         /// </summary>
-        private const ulong Seed = 5;
+        private static readonly ulong Seed = ScenarioSeed.Or(59);
 
         [Fact]
         public void EpicElevenPlaysTogether()

@@ -53,7 +53,7 @@ namespace Simpiens.Cognition.Planning
                 if (distance > CryRadius * CryRadius || distance > best) continue;
                 if (distance == best && found && f.Id.CompareTo(chosen.Id) >= 0) continue;
                 if (!IsFriend(context, f)) continue;
-                if (!Vitality.WouldEnterAt(context, f.Position) && !AlreadyThere(context, f.Position)) continue;
+                if (!Vitality.WouldEnterAt(context, f.Position, restDay: false) && !AlreadyThere(context, f.Position)) continue; // on its day off too (plan 3's D35)
                 best = distance;
                 chosen = f;
                 found = true;

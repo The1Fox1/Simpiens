@@ -85,6 +85,8 @@ namespace Simpiens.Presentation.Art
             CarryHeight = builder.CarryHeight;
             BadgeOffset = builder.BadgeOffset;
             BadgeHeight = builder.BadgeHeight;
+            ThoughtOffset = builder.ThoughtOffset;
+            ThoughtHeight = builder.ThoughtHeight;
             RideOffset = builder.RideOffset;
             RideHeight = builder.RideHeight;
             DisplaySlots = builder.DisplaySlots ?? System.Array.Empty<(Vec2 Offset, float Height)>();
@@ -123,6 +125,11 @@ namespace Simpiens.Presentation.Art
         public Vec2 BadgeOffset { get; }
 
         public float BadgeHeight { get; }
+
+        /// <summary>Where the icon of what a crawler is doing hangs (Epic LIFE-1 plan 3, V.4): <see cref="ThoughtOffset"/> on the floor from it, <see cref="ThoughtHeight"/> units up.</summary>
+        public Vec2 ThoughtOffset { get; }
+
+        public float ThoughtHeight { get; }
 
         /// <summary>Where a carried crawler rides on its rescuer (Epic 10 Part 3, K5.8a): <see cref="RideOffset"/> on the floor from it, <see cref="RideHeight"/> units up.</summary>
         public Vec2 RideOffset { get; }
@@ -215,6 +222,10 @@ namespace Simpiens.Presentation.Art
             public Vec2 BadgeOffset { get; set; }
 
             public float BadgeHeight { get; set; }
+
+            public Vec2 ThoughtOffset { get; set; }
+
+            public float ThoughtHeight { get; set; }
 
             public float CarryHeight { get; set; }
             public Vec2 RideOffset { get; set; }

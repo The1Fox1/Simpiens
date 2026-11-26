@@ -61,9 +61,18 @@ namespace Simpiens.Cognition
         public const int VentureRiskTolerancePercent = 30;
         public const float VentureHealth = 80f;
 
-        /// <summary>True when this crawler would go into danger for salvage now.</summary>
-        public static bool WouldVenture(in AgentContext context) =>
-            context.Personality.RiskTolerancePercent >= VentureRiskTolerancePercent && context.Health >= VentureHealth && !context.IsDowned;
+        /// <summary>True when this crawler would go into danger for salvage now: never on its day off (Epic LIFE-1 plan 3, R.8, D35).</summary>
+        public static bool WouldVenture(in AgentContext context) => WouldVenture(context, Resting(context));
+
+        /// <summary>The same, with its day off judged as <paramref name="restDay"/> (rescue judges it as a working day: D35).</summary>
+        private static bool WouldVenture(in AgentContext context, bool restDay) =>
+            !restDay && context.Personality.RiskTolerancePercent >= VentureRiskTolerancePercent && context.Health >= VentureHealth && !context.IsDowned;
+
+        /// <summary>
+        /// True on its day off (Epic LIFE-1 plan 3, R.8, D35): its lone danger limit is 0, so it neither braves a hazard nor walks a
+        /// charted lair's reach, not even one it would clear. Rescue and orders are judged apart (D35, D36).
+        /// </summary>
+        public static bool Resting(in AgentContext context) => context.Intention == Simpiens.Simulation.Life.DayIntention.Rest;
 
         /// <summary>
         /// The worst danger a crawler braves alone, in health a second (Epic 10 G5, D11): the Sump's 0.75 and the Glow
@@ -117,11 +126,17 @@ namespace Simpiens.Cognition
         /// judged as <see cref="WouldEnter(in AgentContext, in SectorHazard)"/>, and a charted lair's reach judged the same
         /// way, by its pack's danger against <see cref="LoneHazardLimit"/> (Q6: a known lair is judged as a hazard is).
         /// </summary>
-        public static bool WouldEnterAt(in AgentContext context, Vec2 position)
+        public static bool WouldEnterAt(in AgentContext context, Vec2 position) => WouldEnterAt(context, position, Resting(context));
+
+        /// <summary>
+        /// The same, with its day off judged as <paramref name="restDay"/>: rescue passes false (D35: a friend still goes for the
+        /// fallen on its day off).
+        /// </summary>
+        public static bool WouldEnterAt(in AgentContext context, Vec2 position, bool restDay)
         {
-            bool venture = WouldVenture(context);
+            bool venture = WouldVenture(context, restDay);
             if (!WouldEnter(venture, HazardAt(context.Snapshot?.Map, position), context.Inventory)) return false;
-            float lair = LairDangerFor(context, position);
+            float lair = LairDangerFor(context, position, null, restDay);
             return lair <= 0f || (venture && lair <= LoneHazardLimit);
         }
 
@@ -132,7 +147,10 @@ namespace Simpiens.Cognition
         public static float LairDangerFor(in AgentContext context, Vec2 position) => LairDangerFor(context, position, null);
 
         /// <summary>As <see cref="LairDangerFor(in AgentContext, Vec2)"/>, leaving out the lairs whose reach holds <paramref name="ignoreAt"/> (where it stands: it may walk out).</summary>
-        public static float LairDangerFor(in AgentContext context, Vec2 position, Vec2? ignoreAt)
+        public static float LairDangerFor(in AgentContext context, Vec2 position, Vec2? ignoreAt) => LairDangerFor(context, position, ignoreAt, Resting(context));
+
+        /// <summary>The same, with its day off judged as <paramref name="restDay"/>: on it, a lair it would brave is danger like any other (D35).</summary>
+        private static float LairDangerFor(in AgentContext context, Vec2 position, Vec2? ignoreAt, bool restDay)
         {
             var snapshot = context.Snapshot;
             var map = snapshot?.Map;
@@ -143,7 +161,7 @@ namespace Simpiens.Cognition
             {
                 if (!snapshot.IsLairCharted(i) || !Simpiens.Simulation.Creatures.LairReach.Holds(lairs[i], position)) continue;
                 if (ignoreAt.HasValue && Simpiens.Simulation.Creatures.LairReach.Holds(lairs[i], ignoreAt.Value)) continue;
-                if (BravesLair(lairs[i], snapshot.IsBossAlive(i), context.Skills, context.Inventory, context.Traits, context.Health, context.Personality.RiskTolerancePercent, context.IsDowned, snapshot.LeaderRank(i), IsGrudgeLair(context.Traits, snapshot, i))) continue;
+                if (!restDay && BravesLair(lairs[i], snapshot.IsBossAlive(i), context.Skills, context.Inventory, context.Traits, context.Health, context.Personality.RiskTolerancePercent, context.IsDowned, snapshot.LeaderRank(i), IsGrudgeLair(context.Traits, snapshot, i))) continue;
                 if (defense < 0f) defense = Simpiens.Simulation.Items.CrawlerStats.Get(context.Inventory, Simpiens.Simulation.Items.StatKind.Defense);
                 float danger = Simpiens.Simulation.Creatures.LairReach.Danger(lairs[i], defense, snapshot.IsBossAlive(i), snapshot.LeaderRank(i));
                 if (danger > worst) worst = danger;

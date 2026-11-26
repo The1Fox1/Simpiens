@@ -57,6 +57,36 @@ namespace Simpiens.Core.Tests
         public void Mood() => new Simpiens.Testing.Life.MoodValidator().RunAllValidationTests(); // Epic LIFE-1, L1.3
 
         [Fact]
+        public void Fun() => new Simpiens.Testing.Life.FunValidator().RunAllValidationTests(); // Epic LIFE-1 plan 2, L2.1
+
+        [Fact]
+        public void Activities() => new Simpiens.Testing.Life.ActivityValidator().RunAllValidationTests(); // Epic LIFE-1 plan 2, L2.2
+
+        [Fact]
+        public void Venues() => new Simpiens.Testing.World.VenueValidator().RunAllValidationTests(); // Epic LIFE-1 plan 2, L2.3
+
+        [Fact]
+        public void Recreate() => new Simpiens.Testing.Life.RecreateValidator().RunAllValidationTests(); // Epic LIFE-1 plan 2, L2.5
+
+        [Fact]
+        public void Stations() => new Simpiens.Testing.Economy.StationsValidator().RunAllValidationTests(); // Epic LIFE-1 plan 2, T.1
+
+        [Fact]
+        public void TavernMenu() => new Simpiens.Testing.Economy.TavernMenuValidator().RunAllValidationTests(); // Epic LIFE-1 plan 2, T.3
+
+        [Fact]
+        public void Wants() => new Simpiens.Testing.Life.WantsValidator().RunAllValidationTests(); // Epic LIFE-1 plan 2, W.1-W.3
+
+        [Fact]
+        public void Routine() => new Simpiens.Testing.Life.RoutineValidator().RunAllValidationTests(); // Epic LIFE-1 plan 3, R.1
+
+        [Fact]
+        public void Weariness() => new Simpiens.Testing.Life.WearinessValidator().RunAllValidationTests(); // Epic LIFE-1 plan 3, R.5
+
+        [Fact]
+        public void Intention() => new Simpiens.Testing.Life.IntentionValidator().RunAllValidationTests(); // Epic LIFE-1 plan 3, R.7
+
+        [Fact]
         public void Look() => new Simpiens.Testing.People.LookValidator().RunAllValidationTests();
 
         [Fact]

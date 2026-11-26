@@ -52,6 +52,7 @@ namespace Simpiens.Client.Tests
             Piece("ring", art.SelectionRing);
             foreach (AgentVisualState state in Enum.GetValues(typeof(AgentVisualState)))
             {
+                if (state > AgentVisualState.Sleeping) continue; // the states the art sets drew (the seated pose came with Epic LIFE-1 plan 3, V.3)
                 foreach (float t in Times)
                 {
                     CrawlerAppearance.MicroAnimation(state, t, out float tilt, out float scaleX, out float scaleY);

@@ -13,15 +13,15 @@ namespace Simpiens.Presentation
     public static class ProceduralSprites
     {
         private static readonly List<PixelSprite> _all = new List<PixelSprite>(48);
-        private static readonly PixelSprite[,] _agentSprites = new PixelSprite[12, 2];
-        private static readonly IReadOnlyList<string>[,] _agentPatterns = new IReadOnlyList<string>[12, 2];
+        private static readonly PixelSprite[,] _agentSprites = new PixelSprite[13, 2];
+        private static readonly IReadOnlyList<string>[,] _agentPatterns = new IReadOnlyList<string>[13, 2];
         private static readonly Dictionary<char, Rgba32> _crawlerKeys, _sleepKeys; // a standing crawler's palette (its fixed letters are every state's), and the sleeper's
         private static readonly PixelSprite _resourceSprite;
         private static readonly PixelSprite _oreVeinSprite;
         private static readonly PixelSprite _herbPatchSprite;
         private static readonly PixelSprite _glowstoneSprite;
         private static readonly PixelSprite _stallSprite;
-        private static readonly PixelSprite _forgeSprite, _stillSprite, _stationPlotSprite, _cairnSprite, _drillYardSprite;
+        private static readonly PixelSprite _forgeSprite, _stillSprite, _stationPlotSprite, _cairnSprite, _drillYardSprite, _tavernSprite;
 
         /// <summary>A body's cairn (Epic 10 Part 3, K5.8b).</summary>
         public static PixelSprite CairnSprite => _cairnSprite;
@@ -39,6 +39,7 @@ namespace Simpiens.Presentation
 
         /// <summary>The guildhall's drill yard (Epic 11, S3.4).</summary>
         public static PixelSprite DrillYardSprite => _drillYardSprite;
+        public static PixelSprite TavernSprite => _tavernSprite;
         private static readonly PixelSprite _wallSprite;
         private static readonly PixelSprite[] _campfireSprites = new PixelSprite[2];
 
@@ -324,6 +325,7 @@ namespace Simpiens.Presentation
             _stillSprite = CreateSprite(PatternStill, stationPalette, "Prop_Still");
             _stationPlotSprite = CreateSprite(PatternStationPlot, stationPalette, "Prop_StationPlot");
             _drillYardSprite = CreateSprite(PatternDrillYard, stationPalette, "Prop_DrillYard"); // Epic 11, S3.4
+            _tavernSprite = CreateSprite(PatternTavern, stationPalette, "Prop_Tavern"); // Epic LIFE-1 plan 2, T.3
 
             // A body's cairn (Epic 10 Part 3, K5.8b): stones heaped where a crawler fell
             var cairnPalette = new Dictionary<char, Rgba32>
@@ -334,6 +336,11 @@ namespace Simpiens.Presentation
                 { 's', new Rgba32(130, 124, 116, 255) }, // Stone, lit
             };
             _cairnSprite = CreateSprite(PatternCairn, cairnPalette, "Prop_Cairn");
+
+            // The seated frames (Epic LIFE-1 plan 3, V.3), last, so every earlier sprite keeps its place in the sheet: sitting at a
+            // seat, knees forward; the idle outfit's colours
+            Agent(AgentVisualState.Seated, 0, PatternSeat0, idlePalette, "Agent_Seat_0");
+            Agent(AgentVisualState.Seated, 1, PatternSeat1, idlePalette, "Agent_Seat_1");
         }
 
         private static PixelSprite CreateRing()
@@ -490,6 +497,27 @@ namespace Simpiens.Presentation
             "....########....",
         };
 
+        // The tavern (Epic LIFE-1 plan 2, T.3): its counter, two tankards foaming on it, a barrel behind
+        private static readonly string[] PatternTavern =
+        {
+            "................",
+            "..####..........",
+            ".#TwwT#.........",
+            ".#wTTw#..#hh#...",
+            ".#TwwT#..#pp#...",
+            "..####...####...",
+            "################",
+            "#TTTTTTTTTTTTTT#",
+            "#TTThhTTTTThhTT#",
+            "#TTTppTTTTTppTT#",
+            "################",
+            "#wwwwwwwwwwwwww#",
+            "#wwTwwwwwwwwTww#",
+            "#wwwwwwwwwwwwww#",
+            "################",
+            "................",
+        };
+
         private static readonly string[] PatternCairn =
         {
             "................",
@@ -548,6 +576,48 @@ namespace Simpiens.Presentation
             ".##############################.",
             ".#ww#......................#ww#.",
             "................................",
+        };
+
+        // Seated (Epic LIFE-1 plan 3, V.3): the head two rows lower, hands on the knees, the thighs forward and the shins under
+        // them; frame 1 blinks
+        private static readonly string[] PatternSeat0 =
+        {
+            "................",
+            "................",
+            "................",
+            ".....######.....",
+            "....#HHHHHH#....",
+            "....#HKKKKH#....",
+            "....#KBKKBK#....",
+            "....#KKKKKK#....",
+            ".....######.....",
+            "....#CCCCCC#....",
+            "...#CCCCCCCC#...",
+            "...#KCCCCCCK#...",
+            "..#SSSSSSSSSS#..",
+            "..#SS######SS#..",
+            "...##......##...",
+            "................"
+        };
+
+        private static readonly string[] PatternSeat1 =
+        {
+            "................",
+            "................",
+            "................",
+            ".....######.....",
+            "....#HHHHHH#....",
+            "....#HKKKKH#....",
+            "....#KKKKKK#....",
+            "....#KKKKKK#....",
+            ".....######.....",
+            "....#CCCCCC#....",
+            "...#CCCCCCCC#...",
+            "...#KCCCCCCK#...",
+            "..#SSSSSSSSSS#..",
+            "..#SS######SS#..",
+            "...##......##...",
+            "................"
         };
 
         private static readonly string[] PatternIdle0 =

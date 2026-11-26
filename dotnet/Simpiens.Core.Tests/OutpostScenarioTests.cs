@@ -18,9 +18,9 @@ namespace Simpiens.Core.Tests
     /// </summary>
     public class OutpostScenarioTests
     {
-        private static LocalSimulation Outpost()
+        private static LocalSimulation Outpost(ulong seed = SimulationSettings.DefaultSeed)
         {
-            var sim = LocalSimulation.Create(SimulationSettings.DefaultSeed);
+            var sim = LocalSimulation.Create(seed);
             sim.Respawn(OutpostSession.SessionId);
             return sim;
         }
@@ -152,11 +152,17 @@ namespace Simpiens.Core.Tests
         /// the stall on its own and, in the same hazard sector, loses health more slowly per tick of exposure than a crawler
         /// without; its gear wears; the caravan restocks the stall's gear under its own sink, and the ledger balances; the
         /// day's checks still hold.
+        /// Gate seed 424242 since the tavern's room (Epic LIFE-1 plan 2, T.2): the taller floor and the Garden's move moved the
+        /// outpost's history, and the default seed's moment no longer came.
         /// </summary>
+        /// <summary>The gear scenario's seed: the default until a deliberate behaviour change moves it (re-picked with <see cref="ScenarioSeed"/>).</summary>
+        // Seed 20261009 since Epic LIFE-1 plan 3's rhythm (nights, routines, weights by the hour and days off, R.2-R.9) moved the outpost's history, and seed 424242's moment no longer came.
+        private static readonly ulong GearSeed = ScenarioSeed.Or(20261009);
+
         [Fact]
         public void TheGearedTakeLessDamageInTheSameSector()
         {
-            using var sim = Outpost();
+            using var sim = Outpost(GearSeed);
             var watch = new OutpostWatch(sim);
             var map = sim.Host.World.Map;
             // Per hazard sector: ticks and damage, bare and geared, from each crawler's tallies tick by tick

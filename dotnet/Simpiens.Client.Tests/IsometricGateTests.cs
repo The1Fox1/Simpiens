@@ -89,7 +89,7 @@ namespace Simpiens.Client.Tests
         }
 
         /// <summary>The outpost at t300 (the crawlers have spread out from where they woke), close up on the hub.</summary>
-        private static (WorldScene Scene, View View, LocalSimulation Sim) CloseUp(WallStyle style)
+        private static (WorldScene Scene, View View, LocalSimulation Sim) CloseUp(WallStyle style, bool onACrawler = false)
         {
             var sim = LocalSimulation.Create(SimulationSettings.DefaultSeed);
             sim.Respawn(OutpostSession.SessionId);
@@ -97,14 +97,16 @@ namespace Simpiens.Client.Tests
             var scene = new WorldScene { Mode = ViewMode.Isometric, WallStyle = style };
             scene.Build(sim.Host.Current.Map, TestFrames.Of(sim), 0f);
             var hub = sim.Host.Current.Map.Labels.First(l => l.Text == "Outpost Hub").Position;
-            var view = new View(ViewMode.Isometric.Projection, new ViewCamera(hub, 48f, 1280, 720)).SnappedToPixels();
+            // Framed on a crawler where the test needs one in view (since the venues, Epic LIFE-1 plan 2, the hub at t300 may be empty)
+            var centre = onACrawler ? sim.Host.CrawlerStates[0].Position : hub;
+            var view = new View(ViewMode.Isometric.Projection, new ViewCamera(centre, 48f, 1280, 720)).SnappedToPixels();
             return (scene, view, sim);
         }
 
         [Fact]
         public void AClickOnACrawlersHeadPicksIt()
         {
-            var (scene, view, sim) = CloseUp(WallStyle.Cutaway);
+            var (scene, view, sim) = CloseUp(WallStyle.Cutaway, onACrawler: true);
             using (sim)
             {
                 var items = Items(scene).Where(i => i.Pick >= 0).ToList();

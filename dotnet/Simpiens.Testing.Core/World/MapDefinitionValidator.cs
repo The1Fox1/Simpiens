@@ -286,22 +286,32 @@ namespace Simpiens.Testing.World
             for (int i = 0; i < def.Sectors.Count; i++)
             {
                 var s = def.Sectors[i];
-                bool facility = s.Id == Floor1Layout.WorkshopRowSectorId || s.Id == Floor1Layout.GuildhallSectorId;
+                bool facility = s.Id == Floor1Layout.WorkshopRowSectorId || s.Id == Floor1Layout.GuildhallSectorId || s.Id == Floor1Layout.TavernSectorId;
                 Assert(s.Facility == facility, $"(i) {s.Name} {(facility ? "must" : "must not")} be a facility.");
                 if (!facility) Assert(DoorWidth(grid, guildhall.Bounds, s.Bounds) == 0, $"(i) The guildhall must open only onto the workshop row, not {s.Name}.");
+            }
+            // (t) The tavern's room (Epic LIFE-1 plan 2, T.2, D16): off the hub, charted and safe, a facility; the Garden moved
+            // north of it opens onto it alone
+            Assert(def.TryGetSector(Floor1Layout.TavernSectorId, out var tavern) && tavern.StartsExplored && !tavern.Hazard.IsHazardous, "(t) The tavern is charted and safe.");
+            Assert(DoorWidth(grid, hub.Bounds, tavern.Bounds) >= 3 && DoorWidth(grid, tavern.Bounds, garden.Bounds) >= 3, "(t) The tavern opens onto the hub and the Garden.");
+            for (int i = 0; i < def.Sectors.Count; i++)
+            {
+                var s = def.Sectors[i];
+                if (s.Id == Floor1Layout.TavernSectorId || s.Id == Floor1Layout.GardenSectorId) continue;
+                Assert(DoorWidth(grid, garden.Bounds, s.Bounds) == 0, $"(t) The Garden opens onto the tavern alone, not {s.Name}.");
             }
             var kinds = new HashSet<StationKind>();
             for (int i = 0; i < def.Stations.Count; i++)
             {
                 var station = def.Stations[i];
                 // The workshop row's stations; the drill yard in the guildhall (Epic 11, S3.4, D10)
-                int home = station.Kind == StationKind.DrillYard ? Floor1Layout.GuildhallSectorId : Floor1Layout.WorkshopRowSectorId;
-                Assert(def.FindSector(station.Position).Id == home, $"(i) Station '{station.Key}' stands in {(home == Floor1Layout.GuildhallSectorId ? "the guildhall" : "the workshop row")}.");
+                int home = station.Kind == StationKind.DrillYard ? Floor1Layout.GuildhallSectorId : station.Kind == StationKind.Tavern ? Floor1Layout.TavernSectorId : Floor1Layout.WorkshopRowSectorId;
+                Assert(def.FindSector(station.Position).Id == home, $"(i) Station '{station.Key}' stands in sector {home}.");
                 Assert(grid.TryGetRegion(station.Position, out int r) && r == hubRegion, $"(i) Station '{station.Key}' at {station.Position} is reachable from the Hub.");
                 Assert(station.Radius > 0f && kinds.Add(station.Kind), $"(i) Station '{station.Key}': a radius, and the only {station.Kind}.");
             }
-            Assert(kinds.Contains(StationKind.Forge) && kinds.Contains(StationKind.Still) && kinds.Contains(StationKind.DrillYard) && def.Stations.Count == 3,
-                "(i) Floor 1 has a forge and a still (Q2), and the guildhall's drill yard (Epic 11, S3.4).");
+            Assert(kinds.Contains(StationKind.Forge) && kinds.Contains(StationKind.Still) && kinds.Contains(StationKind.DrillYard) && kinds.Contains(StationKind.Tavern) && def.Stations.Count == 4,
+                "(i) Floor 1 has a forge and a still (Q2), the guildhall's drill yard (Epic 11, S3.4) and the tavern's counter (Epic LIFE-1 plan 2, T.4).");
 
             // (e) building twice gives identical walkability and region labels
             var again = Rasterized(def);

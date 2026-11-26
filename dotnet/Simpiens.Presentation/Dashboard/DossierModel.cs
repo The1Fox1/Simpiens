@@ -64,6 +64,9 @@ namespace Simpiens.Presentation.Dashboard
         /// <summary>"Content. Health 100%."</summary>
         public string MoodLine { get; private set; } = string.Empty;
 
+        /// <summary>"Today: a day off." (Epic LIFE-1 plan 3, V.1, D38), shown after the mood; empty on a working day.</summary>
+        public string IntentionLine { get; private set; } = string.Empty;
+
         /// <summary>How a crawler feels and its health, in words: "Content. Health 100%.", or "Hurt. Downed."</summary>
         public static string MoodText(Mood mood, float health, bool downed) => MoodText(mood, health, downed, string.Empty);
 
@@ -559,6 +562,7 @@ namespace Simpiens.Presentation.Dashboard
                 _reasonShown = Mind.ReasonInLine;
                 MoodLine = MoodText(Mood, agent.Health, agent.IsDowned, Mind.ReasonInLine);
             }
+            IntentionLine = LifeTexts.TodayLine(agent.IntentionAt((uint)(_context.Clock?.CurrentTick ?? 0)));
         }
 
         /// <summary>

@@ -162,7 +162,11 @@ namespace Simpiens.Simulation.Items
             Primer(ItemType.ForagingPrimer, "ForagingPrimer", "Primer of the Grove", Simpiens.Simulation.Skills.SkillWork.Harvest(ItemType.MedicinalHerb)),
             Primer(ItemType.SmithingPrimer, "SmithingPrimer", "Primer of the Forge", Simpiens.Simulation.Skills.SkillWork.Make(StationKind.Forge)),
             Primer(ItemType.AlchemyPrimer, "AlchemyPrimer", "Primer of the Still", Simpiens.Simulation.Skills.SkillWork.Make(StationKind.Still)),
-            Primer(ItemType.MedicinePrimer, "MedicinePrimer", "Primer of Mending", Simpiens.Simulation.Skills.SkillWork.Tend())
+            Primer(ItemType.MedicinePrimer, "MedicinePrimer", "Primer of Mending", Simpiens.Simulation.Skills.SkillWork.Tend()),
+            // The tavern's menu (Epic LIFE-1 plan 2, T.3, D19): served, never carried; what they do is their activity's row (an
+            // ale's fun, a supper's meal), so they carry no consume effect of their own
+            new ItemDefinition(ItemType.Ale, "Ale", "Ale", ItemCategory.Served, ItemRarity.Common),
+            new ItemDefinition(ItemType.Stew, "Stew", "Stew", ItemCategory.Served, ItemRarity.Common)
         };
 
         private static ItemDefinition Primer(ItemType id, string name, string displayName, Simpiens.Simulation.Skills.SkillWork work) =>

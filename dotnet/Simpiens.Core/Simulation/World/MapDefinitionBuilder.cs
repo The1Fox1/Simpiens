@@ -26,6 +26,8 @@ namespace Simpiens.Simulation.World
         private readonly List<PoiDefinition> _pois = new List<PoiDefinition>();
         private readonly List<StationDefinition> _stations = new List<StationDefinition>();
         private readonly List<LairDefinition> _lairs = new List<LairDefinition>();
+        private readonly List<(string Key, Vec2 Position, float Radius, Vec2[] Seats, byte Hours, uint Activities, VenueAccess Access, string Station)> _venues
+            = new List<(string, Vec2, float, Vec2[], byte, uint, VenueAccess, string)>();
         private readonly List<MapLabel> _labels = new List<MapLabel>();
         private Vec2[] _caravanRoute;
 
@@ -122,6 +124,20 @@ namespace Simpiens.Simulation.World
             return this;
         }
 
+        /// <summary>
+        /// A place to spend free time (Epic LIFE-1 plan 2, L2.3, D13): its centre and radius, its seats, the activities it
+        /// offers, its hours (every block unless given), who may come, and the key of a station it needs built. Its sector is
+        /// the one its centre lies in.
+        /// </summary>
+        public MapDefinitionBuilder Venue(string key, Vec2 position, float radius, Vec2[] seats, Simpiens.Simulation.Life.Activity[] offers,
+            byte hours = 0b111111, VenueAccess access = VenueAccess.Anyone, string station = null)
+        {
+            uint activities = 0;
+            if (offers != null) foreach (var activity in offers) activities |= 1u << (byte)activity;
+            _venues.Add((key, position, radius, seats ?? System.Array.Empty<Vec2>(), hours, activities, access, station));
+            return this;
+        }
+
         public MapDefinition Build()
         {
             if (string.IsNullOrEmpty(_name)) throw new InvalidOperationException("Map definition needs a name.");
@@ -162,6 +178,23 @@ namespace Simpiens.Simulation.World
                 if (_lairs[i].Kind == Simpiens.Simulation.Creatures.CreatureKind.None) throw new InvalidOperationException($"Map '{_name}': lair '{_lairs[i].Key}' has no kind.");
             }
 
+            if (_venues.Count > MapDefinition.MaxVenues) throw new InvalidOperationException($"Map '{_name}': {_venues.Count} venues; a map holds at most {MapDefinition.MaxVenues}.");
+            var venues = new VenueDefinition[_venues.Count];
+            for (int i = 0; i < _venues.Count; i++)
+            {
+                var v = _venues[i];
+                RequireKey(keys, v.Key);
+                RequireInside(v.Position, v.Key);
+                foreach (var seat in v.Seats) RequireInside(seat, v.Key + " seat");
+                if (v.Activities == 0) throw new InvalidOperationException($"Map '{_name}': venue '{v.Key}' offers nothing.");
+                if (v.Hours == 0) throw new InvalidOperationException($"Map '{_name}': venue '{v.Key}' is never open.");
+                if (v.Station != null && !_stations.Exists(s => s.Key == v.Station)) throw new InvalidOperationException($"Map '{_name}': venue '{v.Key}' needs station '{v.Station}', which the map hasn't.");
+                byte sector = 0;
+                foreach (var s in _sectors) if (s.Bounds.Contains(v.Position)) { sector = s.Id; break; }
+                if (sector == 0) throw new InvalidOperationException($"Map '{_name}': venue '{v.Key}' lies in no sector.");
+                venues[i] = new VenueDefinition(v.Key, sector, v.Position, v.Radius, v.Seats, v.Hours, v.Activities, v.Access, v.Station);
+            }
+
             return new MapDefinition(
                 _name,
                 _playableBounds,
@@ -174,7 +207,8 @@ namespace Simpiens.Simulation.World
                 _stations.ToArray(),
                 _labels.ToArray(),
                 _caravanRoute,
-                _lairs.ToArray());
+                _lairs.ToArray(),
+                venues);
         }
 
         private void RequireKey(HashSet<string> keys, string key)

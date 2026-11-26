@@ -196,7 +196,9 @@ namespace Simpiens.Core.Tests
             Assert.Equal(ExpeditionStage.March, o.Guild.Parties[0].Expedition.Stage);
             groups.TryGetGroup(expedition.PartyGroupId, out party);
             Assert.Equal(o.Gallery, party.ActiveDirective.TargetLocation);
-            Assert.Equal(expedition.DispatchTick, party.ActiveDirective.IssuedTick); // judged once, at dispatch
+            // Issued afresh at each stage, so each member judges it again (Epic LIFE-1 plan 2's O.2, D25; Epic 10's D8 judged it once)
+            Assert.Equal(o.Guild.Parties[0].Expedition.StageTick, party.ActiveDirective.IssuedTick);
+            Assert.NotEqual(expedition.DispatchTick, party.ActiveDirective.IssuedTick);
 
             o.PutAll(o.Gallery, health: 90f);
             o.Step();
@@ -813,6 +815,52 @@ namespace Simpiens.Core.Tests
             Assert.Equal(ExpeditionMemberStatus.Deserted, o.Guild.Parties[0].Members[2].Status);
             Assert.False(o.Guild.IsMember(deserter.AgentId), "Deserting takes it out of the guild.");
             Assert.Equal(settled, groups.TryGetMembership(deserter.AgentId, GroupType.Settlement, out _));
+        }
+
+        /// <summary>
+        /// Orders are judged at every stage (the producer, 2026-11-24: "Crawlers can absolutely disobey orders"; Epic LIFE-1 plan
+        /// 2's O.2, D25): a member who set out willingly and soured on the patron on the way stays behind when the next stage's
+        /// order comes, keeps its place in the guild, and the party works on without it.
+        /// </summary>
+        [Fact]
+        public void AMemberWhoSoursOnTheWayStaysBehindAtTheNextStage()
+        {
+            using var o = LiveOutpost(geared: true);
+            var groups = o.Sim.Simulation.Groups;
+            var sour = o.Members[1];
+            SendUntil(o, ExpeditionStage.March);
+            // It judges the march's order a few ticks after the stage begins (cognition's turn), and complies
+            groups.TryGetGroup(o.Guild.Parties[0].Expedition.PartyGroupId, out var party);
+            for (int t = 0; t < 200 && sour.LastEvaluatedDirectiveTick != party.ActiveDirective.IssuedTick; t++) o.Sim.Step(1);
+            Assert.Equal(party.ActiveDirective.IssuedTick, sour.LastEvaluatedDirectiveTick);
+            Assert.Equal(ExpeditionStage.March, o.Guild.Parties[0].Expedition.Stage);
+            Assert.True(o.Guild.IsOnExpedition(sour.AgentId), "It set out with the party, and judged the march's order willingly.");
+
+            // On the way it sours: trust 30 and its allegiance to the party it judges the order by gone, less a little hunger:
+            // 30 x 0.35 - 10 x 0.30 = 7.5, below the 20 that complies, above the 0 that deserts
+            uint tick = (uint)o.Sim.Clock.CurrentTick;
+            sour.Memory.SetAffinity(WorldRegistry.PlayerEntityId, new AffinityRecord(0, 30, 0, 0, 1, tick));
+            groups.UpdateAllegiance(sour.AgentId, o.Guild.Parties[0].Expedition.PartyGroupId, -100);
+            sour.Hunger = 10f;
+            sour.Frustration = 0f;
+            for (int t = 0; t < 3000 && o.Guild.IsOnExpedition(sour.AgentId); t++) o.Sim.Step(1);
+
+            var expedition = o.Guild.Parties[0].Expedition;
+            Assert.Equal(ExpeditionMemberStatus.StayedBehind, o.Guild.Parties[0].Members[1].Status);
+            Assert.True(expedition.Stage != ExpeditionStage.None && expedition.Stage != ExpeditionStage.Muster && expedition.Stage != ExpeditionStage.March,
+                $"It stayed behind when the next stage's order came ({expedition.Stage}).");
+            Assert.True(o.Guild.IsMember(sour.AgentId), "Staying behind keeps it in the guild.");
+            Assert.True(o.Guild.HasExpedition, "The party goes on without it.");
+            for (int i = 0; i < o.Members.Length; i++)
+                if (i != 1) Assert.True(o.Guild.IsOnExpedition(o.Members[i].AgentId), $"Member {i} keeps to its orders.");
+        }
+
+        /// <summary>Sends the party and runs until its expedition reaches <paramref name="stage"/>.</summary>
+        private static void SendUntil(Outpost o, ExpeditionStage stage, int limit = 3000)
+        {
+            Commands(o).QueueInfluence(InfluenceEvent.CreateDispatchExpedition("Test", o.Order()));
+            for (int t = 0; t < limit && o.Guild.Parties[0].Expedition.Stage != stage; t++) o.Sim.Step(1);
+            Assert.Equal(stage, o.Guild.Parties[0].Expedition.Stage);
         }
 
         [Fact]

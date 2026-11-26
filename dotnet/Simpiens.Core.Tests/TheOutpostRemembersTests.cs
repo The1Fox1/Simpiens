@@ -94,8 +94,9 @@ namespace Simpiens.Core.Tests
         /// earned on 19 of the 23 gate seeds and a scar borne on 12, both with the days holding on 12. On this one Kwame, downed
         /// by a beetle, is carried out and stands at t19108 bearing its claw, and Ellis, who carried the fallen out twice, is the
         /// Steadfast at t19116.
+        /// Seed 1 since Epic LIFE-1 plan 3's rhythm (nights, routines, weights by the hour and days off, R.2-R.9) moved the outpost's history, and seed 3's moment no longer came.
         /// </summary>
-        private const ulong Seed = 3;
+        private static readonly ulong Seed = ScenarioSeed.Or(1);
 
         [Fact]
         public void TheOutpostRemembers()

@@ -94,6 +94,8 @@ namespace Simpiens.Cognition
                     {
                         agent.Energy = SimMath.Min(100f, agent.Energy + Day.SleepBonus);
                         agent.Think(Simpiens.Simulation.Life.Thought.SleptInABunk, currentTick); // woke in a bunk (Epic LIFE-1, L1.2)
+                        agent.EaseVariety(Simpiens.Cognition.Planning.Leisure.EasePerDay); // a day's variety eased (plan 2, L2.7)
+                        agent.JustWoke = true; // a want may arise (plan 2, W.2): the runtime takes it this tick
                     }
                     else if (completedAction is TravelToPeerAction)
                     {
