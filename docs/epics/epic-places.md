@@ -26,6 +26,12 @@
 **Decided by the producer:**
 - **P1. Zones and buildings are different things.** A zone (today's sector) is a walled region of the floor; a building is a walled structure inside a zone, and a zone may hold many.
 - **P2. A station is not a building.** A building hosts stations, several of different kinds: a tavern's central bar, cooking station and brew barrel.
+- **P3. No perfect geometry in maps** (2026-11-27, answering plan 1's S1 with B, the wider outpost square, over A, the square at today's width):
+  > The outpost square, for plan 2 should go with design B. Your recommendation with plan A follows a "perfect geometry" where everything is perfectly square, which makes sense as an LLM but humans hate "prefect gemoetry" in maps because it feels incredibly unrealistic.
+
+  A map should read as grown, not drawn from above. Places come in different sizes. They aren't lined up with one another or flush with their zone's walls. Doors sit off-centre, and a zone's edge may jog. The walls stay on the map's grid, so the variety comes from sizes, offsets, setbacks and jogs, not from angles. The rule binds every map change from plan 2's map pass on (`docs/places-model.md` §7).
+
+  **My verdict: agreed.** A put buildings across the full width of the column, so the plan was symmetrical. That suits a barracks yard, not a frontier outpost built up a hall at a time. Variety also helps the player: a distinct shape is a landmark, and today's identical 16 × 12 rooms all look alike from the camera. B also has the empty lot that plan 2's build command needs on Floor 1, which A lacked and I underweighted. But B as I drew it is still too regular: buildings sit flush in the square's corners, and every side room moves out exactly four units. Plan 2's map pass redraws it under P3. Where a neighbouring room has space to spare, the square takes that space instead of pushing the room out, so fewer walks change than a uniform shift would cause.
 
 ### The questions (defaults proposed; the producer answers by exception)
 - **Q1. Where buildings stand: fixed lots or the player's choice?** *Default: fixed lots in the map.* A building's footprint, walls and doors are map data from the start, drawn as an empty lot (foundations) until it's built. The player chooses whether and what to build on a lot, not where. Free placement means changing walkable ground at runtime, re-planning paths and saving walls; it waits for the dev map designer, and the lot data is what it would place.
@@ -101,7 +107,7 @@ A player can tell where a crawler is and what it's doing by looking. A tavern is
 
 **Plan 1's changes to this section** (its decisions, defaults by exception; they move to §0 as their steps land):
 - **The save's raise moves to plan 2** (its D1): plan 1's buildings and lots are map data only, and the first saved building state is plan 2's build command for a lot. A7 and PL1's row read "plan 2" for the raise.
-- **The barracks moves to plan 2's map pass** (its D6): the guildhall is six units deep, too shallow for a building in its half. Plan 1 makes the bunkhouse a building on its room's walls, so no wall moves, and sketches an outpost square for plan 2 (its D7, S.1): the hub, the tavern's room and the bunkhouse's one zone, with the tavern hall and the bunkhouse standing in it.
+- **The barracks moves to plan 2's map pass** (its D6): the guildhall is six units deep, too shallow for a building in its half. Plan 1 makes the bunkhouse a building on its room's walls, so no wall moves, and sketches an outpost square for plan 2 (its D7, S.1). The producer chose B (S1, P3): a wider square with the tavern hall, the bunkhouse and an empty lot standing in it, drawn without perfect geometry. The guildhall's row deepens for the barracks (S2, at its default).
 
 ---
 
