@@ -343,14 +343,14 @@ namespace Simpiens.Cognition
             if (map == null) return false;
             float bestSqr = float.MaxValue;
             bool found = false;
-            for (int i = 0; i < map.Pois.Count; i++)
+            for (int i = 0; i < map.Beds.Count; i++) // a resident's bed, in spawn order (Epic PLACES plan 1, F.2: a bunk POI or a piece's bed)
             {
-                var poi = map.Pois[i];
-                if (poi.Kind != PoiKind.Bunk) continue;
-                float sqr = (poi.Position - from).SqrMagnitude;
+                var bed = map.Beds[i];
+                if (bed.Guild) continue;
+                float sqr = (bed.Position - from).SqrMagnitude;
                 if (sqr >= bestSqr) continue;
                 bestSqr = sqr;
-                refuge = poi.Position;
+                refuge = bed.Position;
                 found = true;
             }
             return found;

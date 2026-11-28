@@ -20,10 +20,24 @@ namespace Simpiens.Client.Tests
             return scene;
         }
 
+        // A wall's sprites by its material (Epic PLACES plan 1, B.3): Floor 1's bunkhouse is timber
+        private static int Sprite(string name) => SpriteSheets.World.IndexOf(BuildingSprites.All.First(s => s.Name == name));
+        private static int Standing(byte material) => material == (byte)Simpiens.Simulation.Places.WallMaterial.Timber ? Sprite(BuildingSprites.IsoTimberWall) : SpriteSheets.World.IndexOf(IsometricSprites.Wall);
+        private static int Stub(byte material) => material == (byte)Simpiens.Simulation.Places.WallMaterial.Timber ? Sprite(BuildingSprites.IsoTimberWallLow) : SpriteSheets.World.IndexOf(IsometricSprites.LowWall);
+        private static int FromAbove(byte material) => material == (byte)Simpiens.Simulation.Places.WallMaterial.Timber ? Sprite(BuildingSprites.TimberWall) : SpriteSheets.World.IndexOf(ProceduralSprites.WallSprite);
+
         private static (int Full, int Low) Walls(WorldScene scene)
         {
             var walls = Enumerable.Range(0, scene.Items.Count).Select(i => scene.Items[i]).Where(i => DrawSortKey.Role(i.SortKey) == DrawRole.Wall).ToList();
-            return (walls.Count(w => w.SpriteIndex == SpriteSheets.World.IndexOf(IsometricSprites.Wall)), walls.Count(w => w.SpriteIndex == SpriteSheets.World.IndexOf(IsometricSprites.LowWall)));
+            var standing = new[] { SpriteSheets.World.IndexOf(IsometricSprites.Wall), Sprite(BuildingSprites.IsoTimberWall) };
+            var stubs = new[] { SpriteSheets.World.IndexOf(IsometricSprites.LowWall), Sprite(BuildingSprites.IsoTimberWallLow) };
+            return (walls.Count(w => standing.Contains(w.SpriteIndex)), walls.Count(w => stubs.Contains(w.SpriteIndex)));
+        }
+
+        private static byte MaterialAt(WorldScene scene, float x, float y)
+        {
+            var tiles = scene.Tiles;
+            return tiles.Tiles.Single(t => t.Kind == TileKind.Wall && tiles.CellCentre(t.X, t.Y) == new Vec2(x, y)).Material;
         }
 
         [Fact]
@@ -39,7 +53,7 @@ namespace Simpiens.Client.Tests
                 var item = walls.Single(w => w.X == centre.X && w.Y == centre.Y);
                 // Behind, in the fixed isometric view (depth x + y): the cells one step down in x, in y, or both
                 bool floorBehind = tiles.IsFloor(tile.X - 1, tile.Y) || tiles.IsFloor(tile.X, tile.Y - 1) || tiles.IsFloor(tile.X - 1, tile.Y - 1);
-                Assert.Equal(floorBehind ? SpriteSheets.World.IndexOf(IsometricSprites.LowWall) : SpriteSheets.World.IndexOf(IsometricSprites.Wall), item.SpriteIndex);
+                Assert.Equal(floorBehind ? Stub(tile.Material) : Standing(tile.Material), item.SpriteIndex);
                 if (!floorBehind) standing++;
             }
             Assert.InRange(standing, 1, walls.Count - 1); // the far walls stand, the rest are stubs
@@ -58,7 +72,7 @@ namespace Simpiens.Client.Tests
             {
                 var scene = Outpost(ViewMode.TopDown, style);
                 Assert.All(Enumerable.Range(0, scene.Items.Count).Select(i => scene.Items[i]).Where(i => DrawSortKey.Role(i.SortKey) == DrawRole.Wall),
-                    w => Assert.Equal(SpriteSheets.World.IndexOf(ProceduralSprites.WallSprite), w.SpriteIndex));
+                    w => Assert.Equal(FromAbove(MaterialAt(scene, w.X, w.Y)), w.SpriteIndex));
             }
         }
 

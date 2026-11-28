@@ -26,6 +26,12 @@ namespace Simpiens.Simulation.World
             {
                 MarkRect(walls[i].Solid, grid);
             }
+            // Furniture that stands in the way (Epic PLACES plan 1, F.4, D15): a table, written as a wall is, inflated the same
+            var furniture = definition.Furniture;
+            for (int i = 0; i < furniture.Count; i++)
+            {
+                if (furniture[i].Row.Blocks) MarkRect(furniture[i].Footprint, grid);
+            }
 
             // Bounds first, then Clear(): walkability is recomputed from the base layer and the new bounds only,
             // dropping dynamic walls and any cells the previous bounds had blocked
@@ -49,6 +55,28 @@ namespace Simpiens.Simulation.World
                     grid.SetBaseWall(x, y);
                 }
             }
+        }
+
+        /// <summary>
+        /// The blocking piece of furniture a circle overlaps (exact footprint, no inflation), or -1 (Epic PLACES plan 1, F.4: a table
+        /// stands in the way as a wall does). Used by diagnostics; allocation-free.
+        /// </summary>
+        public static int CircleOverlapsFurniture(MapDefinition definition, Vec2 center, float radius)
+        {
+            if (definition == null) return -1;
+            var furniture = definition.Furniture;
+            float r2 = radius * radius;
+            for (int i = 0; i < furniture.Count; i++)
+            {
+                if (!furniture[i].Row.Blocks) continue;
+                var rect = furniture[i].Footprint;
+                float cx = SimMath.Clamp(center.X, rect.XMin, rect.XMax);
+                float cy = SimMath.Clamp(center.Y, rect.YMin, rect.YMax);
+                float dx = center.X - cx;
+                float dy = center.Y - cy;
+                if (dx * dx + dy * dy < r2) return i;
+            }
+            return -1;
         }
 
         /// <summary>

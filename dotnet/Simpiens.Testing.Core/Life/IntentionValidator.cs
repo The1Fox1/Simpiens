@@ -78,6 +78,12 @@ namespace Simpiens.Testing.Life
             Assert(life.Weariness == 0f, "A second in a row clears it.");
             var bytes = CrawlerLife.BytesOf(life);
             Assert(bytes[276] == (byte)DayIntention.Rest && BitConverter.ToUInt16(bytes.Slice(288, 2)) == 6, "The intention at 276, its day plus one at 288.");
+            Assert(life.WokeAt == 0u && life.WokeOn(5) == 0u, "Begun with no tick, when it woke is unknown (Epic PLACES plan 1, G.3).");
+            IntentionRules.Begin(ref life, DayIntention.Rest, 6, 77_000u);
+            Assert(life.WokeOn(6) == 77_000u && life.WokeOn(5) == 0u && BitConverter.ToUInt32(CrawlerLife.BytesOf(life).Slice(292, 4)) == 77_000u,
+                "When it woke at 292, for its own day only.");
+            IntentionRules.CallIn(ref life, 6);
+            Assert(life.IntentionFor(6) == DayIntention.Work && life.WokeOn(6) == 77_000u, "Called in, it still woke when it woke.");
         }
 
         private void ValidateOnceADay()
@@ -97,6 +103,7 @@ namespace Simpiens.Testing.Life
             Assert(state.IntentionDue(morning, out long day) && day == routine.Day, "Awake at its waking hour: due, for that routine day.");
             state.DrawIntention(day, morning, 424242UL, RhythmTuning.Default, 80);
             Assert(!state.IntentionDue(morning + 70, out _) && state.Life.IntentionDay == day + 1, "Drawn once for the day.");
+            Assert(state.Life.WokeOn(day) == morning, "The draw keeps when it got up (Epic PLACES plan 1, G.3).");
             Assert(state.IntentionDue((uint)(routine.NextWake + 7), out long next) && next == day + 1, "Due again the next morning.");
             var drifter = new AgentState(EntityId.Generate()) { DepartsAtTick = 99999u };
             Assert(!drifter.IntentionDue(morning, out _), "A drifter draws none.");

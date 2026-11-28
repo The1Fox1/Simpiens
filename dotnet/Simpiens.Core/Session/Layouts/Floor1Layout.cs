@@ -102,6 +102,23 @@ namespace Simpiens.Core.Session.Layouts
 
         /// <summary>The venues' keys (Epic LIFE-1 plan 2, L2.3, D13): where free time goes.</summary>
         public const string HearthVenue = "venue.hearth", StallVenue = "venue.stall", GardenVenue = "venue.garden", YardVenue = "venue.yard", TavernVenue = "venue.tavern";
+
+        /// <summary>
+        /// The tavern's furniture (Epic PLACES plan 1, F.3, D14): two tables in the room's west half, each with four stools round it
+        /// (west, east, south, north), its seats the venue's in that order. A table blocks (F.4, D15), written into the nav grid as a
+        /// wall is, so it takes the 3 x 3 cells round it: its stools stand 1.8 out, on the first open cells. Written out, not added
+        /// to their tables' centres (a float sum can round an ulp the other way).
+        /// </summary>
+        public static readonly IReadOnlyList<Vec2> TavernTables = new[] { new Vec2(-4.5f, 9.5f), new Vec2(-4.5f, 14.5f) };
+
+        public static readonly IReadOnlyList<Vec2> TavernStools = new[]
+        {
+            new Vec2(-6.3f, 9.5f), new Vec2(-2.7f, 9.5f), new Vec2(-4.5f, 7.7f), new Vec2(-4.5f, 11.3f),
+            new Vec2(-6.3f, 14.5f), new Vec2(-2.7f, 14.5f), new Vec2(-4.5f, 12.7f), new Vec2(-4.5f, 16.3f),
+        };
+
+        /// <summary>The tavern's stools' keys, its seats' order.</summary>
+        public static string TavernStool(int stool) => $"tavern.stool.{stool + 1}";
         public const float StationRadius = 1.5f;
 
         public const int SpawnPointCount = 12;
@@ -111,6 +128,9 @@ namespace Simpiens.Core.Session.Layouts
 
         /// <summary>The guild's barracks (Epic 10 Part 2, W5.2, D62): a bunk kept for each of its eight members, by D21's reckoning.</summary>
         public const int GuildBunkCount = 8;
+
+        /// <summary>The bunkhouse, Floor 1's first building (Epic PLACES plan 1, B.5, D6): it fills the Bunkhouse's room, on its walls and doors.</summary>
+        public const string BunkhouseBuilding = "bunkhouse.building";
 
         /// <summary>Doorway centres (on wall centre lines). Validators and scenarios read doors from here.</summary>
         public static readonly IReadOnlyList<Vec2> Doors = new[]
@@ -245,12 +265,17 @@ namespace Simpiens.Core.Session.Layouts
             b.Poi(Stall, PoiKind.Stall, new Vec2(0f, 2.5f), 3.0f);
             b.Poi(Hearth, PoiKind.Hearth, new Vec2(-4.5f, -3.5f), 3.0f);
 
+            // --- The bunkhouse building (Epic PLACES plan 1, B.5, D6): it fills its room, standing on the room's walls and doors, so no
+            // wall moves; its main door is the hub's, its sign beside it in the hub. Plan 2's map pass gives it a zone to stand in ---
+            b.Building(BunkhouseBuilding, Simpiens.Simulation.Places.BuildingKind.Bunkhouse, new RectF(-8f, -12f, 16f, 6f), HubBunkhouseDoor, new Vec2(4f, -12f));
+
             // --- Bunkhouse: two rows of six in the west half, 1.5 apart, clear of the gate-to-hub lane (x 2..6), with the
             // walkable strip along the north wall (y -7.5) kept free: it is the way from the bunks to the hub door, and a
             // sleeper lies in its bunk for hours (Epic 10 Part 2, T4.2: a top row there walled a crawler in until it starved) ---
+            // Bunks are furniture (Epic PLACES plan 1, F.2, D13), at the places and with the keys they had as POIs
             for (int i = 0; i < BunkCount; i++)
             {
-                b.Poi($"bunk.{i + 1}", PoiKind.Bunk, new Vec2(-6.5f + (i % 6) * 1.5f, i < 6 ? -8.5f : -10.5f), 1.0f);
+                b.Furniture($"bunk.{i + 1}", Simpiens.Simulation.Places.FurnitureKind.Bunk, new Vec2(-6.5f + (i % 6) * 1.5f, i < 6 ? -8.5f : -10.5f));
             }
 
             // --- Guildhall: the barracks, two rows of four in its east half, laid out as the bunkhouse is (1.5 apart, the
@@ -258,7 +283,7 @@ namespace Simpiens.Core.Session.Layouts
             // west half, inside the door, is the yard (D64: the muster stays at the stall) ---
             for (int i = 0; i < GuildBunkCount; i++)
             {
-                b.Poi($"barracks.{i + 1}", PoiKind.GuildBunk, new Vec2(16.5f + (i % 4) * 1.5f, i < 4 ? -20.5f : -22.5f), 1.0f);
+                b.Furniture($"barracks.{i + 1}", Simpiens.Simulation.Places.FurnitureKind.GuildBunk, new Vec2(16.5f + (i % 4) * 1.5f, i < 4 ? -20.5f : -22.5f));
             }
 
             // --- The trade caravan's way in (Epic 10 Part 2, the stretch, D70): up the gate-to-hub lane from the Road Gate's
@@ -284,15 +309,18 @@ namespace Simpiens.Core.Session.Layouts
                 new[] { Simpiens.Simulation.Life.Activity.Walk });
             b.Venue(YardVenue, new Vec2(12f, -21.5f), 2f, new[] { new Vec2(10.8f, -21.5f), new Vec2(13.2f, -21.5f) },
                 new[] { Simpiens.Simulation.Life.Activity.Spar }, access: VenueAccess.GuildMembers, station: DrillYard);
-            // The tavern (T.4): two tables of four in the room's west half; open while it stands and its keeper is at the counter on shift
-            b.Venue(TavernVenue, new Vec2(-4.5f, 12f), 4f,
-                new[]
-                {
-                    new Vec2(-5.7f, 9.5f), new Vec2(-3.3f, 9.5f), new Vec2(-4.5f, 8.3f), new Vec2(-4.5f, 10.7f),
-                    new Vec2(-5.7f, 14.5f), new Vec2(-3.3f, 14.5f), new Vec2(-4.5f, 13.3f), new Vec2(-4.5f, 15.7f),
-                },
+            // The tavern (T.4): two tables of four in the room's west half; open while it stands and its keeper is at the counter on
+            // shift. Its seats are its stools (Epic PLACES plan 1, F.3, D14), at the places its seats had
+            for (int t = 0; t < TavernTables.Count; t++) b.Furniture($"tavern.table.{t + 1}", Simpiens.Simulation.Places.FurnitureKind.Table, TavernTables[t]);
+            var stools = new string[TavernStools.Count];
+            for (int s = 0; s < TavernStools.Count; s++)
+            {
+                stools[s] = TavernStool(s);
+                b.Furniture(stools[s], Simpiens.Simulation.Places.FurnitureKind.Stool, TavernStools[s]);
+            }
+            b.Venue(TavernVenue, new Vec2(-4.5f, 12f), 4.75f, null, // round its stools (F.4): company counts within it
                 new[] { Simpiens.Simulation.Life.Activity.Ale, Simpiens.Simulation.Life.Activity.Supper, Simpiens.Simulation.Life.Activity.Dice },
-                station: Tavern);
+                station: Tavern, seatedOn: stools);
 
             // --- Road Gate spawn points: two rows of six ---
             for (int i = 0; i < SpawnPointCount; i++)

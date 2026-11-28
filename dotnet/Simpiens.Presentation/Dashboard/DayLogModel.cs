@@ -61,10 +61,13 @@ namespace Simpiens.Presentation.Dashboard
                 _lines.Add(new Line(slot.BegunAt, LifeTexts.Thought(slot, life, nameOf)));
             }
 
-            // The day's first line (Epic LIFE-1 plan 3, V.1, D38): its waking hour and what it meant to do with the day, once drawn
+            // The day's first line (Epic LIFE-1 plan 3, V.1, D38): when it got up and what it meant to do with the day, once drawn;
+            // when it got up is the tick its intention was drawn (Epic PLACES plan 1, G.3), or its waking hour for a record before it
             var routine = agent.RoutineAt((uint)tick);
-            if (life.IntentionDay == routine.Day + 1 && routine.WakesAt >= since && routine.WakesAt <= tick)
-                _lines.Add(new Line(routine.WakesAt, LifeTexts.WokeMeaning(life.IntentionFor(routine.Day))));
+            uint woke = life.WokeOn(routine.Day);
+            long wokeAt = woke != 0u ? woke : routine.WakesAt;
+            if (life.IntentionDay == routine.Day + 1 && wokeAt >= since && wokeAt <= tick)
+                _lines.Add(new Line(wokeAt, LifeTexts.WokeMeaning(life.IntentionFor(routine.Day))));
 
             if (chronicle != null && formatter != null)
             {

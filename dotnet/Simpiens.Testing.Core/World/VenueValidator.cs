@@ -12,7 +12,9 @@ namespace Simpiens.Testing.World
     /// Venues as map data (Epic LIFE-1 plan 2, L2.3, D13; the epic's §2.5, "no leisure in danger"): on the outpost floor every
     /// venue stands outside the hazard sectors and every lair's reach, its seats inside its sector and out of the reach too;
     /// every activity offered has a row, and each recreation it offers somewhere to stand or sit. Which venues are open
-    /// follows their hours and the stations they need. Runs as a test (ValidatorTests).
+    /// follows their hours and the stations they need. A venue may seat its crawlers on furniture (Epic PLACES plan 1, F.3, D14):
+    /// its seats are its pieces' seats in its order, each piece in its sector; the tavern's stools sit where its seats were. Runs
+    /// as a test (ValidatorTests).
     /// </summary>
     public class VenueValidator
     {
@@ -22,7 +24,8 @@ namespace Simpiens.Testing.World
             ValidateNoLeisureInDanger();
             ValidateWhatEachOffers();
             ValidateWhichAreOpen();
-            TestLog.Log("<color=green>[VenueValidator] ALL 3 TESTS PASSED SUCCESSFULLY!</color>");
+            ValidateSeatsOnFurniture();
+            TestLog.Log("<color=green>[VenueValidator] ALL 4 TESTS PASSED SUCCESSFULLY!</color>");
         }
 
         private void ValidateNoLeisureInDanger()
@@ -64,6 +67,56 @@ namespace Simpiens.Testing.World
             var tavern = Find(map, Floor1Layout.TavernVenue);
             Assert(tavern.Offers(Activity.Ale) && tavern.Offers(Activity.Supper) && tavern.Offers(Activity.Dice) && tavern.Station == Floor1Layout.Tavern
                 && tavern.SectorId == Floor1Layout.TavernSectorId && tavern.Seats.Count == 8, "The tavern: ale, supper and dice at eight seats, at its counter, in its room (T.4).");
+        }
+
+        private void ValidateSeatsOnFurniture()
+        {
+            var map = Floor1Layout.Definition;
+            int seated = 0;
+            foreach (var venue in map.Venues)
+            {
+                if (venue.SeatedOn.Count == 0) continue;
+                int s = 0;
+                foreach (var key in venue.SeatedOn)
+                {
+                    Assert(map.TryGetFurniture(key, out var piece) && piece.SectorId == venue.SectorId, $"'{venue.Key}' seats crawlers on '{key}', in its sector.");
+                    for (int i = 0; i < piece.SeatCount; i++, s++) Assert(venue.Seats[s] == piece.SeatAt(i), $"'{venue.Key}' seat {s} is '{key}' seat {i}.");
+                }
+                Assert(s == venue.Seats.Count, $"'{venue.Key}' has its pieces' seats and no others ({venue.Seats.Count}, not {s}).");
+                seated++;
+            }
+            Assert(map.TryGetVenue(Floor1Layout.TavernVenue, out var tavern) && tavern.SeatedOn.Count == 8 && tavern.Seats.Count == 8, "The tavern seats its crawlers on its eight stools.");
+            // Its stools stand 1.8 from their tables' centres since the tables block (F.4, D15), each within the venue's reach
+            for (int i = 0; i < tavern.Seats.Count; i++)
+            {
+                var table = Floor1Layout.TavernTables[i / 4];
+                Assert(Math.Abs(Vec2.Distance(tavern.Seats[i], table) - 1.8f) < 0.001f && Vec2.Distance(tavern.Seats[i], tavern.Position) + VenueDefinition.SeatRadius <= tavern.Radius,
+                    $"The tavern's seat {i} stands 1.8 from its table, within the venue ({tavern.Seats[i]}).");
+            }
+
+            // The builder refuses seats of its own beside seats on furniture, a piece the map hasn't, and a piece with no seat
+            Refused(b => b.Furniture("stool", Simpiens.Simulation.Places.FurnitureKind.Stool, new Vec2(0f, 0f))
+                .Venue("v", new Vec2(0f, 0f), 2f, new[] { new Vec2(1f, 0f) }, new[] { Activity.Ale }, seatedOn: new[] { "stool" }), "seats of its own and on furniture");
+            Refused(b => b.Venue("v", new Vec2(0f, 0f), 2f, null, new[] { Activity.Ale }, seatedOn: new[] { "stool" }), "a piece the map hasn't");
+            Refused(b => b.Furniture("table", Simpiens.Simulation.Places.FurnitureKind.Table, new Vec2(0f, 0f))
+                .Venue("v", new Vec2(0f, 0f), 2f, null, new[] { Activity.Ale }, seatedOn: new[] { "table" }), "a piece with no seat");
+            TestLog.Log($"[PASS] Test 4: Seats on furniture: {seated} venue(s) seat crawlers on their pieces, in order; the tavern's stools round its tables; the builder's refusals.");
+        }
+
+        private static void Refused(Action<MapDefinitionBuilder> add, string what)
+        {
+            var b = new MapDefinitionBuilder("Yard", new RectF(-10f, -10f, 20f, 20f));
+            b.Sector(1, "Yard", "", new RectF(-8f, -8f, 16f, 16f));
+            add(b);
+            try
+            {
+                b.Build();
+            }
+            catch (InvalidOperationException)
+            {
+                return;
+            }
+            throw new InvalidOperationException("[VenueValidator] FAILED: The builder refuses a venue with " + what + ".");
         }
 
         private void ValidateWhichAreOpen()

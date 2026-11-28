@@ -13,6 +13,11 @@ namespace Simpiens.Presentation
         Name = 2,
         /// <summary>A hazard sector's danger ("FOUL AIR") under its room's name, placed as <see cref="Uncharted"/> (Epic 10 G2).</summary>
         Hazard = 3,
+        /// <summary>
+        /// A building's name over its sign (Epic PLACES plan 1, B.4, D10): a size under its zone's name (at the least size in a zone
+        /// with none), hidden while its zone's name is, and wherever it would overlap a label placed before it.
+        /// </summary>
+        Building = 4,
     }
 
     /// <summary>Text the map asks for: a world point to hang it on (<see cref="Height"/> above the floor), in a colour (its alpha fades it).</summary>
@@ -193,6 +198,21 @@ namespace Simpiens.Presentation
                         Emit(i, label, font, Round(at.X - font.Measure(label.Text) * 0.5f), Round(top), glyphs);
                         break;
                     }
+                    case LabelKind.Building:
+                    {
+                        int size = MinSize;
+                        if (label.SectorId >= 0 && _roomOfSector.TryGetValue(label.SectorId, out int zone))
+                        {
+                            if (_roomSize[zone] == 0) { Placed.Add(new PlacedLabel(i, false, default, 0, 0, 0, 0)); break; }
+                            size = Smaller(_roomSize[zone]);
+                        }
+                        var font = fonts[FontSet.Bold(size)];
+                        var at = view.WorldToScreen(label.At, label.Height);
+                        int left = Round(at.X - font.Measure(label.Text) * 0.5f), top = Round(at.Y) - font.LineHeight;
+                        if (Overlaps(left, top, font.Measure(label.Text), font.LineHeight)) { Placed.Add(new PlacedLabel(i, false, default, 0, 0, 0, 0)); break; }
+                        Emit(i, label, font, left, top, glyphs);
+                        break;
+                    }
                     default:
                     {
                         var font = fonts[FontSet.Bold(NameSize)];
@@ -223,6 +243,17 @@ namespace Simpiens.Presentation
                 if (fits) return size;
             }
             return 0;
+        }
+
+        /// <summary>Whether a rectangle overlaps a label shown so far.</summary>
+        private bool Overlaps(int left, int top, int width, int height)
+        {
+            for (int p = 0; p < Placed.Count; p++)
+            {
+                var o = Placed[p];
+                if (o.Shown && left < o.X + o.Width && o.X < left + width && top < o.Y + o.Height && o.Y < top + height) return true;
+            }
+            return false;
         }
 
         /// <summary>The next baked size down (for "UNCHARTED"), not below <see cref="MinSize"/>.</summary>

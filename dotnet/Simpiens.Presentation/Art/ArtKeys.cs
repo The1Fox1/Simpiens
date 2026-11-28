@@ -23,6 +23,22 @@ namespace Simpiens.Presentation.Art
         public const string TileWall = "tile/wall";
         /// <summary>A wall cut down so it hides nothing behind it (M3 design D7); top-down's is its wall.</summary>
         public const string TileWallLow = "tile/wall-low";
+
+        /// <summary>A building's walls and floors by their material (Epic PLACES plan 1, B.3, D9): a zone's are stone and flagstone, the keys above.</summary>
+        public const string TileWallTimber = "tile/wall/timber";
+        public const string TileWallLowTimber = "tile/wall-low/timber";
+        /// <summary>A lot's foundations: low whether walls stand or are cut away.</summary>
+        public const string TileWallFoundations = "tile/wall/foundations";
+        public const string TileFloorPlanks = "tile/floor/planks";
+        public const string TileFloorBare = "tile/floor/bare";
+
+        /// <summary>A standing building's sign, beside its main door (Epic PLACES plan 1, B.4, D10).</summary>
+        public const string DecorSign = "decor/sign";
+
+        public const string FurniturePrefix = "furniture/";
+
+        /// <summary>A piece of furniture by its kind's art key (Epic PLACES plan 1, F.5): <c>furniture/table</c> (setup only: builds a string).</summary>
+        public static string Furniture(string artKey) => FurniturePrefix + artKey;
         public const string PropHearth = "prop/hearth";
         public const string PropBunk = "prop/bunk";
         /// <summary>The trade stall, with its goods on display (graphics V5).</summary>
@@ -121,6 +137,30 @@ namespace Simpiens.Presentation.Art
             TileKind.Floor => TileFloor,
             TileKind.Rock => TileRock,
             _ => TileWall,
+        };
+
+        /// <summary>A standing wall of <paramref name="material"/>.</summary>
+        public static string TileWallOf(Simpiens.Simulation.Places.WallMaterial material) => material switch
+        {
+            Simpiens.Simulation.Places.WallMaterial.Timber => TileWallTimber,
+            Simpiens.Simulation.Places.WallMaterial.Foundations => TileWallFoundations,
+            _ => TileWall,
+        };
+
+        /// <summary>A cut-away wall of <paramref name="material"/>.</summary>
+        public static string TileWallLowOf(Simpiens.Simulation.Places.WallMaterial material) => material switch
+        {
+            Simpiens.Simulation.Places.WallMaterial.Timber => TileWallLowTimber,
+            Simpiens.Simulation.Places.WallMaterial.Foundations => TileWallFoundations,
+            _ => TileWallLow,
+        };
+
+        /// <summary>A floor of <paramref name="material"/>.</summary>
+        public static string TileFloorOf(Simpiens.Simulation.Places.FloorMaterial material) => material switch
+        {
+            Simpiens.Simulation.Places.FloorMaterial.Planks => TileFloorPlanks,
+            Simpiens.Simulation.Places.FloorMaterial.Bare => TileFloorBare,
+            _ => TileFloor,
         };
 
         public static string Node(string itemArtKey) => NodePrefix + itemArtKey;

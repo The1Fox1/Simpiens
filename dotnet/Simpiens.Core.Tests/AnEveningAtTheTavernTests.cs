@@ -10,6 +10,7 @@ using Simpiens.Simulation.Economy;
 using Simpiens.Simulation.Items;
 using Simpiens.Simulation.Life;
 using Simpiens.Simulation.Persistence;
+using Simpiens.Simulation.World;
 using Simpiens.Testing.Environment;
 using Xunit;
 
@@ -22,7 +23,8 @@ namespace Simpiens.Core.Tests
     /// <list type="bullet">
     /// <item><b><c>AnEveningAtTheTavern</c></b> (L2, D24): the tavern built and kept; it serves on two days at least; half the
     /// residents spend an hour or more at a venue other than the hearth; the days hold (nobody starves; the ledger balances,
-    /// with its takings, wholesale and the keeper's wage); a save on the third day loads with the tavern standing and kept.</item>
+    /// with its takings, wholesale and the keeper's wage); a save on the third day loads with the tavern standing and kept; and since
+    /// Epic PLACES plan 1 (D.1), crawlers sit at its tables, each on its own stool's point, and walk round its tables, never through.</item>
     /// <item><b><c>AWantComesTrue</c></b> (L1's wants, D20): wants arise, and some come true at a venue, leaving their thoughts.</item>
     /// </list>
     /// </summary>
@@ -40,11 +42,14 @@ namespace Simpiens.Core.Tests
             public double VenueHoursPerResidentDay;
             public int WantsArisen, WantsFulfilled, WantsMissed;
             public uint Wholesale, ArtisanWages, Takings, EveningTakings;
+            // At its tables (Epic PLACES plan 1, D.1): crawler-ticks seated at the tavern, and of those off a stool or sharing one;
+            // ticks a crawler stood in a table
+            public int SeatedTicks, OffStool, SharedSeat, InTable;
 
             public override string ToString() =>
                 $"built t{BuiltTick}, kept t{KeptTick}, served {Player.Served} ({Player.Ales} ales, {Player.Suppers} suppers) for {Takings}g ({EveningTakings}g in the evening) on days [{string.Join(",", ServedDays.OrderBy(d => d))}]; "
                 + $"{AtVenuesAnHour} of {Residents} an hour at a venue, {VenueHoursPerResidentDay:F2} h a resident-day; wants arisen {WantsArisen}, come true {WantsFulfilled}, missed {WantsMissed}; "
-                + $"wholesale {Wholesale}g, artisans' wages {ArtisanWages}g";
+                + $"wholesale {Wholesale}g, artisans' wages {ArtisanWages}g; seated at the tables {SeatedTicks} crawler-ticks (off a stool {OffStool}, sharing one {SharedSeat}), in a table {InTable}";
         }
 
         internal static Run Play(ulong seed, long horizon, out LocalSimulation keep)
@@ -61,6 +66,8 @@ namespace Simpiens.Core.Tests
             };
             var map = sim.Host.Current.Map;
             int hearth = map.Venues.ToList().FindIndex(v => v.Key == Floor1Layout.HearthVenue);
+            int tavernVenue = map.Venues.ToList().FindIndex(v => v.Key == Floor1Layout.TavernVenue);
+            var seated = new List<Vec2>();
             var atVenues = new Dictionary<EntityId, long>();
             var wantsHeld = new Dictionary<EntityId, ushort[]>();
             var fulfilledThoughts = WantTable.All.Select(w => w.Fulfilled).ToHashSet();
@@ -72,8 +79,19 @@ namespace Simpiens.Core.Tests
                 int tavern = sim.Simulation.Workshops.IndexOf(StationKind.Tavern);
                 if (run.BuiltTick < 0 && sim.Simulation.Workshops[tavern].Built) run.BuiltTick = now;
                 if (run.KeptTick < 0 && (sim.Simulation.Workshops.KeptMask((Simpiens.Simulation.Workshops.IWorkshopHost)sim.Simulation, (uint)now) & (1UL << tavern)) != 0) run.KeptTick = now;
+                seated.Clear();
                 foreach (var crawler in sim.Host.CrawlerStates)
                 {
+                    // Seated at the tavern's tables (D.1): on its stool's very point; never two on one; nobody in a table
+                    if (crawler.CurrentIntent is RecreateIntent atTable && atTable.Begun && atTable.VenueIndex == tavernVenue
+                        && crawler.VisualState == Simpiens.Entities.AgentVisualState.Seated)
+                    {
+                        run.SeatedTicks++;
+                        if (Vec2.Distance(crawler.Position, map.Venues[tavernVenue].Seats[atTable.Seat]) > 0.06f) run.OffStool++;
+                        foreach (var other in seated) if (Vec2.Distance(other, crawler.Position) < VenueDefinition.SeatRadius) run.SharedSeat++;
+                        seated.Add(crawler.Position);
+                    }
+                    if (WallRasterizer.CircleOverlapsFurniture(map, crawler.Position, 0.1f) >= 0) run.InTable++;
                     if (crawler.IsDrifter) continue;
                     if (crawler.CurrentIntent is RecreateIntent recreate && recreate.Begun && recreate.VenueIndex != hearth)
                         atVenues[crawler.AgentId] = (atVenues.TryGetValue(crawler.AgentId, out long n) ? n : 0) + 1;
@@ -119,6 +137,10 @@ namespace Simpiens.Core.Tests
                 Assert.True(run.EveningTakings * 2 >= run.Takings, $"Most of its takings came in the evening, 18:00 to 02:00 (plan 3's D.2: {run.EveningTakings}g of {run.Takings}g).");
                 Assert.True(run.AtVenuesAnHour * 2 >= run.Residents, $"Half the residents spent an hour at a venue other than the hearth ({run.AtVenuesAnHour} of {run.Residents}).");
                 Assert.True(run.Wholesale > 0 && run.ArtisanWages > 0, "The caravan's wholesale for the menu and the keeper's wage are in the ledger.");
+                // At its tables (Epic PLACES plan 1, D.1): crawlers sat on its stools, each on its own, and walked round its tables
+                Assert.True(run.SeatedTicks >= DayClock.TicksPerHour, $"Crawlers sat at the tavern's tables an hour at least ({run.SeatedTicks} crawler-ticks).");
+                Assert.True(run.OffStool == 0 && run.SharedSeat == 0, $"Every crawler seated at the tables sat on its own stool (off a stool {run.OffStool}, sharing one {run.SharedSeat}).");
+                Assert.Equal(0, run.InTable);
                 Assert.Equal(0, run.Watch.ConservationViolations);
                 Assert.Equal(0, run.Watch.IntentFaults);
                 var failures = run.Watch.DayFailures();

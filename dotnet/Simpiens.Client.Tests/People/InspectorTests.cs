@@ -51,6 +51,31 @@ namespace Simpiens.Client.Tests.People
             Assert.False(card.Root.Visible);
         }
 
+        /// <summary>
+        /// The day off on the map card (Epic PLACES plan 1, G.2; Epic LIFE-1's F23): a crawler on its day off shows "Today: a day
+        /// off." after its mood, as the dossier does; on a working day the card shows its mood alone.
+        /// </summary>
+        [Fact]
+        public void TheCardSaysADayOff()
+        {
+            var ui = UiDriver.Start(width: Width, height: Height);
+            var game = ui.Game;
+            var card = game.Play.Dashboard.Inspector;
+            game.Play.Dashboard.TogglePanels(); // the map view
+            var crawler = game.Session.Simulation.Registry.ActiveEntities.First(e => e.Type == EntityType.Pawn);
+            game.Session.Selection.SelectCrawler(crawler.Id, follow: false);
+            ui.Frame();
+            Assert.DoesNotContain("Today:", card.MoodShown);
+
+            var state = crawler.Agent;
+            var life = state.Life;
+            life.SetIntention(Simpiens.Simulation.Life.DayIntention.Rest, state.RoutineAt((uint)game.Session.Simulation.Clock.CurrentTick).Day);
+            state.Life = life;
+            ui.Frame();
+            Assert.StartsWith(game.Session.DashboardModel.Inspector.MoodLine, card.MoodShown);
+            Assert.EndsWith("Today: a day off.", card.MoodShown);
+        }
+
         /// <summary>Click to find (Epic UI-Beta B4, D4): a resident's face, then an affinity's, each finds its crawler on the map.</summary>
         [Fact]
         public void AClickOnAFaceFindsTheCrawlerOnTheMap()

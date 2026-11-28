@@ -49,10 +49,16 @@ namespace Simpiens.Presentation
             set
             {
                 _catalog = value ?? throw new ArgumentNullException(nameof(value));
-                _floor = value.Id(ArtKeys.TileFloor);
                 _rock = value.Id(ArtKeys.TileRock);
-                _wall = value.Id(ArtKeys.TileWall);
-                _lowWall = value.Id(ArtKeys.TileWallLow);
+                _sign = value.Id(ArtKeys.DecorSign);
+                foreach (var row in Simpiens.Simulation.Places.FurnitureTable.All) // furniture by kind (Epic PLACES plan 1, F.5); a bunk is drawn by its bed's entity
+                    _furniture[(int)row.Kind] = row.Beds.Count > 0 ? ArtId.None : value.Id(ArtKeys.Furniture(row.ArtKey));
+                for (int m = 0; m < _wallBy.Length; m++) // buildings' walls and floors by material (Epic PLACES plan 1, B.3)
+                {
+                    _wallBy[m] = value.Id(ArtKeys.TileWallOf((Simpiens.Simulation.Places.WallMaterial)m));
+                    _lowBy[m] = value.Id(ArtKeys.TileWallLowOf((Simpiens.Simulation.Places.WallMaterial)m));
+                }
+                for (int m = 0; m < _floorBy.Length; m++) _floorBy[m] = value.Id(ArtKeys.TileFloorOf((Simpiens.Simulation.Places.FloorMaterial)m));
                 _ring = value.Id(ArtKeys.SelectionRing);
                 _shadow = value.TryId(ArtKeys.CrawlerShadow, out var shadow) ? shadow : ArtId.None;
                 _bar = value.TryId(ArtKeys.FxBar, out var bar) ? bar : ArtId.None;
@@ -91,7 +97,10 @@ namespace Simpiens.Presentation
         public CrawlerBodies Bodies { get; set; }
 
         private ArtCatalog _catalog;
-        private ArtId _floor, _rock, _wall, _lowWall, _ring, _shadow, _caravan, _bar, _gate, _gateOpen;
+        private ArtId _sign;
+        private readonly ArtId[] _furniture = new ArtId[16]; // by FurnitureKind
+        private ArtId _rock, _ring, _shadow, _caravan, _bar, _gate, _gateOpen;
+        private readonly ArtId[] _wallBy = new ArtId[3], _lowBy = new ArtId[3], _floorBy = new ArtId[3]; // by WallMaterial, FloorMaterial
         private readonly ArtId[] _badges = new ArtId[5]; // by PartyRole (Epic 11, S5.8)
         private ArtId _namedBadge; // a named creature's mark (Epic 11, S7.7)
         private readonly ArtId[] _activities = new ArtId[Simpiens.Simulation.Life.ActivityTable.Capacity]; // what a crawler is doing with its free time, by Activity (Epic LIFE-1 plan 3, V.4)
@@ -186,6 +195,8 @@ namespace Simpiens.Presentation
                 Fog.AddLabels(Labels, viewSeconds);
                 AddHazardNotes(map);
                 AddHazardEffects(map, viewSeconds);
+                AddBuildings(map, viewSeconds);
+                AddFurniture(map, viewSeconds);
             }
 
             if (frame != null)
@@ -365,6 +376,60 @@ namespace Simpiens.Presentation
             }
         }
 
+        /// <summary>A building's name over its sign: parchment, warmer than a room's name.</summary>
+        public static readonly Rgba BuildingNameColor = new Rgba(0.95f, 0.86f, 0.66f, 1f);
+
+        /// <summary>
+        /// Each standing building's sign beside its main door, and its name over the sign (Epic PLACES plan 1, B.4, D10): a lot has
+        /// neither, and a building whose zone already bears its name (the bunkhouse filling its room) isn't named twice. Faded
+        /// with the fog, as any prop is; its name hidden while its zone is uncharted.
+        /// </summary>
+        private void AddBuildings(MapDefinition map, float viewSeconds)
+        {
+            var buildings = map.Buildings;
+            for (int i = 0; i < buildings.Count; i++)
+            {
+                var building = buildings[i];
+                if (building.IsLot) continue;
+                float shown = Fog.Visibility(building.Sign, viewSeconds);
+                if (shown <= 0f) continue;
+                Add(DrawRole.Prop, Projection.Depth(building.Sign), _catalog.Piece(_sign, viewSeconds), building.Sign, Shown(White, shown));
+                string title = building.Row.Title;
+                if (Fog.Covers(building.SectorId) || ZoneBears(map, building.SectorId, title)) continue;
+                Labels.Add(new WorldLabel(title, building.Sign + _catalog.NameOffset, LabelKind.Building, Shown(Rgba32.From(BuildingNameColor), shown), _catalog.NameHeight, building.SectorId));
+            }
+        }
+
+        /// <summary>
+        /// The map's furniture (Epic PLACES plan 1, F.5): a piece that stands in the way (a table) stands as a prop, sorted by depth;
+        /// a seat lies with the floor marks, under whoever sits on it. A piece with beds is drawn by its bed's bunk. Faded with the fog.
+        /// </summary>
+        private void AddFurniture(MapDefinition map, float viewSeconds)
+        {
+            var furniture = map.Furniture;
+            for (int i = 0; i < furniture.Count; i++)
+            {
+                var piece = furniture[i];
+                var art = (int)piece.Kind < _furniture.Length ? _furniture[(int)piece.Kind] : ArtId.None;
+                if (art.IsNone) continue;
+                float shown = Fog.Visibility(piece.Position, viewSeconds);
+                if (shown <= 0f) continue;
+                bool stands = piece.Row.Blocks;
+                Add(stands ? DrawRole.Prop : DrawRole.FloorMark, stands ? Projection.Depth(piece.Position) : 0f, _catalog.Piece(art, viewSeconds), piece.Position, Shown(White, shown));
+            }
+        }
+
+        /// <summary>Whether a label of the map in zone <paramref name="sectorId"/> already reads <paramref name="title"/>.</summary>
+        private static bool ZoneBears(MapDefinition map, int sectorId, string title)
+        {
+            if (!map.TryGetSector((byte)sectorId, out var sector)) return false;
+            for (int i = 0; i < map.Labels.Count; i++)
+            {
+                if (map.Labels[i].Text == title && sector.Contains(map.Labels[i].Position)) return true;
+            }
+            return false;
+        }
+
         private static readonly Rgba32 BarBack = new Rgba32(20, 18, 24, 220), BarFill = new Rgba32(220, 64, 52, 255), BarFury = new Rgba32(255, 150, 60, 255);
 
         /// <summary>
@@ -514,22 +579,20 @@ namespace Simpiens.Presentation
 
         private void AddTiles(MapTileLayer tiles)
         {
-            var floor = _catalog.Piece(_floor, 0f);
             var rock = _catalog.Piece(_rock, 0f);
-            var wall = _catalog.Piece(_wall, 0f);
-            var low = _catalog.Piece(_lowWall, 0f);
             var stands = WallsStanding(tiles);
             var list = tiles.Tiles;
             for (int i = 0; i < list.Count; i++)
             {
                 var tile = list[i];
                 var centre = tiles.CellCentre(tile.X, tile.Y);
+                int material = tile.Material < _wallBy.Length ? tile.Material : 0; // a building's walls and floor by their material (Epic PLACES plan 1, B.3)
                 switch (tile.Kind)
                 {
-                    case TileKind.Floor: Add(DrawRole.Floor, 0f, floor, centre, Rgba32.From(tile.Tint)); break;
+                    case TileKind.Floor: Add(DrawRole.Floor, 0f, _catalog.Piece(_floorBy[material], 0f), centre, Rgba32.From(tile.Tint)); break;
                     case TileKind.Rock: Add(DrawRole.Rock, 0f, rock, centre, White); break;
                     // Walls stand: in isometric they interleave with crawlers by depth (in top-down they never overlap)
-                    default: Add(DrawRole.Wall, Projection.Depth(centre), Stands(stands, i) ? wall : low, centre, White); break;
+                    default: Add(DrawRole.Wall, Projection.Depth(centre), _catalog.Piece(Stands(stands, i) ? _wallBy[material] : _lowBy[material], 0f), centre, White); break;
                 }
             }
         }

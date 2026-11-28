@@ -86,11 +86,11 @@ namespace Simpiens.Presentation
         }
 
         /// <summary>True when the pixel's centre lies inside the 2:1 diamond of <paramref name="width"/> by <paramref name="height"/> centred at <paramref name="cx"/>, <paramref name="cy"/>.</summary>
-        private static bool InDiamond(int x, int y, float cx, float cy, int width, int height)
+        internal static bool InDiamond(int x, int y, float cx, float cy, int width, int height)
             => MathF.Abs(x + 0.5f - cx) / (width * 0.5f) + MathF.Abs(y + 0.5f - cy) / (height * 0.5f) < 1f;
 
         /// <summary>A fixed per-pixel hash (view only), for speckles.</summary>
-        private static uint Hash(int x, int y, uint salt)
+        internal static uint Hash(int x, int y, uint salt)
         {
             unchecked
             {
@@ -167,7 +167,7 @@ namespace Simpiens.Presentation
         }
 
         /// <summary>Inside the block: the cell's diamond swept from <paramref name="rise"/> pixels up down to the floor.</summary>
-        private static bool InBlock(int x, int y, int width, int footprintHeight, int rise)
+        internal static bool InBlock(int x, int y, int width, int footprintHeight, int rise)
         {
             if (x < 0 || x >= width || y < 0 || y >= footprintHeight + rise) return false;
             float dx = MathF.Abs(x + 0.5f - width * 0.5f) / (width * 0.5f);

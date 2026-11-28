@@ -17,6 +17,9 @@ namespace Simpiens.Cognition.Planning.Handlers
         /// <summary>How near a seat counts as at it.</summary>
         public const float SeatReach = 0.5f;
 
+        /// <summary>A crawler this near its seat sits on it (F.6); farther, it takes the last steps onto it first.</summary>
+        public const float SettleDistance = 0.05f;
+
         protected override IntentResult Execute(WorldEntity node, RecreateIntent recreate, ActiveIntentState state, IIntentExecutionContext context)
         {
             var agent = node.Agent;
@@ -36,6 +39,18 @@ namespace Simpiens.Cognition.Planning.Handlers
                     var walked = context.ExecutePathMovement(node, recreate.Path, state);
                     if (walked != IntentResult.Success) return walked;
                     if ((seat - node.Position).SqrMagnitude > SeatReach * SeatReach * 4f) return IntentResult.PathBlocked;
+                }
+                if (venue.SeatedOn.Count > 0 && row.Pose != AgentVisualState.Walking)
+                {
+                    // A seat on furniture is one crawler's (Epic PLACES plan 1, F.6): taken by another, this crawler chooses again; its
+                    // own, it sits down on the seat's very point, so others see it taken. A venue's standing spots (the stall's, the
+                    // yard's) stay as they were
+                    if (!context.TryClaimSeat(recreate.VenueIndex, recreate.Seat, node.Id)) return IntentResult.TargetMissing;
+                    if ((seat - node.Position).SqrMagnitude > SettleDistance * SettleDistance)
+                    {
+                        var step = Vec2.MoveTowards(node.Position, seat, node.BaseSpeed * context.FixedTickDeltaTime);
+                        if (context.TryDisplacePawn(node, step, respectPawns: false)) return IntentResult.InProgress;
+                    }
                 }
                 if (row.Cost != Simpiens.Simulation.Economy.ItemType.None && !Pay(node, row.Cost, context)) return IntentResult.Failed; // out of it, or short of gold
                 recreate.Begun = true;

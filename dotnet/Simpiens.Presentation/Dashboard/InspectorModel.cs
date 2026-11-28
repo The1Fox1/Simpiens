@@ -29,6 +29,9 @@ namespace Simpiens.Presentation.Dashboard
         public Simpiens.Entities.AgentVisualState State { get; private set; }
         public string Badge { get; private set; } = string.Empty;
         public string MoodLine { get; private set; } = string.Empty;
+
+        /// <summary>The day's intention, as the dossier says it beside the mood ("Today: a day off."; Epic PLACES plan 1, G.2); empty on a working day or for a creature.</summary>
+        public string IntentionLine { get; private set; } = string.Empty;
         public float Health { get; private set; }
         public float Hunger { get; private set; }
         public float Energy { get; private set; }
@@ -75,6 +78,7 @@ namespace Simpiens.Presentation.Dashboard
             HasPortrait = agent.Look.IsComplete;
             Portrait = PortraitKey.Of(node.Id, agent, _moods, _context.Clock?.CurrentTick ?? 0);
             MoodLine = DossierModel.MoodText(Portrait.Mood, agent.Health, agent.IsDowned);
+            IntentionLine = LifeTexts.TodayLine(agent.IntentionAt((uint)(_context.Clock?.CurrentTick ?? 0)));
             Health = agent.Health;
             Hunger = agent.Hunger;
             Energy = agent.Energy;
@@ -92,6 +96,7 @@ namespace Simpiens.Presentation.Dashboard
             IsShown = kind != null;
             if (!IsShown) return;
             IsCreature = true;
+            IntentionLine = string.Empty;
             CreatureKind = creature.Kind;
             CrawlerId = node.Id;
             Following = following;

@@ -56,7 +56,7 @@ namespace Simpiens.Simulation.Life
         private byte _first;
     }
 
-    /// <summary>The record's room for LIFE-2 and LIFE-3 (D6's table), at 288: zeros until a field is laid in it.</summary>
+    /// <summary>The record's room for LIFE-2 and LIFE-3 (D6's table), at 296: zeros until a field is laid in it.</summary>
     [InlineArray(CrawlerLife.SpareBytes)]
     public struct LifeSpare
     {
@@ -83,7 +83,10 @@ namespace Simpiens.Simulation.Life
     /// <item><b>Variety</b> (L2.7, D15): eight bytes at 280, a variety group each.</item>
     /// <item><b>The intention's day</b> (plan 3's R.7, D34): a <c>ushort</c> at 288, the routine day the intention at 276 was drawn
     /// for, plus one (0: never drawn, read as a work day).</item>
-    /// <item><b>Spare</b>, at 290: taste and keepsakes (LIFE-2) and an aspiration (LIFE-3), with about 100 bytes left. A field
+    /// <item><b>When it woke</b> (Epic PLACES plan 1, G.3): a <c>uint</c> at 292, the tick the intention was drawn, when the crawler
+    /// was first up outside its night (0: unknown, a record before it; the day log falls back to the waking hour). 290 and 291
+    /// are padding.</item>
+    /// <item><b>Spare</b>, at 296: taste and keepsakes (LIFE-2) and an aspiration (LIFE-3), with about 100 bytes left. A field
     /// laid here later reads 0 as "none", so a save made before it loads unchanged.</item>
     /// </list>
     /// Its size is pinned (<c>EconomySerializationValidator</c>).
@@ -105,8 +108,8 @@ namespace Simpiens.Simulation.Life
         public const int VarietyGroups = 8;
 
         /// <summary>What's left of <see cref="Size"/> after the thoughts, their subjects, the wants, boredom, the rhythm's room,
-        /// the intention, curiosity, the tried venues, the chronotype, variety and the intention's day.</summary>
-        public const int SpareBytes = Size - ThoughtCapacity * 8 - SubjectCapacity * 16 - WantBytes - sizeof(float) - sizeof(float) - sizeof(uint) - 4 - VarietyGroups - sizeof(ushort);
+        /// the intention, curiosity, the tried venues, the chronotype, variety, the intention's day, its padding and when it woke.</summary>
+        public const int SpareBytes = Size - ThoughtCapacity * 8 - SubjectCapacity * 16 - WantBytes - sizeof(float) - sizeof(float) - sizeof(uint) - 4 - VarietyGroups - sizeof(ushort) - sizeof(ushort) - sizeof(uint);
 
         /// <summary>The most weariness holds (D33).</summary>
         public const float MaxWeariness = 100f;
@@ -126,7 +129,9 @@ namespace Simpiens.Simulation.Life
         private byte _chronotype;          // 279 (plan 3's R.1)
         private LifeVariety _variety;      // 280: 8
         private ushort _intentionDay;      // 288: 2 (plan 3's R.7)
-        private LifeSpare _spare;          // 290: 222
+        private ushort _padding290;        // 290: 2
+        private uint _wokeAt;              // 292: 4 (Epic PLACES plan 1, G.3)
+        private LifeSpare _spare;          // 296: 216
 
         // --- Thoughts (L1.2) ---
 
@@ -233,6 +238,16 @@ namespace Simpiens.Simulation.Life
             _intention = (byte)intention;
             _intentionDay = (ushort)Math.Clamp(day + 1, 0, ushort.MaxValue);
         }
+
+        /// <summary>The tick the last intention was drawn: when the crawler got up that day (0: unknown).</summary>
+        public readonly uint WokeAt => _wokeAt;
+
+        /// <summary>When the crawler got up on routine day <paramref name="day"/>: the tick its intention was drawn, or 0 when that
+        /// day's wasn't drawn or a record before G.3 doesn't know.</summary>
+        public readonly uint WokeOn(long day) => day >= 0 && _intentionDay == day + 1 ? _wokeAt : 0u;
+
+        /// <summary>Keeps <paramref name="tick"/> as when the crawler got up (Epic PLACES plan 1, G.3).</summary>
+        public void Woke(uint tick) => _wokeAt = tick;
 
         // --- The record as bytes ---
 

@@ -200,8 +200,16 @@ namespace Simpiens.Simulation.World
         /// <summary>The key of the station it needs built (the drill yard for the guildhall's yard; the tavern's counter); null for none.</summary>
         public readonly string Station;
 
-        public VenueDefinition(string key, byte sectorId, Vec2 position, float radius, IReadOnlyList<Vec2> seats, byte hours, uint activities, VenueAccess access, string station)
+        /// <summary>
+        /// The furniture it seats crawlers on, by key (Epic PLACES plan 1, F.3, D14), whose seats are its <see cref="Seats"/> in this
+        /// order; empty for a venue of standing spots (the Garden's walk, the stall's browsing, the yard).
+        /// </summary>
+        public readonly IReadOnlyList<string> SeatedOn;
+
+        public VenueDefinition(string key, byte sectorId, Vec2 position, float radius, IReadOnlyList<Vec2> seats, byte hours, uint activities, VenueAccess access, string station,
+            IReadOnlyList<string> seatedOn = null)
         {
+            SeatedOn = seatedOn ?? System.Array.Empty<string>();
             Key = key;
             SectorId = sectorId;
             Position = position;
@@ -261,6 +269,131 @@ namespace Simpiens.Simulation.World
         public Simpiens.Simulation.Creatures.CreatureKind KindIn(int slot) => slot == 0 && HasBoss ? Boss : Kind;
     }
 
+    /// <summary>
+    /// A building (Epic PLACES, A1, plan 1's D2): a walled structure inside one zone, standing from the start or, of kind None, an
+    /// empty lot. Its footprint is its walls' centre lines, on the map's wall grid; its doors are gaps in its edges, each
+    /// <see cref="DoorSpan"/> between the wall cells either side, as the map's doors are. Its walls are written with the zone's
+    /// (<see cref="MapDefinitionBuilder.Building"/>), once: a wall the map already has isn't added again.
+    /// </summary>
+    public readonly struct BuildingDefinition
+    {
+        /// <summary>A door's span: from the wall cell on one side to the one on the other, centre to centre. The cells between are open.</summary>
+        public const float DoorSpan = 6f;
+
+        public readonly string Key;
+        public readonly Simpiens.Simulation.Places.BuildingKind Kind;
+
+        /// <summary>The zone it stands in, wholly.</summary>
+        public readonly byte SectorId;
+
+        /// <summary>Its walls' centre lines.</summary>
+        public readonly RectF Footprint;
+
+        /// <summary>Its doors' centres, each on an edge of its footprint; the first is its main door, its sign beside it.</summary>
+        public readonly IReadOnlyList<Vec2> Doors;
+
+        /// <summary>Where its sign stands: outside its main door's wall, a cell out, beside the door.</summary>
+        public readonly Vec2 Sign;
+
+        /// <summary>The wall cells it added to the map's: none for a building standing on a zone's walls (the bunkhouse).</summary>
+        public readonly int WallCellsAdded;
+
+        public BuildingDefinition(string key, Simpiens.Simulation.Places.BuildingKind kind, byte sectorId, RectF footprint, IReadOnlyList<Vec2> doors, Vec2 sign, int wallCellsAdded)
+        {
+            Key = key;
+            Kind = kind;
+            SectorId = sectorId;
+            Footprint = footprint;
+            Doors = doors ?? System.Array.Empty<Vec2>();
+            Sign = sign;
+            WallCellsAdded = wallCellsAdded;
+        }
+
+        /// <summary>An empty lot: foundations, no building yet (D5).</summary>
+        public bool IsLot => Kind == Simpiens.Simulation.Places.BuildingKind.None;
+
+        /// <summary>Its row in the building table.</summary>
+        public Simpiens.Simulation.Places.BuildingKindDefinition Row => Simpiens.Simulation.Places.BuildingTable.Get(Kind);
+
+        /// <summary>The lot its footprint makes.</summary>
+        public Simpiens.Simulation.Places.LotSize Size => Simpiens.Simulation.Places.BuildingTable.SizeOf(Footprint);
+
+        /// <summary>Whether <paramref name="point"/> is inside it: within its walls, not on them nor in a doorway.</summary>
+        public bool Contains(Vec2 point)
+        {
+            const float wall = MapDefinitionBuilder.WallHalfExtent;
+            return point.X > Footprint.XMin + wall && point.X < Footprint.XMax - wall && point.Y > Footprint.YMin + wall && point.Y < Footprint.YMax - wall;
+        }
+    }
+
+    /// <summary>
+    /// A piece of furniture placed on the map (Epic PLACES plan 1, F.1, D12): its key, its kind, its centre, whether it is turned a
+    /// quarter (its footprint's sides and its seats' and beds' offsets swapped), the zone it stands in and the building it stands
+    /// in (-1 for none).
+    /// </summary>
+    public readonly struct FurnitureDefinition
+    {
+        public readonly string Key;
+        public readonly Simpiens.Simulation.Places.FurnitureKind Kind;
+        public readonly Vec2 Position;
+        public readonly bool Turned;
+        public readonly byte SectorId;
+        public readonly int Building;
+
+        public FurnitureDefinition(string key, Simpiens.Simulation.Places.FurnitureKind kind, Vec2 position, bool turned, byte sectorId, int building)
+        {
+            Key = key;
+            Kind = kind;
+            Position = position;
+            Turned = turned;
+            SectorId = sectorId;
+            Building = building;
+        }
+
+        public Simpiens.Simulation.Places.FurnitureKindDefinition Row => Simpiens.Simulation.Places.FurnitureTable.Get(Kind);
+
+        /// <summary>Its footprint in the world.</summary>
+        public RectF Footprint
+        {
+            get
+            {
+                var row = Row;
+                float w = Turned ? row.Depth : row.Width, d = Turned ? row.Width : row.Depth;
+                return new RectF(Position.X - w * 0.5f, Position.Y - d * 0.5f, w, d);
+            }
+        }
+
+        public int SeatCount => Row.Seats.Count;
+
+        /// <summary>Seat <paramref name="i"/> in the world.</summary>
+        public Vec2 SeatAt(int i) => Place(Row.Seats[i]);
+
+        public int BedCount => Row.Beds.Count;
+
+        /// <summary>Bed <paramref name="i"/> in the world.</summary>
+        public Vec2 BedAt(int i) => Place(Row.Beds[i]);
+
+        private Vec2 Place(Vec2 offset) => Position + (Turned ? new Vec2(offset.Y, offset.X) : offset);
+    }
+
+    /// <summary>
+    /// A bed on the map (Epic PLACES plan 1, F.2, D13): where a crawler sleeps, from a bunk POI (a map not moved over to furniture)
+    /// or a piece of furniture's beds; whether it is kept for the guild; and the key its bunk entity is registered under.
+    /// </summary>
+    public readonly struct BedDefinition
+    {
+        public readonly string Key;
+        public readonly Vec2 Position;
+        public readonly bool Guild;
+
+        public BedDefinition(string key, Vec2 position, bool guild)
+        {
+            Key = key;
+            Position = position;
+            Guild = guild;
+        }
+    }
+
     /// <summary>Presentation hint: a text label drawn on the map.</summary>
     public readonly struct MapLabel
     {
@@ -311,6 +444,24 @@ namespace Simpiens.Simulation.World
         /// <summary>The most venues a map holds: the snapshot's open mask is 32 bits.</summary>
         public const int MaxVenues = 32;
 
+        /// <summary>The buildings and lots, in definition order (Epic PLACES plan 1, B.1); at most <see cref="MaxBuildings"/>. Empty on a map with none.</summary>
+        public readonly IReadOnlyList<BuildingDefinition> Buildings;
+
+        /// <summary>The most buildings a map holds, as venues: a mask of them fits 32 bits.</summary>
+        public const int MaxBuildings = 32;
+
+        /// <summary>The furniture placed on the map, in definition order (Epic PLACES plan 1, F.1). Empty on a map with none.</summary>
+        public readonly IReadOnlyList<FurnitureDefinition> Furniture;
+
+        /// <summary>
+        /// Every bed (Epic PLACES plan 1, F.2, D13), in the order their bunks are spawned: the bunk POIs in POI order, then the
+        /// furniture's beds in furniture order. A piece with one bed gives it the piece's key; with more, the key and its number.
+        /// </summary>
+        public readonly IReadOnlyList<BedDefinition> Beds;
+
+        /// <summary>The beds from furniture: <see cref="Beds"/> after its POI bunks (the session host spawns these after the POIs).</summary>
+        public int FirstFurnitureBed { get; }
+
         /// <summary>
         /// The trade caravan's way in (Epic 10 Part 2, the stretch, D70): from where the road meets the map to the stall, in
         /// order; it walks back out the same way. Empty on a map the caravan doesn't walk.
@@ -330,8 +481,25 @@ namespace Simpiens.Simulation.World
             MapLabel[] labels,
             Vec2[] caravanRoute = null,
             LairDefinition[] lairs = null,
-            VenueDefinition[] venues = null)
+            VenueDefinition[] venues = null,
+            BuildingDefinition[] buildings = null,
+            FurnitureDefinition[] furniture = null)
         {
+            Furniture = furniture ?? System.Array.Empty<FurnitureDefinition>();
+            var beds = new List<BedDefinition>();
+            for (int i = 0; i < pois.Length; i++)
+            {
+                if (pois[i].Kind == PoiKind.Bunk || pois[i].Kind == PoiKind.GuildBunk) beds.Add(new BedDefinition(pois[i].Key, pois[i].Position, pois[i].Kind == PoiKind.GuildBunk));
+            }
+            FirstFurnitureBed = beds.Count;
+            for (int i = 0; i < Furniture.Count; i++)
+            {
+                var piece = Furniture[i];
+                for (int b = 0; b < piece.BedCount; b++)
+                    beds.Add(new BedDefinition(piece.BedCount == 1 ? piece.Key : piece.Key + "#" + (b + 1), piece.BedAt(b), piece.Row.BedFor == Simpiens.Simulation.Places.BedFor.Guild));
+            }
+            Beds = beds;
+            Buildings = buildings ?? System.Array.Empty<BuildingDefinition>();
             Venues = venues ?? System.Array.Empty<VenueDefinition>();
             CaravanRoute = caravanRoute ?? System.Array.Empty<Vec2>();
             Lairs = lairs ?? System.Array.Empty<LairDefinition>();
@@ -345,6 +513,29 @@ namespace Simpiens.Simulation.World
             Pois = pois;
             Stations = stations;
             Labels = labels;
+        }
+
+        /// <summary>
+        /// The map's wall grid (Epic PLACES plan 1, B.2): the fractional part, 0 or 0.5 on each axis, of its first wall cell's
+        /// centre. A map's walls share one alignment (Floor 1's on whole units; the Dev Map's on half units in y); its tiles line
+        /// up with it, and its buildings' footprints and doors lie on it.
+        /// </summary>
+        public Vec2 WallAlignment => AlignmentOf(Walls);
+
+        /// <summary>The wall grid of <paramref name="walls"/>: (0, 0) with none.</summary>
+        public static Vec2 AlignmentOf(IReadOnlyList<WallRect> walls)
+        {
+            if (walls == null || walls.Count == 0) return Vec2.Zero;
+            var solid = walls[0].Solid;
+            float unit = 2f * MapDefinitionBuilder.WallHalfExtent + 0.01f;
+            float inset = solid.Width > unit && solid.Height > unit ? 0.5f : MapDefinitionBuilder.WallHalfExtent; // rock, or a wall run
+            return new Vec2(Fraction(solid.XMin + inset), Fraction(solid.YMin + inset));
+        }
+
+        private static float Fraction(float v)
+        {
+            float f = v - SimMath.Floor(v);
+            return SimMath.Abs(f - 0.5f) < 0.01f ? 0.5f : 0f;
         }
 
         /// <summary>
@@ -386,6 +577,58 @@ namespace Simpiens.Simulation.World
                 }
             }
             sector = default;
+            return false;
+        }
+
+        /// <summary>The index of the building <paramref name="position"/> is inside (within its walls, not on them), or -1 (Epic PLACES, A2, plan 1's D8).</summary>
+        public int BuildingAt(Vec2 position)
+        {
+            for (int i = 0; i < Buildings.Count; i++)
+            {
+                if (Buildings[i].Contains(position)) return i;
+            }
+            return -1;
+        }
+
+        public bool TryGetBuilding(string key, out BuildingDefinition building)
+        {
+            for (int i = 0; i < Buildings.Count; i++)
+            {
+                if (Buildings[i].Key == key)
+                {
+                    building = Buildings[i];
+                    return true;
+                }
+            }
+            building = default;
+            return false;
+        }
+
+        public bool TryGetVenue(string key, out VenueDefinition venue)
+        {
+            for (int i = 0; i < Venues.Count; i++)
+            {
+                if (Venues[i].Key == key)
+                {
+                    venue = Venues[i];
+                    return true;
+                }
+            }
+            venue = default;
+            return false;
+        }
+
+        public bool TryGetFurniture(string key, out FurnitureDefinition piece)
+        {
+            for (int i = 0; i < Furniture.Count; i++)
+            {
+                if (Furniture[i].Key == key)
+                {
+                    piece = Furniture[i];
+                    return true;
+                }
+            }
+            piece = default;
             return false;
         }
 

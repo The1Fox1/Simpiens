@@ -361,13 +361,13 @@ namespace Simpiens.Testing.World
 
             int spawns = CountPois(def, PoiKind.SpawnPoint, Floor1Layout.RoadGateSectorId, grid);
             Assert(spawns == Floor1Layout.SpawnPointCount, $"Floor1 has {Floor1Layout.SpawnPointCount} spawn points in the Road Gate (found {spawns}).");
-            int bunks = CountPois(def, PoiKind.Bunk, Floor1Layout.BunkhouseSectorId, grid);
+            int bunks = CountBeds(def, guild: false, Floor1Layout.BunkhouseSectorId, grid); // bunks are furniture (Epic PLACES plan 1, F.2)
             Assert(bunks == Floor1Layout.BunkCount, $"Floor1 has {Floor1Layout.BunkCount} bunks in the Bunkhouse (found {bunks}).");
             // A sleeper holds its bunk about 8 hours of the 24-hour day (Epic 10 Part 2, T2.3, D21): a bunk per resident
             Assert(bunks >= Simpiens.Core.Session.OutpostSession.DefaultCrawlerCount,
                 $"Floor1 has a bunk per resident ({bunks} for {Simpiens.Core.Session.OutpostSession.DefaultCrawlerCount}).");
             // The guild's barracks (Epic 10 Part 2, W5.2, D62): a bunk kept for each member, in the guildhall
-            int barracks = CountPois(def, PoiKind.GuildBunk, Floor1Layout.GuildhallSectorId, grid);
+            int barracks = CountBeds(def, guild: true, Floor1Layout.GuildhallSectorId, grid);
             Assert(barracks == Floor1Layout.GuildBunkCount && barracks >= Simpiens.Simulation.Economy.GuildTuning.Default.MaxMembers,
                 $"Floor1 has {Floor1Layout.GuildBunkCount} bunks in the guildhall's barracks, one per member (found {barracks}).");
 
@@ -406,12 +406,11 @@ namespace Simpiens.Testing.World
 
             var laneFrom = Floor1Layout.Doors[6];   // Bunkhouse - Road Gate
             var laneTo = Floor1Layout.HubBunkhouseDoor;
-            for (int i = 0; i < def.Pois.Count; i++)
+            for (int i = 0; i < def.Beds.Count; i++)
             {
-                var p = def.Pois[i];
-                if (p.Kind != PoiKind.Bunk && p.Kind != PoiKind.GuildBunk) continue;
+                var p = def.Beds[i];
                 float d = DistanceToSegment(p.Position, laneFrom, laneTo);
-                Assert(p.Kind == PoiKind.GuildBunk || d >= LaneClearance, $"Bunk '{p.Key}' at {p.Position} sits {d:F1} from the gate-to-hub lane (needs {LaneClearance}).");
+                Assert(p.Guild || d >= LaneClearance, $"Bunk '{p.Key}' at {p.Position} sits {d:F1} from the gate-to-hub lane (needs {LaneClearance}).");
                 // On the 24-hour day a sleeper lies in its bunk for hours, and paths don't see pawns: a bunk against the north
                 // wall blocks the walkable strip there, the way to the hub door (Epic 10 Part 2, T4.2: it walled a crawler in)
                 Assert(grid.WorldToCell(p.Position, out int bx, out int by) && grid.IsCellWalkable(bx, by + 1),
@@ -419,6 +418,25 @@ namespace Simpiens.Testing.World
             }
 
             TestLog.Log($"[PASS] Test 8: Floor1 is ready to go live: {spawns} spawn points, {bunks} bunks and {barracks} in the barracks, {Floor1Layout.Doors.Count} named doors, hearth ring clear of doors and stall.");
+        }
+
+        /// <summary>The map's beds for residents or the guild (Epic PLACES plan 1, F.2), each in its sector, walkable and 1.5 from the next.</summary>
+        private static int CountBeds(MapDefinition def, bool guild, byte sectorId, StaticNavGrid grid)
+        {
+            int count = 0;
+            for (int i = 0; i < def.Beds.Count; i++)
+            {
+                var p = def.Beds[i];
+                if (p.Guild != guild) continue;
+                Assert(def.FindSector(p.Position).Id == sectorId, $"Bed '{p.Key}' at {p.Position} lies in sector {sectorId}.");
+                Assert(grid.WorldToCell(p.Position, out int x, out int y) && grid.IsCellWalkable(x, y), $"Bed '{p.Key}' at {p.Position} is walkable.");
+                for (int j = 0; j < i; j++)
+                {
+                    if (def.Beds[j].Guild == guild) Assert(Vec2.Distance(p.Position, def.Beds[j].Position) >= 1.5f, $"Beds '{def.Beds[j].Key}' and '{p.Key}' are at least 1.5 apart.");
+                }
+                count++;
+            }
+            return count;
         }
 
         private static int CountPois(MapDefinition def, PoiKind kind, byte sectorId, StaticNavGrid grid)
@@ -452,10 +470,11 @@ namespace Simpiens.Testing.World
         {
             var def = DevMapLayout.Definition;
             var grid = Rasterized(def);
-            Assert(def.Sectors.Count == 10, $"The Dev Map has the 10 pen sectors, got {def.Sectors.Count}.");
+            Assert(def.Sectors.Count == 11, $"The Dev Map has the 10 pen sectors and the building yard, got {def.Sectors.Count}.");
 
-            var penRegions = new int[def.Sectors.Count];
-            for (int i = 0; i < def.Sectors.Count; i++)
+            const int pens = 10;
+            var penRegions = new int[pens + 1];
+            for (int i = 0; i < pens; i++)
             {
                 var pen = def.Sectors[i];
                 Assert(grid.TryGetRegion(pen.TargetPoint + new Vec2(0f, 1.5f), out penRegions[i]), $"Pen {pen.Name} interior is walkable.");
@@ -472,7 +491,13 @@ namespace Simpiens.Testing.World
                 Assert(grid.TryGetRegion(n.Position, out int r) && r == penRegions[sectorId - 1], $"Node '{n.Key}' is not reachable inside its pen.");
             }
 
-            TestLog.Log("[PASS] Test 9: Dev Map: 10 sealed pens, every prop inside and reachable within its pen.");
+            // The building yard (Epic PLACES plan 1, B.2): sealed from every pen, its building and lot inside it
+            Assert(def.TryGetSector(DevMapLayout.BuildingYardSectorId, out var yard) && grid.TryGetRegion(yard.TargetPoint, out penRegions[pens]), "The building yard is walkable.");
+            for (int j = 0; j < pens; j++) Assert(penRegions[pens] != penRegions[j], $"The building yard is sealed from {def.Sectors[j].Name}.");
+            Assert(def.Buildings.Count == 2 && def.TryGetBuilding(DevMapLayout.YardBarracks, out var barracks) && !barracks.IsLot && barracks.SectorId == yard.Id
+                && def.TryGetBuilding(DevMapLayout.YardLot, out var lot) && lot.IsLot && lot.SectorId == yard.Id, "The yard holds its barracks and its empty lot.");
+
+            TestLog.Log("[PASS] Test 9: Dev Map: 10 sealed pens, every prop inside and reachable within its pen; the building yard sealed, its barracks and lot inside.");
         }
 
         private static StaticNavGrid Rasterized(MapDefinition def)
